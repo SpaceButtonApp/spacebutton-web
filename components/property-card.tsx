@@ -10,7 +10,7 @@ import { cn } from '@/lib/utils'
 
 interface PropertyCardProps {
   property: Property
-  variant?: 'full' | 'compact'
+  variant?: 'full' | 'compact' | 'horizontal'
 }
 
 export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) {
@@ -21,14 +21,13 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
   const handleSave = (e: React.MouseEvent) => {
     e.stopPropagation()
     toggleSaveProperty(property.id)
-    console.log('[v0] Property saved:', property.id, !isSaved)
   }
 
   const handleViewDetails = () => {
     router.push(`/property/${property.id}`)
   }
 
-  if (variant === 'compact') {
+  if (variant === 'compact' || variant === 'horizontal') {
     return (
       <div 
         onClick={handleViewDetails}

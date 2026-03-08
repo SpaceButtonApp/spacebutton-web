@@ -21,6 +21,7 @@ export interface Property {
   bonus?: string
   rentDueDate?: string
   agent: Agent
+  ownerId: string
 }
 
 export interface Agent {
@@ -129,6 +130,7 @@ export const mockProperties: Property[] = [
     bonus: '+₦75,000 5% Bonus',
     rentDueDate: '15th April 2023',
     agent: mockAgents[0],
+    ownerId: '1',
   },
   {
     id: '2',
@@ -153,6 +155,7 @@ export const mockProperties: Property[] = [
     saved: false,
     photoCount: 12,
     agent: mockAgents[1],
+    ownerId: '2',
   },
   {
     id: '3',
@@ -177,6 +180,7 @@ export const mockProperties: Property[] = [
     saved: true,
     photoCount: 12,
     agent: mockAgents[2],
+    ownerId: '3',
   },
   {
     id: '4',
@@ -203,6 +207,7 @@ export const mockProperties: Property[] = [
     bonus: '+₦75,000 5% Bonus',
     rentDueDate: '15th April 2023',
     agent: mockAgents[0],
+    ownerId: '1',
   },
   {
     id: '5',
@@ -227,6 +232,7 @@ export const mockProperties: Property[] = [
     saved: true,
     photoCount: 15,
     agent: mockAgents[1],
+    ownerId: '2',
   },
   {
     id: '6',
@@ -251,6 +257,7 @@ export const mockProperties: Property[] = [
     saved: false,
     photoCount: 8,
     agent: mockAgents[2],
+    ownerId: '3',
   },
 ]
 
@@ -434,6 +441,50 @@ export const currentUser: Agent = {
   rating: 4.8,
   online: true,
 }
+
+export interface User {
+  id: string
+  name: string
+  avatar: string
+  type: 'individual' | 'agent'
+  email: string
+  phone: string
+  stats: {
+    listings: number
+    closed: number
+    rating: number
+  }
+}
+
+export const mockUsers: User[] = [
+  {
+    id: '1',
+    name: 'Indica Watson',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+    type: 'agent',
+    email: 'indica@example.com',
+    phone: '+234 123 456 7890',
+    stats: { listings: 30, closed: 12, rating: 4.8 },
+  },
+  {
+    id: '2',
+    name: 'Milano',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+    type: 'individual',
+    email: 'milano@example.com',
+    phone: '+234 987 654 3210',
+    stats: { listings: 5, closed: 2, rating: 4.5 },
+  },
+  {
+    id: '3',
+    name: 'Sarah Johnson',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop&crop=face',
+    type: 'agent',
+    email: 'sarah@example.com',
+    phone: '+234 555 123 4567',
+    stats: { listings: 45, closed: 28, rating: 4.9 },
+  },
+]
 
 export const safetyTips = [
   "Do not pay any inspection fee If you've not seen more than two Apartment",

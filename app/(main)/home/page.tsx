@@ -23,7 +23,6 @@ export default function HomePage() {
     if (tab === 'Connect' || tab === 'Agent') {
       setActiveTab(tab.toLowerCase() as 'connect' | 'agent')
     }
-    console.log('[v0] Tab changed to:', tab)
   }
 
   const filteredProperties = mockProperties.filter((property) => {

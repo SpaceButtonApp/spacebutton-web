@@ -1,0 +1,369 @@
+"use client"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { ChevronLeft, ChevronDown, MapPin, X, Plus, Calendar } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import Image from "next/image"
+
+const listingConditions = ["Rent", "Roommate", "Flatmate"]
+const propertyCategories = ["Flat", "Self Con", "Duplex", "Storey", "Penthouse"]
+const facilities = ["Parking Lot", "Pet Allowed", "Park", "Garden", "Estate", "Kid's Friendly", "Home theatre", "Other"]
+
+export default function AddPostPage() {
+  const router = useRouter()
+  const [listingType, setListingType] = useState<"Connect" | "Agent">("Connect")
+  const [listingTitle, setListingTitle] = useState("")
+  const [selectedConditions, setSelectedConditions] = useState<string[]>(["Rent"])
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(["Flat"])
+  const [location, setLocation] = useState("")
+  const [photos, setPhotos] = useState<string[]>([
+    "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=300&h=200&fit=crop",
+    "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=300&h=200&fit=crop",
+    "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=300&h=200&fit=crop",
+  ])
+  const [rentPrice, setRentPrice] = useState("1,500,000")
+  const [reward, setReward] = useState("50,000")
+  const [bedrooms, setBedrooms] = useState(3)
+  const [bathrooms, setBathrooms] = useState(2)
+  const [sittingRooms, setSittingRooms] = useState(2)
+  const [balconies, setBalconies] = useState(2)
+  const [landlordPresence, setLandlordPresence] = useState<string[]>(["Landlord Stays in the Compound"])
+  const [selectedFacilities, setSelectedFacilities] = useState<string[]>(["Parking Lot", "Pet Allowed", "Garden", "Estate", "Other"])
+  const [showCalendar, setShowCalendar] = useState(false)
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+
+  const toggleCondition = (condition: string) => {
+    setSelectedConditions((prev) =>
+      prev.includes(condition)
+        ? prev.filter((c) => c !== condition)
+        : [...prev, condition]
+    )
+  }
+
+  const toggleCategory = (category: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(category)
+        ? prev.filter((c) => c !== category)
+        : [...prev, category]
+    )
+  }
+
+  const toggleFacility = (facility: string) => {
+    setSelectedFacilities((prev) =>
+      prev.includes(facility)
+        ? prev.filter((f) => f !== facility)
+        : [...prev, facility]
+    )
+  }
+
+  const removePhoto = (index: number) => {
+    setPhotos((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const currentMonth = new Date(2023, 3)
+  const daysInMonth = new Date(2023, 4, 0).getDate()
+  const firstDayOfMonth = new Date(2023, 3, 1).getDay()
+
+  return (
+    <div className="min-h-screen bg-background pb-8">
+      <header className="sticky top-0 z-10 bg-background px-4 py-4 flex items-center gap-4">
+        <button
+          onClick={() => router.back()}
+          className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        <h1 className="text-lg font-semibold flex-1 text-center pr-10">Add Apartment Details</h1>
+      </header>
+
+      <div className="px-4 space-y-6">
+        <div>
+          <h3 className="font-medium mb-3">Listing type</h3>
+          <div className="flex gap-3">
+            {["Connect", "Agent"].map((type) => (
+              <button
+                key={type}
+                onClick={() => setListingType(type as "Connect" | "Agent")}
+                className={`px-6 py-2.5 rounded-full text-sm font-medium transition-colors ${
+                  listingType === type
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary"
+                }`}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h3 className="font-medium mb-3">Listing Title</h3>
+          <div className="relative">
+            <Input
+              value={listingTitle}
+              onChange={(e) => setListingTitle(e.target.value)}
+              placeholder="Two Bedroom Flat"
+              className="h-14 rounded-2xl pr-12"
+            />
+            <button className="absolute right-4 top-1/2 -translate-y-1/2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                <line x1="12" x2="12" y1="19" y2="22"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="font-medium mb-3">Listing Condition</h3>
+          <div className="flex flex-wrap gap-3">
+            {listingConditions.map((condition) => (
+              <button
+                key={condition}
+                onClick={() => toggleCondition(condition)}
+                className={`px-6 py-2.5 rounded-full text-sm font-medium transition-colors ${
+                  selectedConditions.includes(condition)
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary"
+                }`}
+              >
+                {condition}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h3 className="font-medium mb-3">Property category</h3>
+          <div className="flex flex-wrap gap-3">
+            {propertyCategories.map((category) => (
+              <button
+                key={category}
+                onClick={() => toggleCategory(category)}
+                className={`px-6 py-2.5 rounded-full text-sm font-medium transition-colors ${
+                  selectedCategories.includes(category)
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary"
+                }`}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h3 className="font-medium mb-3">Location</h3>
+          <div className="relative">
+            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Input
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="First gate, Ojo, Lagos State, Nigeria."
+              className="h-14 rounded-2xl pl-12"
+            />
+          </div>
+        </div>
+
+        <div className="h-40 rounded-2xl overflow-hidden relative">
+          <div className="absolute inset-0 bg-secondary flex items-center justify-center">
+            <div className="text-center">
+              <MapPin className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">Select on the map</p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="font-medium mb-3">Listing Photos</h3>
+          <div className="grid grid-cols-2 gap-3">
+            {photos.map((photo, index) => (
+              <div key={index} className="relative aspect-[4/3] rounded-2xl overflow-hidden">
+                <Image src={photo} alt="" fill className="object-cover" />
+                <button
+                  onClick={() => removePhoto(index)}
+                  className="absolute top-2 right-2 w-6 h-6 bg-black/50 rounded-full flex items-center justify-center"
+                >
+                  <X className="w-4 h-4 text-white" />
+                </button>
+              </div>
+            ))}
+            <button className="aspect-[4/3] rounded-2xl border-2 border-dashed border-border flex items-center justify-center">
+              <Plus className="w-8 h-8 text-muted-foreground" />
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="font-medium mb-3">Rent Price</h3>
+          <div className="relative">
+            <Input
+              value={rentPrice}
+              onChange={(e) => setRentPrice(e.target.value)}
+              placeholder="0"
+              className="h-14 rounded-2xl pr-12"
+            />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="font-medium mb-3">Reward</h3>
+          <div className="relative">
+            <Input
+              value={reward}
+              onChange={(e) => setReward(e.target.value)}
+              placeholder="0"
+              className="h-14 rounded-2xl pr-12 bg-primary/10 border-primary/20"
+            />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="font-medium mb-3">Property Features</h3>
+          <div className="space-y-3">
+            {[
+              { label: "Bedroom", value: bedrooms, setValue: setBedrooms },
+              { label: "Bathroom", value: bathrooms, setValue: setBathrooms },
+              { label: "Sitting Room", value: sittingRooms, setValue: setSittingRooms },
+              { label: "Balcony", value: balconies, setValue: setBalconies },
+            ].map((feature) => (
+              <div
+                key={feature.label}
+                className="flex items-center justify-between p-4 bg-secondary/50 rounded-2xl"
+              >
+                <span>{feature.label}</span>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => feature.setValue(Math.max(0, feature.value - 1))}
+                    className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center"
+                  >
+                    -
+                  </button>
+                  <span className="w-6 text-center">{feature.value}</span>
+                  <button
+                    onClick={() => feature.setValue(feature.value + 1)}
+                    className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h3 className="font-medium mb-3">Select Current Rent Due Date</h3>
+          <button
+            onClick={() => setShowCalendar(!showCalendar)}
+            className="w-full flex items-center justify-between p-4 border border-border rounded-2xl"
+          >
+            <span className="text-muted-foreground">
+              {selectedDate ? selectedDate.toLocaleDateString() : "Select Date"}
+            </span>
+            <ChevronDown className={`w-5 h-5 transition-transform ${showCalendar ? "rotate-180" : ""}`} />
+          </button>
+          {showCalendar && (
+            <div className="mt-3 p-4 border border-border rounded-2xl">
+              <div className="flex items-center justify-between mb-4">
+                <button className="p-2">
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <span className="font-medium">April 2023</span>
+                <button className="p-2">
+                  <ChevronLeft className="w-5 h-5 rotate-180" />
+                </button>
+              </div>
+              <div className="grid grid-cols-7 gap-1 text-center text-sm">
+                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+                  <div key={day} className="py-2 text-primary text-xs">{day}</div>
+                ))}
+                {Array.from({ length: firstDayOfMonth }).map((_, i) => (
+                  <div key={`empty-${i}`} />
+                ))}
+                {Array.from({ length: daysInMonth }).map((_, i) => {
+                  const day = i + 1
+                  const isSelected = selectedDate?.getDate() === day
+                  return (
+                    <button
+                      key={day}
+                      onClick={() => setSelectedDate(new Date(2023, 3, day))}
+                      className={`py-2 rounded-lg text-sm ${
+                        isSelected
+                          ? "bg-primary text-primary-foreground"
+                          : "hover:bg-secondary"
+                      }`}
+                    >
+                      {day}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div>
+          <h3 className="font-medium mb-3">Landlord Presence</h3>
+          <div className="space-y-3">
+            {["Landlord Stays in the Compound", "Landlord Does not stay in the Compound"].map((option) => (
+              <label key={option} className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={landlordPresence.includes(option)}
+                  onChange={() => {
+                    setLandlordPresence((prev) =>
+                      prev.includes(option)
+                        ? prev.filter((o) => o !== option)
+                        : [...prev, option]
+                    )
+                  }}
+                  className="w-5 h-5 rounded border-border accent-primary"
+                />
+                <span className="text-sm">{option}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h3 className="font-medium mb-3">Environment / Facilities</h3>
+          <div className="flex flex-wrap gap-2">
+            {facilities.map((facility) => (
+              <button
+                key={facility}
+                onClick={() => toggleFacility(facility)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  selectedFacilities.includes(facility)
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary"
+                }`}
+              >
+                {facility}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <Input
+            placeholder="Write other descriptions if available"
+            className="h-14 rounded-2xl"
+          />
+        </div>
+
+        <Button
+          onClick={() => router.push("/home")}
+          className="w-full h-14 text-base font-semibold"
+        >
+          Finish
+        </Button>
+      </div>
+    </div>
+  )
+}

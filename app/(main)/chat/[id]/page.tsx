@@ -41,12 +41,12 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
   const handleVideoCall = () => {
     console.log('[v0] Video call initiated with:', agent.name)
-    alert('Video call feature coming soon!')
+    router.push(`/call/video/${id}`)
   }
 
   const handleVoiceCall = () => {
     console.log('[v0] Voice call initiated with:', agent.name)
-    alert('Voice call feature coming soon!')
+    router.push(`/call/voice/${id}`)
   }
 
   const handleDoneDeal = () => {

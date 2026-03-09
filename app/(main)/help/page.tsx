@@ -10,19 +10,19 @@ const faqItems = [
     id: 1,
     icon: FileText,
     title: "About Us",
-    href: "/help/about",
+    href: "/about",
   },
   {
     id: 2,
     icon: Shield,
     title: "Privacy Policy",
-    href: "/help/privacy",
+    href: "/privacy",
   },
   {
     id: 3,
     icon: ScrollText,
     title: "Terms & Condition",
-    href: "/help/terms",
+    href: "/terms",
   },
 ]
 

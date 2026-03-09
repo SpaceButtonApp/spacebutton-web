@@ -62,6 +62,7 @@ export default function WalletPage() {
           <Button
             variant="secondary"
             className="bg-white/20 hover:bg-white/30 text-white border-0"
+            onClick={() => router.push('/wallet/fund')}
           >
             <Plus className="w-4 h-4 mr-2" />
             Fund Wallet

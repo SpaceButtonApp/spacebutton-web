@@ -1,12 +1,14 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { 
-  User, Wallet, Crown, Bell, Settings as SettingsIcon, 
+  User, Wallet, Crown, Bell, 
   HelpCircle, LogOut, ChevronRight 
 } from 'lucide-react'
 import { BottomNav } from '@/components/bottom-nav'
+import { LogoutModal } from '@/components/logout-modal'
 import { useAppStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
 
@@ -15,20 +17,18 @@ const menuItems = [
   { icon: Wallet, label: 'My Wallet', href: '/wallet', color: 'text-foreground' },
   { icon: Crown, label: 'Premium', href: '/premium', color: 'text-foreground' },
   { icon: Bell, label: 'Notifications', href: '/notifications', badge: 5, color: 'text-foreground' },
-  { icon: SettingsIcon, label: 'Personal Data', href: '/settings/personal', color: 'text-foreground' },
   { icon: HelpCircle, label: 'Help & Support', href: '/help', color: 'text-foreground' },
   { icon: LogOut, label: 'Log Out', href: '/logout', color: 'text-destructive' },
 ]
 
 export default function SettingsPage() {
   const router = useRouter()
-  const { user, setUser } = useAppStore()
+  const { user } = useAppStore()
+  const [showLogoutModal, setShowLogoutModal] = useState(false)
 
   const handleItemClick = (item: typeof menuItems[0]) => {
     if (item.label === 'Log Out') {
-      setUser(null)
-      router.push('/')
-      console.log('[v0] User logged out')
+      setShowLogoutModal(true)
     } else {
       router.push(item.href)
     }
@@ -78,6 +78,7 @@ export default function SettingsPage() {
       </div>
 
       <BottomNav />
+      <LogoutModal isOpen={showLogoutModal} onClose={() => setShowLogoutModal(false)} />
     </div>
   )
 }

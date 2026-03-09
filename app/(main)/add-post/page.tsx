@@ -23,13 +23,16 @@ export default function AddPostPage() {
     "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=300&h=200&fit=crop",
     "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=300&h=200&fit=crop",
   ])
-  const [rentPrice, setRentPrice] = useState("1,500,000")
-  const [reward, setReward] = useState("50,000")
+  const [rentPrice, setRentPrice] = useState("1500000")
+  const [showReviewModal, setShowReviewModal] = useState(false)
+  
+  // Reward is 5% of rent price, auto-calculated
+  const calculatedReward = Math.round(parseInt(rentPrice.replace(/,/g, '') || '0') * 0.05)
   const [bedrooms, setBedrooms] = useState(3)
   const [bathrooms, setBathrooms] = useState(2)
   const [sittingRooms, setSittingRooms] = useState(2)
   const [balconies, setBalconies] = useState(2)
-  const [landlordPresence, setLandlordPresence] = useState<string[]>(["Landlord Stays in the Compound"])
+  const [landlordPresence, setLandlordPresence] = useState<"stays" | "not-stays">("stays")
   const [selectedFacilities, setSelectedFacilities] = useState<string[]>(["Parking Lot", "Pet Allowed", "Garden", "Estate", "Other"])
   const [showCalendar, setShowCalendar] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
@@ -210,18 +213,21 @@ export default function AddPostPage() {
           </div>
         </div>
 
-        <div>
-          <h3 className="font-medium mb-3">Reward</h3>
-          <div className="relative">
-            <Input
-              value={reward}
-              onChange={(e) => setReward(e.target.value)}
-              placeholder="0"
-              className="h-14 rounded-2xl pr-12 bg-primary/10 border-primary/20"
-            />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+        {/* Reward - Only visible for Connect listing type */}
+        {listingType === "Connect" && (
+          <div>
+            <h3 className="font-medium mb-3">Reward (5% of Rent)</h3>
+            <div className="relative">
+              <Input
+                value={calculatedReward.toLocaleString()}
+                disabled
+                placeholder="0"
+                className="h-14 rounded-2xl pr-12 bg-primary/10 border-primary/20"
+              />
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+            </div>
           </div>
-        </div>
+        )}
 
         <div>
           <h3 className="font-medium mb-3">Property Features</h3>
@@ -257,7 +263,9 @@ export default function AddPostPage() {
           </div>
         </div>
 
-        <div>
+        {/* Select Rent Due Date - Only visible for Connect */}
+        {listingType === "Connect" && (
+          <div>
           <h3 className="font-medium mb-3">Select Current Rent Due Date</h3>
           <button
             onClick={() => setShowCalendar(!showCalendar)}
@@ -307,27 +315,29 @@ export default function AddPostPage() {
             </div>
           )}
         </div>
+        )}
 
         <div>
           <h3 className="font-medium mb-3">Landlord Presence</h3>
           <div className="space-y-3">
-            {["Landlord Stays in the Compound", "Landlord Does not stay in the Compound"].map((option) => (
-              <label key={option} className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={landlordPresence.includes(option)}
-                  onChange={() => {
-                    setLandlordPresence((prev) =>
-                      prev.includes(option)
-                        ? prev.filter((o) => o !== option)
-                        : [...prev, option]
-                    )
-                  }}
-                  className="w-5 h-5 rounded border-border accent-primary"
-                />
-                <span className="text-sm">{option}</span>
-              </label>
-            ))}
+            <label className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={landlordPresence === "stays"}
+                onChange={() => setLandlordPresence("stays")}
+                className="w-5 h-5 rounded border-border accent-primary"
+              />
+              <span className="text-sm">Landlord Stays in the Compound</span>
+            </label>
+            <label className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={landlordPresence === "not-stays"}
+                onChange={() => setLandlordPresence("not-stays")}
+                className="w-5 h-5 rounded border-border accent-primary"
+              />
+              <span className="text-sm">Landlord Does not stay in the Compound</span>
+            </label>
           </div>
         </div>
 
@@ -358,12 +368,49 @@ export default function AddPostPage() {
         </div>
 
         <Button
-          onClick={() => router.push("/home")}
+          onClick={() => setShowReviewModal(true)}
           className="w-full h-14 text-base font-semibold"
         >
           Finish
         </Button>
       </div>
+
+      {/* Under Review Modal */}
+      {showReviewModal && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
+          <div className="w-full max-w-md rounded-t-3xl bg-background p-6 pb-8">
+            <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-muted" />
+            
+            <div className="flex flex-col items-center text-center">
+              <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-b from-primary/30 to-primary/60">
+                <div className="h-16 w-16 rounded-full bg-primary" />
+              </div>
+              
+              <h2 className="mb-1 text-2xl">Your listing is now</h2>
+              <h3 className="mb-4 text-2xl font-bold">Under Review</h3>
+              <p className="mb-6 text-muted-foreground">
+                Lorem ipsum dolor sit amet, consectetur.
+              </p>
+
+              <div className="flex w-full gap-3">
+                <Button
+                  variant="outline"
+                  className="flex-1 rounded-xl"
+                  onClick={() => setShowReviewModal(false)}
+                >
+                  Edit Post
+                </Button>
+                <Button
+                  className="flex-1 rounded-xl"
+                  onClick={() => router.push('/home')}
+                >
+                  Finish
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

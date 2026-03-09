@@ -146,15 +146,23 @@ export default function ProfilePage() {
             {userProperties.map((property) => (
               <div key={property.id} className="relative">
                 <PropertyCard property={property} variant="compact" />
-                <button
-                  onClick={() => {
-                    console.log('[v0] Delete property:', property.id)
-                    alert('Property deleted!')
-                  }}
-                  className="absolute top-2 right-2 px-2 py-1 bg-destructive text-destructive-foreground rounded text-xs"
-                >
-                  Delete
-                </button>
+                <div className="absolute top-2 right-2 flex gap-2">
+                  <button
+                    onClick={() => router.push(`/edit-post/${property.id}`)}
+                    className="px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-medium"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => {
+                      console.log('[v0] Close listing:', property.id)
+                      alert('Listing closed!')
+                    }}
+                    className="px-3 py-1 bg-destructive text-destructive-foreground rounded-full text-xs font-medium"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             ))}
           </div>

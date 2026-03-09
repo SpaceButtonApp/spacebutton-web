@@ -21,7 +21,6 @@ export default function ForgotPasswordPage() {
     
     // Store for next step
     localStorage.setItem('resetEmail', emailOrPhone)
-    console.log('[v0] Reset code sent to:', emailOrPhone)
     router.push('/forgot-password/reset')
   }
 

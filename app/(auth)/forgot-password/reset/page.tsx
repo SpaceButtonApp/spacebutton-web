@@ -37,7 +37,6 @@ export default function ResetPasswordPage() {
       return
     }
     
-    console.log('[v0] Password reset successfully')
     localStorage.removeItem('resetEmail')
     router.push('/login')
   }

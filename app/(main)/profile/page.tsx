@@ -154,10 +154,7 @@ export default function ProfilePage() {
                     Edit
                   </button>
                   <button
-                    onClick={() => {
-                      console.log('[v0] Close listing:', property.id)
-                      alert('Listing closed!')
-                    }}
+                    onClick={() => alert('Listing closed!')}
                     className="px-3 py-1 bg-destructive text-destructive-foreground rounded-full text-xs font-medium"
                   >
                     Close

@@ -51,7 +51,6 @@ export default function LoginPage() {
       connectsRemaining: 0,
     })
     
-    console.log('[v0] User logged in successfully')
     router.push('/home')
   }
 

@@ -36,7 +36,6 @@ export default function SignupPage() {
 
     // Store form data and navigate to password page
     localStorage.setItem('signupData', JSON.stringify(formData))
-    console.log('[v0] Signup step 1 complete:', formData)
     router.push('/signup/password')
   }
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
+import { useState, useEffect, use, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { ChevronLeft, MessageSquare, MicOff, Phone } from 'lucide-react'
@@ -13,7 +13,8 @@ export default function VideoCallPage({ params }: { params: Promise<{ id: string
   const [callTime, setCallTime] = useState(0)
   const [isMuted, setIsMuted] = useState(false)
 
-  const conversation = mockConversations.find((c) => c.id === id)
+  const conversation = useMemo(() => mockConversations.find((c) => c.id === id), [id])
+  const callerName = conversation?.name || 'Unknown'
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -33,7 +34,14 @@ export default function VideoCallPage({ params }: { params: Promise<{ id: string
   }
 
   if (!conversation) {
-    return <div>Conversation not found</div>
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background">
+        <p className="text-muted-foreground">Conversation not found</p>
+        <Button variant="outline" className="mt-4" onClick={() => router.back()}>
+          Go Back
+        </Button>
+      </div>
+    )
   }
 
   return (
@@ -60,7 +68,7 @@ export default function VideoCallPage({ params }: { params: Promise<{ id: string
           <ChevronLeft className="h-6 w-6" />
         </button>
         <div className="flex-1 text-center">
-          <h1 className="text-xl font-semibold text-white">{conversation.name}</h1>
+          <h1 className="text-xl font-semibold text-white">{callerName}</h1>
           <span className="rounded-full bg-black/50 px-3 py-1 text-sm text-white">
             {formatTime(callTime)}
           </span>

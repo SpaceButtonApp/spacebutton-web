@@ -74,7 +74,6 @@ export default function CreatePasswordPage() {
       localStorage.removeItem('signupData')
     }
     
-    console.log('[v0] Account created successfully')
     router.push('/welcome')
   }
 

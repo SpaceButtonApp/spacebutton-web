@@ -36,28 +36,21 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     
     setMessages([...messages, newMessage])
     setMessage('')
-    console.log('[v0] Message sent:', message)
   }
 
   const handleVideoCall = () => {
-    console.log('[v0] Video call initiated with:', agent.name)
     router.push(`/call/video/${id}`)
   }
 
   const handleVoiceCall = () => {
-    console.log('[v0] Voice call initiated with:', agent.name)
     router.push(`/call/voice/${id}`)
   }
 
   const handleDoneDeal = () => {
     setDoneDeal(!doneDeal)
-    if (!doneDeal) {
-      console.log('[v0] Done deal marked for conversation with:', agent.name)
-    }
   }
 
   const handleSubmitFeedback = () => {
-    console.log('[v0] Feedback submitted:', { rating, feedback })
     setShowFeedback(false)
     setShowMenu(false)
     alert('Thank you for your feedback!')

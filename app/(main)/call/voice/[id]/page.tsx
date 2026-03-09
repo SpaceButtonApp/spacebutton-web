@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
+import { useState, useEffect, use, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { ChevronLeft, MessageSquare, Volume2, MicOff, Video, Phone, PhoneOff } from 'lucide-react'
@@ -10,6 +10,9 @@ import { mockConversations } from '@/lib/mock-data'
 
 type CallState = 'calling' | 'ringing' | 'ongoing'
 
+// Default avatar fallback
+const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
+
 export default function VoiceCallPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
@@ -18,7 +21,7 @@ export default function VoiceCallPage({ params }: { params: Promise<{ id: string
   const [isMuted, setIsMuted] = useState(false)
   const [isSpeakerOn, setIsSpeakerOn] = useState(false)
 
-  const conversation = mockConversations.find((c) => c.id === id)
+  const conversation = useMemo(() => mockConversations.find((c) => c.id === id), [id])
 
   useEffect(() => {
     if (callState === 'calling') {
@@ -48,8 +51,19 @@ export default function VoiceCallPage({ params }: { params: Promise<{ id: string
     router.back()
   }
 
+  // Use safe values if conversation is not found
+  const callerName = conversation?.name || 'Unknown'
+  const callerAvatar = conversation?.avatar || DEFAULT_AVATAR
+
   if (!conversation) {
-    return <div>Conversation not found</div>
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background">
+        <p className="text-muted-foreground">Conversation not found</p>
+        <Button variant="outline" className="mt-4" onClick={() => router.back()}>
+          Go Back
+        </Button>
+      </div>
+    )
   }
 
   if (callState === 'calling') {
@@ -69,13 +83,13 @@ export default function VoiceCallPage({ params }: { params: Promise<{ id: string
         <div className="flex flex-1 flex-col items-center justify-center px-4">
           <div className="relative mb-6 h-48 w-48">
             <Image
-              src={conversation.avatar}
-              alt={conversation.name}
+              src={callerAvatar}
+              alt={callerName}
               fill
               className="rounded-full object-cover"
             />
           </div>
-          <h2 className="text-2xl font-semibold">{conversation.name}</h2>
+          <h2 className="text-2xl font-semibold">{callerName}</h2>
         </div>
 
         <div className="px-4 pb-8">
@@ -123,7 +137,7 @@ export default function VoiceCallPage({ params }: { params: Promise<{ id: string
           <ChevronLeft className="h-6 w-6" />
         </button>
         <div className="flex-1 text-center">
-          <h1 className="text-xl font-semibold">{conversation.name}</h1>
+          <h1 className="text-xl font-semibold">{callerName}</h1>
           <span className="rounded-full bg-muted px-3 py-1 text-sm">{formatTime(callTime)}</span>
         </div>
         <div className="w-12" />

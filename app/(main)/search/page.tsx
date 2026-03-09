@@ -26,7 +26,6 @@ export default function SearchPage() {
 
   const handleSearch = () => {
     setShowResults(true)
-    console.log('[v0] Search with filters:', { searchQuery, ...filters })
   }
 
   const filteredProperties = useMemo(() => {

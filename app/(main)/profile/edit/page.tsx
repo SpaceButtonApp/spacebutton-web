@@ -19,7 +19,6 @@ export default function EditProfilePage() {
 
   const handleSave = () => {
     updateUser(formData)
-    console.log('[v0] Profile updated:', formData)
     router.back()
   }
 

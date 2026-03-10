@@ -21,14 +21,14 @@ export default function LoginPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const newErrors: Record<string, string> = {}
-    
+
     if (!formData.emailOrPhone) {
       newErrors.emailOrPhone = 'Email or phone number is required'
     }
     if (!formData.password) {
       newErrors.password = 'Password is required'
     }
-    
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors)
       return
@@ -50,7 +50,7 @@ export default function LoginPage() {
       isPremium: false,
       connectsRemaining: 0,
     })
-    
+
     router.push('/home')
   }
 
@@ -81,15 +81,14 @@ export default function LoginPage() {
 
       {/* Form */}
       <div className="flex-1 px-6 py-8">
-        <button 
+        <button
           onClick={() => router.push('/')}
           className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary mb-6"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
 
-        <h1 className="text-2xl font-bold mb-8">Sign In</h1>
-
+        <h1 className="text-2xl font-bold mb-8">Sign</h1>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <label className="text-sm font-medium">Email Address or Phone Number</label>

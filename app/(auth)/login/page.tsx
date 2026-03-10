@@ -88,7 +88,8 @@ export default function LoginPage() {
           <ArrowLeft className="w-5 h-5" />
         </button>
 
-        <h1 className="text-2xl font-bold mb-8">Sign</h1>
+        <h1 className="text-2xl font-bold mb-8">Sign In</h1>
+
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <label className="text-sm font-medium">Email Address or Phone Number</label>

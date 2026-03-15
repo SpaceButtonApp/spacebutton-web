@@ -17,8 +17,8 @@ const plans = {
       { text: "First to review post", included: false },
     ],
     pricing: [
-      { connects: 1, price: 2000, label: "Single Connect" },
-      { connects: 5, price: 8000, label: "5 Connect" },
+      { connects: 1, price: 2000, label: "1 Connect" },
+      { connects: 5, price: 5000, label: "5 Connect" },
     ],
   },
   premium: {
@@ -59,8 +59,8 @@ export default function PremiumPage() {
       <div className="px-4 pb-8">
         <div className="flex items-center justify-center gap-2 mb-2">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-foreground">
-            <path d="M12 2L4 6V12C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12V6L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M12 8V12L14 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M12 2L4 6V12C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12V6L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M12 8V12L14 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           <span className="text-lg font-semibold">SPACEBUTTON</span>
         </div>
@@ -70,17 +70,15 @@ export default function PremiumPage() {
         <div className="bg-secondary rounded-full p-1 flex mb-6">
           <button
             onClick={() => setSelectedPlan("basic")}
-            className={`flex-1 py-3 rounded-full text-sm font-medium transition-colors ${
-              selectedPlan === "basic" ? "bg-background shadow-sm" : ""
-            }`}
+            className={`flex-1 py-3 rounded-full text-sm font-medium transition-colors ${selectedPlan === "basic" ? "bg-background shadow-sm" : ""
+              }`}
           >
             Basic
           </button>
           <button
             onClick={() => setSelectedPlan("premium")}
-            className={`flex-1 py-3 rounded-full text-sm font-medium transition-colors ${
-              selectedPlan === "premium" ? "bg-background shadow-sm" : ""
-            }`}
+            className={`flex-1 py-3 rounded-full text-sm font-medium transition-colors ${selectedPlan === "premium" ? "bg-background shadow-sm" : ""
+              }`}
           >
             Premium
           </button>
@@ -106,11 +104,10 @@ export default function PremiumPage() {
             <button
               key={index}
               onClick={() => setSelectedPricing(index)}
-              className={`flex-1 p-4 rounded-xl border-2 transition-colors ${
-                selectedPricing === index
+              className={`flex-1 p-4 rounded-xl border-2 transition-colors ${selectedPricing === index
                   ? "border-foreground"
                   : "border-border"
-              }`}
+                }`}
             >
               <p className="text-sm text-muted-foreground">{pricing.label}</p>
               <p className="text-2xl font-bold">

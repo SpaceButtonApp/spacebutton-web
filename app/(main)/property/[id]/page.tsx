@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { 
   ArrowLeft, Bookmark, ChevronLeft, ChevronRight, Bed, Bath, 
-  Sofa, MapPin, Calendar, AlertTriangle, Users, Building2, Play
+  Sofa, MapPin, Calendar, AlertTriangle, Users, Building2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { BottomNav } from '@/components/bottom-nav'
@@ -166,51 +166,6 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
 
         {/* Features */}
         <div>
-          <h2 className="text-lg font-bold mb-3">Apartment Photos</h2>
-          <div className="grid grid-cols-2 gap-3">
-            {property.images.slice(0, 4).map((image, index) => (
-              <div key={index} className="aspect-square rounded-lg overflow-hidden bg-secondary relative group cursor-pointer">
-                <Image
-                  src={image}
-                  alt={`Photo ${index + 1}`}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform"
-                />
-              </div>
-            ))}
-          </div>
-          
-          {/* Video section */}
-          <div className="mt-4">
-            <h3 className="text-base font-semibold mb-2 flex items-center gap-2">
-              <Play className="w-4 h-4" />
-              Videos
-            </h3>
-            <div className="space-y-2">
-              {[1, 2].map((index) => (
-                <div 
-                  key={index}
-                  className="aspect-video rounded-lg overflow-hidden bg-secondary relative group cursor-pointer"
-                >
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/50 transition-all">
-                    <div className="w-12 h-12 rounded-full bg-primary/80 flex items-center justify-center group-hover:bg-primary transition-colors">
-                      <Play className="w-6 h-6 text-primary-foreground fill-primary-foreground" />
-                    </div>
-                  </div>
-                  <Image
-                    src={property.images[0]}
-                    alt={`Video ${index}`}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Features */}
-        <div>
           <h2 className="text-lg font-bold mb-3">Features</h2>
           <ul className="space-y-2">
             {property.features.map((feature, index) => (
@@ -325,11 +280,6 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
       )}
 
       <BottomNav />
-
-      {/* Suggested Apartments */}
-      <div className="px-4 pb-8">
-        <SuggestedApartments apartments={mockProperties} currentPropertyId={id} />
-      </div>
 
       {/* Suggested Apartments */}
       <div className="px-4 pb-8">

@@ -9,6 +9,7 @@ export default function TransferPage() {
   const router = useRouter()
   const [timeLeft, setTimeLeft] = useState(43 * 60)
   const [copied, setCopied] = useState<string | null>(null)
+  const [showHelpModal, setShowHelpModal] = useState(false)
 
   const bankDetails = {
     bankName: "Sterling Bank",
@@ -99,9 +100,14 @@ export default function TransferPage() {
               </button>
             </div>
           </div>
-          <div className="bg-secondary px-6 py-4 flex items-center justify-center gap-2">
-            <span className="text-primary font-medium">Help</span>
-            <AlertCircle className="w-4 h-4 text-muted-foreground" />
+          <div className="bg-secondary px-6 py-4">
+            <button 
+              onClick={() => setShowHelpModal(true)}
+              className="w-full flex items-center justify-center gap-2 hover:opacity-80 transition-opacity"
+            >
+              <span className="text-primary font-medium">Help</span>
+              <AlertCircle className="w-4 h-4 text-muted-foreground" />
+            </button>
           </div>
         </div>
 
@@ -123,6 +129,49 @@ export default function TransferPage() {
           Change Payment Method
         </button>
       </div>
+
+      {/* Help Modal */}
+      {showHelpModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center">
+          <div className="w-full max-w-md rounded-t-3xl bg-background p-6 pb-8">
+            <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-muted" />
+            
+            <div className="flex items-start gap-3 mb-6">
+              <div className="flex-shrink-0 mt-1">
+                <AlertCircle className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold mb-3">To complete your bank transfer</h2>
+                <ol className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex gap-2">
+                    <span className="font-medium text-foreground min-w-fit">1.</span>
+                    <span>Open your banking app.</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="font-medium text-foreground min-w-fit">2.</span>
+                    <span>Make a bank transfer to the account below.</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="font-medium text-foreground min-w-fit">3.</span>
+                    <span>Make sure the transfer amount is exactly the one above.</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="font-medium text-foreground min-w-fit">4.</span>
+                    <span>After transfer is completed from your bank, come back to this screen, click 'Confirm Payment' to complete the process.</span>
+                  </li>
+                </ol>
+              </div>
+            </div>
+
+            <Button
+              onClick={() => setShowHelpModal(false)}
+              className="w-full rounded-xl"
+            >
+              Ok, Got it
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

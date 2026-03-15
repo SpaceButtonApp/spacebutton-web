@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { 
   ArrowLeft, Bookmark, ChevronLeft, ChevronRight, Bed, Bath, 
-  Sofa, Calendar, AlertTriangle, Users, Building2
+  Sofa, MapPin, Calendar, AlertTriangle, Users, Building2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { BottomNav } from '@/components/bottom-nav'

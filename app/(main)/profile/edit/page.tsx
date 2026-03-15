@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Copy, Users } from 'lucide-react'
+import { ArrowLeft, Copy, Users, Camera } from 'lucide-react'
+import Image from 'next/image'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useAppStore } from '@/lib/store'
@@ -10,6 +11,10 @@ import { useAppStore } from '@/lib/store'
 export default function EditProfilePage() {
   const router = useRouter()
   const { user, updateUser } = useAppStore()
+  const [profileImage, setProfileImage] = useState(user?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face')
+  const [showImageOptions, setShowImageOptions] = useState(false)
+  const fileInputRef = useState<HTMLInputElement>(null)[1]
+  
   const [formData, setFormData] = useState({
     name: user?.name || '',
     phone: user?.phone || '',
@@ -18,8 +23,25 @@ export default function EditProfilePage() {
   })
 
   const handleSave = () => {
-    updateUser(formData)
+    updateUser({ ...formData, avatar: profileImage })
     router.back()
+  }
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setProfileImage(reader.result as string)
+        setShowImageOptions(false)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleCameraCapture = () => {
+    alert('Camera feature requires mobile device with camera access')
+    setShowImageOptions(false)
   }
 
   const copyReferralCode = () => {
@@ -47,6 +69,50 @@ export default function EditProfilePage() {
 
       {/* Form */}
       <div className="px-4 py-6 space-y-6">
+        {/* Profile Picture Section */}
+        <div className="flex flex-col items-center">
+          <div className="relative mb-4">
+            <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-primary">
+              <Image
+                src={profileImage}
+                alt="Profile"
+                width={96}
+                height={96}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <button
+              onClick={() => setShowImageOptions(!showImageOptions)}
+              className="absolute bottom-0 right-0 w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-lg hover:bg-primary/90 transition-colors"
+            >
+              <Camera className="w-5 h-5 text-primary-foreground" />
+            </button>
+          </div>
+
+          {showImageOptions && (
+            <div className="flex gap-3 mb-6">
+              <button
+                onClick={() => {
+                  const input = document.createElement('input')
+                  input.type = 'file'
+                  input.accept = 'image/*'
+                  input.onchange = (e) => handleImageUpload(e as any)
+                  input.click()
+                }}
+                className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+              >
+                Choose from Phone
+              </button>
+              <button
+                onClick={handleCameraCapture}
+                className="px-4 py-2 rounded-lg bg-secondary text-foreground text-sm font-medium hover:bg-secondary/80 transition-colors"
+              >
+                Take Photo
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* Referral Section */}
         <div className="p-4 rounded-xl bg-secondary space-y-4">
           <div>

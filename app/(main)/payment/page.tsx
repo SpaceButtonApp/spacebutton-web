@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useSearchParams } from "react"
 import { useRouter } from "next/navigation"
 import { X, Wallet, CreditCard, Building2, Globe } from "lucide-react"
 
@@ -30,16 +30,20 @@ const paymentMethods = [
 
 export default function PaymentPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null)
-  const amount = 2000
+  
+  const amount = parseInt(searchParams.get("amount") || "2000")
+  const plan = searchParams.get("plan") || "basic"
+  const connects = searchParams.get("connects") || "1"
 
   const handleContinue = () => {
     if (selectedMethod === "transfer") {
-      router.push("/payment/transfer")
+      router.push(`/payment/transfer?amount=${amount}`)
     } else if (selectedMethod === "card") {
-      router.push("/payment/card")
+      router.push(`/payment/card?amount=${amount}`)
     } else {
-      router.push("/payment/success")
+      router.push(`/payment/success?amount=${amount}&plan=${plan}&connects=${connects}`)
     }
   }
 

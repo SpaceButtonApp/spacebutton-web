@@ -28,8 +28,19 @@ export default function CreatePasswordPage() {
   const [formData, setFormData] = useState({
     password: '',
     confirmPassword: '',
+    email: '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  // Get email from signup data on mount
+  import { useEffect as useEffectImport } from 'react'
+  useEffectImport(() => {
+    const signupData = localStorage.getItem('signupData')
+    if (signupData) {
+      const data = JSON.parse(signupData)
+      setFormData((prev) => ({ ...prev, email: data.email }))
+    }
+  }, [])
 
   const allRequirementsMet = requirements.every((req) => req.test(formData.password))
   const passwordsMatch = formData.password === formData.confirmPassword && formData.confirmPassword.length > 0
@@ -54,27 +65,10 @@ export default function CreatePasswordPage() {
     const signupData = localStorage.getItem('signupData')
     if (signupData) {
       const data = JSON.parse(signupData)
-      
-      // Create user
-      setUser({
-        id: 'user-' + Date.now(),
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-        type: data.profileType,
-        isLoggedIn: true,
-        referralCode: 'REF' + Math.random().toString(36).substr(2, 6).toUpperCase(),
-        referredCount: 0,
-        walletBalance: 0,
-        isPremium: false,
-        connectsRemaining: 0,
-      })
-      
       localStorage.removeItem('signupData')
     }
     
-    router.push('/welcome')
+    router.push(`/verify?email=${encodeURIComponent(formData.email)}`)
   }
 
   return (

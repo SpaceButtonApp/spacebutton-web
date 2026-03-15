@@ -50,7 +50,10 @@ export default function HomePage() {
             />
           </button>
           
-          <h1 className="text-lg font-bold">Available Apartments</h1>
+          <h1 className="flex items-center gap-2 text-lg font-bold">
+            <span className="text-primary text-2xl">S</span>
+            SpaceButton
+          </h1>
           
           <div className="flex items-center gap-2">
             <ConnectBalanceButton />

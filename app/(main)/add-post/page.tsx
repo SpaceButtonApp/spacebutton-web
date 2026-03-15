@@ -65,9 +65,34 @@ export default function AddPostPage() {
     setPhotos((prev) => prev.filter((_, i) => i !== index))
   }
 
-  const currentMonth = new Date(2023, 3)
-  const daysInMonth = new Date(2023, 4, 0).getDate()
-  const firstDayOfMonth = new Date(2023, 3, 1).getDay()
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setPhotos((prev) => [...prev, reader.result as string])
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const [currentMonth, setCurrentMonth] = useState(new Date(2024, 3))
+
+  const getDaysInMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
+  }
+
+  const getFirstDayOfMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth(), 1).getDay()
+  }
+
+  const handlePrevMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))
+  }
+
+  const handleNextMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))
+  }
 
   return (
     <div className="min-h-screen bg-background pb-8">
@@ -194,7 +219,16 @@ export default function AddPostPage() {
                 </button>
               </div>
             ))}
-            <button className="aspect-[4/3] rounded-2xl border-2 border-dashed border-border flex items-center justify-center">
+            <button 
+              onClick={() => {
+                const input = document.createElement('input')
+                input.type = 'file'
+                input.accept = 'image/*'
+                input.onchange = (e) => handlePhotoUpload(e as any)
+                input.click()
+              }}
+              className="aspect-[4/3] rounded-2xl border-2 border-dashed border-border flex items-center justify-center hover:bg-secondary/50 transition-colors"
+            >
               <Plus className="w-8 h-8 text-muted-foreground" />
             </button>
           </div>
@@ -279,11 +313,13 @@ export default function AddPostPage() {
           {showCalendar && (
             <div className="mt-3 p-4 border border-border rounded-2xl">
               <div className="flex items-center justify-between mb-4">
-                <button className="p-2">
+                <button onClick={handlePrevMonth} className="p-2 hover:bg-secondary rounded-lg transition-colors">
                   <ChevronLeft className="w-5 h-5" />
                 </button>
-                <span className="font-medium">April 2023</span>
-                <button className="p-2">
+                <span className="font-medium">
+                  {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                </span>
+                <button onClick={handleNextMonth} className="p-2 hover:bg-secondary rounded-lg transition-colors">
                   <ChevronLeft className="w-5 h-5 rotate-180" />
                 </button>
               </div>
@@ -291,16 +327,16 @@ export default function AddPostPage() {
                 {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
                   <div key={day} className="py-2 text-primary text-xs">{day}</div>
                 ))}
-                {Array.from({ length: firstDayOfMonth }).map((_, i) => (
+                {Array.from({ length: getFirstDayOfMonth(currentMonth) }).map((_, i) => (
                   <div key={`empty-${i}`} />
                 ))}
-                {Array.from({ length: daysInMonth }).map((_, i) => {
+                {Array.from({ length: getDaysInMonth(currentMonth) }).map((_, i) => {
                   const day = i + 1
-                  const isSelected = selectedDate?.getDate() === day
+                  const isSelected = selectedDate?.getDate() === day && selectedDate?.getMonth() === currentMonth.getMonth()
                   return (
                     <button
                       key={day}
-                      onClick={() => setSelectedDate(new Date(2023, 3, day))}
+                      onClick={() => setSelectedDate(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day))}
                       className={`py-2 rounded-lg text-sm ${
                         isSelected
                           ? "bg-primary text-primary-foreground"

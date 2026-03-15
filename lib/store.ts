@@ -50,6 +50,10 @@ interface AppState {
   // Wallet
   addToWallet: (amount: number) => void
   deductFromWallet: (amount: number) => boolean
+  
+  // Connects
+  connectsRemaining: number
+  deductConnect: () => boolean
 }
 
 export const useAppStore = create<AppState>()(
@@ -131,6 +135,17 @@ export const useAppStore = create<AppState>()(
         if (!state.user || state.user.walletBalance < amount) return false
         set({
           user: { ...state.user, walletBalance: state.user.walletBalance - amount }
+        })
+        return true
+      },
+      
+      // Connects
+      connectsRemaining: 0,
+      deductConnect: () => {
+        const state = get()
+        if (!state.user || state.user.connectsRemaining <= 0) return false
+        set({
+          user: { ...state.user, connectsRemaining: state.user.connectsRemaining - 1 }
         })
         return true
       }

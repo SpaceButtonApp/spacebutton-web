@@ -38,6 +38,7 @@ const transactions = [
 
 export default function WalletPage() {
   const router = useRouter()
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false)
   const balance = 1500
 
   return (
@@ -59,14 +60,23 @@ export default function WalletPage() {
         <div className="bg-primary rounded-3xl p-6 text-primary-foreground mb-8">
           <p className="text-sm opacity-80 mb-1">Available Balance</p>
           <h2 className="text-4xl font-bold mb-6">NGN {balance.toLocaleString()}.00</h2>
-          <Button
-            variant="secondary"
-            className="bg-white/20 hover:bg-white/30 text-white border-0"
-            onClick={() => router.push('/wallet/fund')}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Fund Wallet
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="secondary"
+              className="flex-1 bg-white/20 hover:bg-white/30 text-white border-0"
+              onClick={() => router.push('/wallet/fund')}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Fund Wallet
+            </Button>
+            <Button
+              variant="secondary"
+              className="bg-white/20 hover:bg-white/30 text-white border-0"
+              onClick={() => setShowWithdrawModal(true)}
+            >
+              Withdraw
+            </Button>
+          </div>
         </div>
 
         <div className="flex items-center justify-between mb-4">
@@ -112,6 +122,24 @@ export default function WalletPage() {
       </div>
 
       <BottomNav />
+
+      {/* Withdraw Modal */}
+      {showWithdrawModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center">
+          <div className="w-full max-w-md rounded-t-3xl bg-background p-6 pb-8">
+            <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-muted" />
+            <div className="flex flex-col items-center text-center">
+              <p className="text-lg font-semibold mb-4">You can't withdraw at this moment</p>
+              <Button
+                className="w-full rounded-xl"
+                onClick={() => setShowWithdrawModal(false)}
+              >
+                Okay
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

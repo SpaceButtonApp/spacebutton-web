@@ -32,14 +32,16 @@ export function BottomNav() {
               )}
             >
               <item.icon className="w-6 h-6" strokeWidth={isActive ? 2.5 : 2} />
+              <span className="text-xs mt-1 font-medium">{item.label}</span>
             </button>
           )
         })}
         <button
           onClick={() => router.push('/add-post')}
-          className="flex items-center justify-center w-12 h-12 rounded-full border-2 border-border bg-background text-foreground hover:border-primary hover:text-primary transition-all duration-200"
+          className="flex flex-col items-center justify-center p-2 rounded-2xl transition-all duration-200 text-muted-foreground hover:text-foreground"
         >
           <Plus className="w-6 h-6" />
+          <span className="text-xs mt-1 font-medium">Add Post</span>
         </button>
       </div>
     </nav>

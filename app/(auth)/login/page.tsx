@@ -79,16 +79,22 @@ export default function LoginPage() {
         </svg>
       </div>
 
-      {/* Form */}
-      <div className="flex-1 px-6 py-8">
+      {/* Logo & Title Section */}
+      <div className="flex-1 px-6 py-8 flex flex-col">
         <button
           onClick={() => router.push('/')}
-          className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary mb-6"
+          className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary mb-8"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
 
-        <h1 className="text-2xl font-bold mb-8">Sign In</h1>
+        <div className="text-center mb-8">
+          <div className="inline-block p-3 bg-primary/10 rounded-full mb-4">
+            <div className="text-3xl font-bold text-primary">S</div>
+          </div>
+          <h1 className="text-3xl font-bold mb-2">Welcome back</h1>
+          <p className="text-muted-foreground">Please enter your login details</p>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">

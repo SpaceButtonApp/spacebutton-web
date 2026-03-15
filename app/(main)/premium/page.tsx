@@ -32,8 +32,8 @@ const plans = {
       { text: "First to review post", included: true },
     ],
     pricing: [
-      { connects: 100000, price: 50000, label: "Unilimited" },
-      { connects: 100000000, price: 480000, label: "Unlimited" },
+      { connects: 1, price: 50000, label: "Unlimited Connect" },
+      { connects: 100000000, price: 480000, label: "Unlimited Connect" },
     ],
   },
 }
@@ -112,14 +112,17 @@ export default function PremiumPage() {
               <p className="text-sm text-muted-foreground">{pricing.label}</p>
               <p className="text-2xl font-bold">
                 #{pricing.price.toLocaleString()}
-                <span className="text-sm font-normal text-muted-foreground">/ otp</span>
+                <span className="text-sm font-normal text-muted-foreground">/monthly</span>
               </p>
             </button>
           ))}
         </div>
 
         <Button
-          onClick={() => router.push("/payment")}
+          onClick={() => {
+            const selectedOption = currentPlan.pricing[selectedPricing]
+            router.push(`/payment?amount=${selectedOption.price}&plan=${currentPlan.name.toLowerCase()}&connects=${selectedOption.connects}`)
+          }}
           className="w-full h-14 text-base font-semibold"
         >
           Continue

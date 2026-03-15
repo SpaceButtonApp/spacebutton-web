@@ -21,7 +21,7 @@ export default function ForgotPasswordPage() {
     
     // Store for next step
     localStorage.setItem('resetEmail', emailOrPhone)
-    router.push('/forgot-password/reset')
+    router.push(`/forgot-password/verify?email=${encodeURIComponent(emailOrPhone)}`)
   }
 
   return (

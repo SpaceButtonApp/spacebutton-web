@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { 
   ArrowLeft, Bookmark, ChevronLeft, ChevronRight, Bed, Bath, 
-  Sofa, MapPin, Calendar, AlertTriangle, Users, Building2
+  Sofa, Calendar, AlertTriangle, Users, Building2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { BottomNav } from '@/components/bottom-nav'
@@ -195,14 +195,6 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
             </div>
           </div>
         )}
-
-        {/* Map placeholder */}
-        <div className="aspect-video rounded-xl bg-secondary flex items-center justify-center">
-          <div className="text-center">
-            <MapPin className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">Map View</p>
-          </div>
-        </div>
 
         {/* Safety Tips */}
         <div>

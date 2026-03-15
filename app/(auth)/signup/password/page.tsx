@@ -33,8 +33,7 @@ export default function CreatePasswordPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   // Get email from signup data on mount
-  import { useEffect as useEffectImport } from 'react'
-  useEffectImport(() => {
+  useEffect(() => {
     const signupData = localStorage.getItem('signupData')
     if (signupData) {
       const data = JSON.parse(signupData)

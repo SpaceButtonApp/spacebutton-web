@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, use } from 'react'
+import { useState, use, useEffect } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Video, Phone, MoreVertical, Send, X, CheckSquare, MessageSquare, Star } from 'lucide-react'
@@ -16,7 +16,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [messages, setMessages] = useState(mockMessages)
   const [showMenu, setShowMenu] = useState(false)
   const [showFeedback, setShowFeedback] = useState(false)
-  const [showDoneDealInfo, setShowDoneDealInfo] = useState(false)
+  const [showDoneDealInfo, setShowDoneDealInfo] = useState(true)
   const [doneDeal, setDoneDeal] = useState(false)
   const [rating, setRating] = useState(0)
   const [feedback, setFeedback] = useState('')

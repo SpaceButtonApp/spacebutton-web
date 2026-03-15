@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -8,125 +8,138 @@ import { Button } from '@/components/ui/button'
 export default function ForgotPasswordVerifyPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [otp, setOtp] = useState(['', '', '', '', '', ''])
-  const [error, setError] = useState('')
-  const [timeLeft, setTimeLeft] = useState(180)
-  const email = searchParams.get('email') || 'user@example.com'
+  const email = searchParams.get('email') || ''
+  const [codes, setCodes] = useState<string[]>(['', '', '', '', '', ''])
+  const [isLoading, setIsLoading] = useState(false)
 
-  // Timer for OTP expiration
-  useEffect(() => {
-    if (timeLeft <= 0) return
-    const timer = setInterval(() => setTimeLeft((prev) => prev - 1), 1000)
-    return () => clearInterval(timer)
-  }, [timeLeft])
+  const handleCodeChange = (index: number, value: string) => {
+    if (value.length > 1) return
+    if (!/^\d*$/.test(value)) return
 
-  const handleOtpChange = (index: number, value: string) => {
-    const newOtp = [...otp]
-    newOtp[index] = value.slice(0, 1)
-    setOtp(newOtp)
+    const newCodes = [...codes]
+    newCodes[index] = value
 
+    setCodes(newCodes)
+
+    // Auto focus to next input
     if (value && index < 5) {
-      const nextInput = document.getElementById(`otp-${index + 1}`)
+      const nextInput = document.getElementById(`code-${index + 1}`) as HTMLInputElement
       nextInput?.focus()
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    const otpCode = otp.join('')
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !codes[index] && index > 0) {
+      const prevInput = document.getElementById(`code-${index - 1}`) as HTMLInputElement
+      prevInput?.focus()
+    }
+  }
 
-    if (otpCode.length !== 6) {
-      setError('Please enter all 6 digits')
+  const handleContinue = async () => {
+    const verificationCode = codes.join('')
+    if (verificationCode.length !== 6) {
+      alert('Please enter all 6 digits')
       return
     }
 
-    // Store verification email and proceed to reset password
-    localStorage.setItem('verifiedResetEmail', email)
-    router.push('/forgot-password/reset')
+    setIsLoading(true)
+    // Mock verification
+    setTimeout(() => {
+      localStorage.setItem('resetEmail', email)
+      router.push(`/forgot-password/reset?email=${encodeURIComponent(email)}`)
+    }, 1000)
   }
 
-  const handleResend = () => {
-    setTimeLeft(180)
-    setOtp(['', '', '', '', '', ''])
-    setError('')
-    alert('Verification code sent to ' + email)
+  const handleResendOTP = () => {
+    alert('OTP has been resent to ' + email)
   }
+
+  const maskedEmail = email
+    ? email.substring(0, 3) + '*'.repeat(email.length - 6) + email.substring(email.length - 3)
+    : 'your email'
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <div className="px-6 pt-6 pb-4">
+      {/* Header illustration */}
+      <div className="relative h-32 bg-gradient-to-b from-secondary to-background overflow-hidden">
+        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 150" preserveAspectRatio="xMidYMid slice">
+          <rect x="20" y="80" width="30" height="70" fill="#e5e5e5" />
+          <rect x="60" y="60" width="25" height="90" fill="#d4d4d4" />
+          <rect x="95" y="70" width="35" height="80" fill="#e5e5e5" />
+          <rect x="140" y="50" width="40" height="100" fill="#d4d4d4" />
+          <rect x="190" y="65" width="30" height="85" fill="#e5e5e5" />
+          <rect x="230" y="75" width="35" height="75" fill="#d4d4d4" />
+          <rect x="275" y="55" width="40" height="95" fill="#e5e5e5" />
+          <rect x="325" y="70" width="30" height="80" fill="#d4d4d4" />
+          <rect x="365" y="85" width="25" height="65" fill="#e5e5e5" />
+          <circle cx="50" cy="130" r="8" fill="#703BF7" opacity="0.3" />
+          <rect x="46" y="138" width="8" height="12" fill="#703BF7" opacity="0.3" />
+          <circle cx="150" cy="125" r="8" fill="#10B981" opacity="0.4" />
+          <rect x="146" y="133" width="8" height="17" fill="#10B981" opacity="0.4" />
+        </svg>
+      </div>
+
+      {/* Form */}
+      <div className="flex-1 px-6 py-8 flex flex-col">
         <button
           onClick={() => router.back()}
-          className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary"
+          className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary mb-8"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
-      </div>
 
-      {/* Content */}
-      <div className="flex-1 px-6 py-4 flex flex-col">
-        <div>
-          <h1 className="text-2xl font-bold mb-2">Verify Your Email</h1>
-          <p className="text-muted-foreground mb-2">
-            we have sent a code to
-          </p>
-          <p className="font-semibold mb-8">{email}</p>
-          <p className="text-muted-foreground mb-8">Enter it below.</p>
+        <div className="text-center mb-8">
+          <div className="inline-block p-3 bg-primary/10 rounded-full mb-4">
+            <div className="text-3xl font-bold text-primary">S</div>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 space-y-6">
-          {/* OTP Input */}
-          <div className="flex gap-3 justify-center mb-8">
-            {otp.map((digit, index) => (
-              <input
-                key={index}
-                id={`otp-${index}`}
-                type="text"
-                inputMode="numeric"
-                maxLength={1}
-                value={digit}
-                onChange={(e) => handleOtpChange(index, e.target.value)}
-                className={`w-12 h-14 rounded-lg border-2 text-center text-lg font-semibold ${
-                  digit
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border bg-secondary'
-                } focus:outline-none focus:border-primary transition-colors`}
-              />
-            ))}
-          </div>
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold mb-2">we have sent a code to</h1>
+          <p className="text-foreground font-medium">{maskedEmail}</p>
+          <p className="text-sm text-muted-foreground mt-1">Enter it below.</p>
+        </div>
 
-          {error && <p className="text-sm text-destructive text-center">{error}</p>}
+        {/* Code Input Boxes */}
+        <div className="flex justify-center gap-3 mb-8">
+          {codes.map((code, index) => (
+            <input
+              key={index}
+              id={`code-${index}`}
+              type="text"
+              inputMode="numeric"
+              maxLength={1}
+              value={code}
+              onChange={(e) => handleCodeChange(index, e.target.value)}
+              onKeyDown={(e) => handleKeyDown(index, e)}
+              className={`w-14 h-14 text-center text-xl font-bold rounded-lg border-2 transition-colors ${
+                code
+                  ? 'border-primary bg-primary/10'
+                  : 'border-border bg-background'
+              }`}
+            />
+          ))}
+        </div>
 
-          {/* Timer */}
-          <div className="text-center text-sm text-muted-foreground">
-            {timeLeft > 0 ? (
-              <p>
-                Resend code in{' '}
-                <span className="font-semibold text-primary">
-                  {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
-                </span>
-              </p>
-            ) : (
-              <button
-                type="button"
-                onClick={handleResend}
-                className="text-primary font-medium hover:underline"
-              >
-                Resend OTP
-              </button>
-            )}
-          </div>
+        <Button
+          onClick={handleContinue}
+          disabled={isLoading}
+          className="w-full h-14 rounded-xl bg-primary text-primary-foreground font-semibold text-base mb-4"
+        >
+          {isLoading ? 'Verifying...' : 'Continue'}
+        </Button>
 
-          <div className="flex-1" />
-
-          <Button
-            type="submit"
-            className="w-full h-14 rounded-xl bg-primary text-primary-foreground font-semibold text-base"
-          >
-            Continue
-          </Button>
-        </form>
+        <div className="text-center">
+          <p className="text-sm text-muted-foreground">
+            Didn&apos;t receive the OTP?{' '}
+            <button
+              onClick={handleResendOTP}
+              className="text-primary font-semibold hover:underline"
+            >
+              Resend OTP
+            </button>
+          </p>
+        </div>
       </div>
     </div>
   )

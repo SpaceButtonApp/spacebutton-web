@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { ChevronLeft, ChevronDown, MapPin, X, Plus, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { LocationInput } from "@/components/location-input"
 import Image from "next/image"
 
 const listingConditions = ["Rent", "Roommate", "Flatmate"]
@@ -17,7 +18,12 @@ export default function AddPostPage() {
   const [listingTitle, setListingTitle] = useState("")
   const [selectedConditions, setSelectedConditions] = useState<string[]>(["Rent"])
   const [selectedCategories, setSelectedCategories] = useState<string[]>(["Flat"])
-  const [location, setLocation] = useState("")
+  const [location, setLocation] = useState({
+    city: "",
+    lga: "",
+    state: "",
+    country: "",
+  })
   const [photos, setPhotos] = useState<string[]>([
     "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=300&h=200&fit=crop",
     "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=300&h=200&fit=crop",
@@ -184,16 +190,7 @@ export default function AddPostPage() {
         </div>
 
         <div>
-          <h3 className="font-medium mb-3">Location</h3>
-          <div className="relative">
-            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <Input
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="First gate, Ojo, Lagos State, Nigeria."
-              className="h-14 rounded-2xl pl-12"
-            />
-          </div>
+          <LocationInput value={location} onChange={setLocation} />
         </div>
 
         <div className="h-40 rounded-2xl overflow-hidden relative">

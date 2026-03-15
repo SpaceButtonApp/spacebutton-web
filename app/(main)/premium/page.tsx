@@ -32,8 +32,8 @@ const plans = {
       { text: "First to review post", included: true },
     ],
     pricing: [
-      { connects: 1, price: 5000, label: "Single Connect" },
-      { connects: 5, price: 20000, label: "5 Connect" },
+      { connects: 100000, price: 50000, label: "Unilimited" },
+      { connects: 100000000, price: 480000, label: "Unlimited" },
     ],
   },
 }
@@ -105,8 +105,8 @@ export default function PremiumPage() {
               key={index}
               onClick={() => setSelectedPricing(index)}
               className={`flex-1 p-4 rounded-xl border-2 transition-colors ${selectedPricing === index
-                  ? "border-foreground"
-                  : "border-border"
+                ? "border-foreground"
+                : "border-border"
                 }`}
             >
               <p className="text-sm text-muted-foreground">{pricing.label}</p>

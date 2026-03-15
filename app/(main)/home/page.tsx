@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Bookmark, Clock } from 'lucide-react'
 import { BottomNav } from '@/components/bottom-nav'
 import { PropertyCard } from '@/components/property-card'
+import { ConnectBalanceButton } from '@/components/connect-balance-button'
 import { useAppStore } from '@/lib/store'
 import { mockProperties } from '@/lib/mock-data'
 import { cn } from '@/lib/utils'
@@ -51,12 +52,15 @@ export default function HomePage() {
           
           <h1 className="text-lg font-bold">Available Apartments</h1>
           
-          <button 
-            onClick={() => router.push('/saved')}
-            className="w-12 h-12 rounded-full bg-primary flex items-center justify-center"
-          >
-            <Bookmark className="w-5 h-5 text-primary-foreground" />
-          </button>
+          <div className="flex items-center gap-2">
+            <ConnectBalanceButton />
+            <button 
+              onClick={() => router.push('/saved')}
+              className="w-12 h-12 rounded-full bg-primary flex items-center justify-center"
+            >
+              <Bookmark className="w-5 h-5 text-primary-foreground" />
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}

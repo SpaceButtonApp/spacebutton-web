@@ -64,12 +64,12 @@ export default function TransferPage() {
               <p className="font-medium">{bankDetails.bankName}</p>
             </div>
             <div>
-              <p className="text-xs font-semibold text-muted-foreground mb-1">BANK NAME</p>
+              <p className="text-xs font-semibold text-muted-foreground mb-1">ACCOUNT NAME</p>
               <p className="font-medium">{bankDetails.accountName}</p>
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-muted-foreground mb-1">BANK NAME</p>
+                <p className="text-xs font-semibold text-muted-foreground mb-1">ACCOUNT NUMBER</p>
                 <p className="font-medium">{bankDetails.accountNumber}</p>
               </div>
               <button
@@ -85,7 +85,7 @@ export default function TransferPage() {
             </div>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-muted-foreground mb-1">BANK NAME</p>
+                <p className="text-xs font-semibold text-muted-foreground mb-1">AMOUNT</p>
                 <p className="font-medium">{bankDetails.amount}</p>
               </div>
               <button

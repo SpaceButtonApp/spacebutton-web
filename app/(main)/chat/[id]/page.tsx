@@ -16,6 +16,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [messages, setMessages] = useState(mockMessages)
   const [showMenu, setShowMenu] = useState(false)
   const [showFeedback, setShowFeedback] = useState(false)
+  const [showDoneDealInfo, setShowDoneDealInfo] = useState(false)
   const [doneDeal, setDoneDeal] = useState(false)
   const [rating, setRating] = useState(0)
   const [feedback, setFeedback] = useState('')
@@ -111,9 +112,44 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         </div>
       </div>
 
+      {/* Apartment Banner */}
+      <div className="px-4 py-2">
+        <button
+          onClick={() => {
+            // Find the apartment ID from mock data or pass it through context
+            // For now, navigate to first property as example
+            router.push('/property/1')
+          }}
+          className="w-full bg-secondary rounded-xl overflow-hidden border border-border hover:bg-secondary/80 transition-colors"
+        >
+          <div className="flex gap-3 p-3">
+            <div className="relative flex-shrink-0">
+              <Image
+                src="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=100&h=100&fit=crop"
+                alt="Apartment"
+                width={80}
+                height={80}
+                className="rounded-lg object-cover"
+              />
+            </div>
+            <div className="flex-1 text-left">
+              <p className="font-semibold text-sm line-clamp-1">Beautiful 3-bedroom Apartment</p>
+              <p className="text-muted-foreground text-xs mb-1">Lekki, Lagos</p>
+              <p className="text-primary font-bold text-sm">₦250,000/month</p>
+            </div>
+          </div>
+        </button>
+      </div>
+
       {/* Menu Popup */}
       {showMenu && !showFeedback && (
         <div className="mx-4 mt-2 bg-background rounded-xl border border-border shadow-lg overflow-hidden z-50">
+          <button
+            onClick={() => setShowDoneDealInfo(true)}
+            className="w-full text-left px-4 py-3 hover:bg-secondary transition-colors border-b border-border"
+          >
+            <p className="text-sm text-muted-foreground">Learn about Done Deal</p>
+          </button>
           <button
             onClick={handleDoneDeal}
             className="w-full flex items-center justify-between px-4 py-4 hover:bg-secondary transition-colors"
@@ -140,6 +176,52 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             </div>
             <MessageSquare className="w-5 h-5 text-muted-foreground" />
           </button>
+        </div>
+      )}
+
+      {/* Done Deal Info Modal */}
+      {showDoneDealInfo && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center">
+          <div className="w-full max-w-md rounded-t-3xl bg-background p-6 pb-8">
+            <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-muted" />
+            
+            <div className="space-y-4">
+              <p className="font-semibold text-lg">How to use the Done Deal feature</p>
+              
+              <p className="text-muted-foreground text-sm">
+                It's important for both parties to use the done deal button after successful transaction between both parties.
+              </p>
+              
+              <div className="space-y-3 bg-secondary p-4 rounded-xl">
+                <p className="font-medium text-sm">How to use the done deal button:</p>
+                <ol className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex gap-2">
+                    <span className="font-medium text-foreground min-w-fit">1.</span>
+                    <span>Click on the 3 dot sign on the top right corner</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="font-medium text-foreground min-w-fit">2.</span>
+                    <span>You will see a pop-up menu with Done Deal and Feedback options</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="font-medium text-foreground min-w-fit">3.</span>
+                    <span>Click on the Done Deal box after successful transaction</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="font-medium text-foreground min-w-fit">4.</span>
+                    <span>Click on Feedback to tell us about your experience and rate the user</span>
+                  </li>
+                </ol>
+              </div>
+            </div>
+
+            <Button
+              onClick={() => setShowDoneDealInfo(false)}
+              className="w-full mt-6 rounded-xl"
+            >
+              Got it
+            </Button>
+          </div>
         </div>
       )}
 

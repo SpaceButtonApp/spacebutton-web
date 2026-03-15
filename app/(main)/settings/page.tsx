@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { BottomNav } from '@/components/bottom-nav'
 import { LogoutModal } from '@/components/logout-modal'
+import { ThemeToggle } from '@/components/theme-toggle'
 import { useAppStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
 
@@ -36,8 +37,14 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
+      {/* Header with Theme Toggle */}
+      <div className="flex items-center justify-between px-4 pt-4 pb-2">
+        <h1 className="text-lg font-bold">Settings</h1>
+        <ThemeToggle />
+      </div>
+
       {/* Profile Header */}
-      <div className="px-6 pt-8 pb-6 flex flex-col items-center">
+      <div className="px-6 pt-4 pb-6 flex flex-col items-center">
         <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-secondary mb-4">
           <Image
             src={user?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'}

@@ -58,12 +58,12 @@ export default function PremiumPage() {
       </header>
 
       <div className="px-4 pb-8">
-        <div className="flex items-center justify-center mb-2">
+        <div className="flex items-center justify-center mb-6">
           <Image
             src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Spacebutton%20black%20logo-jZteQ4W10uADUHWjKhs6ZzKJxVpvuC.png"
             alt="Spacebutton"
-            width={150}
-            height={40}
+            width={200}
+            height={60}
             className="h-auto"
           />
         </div>

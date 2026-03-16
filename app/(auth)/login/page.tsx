@@ -90,12 +90,12 @@ export default function LoginPage() {
         </button>
 
         <div className="text-center mb-8">
-          <div className="inline-block mb-4">
+          <div className="inline-block mb-6">
             <Image
               src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Spacebutton%20black%20logo-jZteQ4W10uADUHWjKhs6ZzKJxVpvuC.png"
               alt="Spacebutton"
-              width={140}
-              height={40}
+              width={200}
+              height={60}
               className="h-auto"
             />
           </div>

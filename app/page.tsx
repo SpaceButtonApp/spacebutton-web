@@ -45,12 +45,12 @@ export default function LandingPage() {
         {/* Content */}
         <div className="relative flex-1 flex flex-col px-6 py-8">
           {/* Logo */}
-          <div className="mb-12">
+          <div className="mb-16">
             <Image
               src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Spacebutton%20black%20logo-jZteQ4W10uADUHWjKhs6ZzKJxVpvuC.png"
               alt="Spacebutton"
-              width={160}
-              height={50}
+              width={240}
+              height={70}
               className="h-auto"
             />
           </div>

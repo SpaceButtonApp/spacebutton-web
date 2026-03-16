@@ -50,12 +50,12 @@ export default function HomePage() {
             />
           </button>
           
-          <h1 className="flex items-center gap-2 text-lg font-bold">
+          <h1 className="flex items-center justify-center text-lg font-bold">
             <Image
               src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Spacebutton%20black%20logo-jZteQ4W10uADUHWjKhs6ZzKJxVpvuC.png"
               alt="Spacebutton"
-              width={120}
-              height={30}
+              width={140}
+              height={40}
               className="h-auto"
             />
           </h1>

@@ -73,6 +73,9 @@ export default function AddPostPage() {
 
   const [currentMonth, setCurrentMonth] = useState(new Date(2024, 3))
 
+  // Reward is 5% of rent price, auto-calculated
+  const calculatedReward = Math.round(parseInt(rentPrice.replace(/,/g, '') || '0') * 0.05)
+
   const getDaysInMonth = (date: Date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
   }

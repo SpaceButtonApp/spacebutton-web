@@ -14,7 +14,8 @@ interface ConnectCostModalProps {
 
 export function ConnectCostModal({ isOpen, onClose, onConfirm, propertyTitle, agentId }: ConnectCostModalProps) {
   const router = useRouter()
-  const connectsRemaining = useAppStore((state) => state.connectsRemaining)
+  const user = useAppStore((state) => state.user)
+  const connectsRemaining = user?.connectsRemaining || 0
 
   if (!isOpen) return null
 

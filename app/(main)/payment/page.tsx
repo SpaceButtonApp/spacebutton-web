@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { X, Wallet, CreditCard, Building2, Globe } from "lucide-react"
 
-const paymentMethods = [
+const allPaymentMethods = [
   {
     id: "wallet",
     name: "Pay with Wallet",
@@ -36,6 +36,12 @@ export default function PaymentPage() {
   const amount = parseInt(searchParams.get("amount") || "2000")
   const plan = searchParams.get("plan") || "basic"
   const connects = searchParams.get("connects") || "1"
+  const type = searchParams.get("type") || ""
+
+  // Filter out wallet payment method when funding wallet
+  const paymentMethods = type === "wallet" 
+    ? allPaymentMethods.filter(method => method.id !== "wallet")
+    : allPaymentMethods
 
   const handleContinue = () => {
     if (selectedMethod === "transfer") {

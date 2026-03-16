@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { AlertCircle, Zap } from 'lucide-react'
+import { AlertCircle, Zap, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAppStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
@@ -83,12 +83,20 @@ export function ConnectBalanceButton() {
           onMouseLeave={handleDragEnd}
         >
           <div 
-            className="w-full max-w-md rounded-t-3xl bg-background p-6 pb-8"
+            className="w-full max-w-md rounded-t-3xl bg-background p-6 pb-8 relative"
             style={{
               transform: `translate(${modalPos.x}px, ${modalPos.y}px)`,
               transition: isDragging ? 'none' : 'transform 0.2s ease-out',
             }}
           >
+            {/* Close Button - Top Right */}
+            <button
+              onClick={() => setShowModal(false)}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-secondary hover:bg-secondary/80 flex items-center justify-center transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
             {/* Drag Handle */}
             <div
               onMouseDown={handleDragStart}

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { ChevronLeft, ChevronDown, MapPin, X, Plus, Calendar } from "lucide-react"
+import { ChevronLeft, MapPin, X, Plus, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LocationInput } from "@/components/location-input"
@@ -161,29 +161,20 @@ export default function AddPostPage() {
 
         <div>
           <h3 className="font-medium mb-3">Property category</h3>
-          <div className="relative">
-            <button
-              onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-              className="w-full flex items-center justify-between p-4 border border-border rounded-2xl bg-background hover:bg-secondary/50 transition-colors"
-            >
-              <span>{selectedCategory}</span>
-              <ChevronDown className={`w-5 h-5 transition-transform ${showCategoryDropdown ? "rotate-180" : ""}`} />
-            </button>
-            {showCategoryDropdown && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-border rounded-2xl overflow-hidden z-10 shadow-lg">
-                {propertyCategories.map((category) => (
-                  <button
-                    key={category}
-                    onClick={() => toggleCategory(category)}
-                    className={`w-full text-left px-4 py-3 hover:bg-secondary transition-colors ${
-                      selectedCategory === category ? "bg-primary text-primary-foreground" : ""
-                    }`}
-                  >
-                    {category}
-                  </button>
-                ))}
-              </div>
-            )}
+          <div className="flex flex-wrap gap-3">
+            {propertyCategories.map((category) => (
+              <button
+                key={category}
+                onClick={() => toggleCategory(category)}
+                className={`px-6 py-2.5 rounded-full text-sm font-medium transition-colors ${
+                  selectedCategory === category
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary"
+                }`}
+              >
+                {category}
+              </button>
+            ))}
           </div>
         </div>
 

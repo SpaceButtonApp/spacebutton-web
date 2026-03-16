@@ -12,6 +12,9 @@ export function ConnectBalanceButton() {
   const { user, purchasePremium } = useAppStore()
   const [showModal, setShowModal] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
+  const [modalPos, setModalPos] = useState({ x: 0, y: 0 })
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
 
   const connectBalance = user?.connectsRemaining || 0
   const hasNoConnects = connectBalance === 0
@@ -20,6 +23,27 @@ export function ConnectBalanceButton() {
   const handlePurchase = (type: 'basic-single' | 'basic-5' | 'premium-monthly' | 'premium-yearly', amount: number) => {
     purchasePremium(type, amount)
     setShowModal(false)
+  }
+
+  const handleDragStart = (e: React.MouseEvent) => {
+    setIsDragging(true)
+    setDragOffset({
+      x: e.clientX - modalPos.x,
+      y: e.clientY - modalPos.y,
+    })
+  }
+
+  const handleDragMove = (e: React.MouseEvent) => {
+    if (isDragging) {
+      setModalPos({
+        x: e.clientX - dragOffset.x,
+        y: e.clientY - dragOffset.y,
+      })
+    }
+  }
+
+  const handleDragEnd = () => {
+    setIsDragging(false)
   }
 
   return (
@@ -52,17 +76,32 @@ export function ConnectBalanceButton() {
 
       {/* Purchase Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
-          <div className="w-full max-w-md rounded-t-3xl bg-background p-6 pb-8 relative">
+        <div 
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50"
+          onMouseMove={handleDragMove}
+          onMouseUp={handleDragEnd}
+          onMouseLeave={handleDragEnd}
+        >
+          <div 
+            className="w-full max-w-md rounded-t-3xl bg-background p-6 pb-8 relative"
+            style={{
+              transform: `translate(${modalPos.x}px, ${modalPos.y}px)`,
+              transition: isDragging ? 'none' : 'transform 0.2s ease-out',
+            }}
+          >
             {/* Close Button */}
             <button
               onClick={() => setShowModal(false)}
-              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-secondary hover:bg-secondary/80 flex items-center justify-center transition-colors"
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-secondary hover:bg-secondary/80 flex items-center justify-center transition-colors z-10"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="mx-auto mb-3 h-1 w-12 rounded-full bg-muted" />
+            {/* Drag Handle */}
+            <div
+              onMouseDown={handleDragStart}
+              className="mx-auto mb-3 h-1 w-12 rounded-full bg-muted cursor-grab active:cursor-grabbing"
+            />
 
             <h2 className="mb-1 text-lg font-bold">Get Connects</h2>
             <p className="mb-4 text-sm text-muted-foreground">

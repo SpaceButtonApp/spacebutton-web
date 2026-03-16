@@ -61,7 +61,6 @@ export default function SearchPage() {
     apartmentType: '',
     minPrice: '',
     maxPrice: '',
-    area: '',
   })
   const [showResults, setShowResults] = useState(false)
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
@@ -277,35 +276,6 @@ export default function SearchPage() {
                   className="w-full px-4 py-3 text-left hover:bg-secondary text-sm"
                 >
                   ₦{price.toLocaleString()}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Area */}
-        <div className="relative">
-          <button
-            onClick={() => setActiveDropdown(activeDropdown === 'area' ? null : 'area')}
-            className="w-full h-14 rounded-xl border border-border bg-background px-4 flex items-center justify-between"
-          >
-            <div className="flex items-center gap-3">
-              <Grid className="w-5 h-5 text-muted-foreground" />
-              <span className={filters.area ? 'text-foreground' : 'text-muted-foreground'}>
-                {filters.area || 'Area'}
-              </span>
-            </div>
-            <ChevronDown className={cn('w-5 h-5 text-muted-foreground transition-transform', activeDropdown === 'area' && 'rotate-180')} />
-          </button>
-          {activeDropdown === 'area' && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-xl shadow-lg z-10 max-h-48 overflow-auto">
-              {locations.map((loc) => (
-                <button
-                  key={loc}
-                  onClick={() => { setFilters({ ...filters, area: loc }); setActiveDropdown(null); }}
-                  className="w-full px-4 py-3 text-left hover:bg-secondary text-sm"
-                >
-                  {loc}
                 </button>
               ))}
             </div>

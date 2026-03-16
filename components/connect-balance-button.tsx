@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { AlertCircle, Zap } from 'lucide-react'
+import { AlertCircle, Zap, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAppStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
@@ -53,7 +53,15 @@ export function ConnectBalanceButton() {
       {/* Purchase Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50">
-          <div className="w-full max-w-md rounded-t-3xl bg-background p-6 pb-8">
+          <div className="w-full max-w-md rounded-t-3xl bg-background p-6 pb-8 relative">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowModal(false)}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-secondary hover:bg-secondary/80 flex items-center justify-center transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
             <div className="mx-auto mb-6 h-1 w-12 rounded-full bg-muted" />
 
             <h2 className="mb-2 text-2xl font-bold">Get Connects</h2>
@@ -118,14 +126,6 @@ export function ConnectBalanceButton() {
                 </div>
               </button>
             </div>
-
-            <Button
-              variant="outline"
-              onClick={() => setShowModal(false)}
-              className="mt-6 w-full rounded-xl"
-            >
-              Close
-            </Button>
           </div>
         </div>
       )}

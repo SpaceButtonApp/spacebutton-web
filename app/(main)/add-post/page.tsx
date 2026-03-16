@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { ChevronLeft, MapPin, X, Plus, Calendar } from "lucide-react"
+import { ChevronLeft, ChevronDown, MapPin, X, Plus, Calendar } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LocationInput } from "@/components/location-input"
@@ -39,6 +39,7 @@ export default function AddPostPage() {
   const [selectedFacilities, setSelectedFacilities] = useState<string[]>(["Parking Lot", "Pet Allowed", "Garden", "Estate", "Other"])
   const [showCalendar, setShowCalendar] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [showReviewModal, setShowReviewModal] = useState(false)
 
   const toggleCondition = (condition: string) => {
     setSelectedCondition(condition)

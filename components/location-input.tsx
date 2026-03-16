@@ -903,47 +903,6 @@ export function LocationInput({ value, onChange }: LocationInputProps) {
   )
 }
 
-interface LocationInputProps {
-  value: {
-    city: string
-    lga: string
-    state: string
-    country: string
-  }
-  onChange: (location: {
-    city: string
-    lga: string
-    state: string
-    country: string
-  }) => void
-}
-
-export function LocationInput({ value, onChange }: LocationInputProps) {
-  const [openDropdown, setOpenDropdown] = useState<'country' | 'state' | 'lga' | 'city' | null>(null)
-
-  const countries = Object.keys(locationData)
-  const states = value.country ? Object.keys(locationData[value.country as keyof typeof locationData] || {}) : []
-  const lgas = value.country && value.state 
-    ? Object.keys((locationData[value.country as keyof typeof locationData]?.[value.state as keyof typeof locationData[keyof typeof locationData]] || {}) as Record<string, string[]>)
-    : []
-  const cities = value.country && value.state && value.lga
-    ? ((locationData[value.country as keyof typeof locationData]?.[value.state as keyof typeof locationData[keyof typeof locationData]] || {})[value.lga as keyof typeof locationData[keyof typeof locationData][keyof typeof locationData[keyof typeof locationData]]] || []) as string[]
-    : []
-
-  const locationText = `${value.city}${value.city && value.lga ? ', ' : ''}${value.lga}${(value.city || value.lga) && value.state ? ', ' : ''}${value.state}${(value.city || value.lga || value.state) && value.country ? ', ' : ''}${value.country}`
-    .replace(/^, |, $|, , /g, ', ')
-    .replace(/^, |, $/g, '')
-
-  const handleCountrySelect = (country: string) => {
-    onChange({
-      country,
-      state: '',
-      lga: '',
-      city: '',
-    })
-    setOpenDropdown('state')
-  }
-
   const handleStateSelect = (state: string) => {
     onChange({
       ...value,

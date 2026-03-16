@@ -26,9 +26,7 @@ export default function HomePage() {
     setMounted(true)
   }, [])
 
-  const logoUrl = !mounted || theme === 'dark'
-    ? 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/spacebutton%20colored%20symbol%20logo-8UlRIvpJC22FP1z5AeogSGhNfzKNg2.png'
-    : 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/spacebutton%20black%20symbol%20logo-uQEmCtif2jVhxBWdNQa6vzuNCV9BaB.png'
+  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-kJSONfc9hORfv0xhwC97LF0eSOCvJL.png'
 
   const handleTabChange = (tab: Tab) => {
     setCurrentTab(tab)

@@ -33,18 +33,19 @@ export function ConnectBalanceButton() {
           hasNoConnects
             ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
             : 'bg-primary text-primary-foreground hover:bg-primary/90',
-          isHovered ? 'px-3 py-2 w-auto' : 'px-0 py-0 w-12 h-12 justify-center'
+          isHovered ? 'px-3 py-2 w-auto' : 'px-2 py-2 w-auto'
         )}
       >
         {hasNoConnects ? (
           <>
             <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            {isHovered && <span>0 Connects</span>}
+            {isHovered && <span>0</span>}
+            {!isHovered && <span>0</span>}
           </>
         ) : (
           <>
             <Zap className="w-5 h-5 flex-shrink-0" />
-            {isHovered && <span>{displayBalance} Connects</span>}
+            <span>{displayBalance}</span>
           </>
         )}
       </button>

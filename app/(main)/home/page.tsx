@@ -35,8 +35,20 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-secondary pb-24">
       {/* Header */}
-      <div className="bg-background px-4 py-4 sticky top-0 z-40">
-        <div className="flex items-center justify-between mb-4">
+      <div className="bg-background px-4 py-6 sticky top-0 z-40">
+        {/* Logo - Top Row */}
+        <div className="flex items-center justify-center mb-6">
+          <Image
+            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Spacebutton%20black%20logo-jZteQ4W10uADUHWjKhs6ZzKJxVpvuC.png"
+            alt="Spacebutton"
+            width={180}
+            height={50}
+            className="h-auto"
+          />
+        </div>
+
+        {/* User Actions - Second Row */}
+        <div className="flex items-center justify-between mb-6">
           <button 
             onClick={() => router.push('/profile')}
             className="w-12 h-12 rounded-full overflow-hidden border-2 border-border"
@@ -49,16 +61,6 @@ export default function HomePage() {
               className="object-cover"
             />
           </button>
-          
-          <h1 className="flex items-center justify-center text-lg font-bold">
-            <Image
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Spacebutton%20black%20logo-jZteQ4W10uADUHWjKhs6ZzKJxVpvuC.png"
-              alt="Spacebutton"
-              width={140}
-              height={40}
-              className="h-auto"
-            />
-          </h1>
           
           <div className="flex items-center gap-2">
             <ConnectBalanceButton />

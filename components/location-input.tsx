@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { ChevronDown, MapPin } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-// Complete Nigerian location data - State → LGA → Cities
+// Complete Nigerian location data - State → LGA → Communities
 const nigerianLocations: Record<string, Record<string, string[]>> = {
   'Abia': {
     'Aba North': ['Aba', 'Ekezie', 'Ntigha'],
@@ -761,13 +761,13 @@ const nigerianLocations: Record<string, Record<string, string[]>> = {
 
 interface LocationInputProps {
   value: {
-    city: string
+    community: string
     lga: string
     state: string
     country: string
   }
   onChange: (location: {
-    city: string
+    community: string
     lga: string
     state: string
     country: string
@@ -775,22 +775,22 @@ interface LocationInputProps {
 }
 
 export function LocationInput({ value, onChange }: LocationInputProps) {
-  const [openDropdown, setOpenDropdown] = useState<'state' | 'lga' | 'city' | null>(null)
+  const [openDropdown, setOpenDropdown] = useState<'state' | 'lga' | 'community' | null>(null)
 
   const states = Object.keys(nigerianLocations).sort()
   const lgas = value.state ? Object.keys(nigerianLocations[value.state] || {}).sort() : []
-  const cities = value.state && value.lga 
+  const communities = value.state && value.lga 
     ? (nigerianLocations[value.state]?.[value.lga] || []).sort()
     : []
 
-  const locationText = [value.city, value.lga, value.state, 'Nigeria'].filter(Boolean).join(', ')
+  const locationText = [value.community, value.lga, value.state, 'Nigeria'].filter(Boolean).join(', ')
 
   const handleStateSelect = (state: string) => {
     onChange({
       country: 'Nigeria',
       state,
       lga: '',
-      city: '',
+      community: '',
     })
     setOpenDropdown('lga')
   }
@@ -799,15 +799,15 @@ export function LocationInput({ value, onChange }: LocationInputProps) {
     onChange({
       ...value,
       lga,
-      city: '',
+      community: '',
     })
-    setOpenDropdown('city')
+    setOpenDropdown('community')
   }
 
-  const handleCitySelect = (city: string) => {
+  const handleCommunitySelect = (community: string) => {
     onChange({
       ...value,
-      city,
+      community,
     })
     setOpenDropdown(null)
   }
@@ -876,23 +876,23 @@ export function LocationInput({ value, onChange }: LocationInputProps) {
           </div>
         )}
 
-        {/* City Dropdown */}
-        {openDropdown === 'city' && value.state && value.lga && (
+        {/* Community Dropdown */}
+        {openDropdown === 'community' && value.state && value.lga && (
           <div className="border border-border rounded-2xl p-3 space-y-2 bg-secondary/30 max-h-64 overflow-y-auto">
-            <label className="text-xs font-semibold text-muted-foreground px-1 sticky top-0">SELECT CITY / TOWN</label>
+            <label className="text-xs font-semibold text-muted-foreground px-1 sticky top-0">SELECT COMMUNITY</label>
             <div className="space-y-1">
-              {cities.map((city) => (
+              {communities.map((community) => (
                 <button
-                  key={city}
-                  onClick={() => handleCitySelect(city)}
+                  key={community}
+                  onClick={() => handleCommunitySelect(community)}
                   className={cn(
                     'w-full text-left px-3 py-2 rounded-lg text-sm transition-colors',
-                    value.city === city
+                    value.community === community
                       ? 'bg-primary text-primary-foreground'
                       : 'hover:bg-secondary'
                   )}
                 >
-                  {city}
+                  {community}
                 </button>
               ))}
             </div>

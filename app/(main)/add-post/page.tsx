@@ -19,7 +19,7 @@ export default function AddPostPage() {
   const [selectedConditions, setSelectedConditions] = useState<string[]>(["Rent"])
   const [selectedCategories, setSelectedCategories] = useState<string[]>(["Flat"])
   const [location, setLocation] = useState({
-    city: "",
+    community: "",
     lga: "",
     state: "",
     country: "",

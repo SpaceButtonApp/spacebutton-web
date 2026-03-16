@@ -2,9 +2,10 @@
 
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { useTheme } from 'next-themes'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { useAppStore } from '@/lib/store'
-import { useEffect } from 'react'
 import { ArrowRight, Home, Search, Shield, Users } from 'lucide-react'
 
 const features = [
@@ -27,13 +28,23 @@ const features = [
 
 export default function LandingPage() {
   const router = useRouter()
+  const { theme } = useTheme()
+  const [mounted, setMounted] = useState(false)
   const user = useAppStore((state) => state.user)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     if (user?.isLoggedIn) {
       router.push('/home')
     }
   }, [user, router])
+
+  const logoUrl = !mounted || theme === 'dark' 
+    ? 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/spacebutton%20white%20logo-HrS58UclPOoUWRnHILWsbmmNt76hkp.png'
+    : 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Spacebutton%20black%20logo-jZteQ4W10uADUHWjKhs6ZzKJxVpvuC.png'
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -47,7 +58,7 @@ export default function LandingPage() {
           {/* Logo */}
           <div className="mb-16">
             <Image
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Spacebutton%20black%20logo-jZteQ4W10uADUHWjKhs6ZzKJxVpvuC.png"
+              src={logoUrl}
               alt="Spacebutton"
               width={240}
               height={70}

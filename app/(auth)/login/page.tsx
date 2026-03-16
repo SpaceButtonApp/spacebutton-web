@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTheme } from 'next-themes'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react'
@@ -11,6 +12,8 @@ import { useAppStore } from '@/lib/store'
 
 export default function LoginPage() {
   const router = useRouter()
+  const { theme } = useTheme()
+  const [mounted, setMounted] = useState(false)
   const setUser = useAppStore((state) => state.setUser)
   const [showPassword, setShowPassword] = useState(false)
   const [formData, setFormData] = useState({
@@ -18,6 +21,14 @@ export default function LoginPage() {
     password: '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const logoUrl = !mounted || theme === 'dark'
+    ? 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/spacebutton%20white%20logo-HrS58UclPOoUWRnHILWsbmmNt76hkp.png'
+    : 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Spacebutton%20black%20logo-jZteQ4W10uADUHWjKhs6ZzKJxVpvuC.png'
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -92,7 +103,7 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <div className="inline-block mb-6">
             <Image
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Spacebutton%20black%20logo-jZteQ4W10uADUHWjKhs6ZzKJxVpvuC.png"
+              src={logoUrl}
               alt="Spacebutton"
               width={200}
               height={60}

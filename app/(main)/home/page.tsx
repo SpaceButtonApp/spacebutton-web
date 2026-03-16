@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import { useTheme } from 'next-themes'
 import { Bookmark, Clock } from 'lucide-react'
 import { BottomNav } from '@/components/bottom-nav'
 import { PropertyCard } from '@/components/property-card'
@@ -16,8 +17,18 @@ type Tab = typeof tabs[number]
 
 export default function HomePage() {
   const router = useRouter()
+  const { theme } = useTheme()
+  const [mounted, setMounted] = useState(false)
   const { user, activeTab, setActiveTab } = useAppStore()
   const [currentTab, setCurrentTab] = useState<Tab>('Connect')
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const logoUrl = !mounted || theme === 'dark'
+    ? 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/spacebutton%20white%20logo-HrS58UclPOoUWRnHILWsbmmNt76hkp.png'
+    : 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Spacebutton%20black%20logo-jZteQ4W10uADUHWjKhs6ZzKJxVpvuC.png'
 
   const handleTabChange = (tab: Tab) => {
     setCurrentTab(tab)
@@ -54,7 +65,7 @@ export default function HomePage() {
           {/* Centered Logo */}
           <div className="flex-1 flex items-center justify-center">
             <Image
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Spacebutton%20black%20logo-jZteQ4W10uADUHWjKhs6ZzKJxVpvuC.png"
+              src={logoUrl}
               alt="Spacebutton"
               width={150}
               height={45}

@@ -62,10 +62,10 @@ export function ConnectBalanceButton() {
               <X className="w-5 h-5" />
             </button>
 
-            <div className="mx-auto mb-6 h-1 w-12 rounded-full bg-muted" />
+            <div className="mx-auto mb-3 h-1 w-12 rounded-full bg-muted" />
 
-            <h2 className="mb-2 text-2xl font-bold">Get Connects</h2>
-            <p className="mb-6 text-muted-foreground">
+            <h2 className="mb-1 text-lg font-bold">Get Connects</h2>
+            <p className="mb-4 text-sm text-muted-foreground">
               Purchase connects to reach out to property owners and agents
             </p>
 

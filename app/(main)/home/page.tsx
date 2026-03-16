@@ -35,23 +35,12 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-secondary pb-24">
       {/* Header */}
-      <div className="bg-background px-4 py-6 sticky top-0 z-40">
-        {/* Logo - Top Row */}
-        <div className="flex items-center justify-center mb-6">
-          <Image
-            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Spacebutton%20black%20logo-jZteQ4W10uADUHWjKhs6ZzKJxVpvuC.png"
-            alt="Spacebutton"
-            width={180}
-            height={50}
-            className="h-auto"
-          />
-        </div>
-
-        {/* User Actions - Second Row */}
-        <div className="flex items-center justify-between mb-6">
+      <div className="bg-background px-4 py-4 sticky top-0 z-40">
+        {/* Top Row - Logo and User Actions */}
+        <div className="flex items-center justify-between mb-4">
           <button 
             onClick={() => router.push('/profile')}
-            className="w-12 h-12 rounded-full overflow-hidden border-2 border-border"
+            className="w-12 h-12 rounded-full overflow-hidden border-2 border-border flex-shrink-0"
           >
             <Image
               src={user?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'}
@@ -62,7 +51,19 @@ export default function HomePage() {
             />
           </button>
           
-          <div className="flex items-center gap-2">
+          {/* Centered Logo */}
+          <div className="flex-1 flex items-center justify-center">
+            <Image
+              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Spacebutton%20black%20logo-jZteQ4W10uADUHWjKhs6ZzKJxVpvuC.png"
+              alt="Spacebutton"
+              width={150}
+              height={45}
+              className="h-auto"
+            />
+          </div>
+          
+          {/* Right Actions */}
+          <div className="flex items-center gap-2 flex-shrink-0">
             <ConnectBalanceButton />
             <button 
               onClick={() => router.push('/saved')}

@@ -71,9 +71,9 @@ export default function PremiumPage() {
           <Image
             src={logoUrl}
             alt="Spacebutton"
-            width={200}
-            height={60}
-            className="h-auto"
+            width={280}
+            height={80}
+            className="h-auto w-auto"
           />
         </div>
 

@@ -1,21 +1,24 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { ChevronLeft, Copy, Check, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export default function TransferPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [timeLeft, setTimeLeft] = useState(43 * 60)
   const [copied, setCopied] = useState<string | null>(null)
   const [showHelpModal, setShowHelpModal] = useState(false)
+
+  const amount = parseInt(searchParams.get("amount") || "2000")
 
   const bankDetails = {
     bankName: "Sterling Bank",
     accountName: "CORALPAY-NextGen PG",
     accountNumber: "5274332865",
-    amount: "NGN 2000",
+    amount: `NGN ${amount}`,
   }
 
   useEffect(() => {
@@ -50,7 +53,7 @@ export default function TransferPage() {
 
       <div className="px-4 pb-8">
         <div className="text-center mb-8">
-          <h2 className="text-xl font-bold mb-2">Tranfer NGN 2000</h2>
+          <h2 className="text-xl font-bold mb-2">Tranfer NGN {amount}</h2>
           <p className="text-muted-foreground">
             Account number expires in{" "}
             <span className="text-primary font-medium">{formatTime(timeLeft)}</span>
@@ -89,7 +92,7 @@ export default function TransferPage() {
                 <p className="font-medium">{bankDetails.amount}</p>
               </div>
               <button
-                onClick={() => copyToClipboard("2000", "amount")}
+                onClick={() => copyToClipboard(amount.toString(), "amount")}
                 className="text-primary"
               >
                 {copied === "amount" ? (
@@ -116,7 +119,7 @@ export default function TransferPage() {
         </p>
 
         <Button
-          onClick={() => router.push("/payment/success")}
+          onClick={() => router.push(`/payment/success?amount=${amount}`)}
           className="w-full h-14 text-base font-semibold mb-4"
         >
           I've sent the Money

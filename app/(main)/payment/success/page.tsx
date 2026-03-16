@@ -1,13 +1,14 @@
 "use client"
 
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { BottomNav } from "@/components/bottom-nav"
 
 export default function PaymentSuccessPage() {
   const router = useRouter()
-  const amount = 2000
+  const searchParams = useSearchParams()
+  const amount = parseInt(searchParams.get("amount") || "2000")
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

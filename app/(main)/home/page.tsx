@@ -27,8 +27,8 @@ export default function HomePage() {
   }, [])
 
   const logoUrl = !mounted || theme === 'dark'
-    ? 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/spacebutton%20white%20logo-HrS58UclPOoUWRnHILWsbmmNt76hkp.png'
-    : 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Spacebutton%20black%20logo-jZteQ4W10uADUHWjKhs6ZzKJxVpvuC.png'
+    ? 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/spacebutton%20colored%20symbol%20logo-8UlRIvpJC22FP1z5AeogSGhNfzKNg2.png'
+    : 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/spacebutton%20black%20symbol%20logo-uQEmCtif2jVhxBWdNQa6vzuNCV9BaB.png'
 
   const handleTabChange = (tab: Tab) => {
     setCurrentTab(tab)
@@ -67,8 +67,8 @@ export default function HomePage() {
             <Image
               src={logoUrl}
               alt="Spacebutton"
-              width={150}
-              height={45}
+              width={40}
+              height={40}
               className="h-auto"
             />
           </div>

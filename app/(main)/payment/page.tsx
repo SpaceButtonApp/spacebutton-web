@@ -32,6 +32,7 @@ export default function PaymentPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null)
+  const [showUnavailableModal, setShowUnavailableModal] = useState(false)
   
   const amount = parseInt(searchParams.get("amount") || "2000")
   const plan = searchParams.get("plan") || "basic"
@@ -42,6 +43,14 @@ export default function PaymentPage() {
   const paymentMethods = type === "wallet" 
     ? allPaymentMethods.filter(method => method.id !== "wallet")
     : allPaymentMethods
+
+  const handleMethodClick = (methodId: string) => {
+    if (methodId === "country") {
+      setShowUnavailableModal(true)
+    } else {
+      setSelectedMethod(methodId)
+    }
+  }
 
   const handleContinue = () => {
     if (selectedMethod === "transfer") {
@@ -80,7 +89,7 @@ export default function PaymentPage() {
           {paymentMethods.map((method) => (
             <button
               key={method.id}
-              onClick={() => setSelectedMethod(method.id)}
+              onClick={() => handleMethodClick(method.id)}
               className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition-colors ${
                 selectedMethod === method.id
                   ? "border-primary"
@@ -116,6 +125,22 @@ export default function PaymentPage() {
           </button>
         )}
       </div>
+
+      {/* Unavailable Option Modal */}
+      {showUnavailableModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-background rounded-2xl p-6 max-w-sm w-full">
+            <h2 className="text-lg font-semibold mb-2">Option Unavailable</h2>
+            <p className="text-muted-foreground mb-6">This option is not available for you at this moment</p>
+            <button
+              onClick={() => setShowUnavailableModal(false)}
+              className="w-full h-12 bg-primary text-primary-foreground rounded-xl font-medium"
+            >
+              Okay
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

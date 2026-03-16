@@ -11,11 +11,23 @@ import { useAppStore } from '@/lib/store'
 import { mockProperties, locations, apartmentTypes, priceRanges } from '@/lib/mock-data'
 import { cn } from '@/lib/utils'
 
+// Nigerian states with their LGAs
+const stateWithLGAs: Record<string, string[]> = {
+  'Lagos': ['Lagos Island', 'Lagos Mainland', 'Alimosho', 'Amuwo Odofin', 'Apapa', 'Badagry', 'Epe', 'Eti-Osa', 'Ibeju-Lekki', 'Ikeja', 'Ikorodu', 'Kosofe', 'Lekki', 'Mushin', 'Oshodi-Isolo', 'Shomolu', 'Surulere', 'Victoria Island', 'Yaba'],
+  'Abuja': ['Abuja Municipal Area Council', 'Bwari Area Council', 'Gwagwalada Area Council', 'Kuje Area Council', 'Kwali Area Council', 'Municipal Area Council'],
+  'Kano': ['Ajinkyia', 'Albasa', 'Bebeji', 'Bichi', 'Bunkure', 'Dala', 'Dawakin Kudu', 'Dawakin Tofa', 'Doguwa', 'Fagge', 'Gabasawa', 'Garko', 'Garun Mallam', 'Gaya', 'Gezawa', 'Gwale', 'Gwarzo', 'Kabo', 'Kachumbari', 'Kaia', 'Kajiji', 'Kaki', 'Kano Municipal', 'Karfi', 'Karaye', 'Kaura Namoda', 'Kaya', 'Kiri', 'Kumbotso', 'Kunchi', 'Kura', 'Kurkur', 'Kuwai', 'Minjibir', 'Nasarawa', 'Rano', 'Rimin Gado', 'Rogo', 'Shanono', 'Sumaila', 'Takai', 'Tarauni', 'Tofa', 'Tsanyawa', 'Tudun Wada', 'Ungogo', 'Warawa', 'Wudil'],
+  'Rivers': ['Ahoada East', 'Ahoada West', 'Akuku-Toru', 'Andoni', 'Asari-Toru', 'Bonny', 'Degema', 'Eleme', 'Emuoha', 'Etche', 'Gokana', 'Gokere', 'Gobo', 'Ikwerre', 'Isiala-Mbano', 'Isuikwuato', 'Khana', 'Obia', 'Ogba-Egbema-Ndoni', 'Ogu-Bolo', 'Okrika', 'Omuma', 'Opobo-Nkoro', 'Oyigbo', 'Port Harcourt', 'Tai'],
+  'Kaduna': ['Birnin Gwari', 'Bombali', 'Chikun', 'Giwa', 'Igabi', 'Ikara', 'Jaba', 'Jema\'a', 'Kachia', 'Kagarko', 'Kajuru', 'Kaura', 'Kauru', 'Kudan', 'Kudinchi', 'Lere', 'Makarfi', 'Malumfashi', 'Manchok', 'Maru', 'Misau', 'Nasarawa', 'Rigachikun', 'Saba', 'Sabon Gida', 'Saminaka', 'Sanga', 'Soba', 'Zonkwa', 'Zaria'],
+  'Oyo': ['Afijio', 'Akinyele', 'Atisbo', 'Atogo', 'Egbeda', 'Ibadan North', 'Ibadan North-East', 'Ibadan North-West', 'Ibadan South-East', 'Ibadan South-West', 'Ibarapa Central', 'Ibarapa East', 'Ibarapa North', 'Ido', 'Ifedayo', 'Ifeloju', 'Ilesha East', 'Ilesha West', 'Irepodun', 'Irepo', 'Iseyin', 'Itesiwaju', 'Iwajowa', 'Iye', 'Lajowa', 'Lagelu', 'Laguna', 'Oba', 'Oyo East', 'Oyo West', 'Saki East', 'Saki West', 'Surulere'],
+  'Anambra': ['Aguata', 'Anambra East', 'Anambra West', 'Anaocha', 'Awka North', 'Awka South', 'Ayamelum', 'Dunukofia', 'Ekwusigo', 'Idemili North', 'Idemili South', 'Ihiala', 'Njikoka', 'Nnewi North', 'Nnewi South', 'Ogbaru', 'Onitsha North', 'Onitsha South', 'Orumba North', 'Orumba South', 'Oyi', 'Ozo-Uno'],
+}
+
 export default function SearchPage() {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
   const [filters, setFilters] = useState({
     location: '',
+    lga: '',
     apartmentType: '',
     minPrice: '',
     maxPrice: '',
@@ -23,6 +35,9 @@ export default function SearchPage() {
   })
   const [showResults, setShowResults] = useState(false)
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
+
+  // Get LGAs for selected state
+  const availableLGAs = filters.location ? (stateWithLGAs[filters.location] || []) : []
 
   const handleSearch = () => {
     setShowResults(true)
@@ -110,7 +125,7 @@ export default function SearchPage() {
               {locations.map((loc) => (
                 <button
                   key={loc}
-                  onClick={() => { setFilters({ ...filters, location: loc }); setActiveDropdown(null); }}
+                  onClick={() => { setFilters({ ...filters, location: loc, lga: '' }); setActiveDropdown(null); }}
                   className="w-full px-4 py-3 text-left hover:bg-secondary text-sm"
                 >
                   {loc}
@@ -119,6 +134,37 @@ export default function SearchPage() {
             </div>
           )}
         </div>
+
+        {/* LGA - Only show if location is selected */}
+        {filters.location && availableLGAs.length > 0 && (
+          <div className="relative">
+            <button
+              onClick={() => setActiveDropdown(activeDropdown === 'lga' ? null : 'lga')}
+              className="w-full h-14 rounded-xl border border-border bg-background px-4 flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3">
+                <MapPin className="w-5 h-5 text-muted-foreground" />
+                <span className={filters.lga ? 'text-foreground' : 'text-muted-foreground'}>
+                  {filters.lga || 'Local Government Area'}
+                </span>
+              </div>
+              <ChevronDown className={cn('w-5 h-5 text-muted-foreground transition-transform', activeDropdown === 'lga' && 'rotate-180')} />
+            </button>
+            {activeDropdown === 'lga' && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-xl shadow-lg z-10 max-h-48 overflow-auto">
+                {availableLGAs.map((lga) => (
+                  <button
+                    key={lga}
+                    onClick={() => { setFilters({ ...filters, lga }); setActiveDropdown(null); }}
+                    className="w-full px-4 py-3 text-left hover:bg-secondary text-sm"
+                  >
+                    {lga}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Apartment Type */}
         <div className="relative">

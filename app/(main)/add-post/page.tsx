@@ -31,12 +31,6 @@ export default function AddPostPage() {
     "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=300&h=200&fit=crop",
   ])
   const [rentPrice, setRentPrice] = useState("1500000")
-  const [showReviewModal, setShowReviewModal] = useState(false)
-  const [showConditionDropdown, setShowConditionDropdown] = useState(false)
-  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
-  
-  // Reward is 5% of rent price, auto-calculated
-  const calculatedReward = Math.round(parseInt(rentPrice.replace(/,/g, '') || '0') * 0.05)
   const [bedrooms, setBedrooms] = useState(3)
   const [bathrooms, setBathrooms] = useState(2)
   const [sittingRooms, setSittingRooms] = useState(2)
@@ -48,12 +42,10 @@ export default function AddPostPage() {
 
   const toggleCondition = (condition: string) => {
     setSelectedCondition(condition)
-    setShowConditionDropdown(false)
   }
 
   const toggleCategory = (category: string) => {
     setSelectedCategory(category)
-    setShowCategoryDropdown(false)
   }
 
   const toggleFacility = (facility: string) => {
@@ -150,29 +142,20 @@ export default function AddPostPage() {
 
         <div>
           <h3 className="font-medium mb-3">Listing Condition</h3>
-          <div className="relative">
-            <button
-              onClick={() => setShowConditionDropdown(!showConditionDropdown)}
-              className="w-full flex items-center justify-between p-4 border border-border rounded-2xl bg-background hover:bg-secondary/50 transition-colors"
-            >
-              <span>{selectedCondition}</span>
-              <ChevronDown className={`w-5 h-5 transition-transform ${showConditionDropdown ? "rotate-180" : ""}`} />
-            </button>
-            {showConditionDropdown && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-border rounded-2xl overflow-hidden z-10 shadow-lg">
-                {listingConditions.map((condition) => (
-                  <button
-                    key={condition}
-                    onClick={() => toggleCondition(condition)}
-                    className={`w-full text-left px-4 py-3 hover:bg-secondary transition-colors ${
-                      selectedCondition === condition ? "bg-primary text-primary-foreground" : ""
-                    }`}
-                  >
-                    {condition}
-                  </button>
-                ))}
-              </div>
-            )}
+          <div className="flex flex-wrap gap-3">
+            {listingConditions.map((condition) => (
+              <button
+                key={condition}
+                onClick={() => setSelectedCondition(condition)}
+                className={`px-6 py-2.5 rounded-full text-sm font-medium transition-colors ${
+                  selectedCondition === condition
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary"
+                }`}
+              >
+                {condition}
+              </button>
+            ))}
           </div>
         </div>
 

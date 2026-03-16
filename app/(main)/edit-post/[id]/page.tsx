@@ -23,8 +23,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [selectedCondition, setSelectedCondition] = useState(property?.condition || 'rent')
   const [selectedCategory, setSelectedCategory] = useState(property?.category || 'flat')
   const [descriptions, setDescriptions] = useState('')
-  const [showConditionDropdown, setShowConditionDropdown] = useState(false)
-  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
   const [location, setLocation] = useState(property?.location || '')
   const [price, setPrice] = useState(property?.price.toString() || '')
   const [bedrooms, setBedrooms] = useState(property?.beds || 3)
@@ -120,32 +118,20 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         {/* Listing Condition */}
         <div>
           <Label className="mb-2 block font-semibold">Listing Condition</Label>
-          <div className="relative">
-            <button
-              onClick={() => setShowConditionDropdown(!showConditionDropdown)}
-              className="w-full flex items-center justify-between p-3 border rounded-xl bg-background hover:bg-muted transition-colors"
-            >
-              <span className="capitalize">{selectedCondition}</span>
-              <ChevronDown className={`w-5 h-5 transition-transform ${showConditionDropdown ? "rotate-180" : ""}`} />
-            </button>
-            {showConditionDropdown && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-background border rounded-xl overflow-hidden z-10 shadow-lg">
-                {conditions.map((condition) => (
-                  <button
-                    key={condition}
-                    onClick={() => {
-                      setSelectedCondition(condition.toLowerCase() as 'rent' | 'roommate' | 'flatmate')
-                      setShowConditionDropdown(false)
-                    }}
-                    className={`w-full text-left px-4 py-3 hover:bg-muted transition-colors ${
-                      selectedCondition === condition.toLowerCase() ? "bg-primary text-primary-foreground" : ""
-                    }`}
-                  >
-                    {condition}
-                  </button>
-                ))}
-              </div>
-            )}
+          <div className="flex flex-wrap gap-2">
+            {conditions.map((condition) => (
+              <button
+                key={condition}
+                onClick={() => setSelectedCondition(condition.toLowerCase() as 'rent' | 'roommate' | 'flatmate')}
+                className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                  selectedCondition === condition.toLowerCase()
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-secondary'
+                }`}
+              >
+                {condition}
+              </button>
+            ))}
           </div>
         </div>
 

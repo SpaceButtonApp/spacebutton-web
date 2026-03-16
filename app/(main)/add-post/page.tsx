@@ -16,8 +16,9 @@ export default function AddPostPage() {
   const router = useRouter()
   const [listingType, setListingType] = useState<"Connect" | "Agent">("Connect")
   const [listingTitle, setListingTitle] = useState("")
-  const [selectedConditions, setSelectedConditions] = useState<string[]>(["Rent"])
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(["Flat"])
+  const [selectedCondition, setSelectedCondition] = useState("Rent")
+  const [selectedCategory, setSelectedCategory] = useState("Flat")
+  const [descriptions, setDescriptions] = useState("")
   const [location, setLocation] = useState({
     community: "",
     lga: "",
@@ -31,6 +32,8 @@ export default function AddPostPage() {
   ])
   const [rentPrice, setRentPrice] = useState("1500000")
   const [showReviewModal, setShowReviewModal] = useState(false)
+  const [showConditionDropdown, setShowConditionDropdown] = useState(false)
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
   
   // Reward is 5% of rent price, auto-calculated
   const calculatedReward = Math.round(parseInt(rentPrice.replace(/,/g, '') || '0') * 0.05)
@@ -44,19 +47,13 @@ export default function AddPostPage() {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
 
   const toggleCondition = (condition: string) => {
-    setSelectedConditions((prev) =>
-      prev.includes(condition)
-        ? prev.filter((c) => c !== condition)
-        : [...prev, condition]
-    )
+    setSelectedCondition(condition)
+    setShowConditionDropdown(false)
   }
 
   const toggleCategory = (category: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(category)
-        ? prev.filter((c) => c !== category)
-        : [...prev, category]
-    )
+    setSelectedCategory(category)
+    setShowCategoryDropdown(false)
   }
 
   const toggleFacility = (facility: string) => {
@@ -153,39 +150,57 @@ export default function AddPostPage() {
 
         <div>
           <h3 className="font-medium mb-3">Listing Condition</h3>
-          <div className="flex flex-wrap gap-3">
-            {listingConditions.map((condition) => (
-              <button
-                key={condition}
-                onClick={() => toggleCondition(condition)}
-                className={`px-6 py-2.5 rounded-full text-sm font-medium transition-colors ${
-                  selectedConditions.includes(condition)
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary"
-                }`}
-              >
-                {condition}
-              </button>
-            ))}
+          <div className="relative">
+            <button
+              onClick={() => setShowConditionDropdown(!showConditionDropdown)}
+              className="w-full flex items-center justify-between p-4 border border-border rounded-2xl bg-background hover:bg-secondary/50 transition-colors"
+            >
+              <span>{selectedCondition}</span>
+              <ChevronDown className={`w-5 h-5 transition-transform ${showConditionDropdown ? "rotate-180" : ""}`} />
+            </button>
+            {showConditionDropdown && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-border rounded-2xl overflow-hidden z-10 shadow-lg">
+                {listingConditions.map((condition) => (
+                  <button
+                    key={condition}
+                    onClick={() => toggleCondition(condition)}
+                    className={`w-full text-left px-4 py-3 hover:bg-secondary transition-colors ${
+                      selectedCondition === condition ? "bg-primary text-primary-foreground" : ""
+                    }`}
+                  >
+                    {condition}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
         <div>
           <h3 className="font-medium mb-3">Property category</h3>
-          <div className="flex flex-wrap gap-3">
-            {propertyCategories.map((category) => (
-              <button
-                key={category}
-                onClick={() => toggleCategory(category)}
-                className={`px-6 py-2.5 rounded-full text-sm font-medium transition-colors ${
-                  selectedCategories.includes(category)
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary"
-                }`}
-              >
-                {category}
-              </button>
-            ))}
+          <div className="relative">
+            <button
+              onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+              className="w-full flex items-center justify-between p-4 border border-border rounded-2xl bg-background hover:bg-secondary/50 transition-colors"
+            >
+              <span>{selectedCategory}</span>
+              <ChevronDown className={`w-5 h-5 transition-transform ${showCategoryDropdown ? "rotate-180" : ""}`} />
+            </button>
+            {showCategoryDropdown && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-background border border-border rounded-2xl overflow-hidden z-10 shadow-lg">
+                {propertyCategories.map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => toggleCategory(category)}
+                    className={`w-full text-left px-4 py-3 hover:bg-secondary transition-colors ${
+                      selectedCategory === category ? "bg-primary text-primary-foreground" : ""
+                    }`}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -395,6 +410,13 @@ export default function AddPostPage() {
 
         <div>
           <Input
+            value={descriptions}
+            onChange={(e) => {
+              const value = e.target.value
+              // Allow only alphabetic characters and spaces
+              const alphabeticOnly = value.replace(/[^a-zA-Z\s]/g, '')
+              setDescriptions(alphabeticOnly)
+            }}
             placeholder="Write other descriptions if available"
             className="h-14 rounded-2xl"
           />

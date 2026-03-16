@@ -22,6 +22,9 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [title, setTitle] = useState(property?.title || '')
   const [selectedCondition, setSelectedCondition] = useState(property?.condition || 'rent')
   const [selectedCategory, setSelectedCategory] = useState(property?.category || 'flat')
+  const [descriptions, setDescriptions] = useState('')
+  const [showConditionDropdown, setShowConditionDropdown] = useState(false)
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
   const [location, setLocation] = useState(property?.location || '')
   const [price, setPrice] = useState(property?.price.toString() || '')
   const [bedrooms, setBedrooms] = useState(property?.beds || 3)
@@ -117,40 +120,64 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         {/* Listing Condition */}
         <div>
           <Label className="mb-2 block font-semibold">Listing Condition</Label>
-          <div className="flex flex-wrap gap-2">
-            {conditions.map((condition) => (
-              <button
-                key={condition}
-                onClick={() => setSelectedCondition(condition.toLowerCase() as 'rent' | 'roommate' | 'flatmate')}
-                className={`rounded-full px-4 py-2 text-sm ${
-                  selectedCondition === condition.toLowerCase()
-                    ? 'bg-primary text-primary-foreground'
-                    : 'border bg-background'
-                }`}
-              >
-                {condition}
-              </button>
-            ))}
+          <div className="relative">
+            <button
+              onClick={() => setShowConditionDropdown(!showConditionDropdown)}
+              className="w-full flex items-center justify-between p-3 border rounded-xl bg-background hover:bg-muted transition-colors"
+            >
+              <span className="capitalize">{selectedCondition}</span>
+              <ChevronDown className={`w-5 h-5 transition-transform ${showConditionDropdown ? "rotate-180" : ""}`} />
+            </button>
+            {showConditionDropdown && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-background border rounded-xl overflow-hidden z-10 shadow-lg">
+                {conditions.map((condition) => (
+                  <button
+                    key={condition}
+                    onClick={() => {
+                      setSelectedCondition(condition.toLowerCase() as 'rent' | 'roommate' | 'flatmate')
+                      setShowConditionDropdown(false)
+                    }}
+                    className={`w-full text-left px-4 py-3 hover:bg-muted transition-colors ${
+                      selectedCondition === condition.toLowerCase() ? "bg-primary text-primary-foreground" : ""
+                    }`}
+                  >
+                    {condition}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
         {/* Property Category */}
         <div>
           <Label className="mb-2 block font-semibold">Property category</Label>
-          <div className="flex flex-wrap gap-2">
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category.toLowerCase().replace(' ', '-') as typeof selectedCategory)}
-                className={`rounded-full px-4 py-2 text-sm ${
-                  selectedCategory === category.toLowerCase().replace(' ', '-')
-                    ? 'bg-primary text-primary-foreground'
-                    : 'border bg-background'
-                }`}
-              >
-                {category}
-              </button>
-            ))}
+          <div className="relative">
+            <button
+              onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+              className="w-full flex items-center justify-between p-3 border rounded-xl bg-background hover:bg-muted transition-colors"
+            >
+              <span>{selectedCategory}</span>
+              <ChevronDown className={`w-5 h-5 transition-transform ${showCategoryDropdown ? "rotate-180" : ""}`} />
+            </button>
+            {showCategoryDropdown && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-background border rounded-xl overflow-hidden z-10 shadow-lg">
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => {
+                      setSelectedCategory(category.toLowerCase().replace(' ', '-') as typeof selectedCategory)
+                      setShowCategoryDropdown(false)
+                    }}
+                    className={`w-full text-left px-4 py-3 hover:bg-muted transition-colors ${
+                      selectedCategory === category.toLowerCase().replace(' ', '-') ? "bg-primary text-primary-foreground" : ""
+                    }`}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -355,6 +382,13 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         {/* Additional Notes */}
         <div>
           <Input
+            value={descriptions}
+            onChange={(e) => {
+              const value = e.target.value
+              // Allow only alphabetic characters and spaces
+              const alphabeticOnly = value.replace(/[^a-zA-Z\s]/g, '')
+              setDescriptions(alphabeticOnly)
+            }}
             placeholder="Write other descriptions if available"
             className="rounded-xl"
           />

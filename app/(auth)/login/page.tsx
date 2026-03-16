@@ -89,8 +89,14 @@ export default function LoginPage() {
         </button>
 
         <div className="text-center mb-8">
-          <div className="inline-block p-3 bg-primary/10 rounded-full mb-4">
-            <div className="text-3xl font-bold text-primary">S</div>
+          <div className="inline-block mb-4">
+            <Image
+              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Spacebutton%20black%20logo-jZteQ4W10uADUHWjKhs6ZzKJxVpvuC.png"
+              alt="Spacebutton"
+              width={140}
+              height={40}
+              className="h-auto"
+            />
           </div>
           <h1 className="text-3xl font-bold mb-2">Welcome back</h1>
           <p className="text-muted-foreground">Please enter your login details</p>

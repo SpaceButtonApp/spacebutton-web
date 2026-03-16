@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { useAppStore } from '@/lib/store'
 import { useEffect } from 'react'
@@ -44,11 +45,14 @@ export default function LandingPage() {
         {/* Content */}
         <div className="relative flex-1 flex flex-col px-6 py-8">
           {/* Logo */}
-          <div className="flex items-center gap-2 mb-12">
-            <div className="w-10 h-10 bg-foreground rounded-lg flex items-center justify-center">
-              <span className="text-background font-bold text-xl">S</span>
-            </div>
-            <span className="font-bold text-xl tracking-tight">SPACEBUTTON</span>
+          <div className="mb-12">
+            <Image
+              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Spacebutton%20black%20logo-jZteQ4W10uADUHWjKhs6ZzKJxVpvuC.png"
+              alt="Spacebutton"
+              width={160}
+              height={50}
+              className="h-auto"
+            />
           </div>
 
           {/* Hero Image/Illustration */}

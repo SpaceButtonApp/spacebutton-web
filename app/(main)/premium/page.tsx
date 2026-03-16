@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 import { ChevronLeft, Check, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -57,12 +58,14 @@ export default function PremiumPage() {
       </header>
 
       <div className="px-4 pb-8">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-foreground">
-            <path d="M12 2L4 6V12C4 16.4183 7.58172 20 12 20C16.4183 20 20 16.4183 20 12V6L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M12 8V12L14 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          <span className="text-lg font-semibold">SPACEBUTTON</span>
+        <div className="flex items-center justify-center mb-2">
+          <Image
+            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Spacebutton%20black%20logo-jZteQ4W10uADUHWjKhs6ZzKJxVpvuC.png"
+            alt="Spacebutton"
+            width={150}
+            height={40}
+            className="h-auto"
+          />
         </div>
 
         <h1 className="text-2xl font-bold text-center mb-6">SpaceButton Premium</h1>

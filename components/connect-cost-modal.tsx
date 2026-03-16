@@ -52,9 +52,9 @@ export function ConnectCostModal({ isOpen, onClose, onConfirm, propertyTitle, ag
             </p>
           </div>
         ) : (
-          <div className="mb-4 rounded-lg bg-success/10 border border-success/20 p-3">
-            <p className="text-sm text-success font-medium">
-              Purchase connects to start chatting with the owner.
+          <div className="mb-4 rounded-lg bg-destructive/10 border border-destructive/20 p-3">
+            <p className="text-sm text-destructive font-medium">
+              You don't have enough connects. Please purchase more connects to continue.
             </p>
           </div>
         )}

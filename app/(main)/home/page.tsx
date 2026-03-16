@@ -67,8 +67,8 @@ export default function HomePage() {
             <Image
               src={logoUrl}
               alt="Spacebutton"
-              width={40}
-              height={40}
+              width={24}
+              height={24}
               className="h-auto"
             />
           </div>

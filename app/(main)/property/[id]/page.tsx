@@ -54,7 +54,6 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
     if (connectsRemaining > 0) {
       deductConnect()
       setShowConnectModal(false)
-      router.push(`/chat/${property.agent.id}`)
     }
   }
 
@@ -284,6 +283,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
         onClose={() => setShowConnectModal(false)}
         onConfirm={handleConnectConfirm}
         propertyTitle={property.title}
+        agentId={property.agent.id}
       />
     </div>
   )

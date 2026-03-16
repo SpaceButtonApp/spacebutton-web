@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { AlertCircle, Zap, X } from 'lucide-react'
+import { AlertCircle, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useAppStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
@@ -83,28 +83,20 @@ export function ConnectBalanceButton() {
           onMouseLeave={handleDragEnd}
         >
           <div 
-            className="w-full max-w-md rounded-t-3xl bg-background p-6 pb-8 relative"
+            className="w-full max-w-md rounded-t-3xl bg-background p-6 pb-8"
             style={{
               transform: `translate(${modalPos.x}px, ${modalPos.y}px)`,
               transition: isDragging ? 'none' : 'transform 0.2s ease-out',
             }}
           >
-            {/* Close Button */}
-            <button
-              onClick={() => setShowModal(false)}
-              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-secondary hover:bg-secondary/80 flex items-center justify-center transition-colors z-10"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
             {/* Drag Handle */}
             <div
               onMouseDown={handleDragStart}
-              className="mx-auto mb-3 h-1 w-12 rounded-full bg-muted cursor-grab active:cursor-grabbing"
+              className="mx-auto mb-6 h-1 w-12 rounded-full bg-muted cursor-grab active:cursor-grabbing"
             />
 
-            <h2 className="mb-1 text-lg font-bold">Get Connects</h2>
-            <p className="mb-4 text-sm text-muted-foreground">
+            <h2 className="mb-2 text-2xl font-bold">Get Connects</h2>
+            <p className="mb-6 text-muted-foreground">
               Purchase connects to reach out to property owners and agents
             </p>
 
@@ -165,6 +157,14 @@ export function ConnectBalanceButton() {
                 </div>
               </button>
             </div>
+
+            <Button
+              variant="outline"
+              onClick={() => setShowModal(false)}
+              className="mt-6 w-full rounded-xl"
+            >
+              Close
+            </Button>
           </div>
         </div>
       )}

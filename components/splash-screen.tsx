@@ -63,7 +63,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
         >
           <span 
             className="text-2xl font-bold whitespace-nowrap"
-            style={{ color: '#6C3AE1' }}
+            style={{ color: '#5B21B6' }}
           >
             SpaceButton
           </span>
@@ -76,7 +76,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
           <div 
             className="h-full rounded-full transition-all duration-[3000ms] ease-linear"
             style={{ 
-              backgroundColor: '#6B3CE9',
+              backgroundColor: '#5B21B6',
               width: '100%',
               animation: 'loadingBar 3s linear forwards'
             }}

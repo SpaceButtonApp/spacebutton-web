@@ -121,7 +121,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       </div>
 
       {/* Apartment Banner */}
-      {property && (
+      {property && property.image && (
         <div className="px-4 py-2">
           <button
             onClick={() => router.push(`/property/${property.id}`)}
@@ -131,7 +131,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               <div className="relative flex-shrink-0">
                 <Image
                   src={property.image}
-                  alt={property.title}
+                  alt={property.title || 'Property'}
                   width={80}
                   height={80}
                   className="rounded-lg object-cover"

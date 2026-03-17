@@ -10,7 +10,9 @@ export default function PaymentPage() {
   const searchParams = useSearchParams()
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null)
   const [showUnavailableModal, setShowUnavailableModal] = useState(false)
+  const [showInsufficientFundsModal, setShowInsufficientFundsModal] = useState(false)
   const user = useAppStore((state) => state.user)
+  const { deductFromWallet, addTransaction } = useAppStore()
   const walletBalance = user?.walletBalance || 0
 
   const allPaymentMethods = [
@@ -61,6 +63,32 @@ export default function PaymentPage() {
       router.push(`/payment/transfer?${params}`)
     } else if (selectedMethod === "card") {
       router.push(`/payment/card?${params}`)
+    } else if (selectedMethod === "wallet") {
+      // Check if wallet has sufficient funds
+      if (walletBalance < amount) {
+        setShowInsufficientFundsModal(true)
+        return
+      }
+      // Deduct from wallet and add transaction
+      deductFromWallet(amount)
+      
+      // Determine transaction title based on what's being purchased
+      let transactionTitle = 'Connect Purchase'
+      if (plan.includes('premium')) {
+        transactionTitle = 'Premium Subscription'
+      } else if (parseInt(connects) === 5) {
+        transactionTitle = '5 Connects Purchase'
+      } else if (parseInt(connects) === 1) {
+        transactionTitle = '1 Connect Purchase'
+      }
+      
+      addTransaction({
+        type: 'debit',
+        title: transactionTitle,
+        amount: amount
+      })
+      
+      router.push(`/payment/success?${params}&paymentMethod=wallet`)
     } else {
       router.push(`/payment/success?${params}`)
     }
@@ -142,6 +170,30 @@ export default function PaymentPage() {
             >
               Okay
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Insufficient Funds Modal */}
+      {showInsufficientFundsModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-background rounded-2xl p-6 max-w-sm w-full">
+            <h2 className="text-lg font-semibold mb-2 text-destructive">Insufficient Funds</h2>
+            <p className="text-muted-foreground mb-6">You do not have enough money in your wallet. Please fund your wallet to proceed.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowInsufficientFundsModal(false)}
+                className="flex-1 h-12 border border-border rounded-xl font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => router.push('/wallet/fund')}
+                className="flex-1 h-12 bg-primary text-primary-foreground rounded-xl font-medium"
+              >
+                Fund Wallet
+              </button>
+            </div>
           </div>
         </div>
       )}

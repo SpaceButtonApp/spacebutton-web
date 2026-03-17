@@ -22,6 +22,14 @@ interface User {
   connectsRemaining: number
 }
 
+interface Transaction {
+  id: string
+  type: 'credit' | 'debit'
+  title: string
+  amount: number
+  date: string
+}
+
 interface AppState {
   // User
   user: User | null
@@ -50,6 +58,10 @@ interface AppState {
   // Wallet
   addToWallet: (amount: number) => void
   deductFromWallet: (amount: number) => boolean
+  
+  // Transactions
+  transactions: Transaction[]
+  addTransaction: (transaction: Omit<Transaction, 'id' | 'date'>) => void
   
   // Connects
   connectsRemaining: number
@@ -130,11 +142,21 @@ export const useAppStore = create<AppState>()(
       }),
       
       // Wallet
-      addToWallet: (amount) => set((state) => ({
-        user: state.user 
-          ? { ...state.user, walletBalance: state.user.walletBalance + amount }
-          : null
-      })),
+      addToWallet: (amount) => set((state) => {
+        const newTransaction: Transaction = {
+          id: Date.now().toString(),
+          type: 'credit',
+          title: 'Wallet Top Up',
+          amount,
+          date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        }
+        return {
+          user: state.user 
+            ? { ...state.user, walletBalance: state.user.walletBalance + amount }
+            : null,
+          transactions: [newTransaction, ...state.transactions]
+        }
+      }),
       deductFromWallet: (amount) => {
         const state = get()
         if (!state.user || state.user.walletBalance < amount) return false
@@ -143,6 +165,19 @@ export const useAppStore = create<AppState>()(
         })
         return true
       },
+      
+      // Transactions
+      transactions: [],
+      addTransaction: (transaction) => set((state) => {
+        const newTransaction: Transaction = {
+          ...transaction,
+          id: Date.now().toString(),
+          date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        }
+        return {
+          transactions: [newTransaction, ...state.transactions]
+        }
+      }),
       
       // Connects
       connectsRemaining: 0,
@@ -160,6 +195,7 @@ export const useAppStore = create<AppState>()(
       partialize: (state) => ({
         user: state.user,
         savedProperties: state.savedProperties,
+        transactions: state.transactions,
       }),
     }
   )

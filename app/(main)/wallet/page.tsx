@@ -7,41 +7,11 @@ import { Button } from "@/components/ui/button"
 import { BottomNav } from "@/components/bottom-nav"
 import { useAppStore } from "@/lib/store"
 
-const transactions = [
-  {
-    id: 1,
-    type: "credit",
-    title: "Wallet Top Up",
-    amount: 5000,
-    date: "Mar 15, 2023",
-  },
-  {
-    id: 2,
-    type: "debit",
-    title: "Premium Subscription",
-    amount: 2000,
-    date: "Mar 14, 2023",
-  },
-  {
-    id: 3,
-    type: "credit",
-    title: "Referral Bonus",
-    amount: 500,
-    date: "Mar 12, 2023",
-  },
-  {
-    id: 4,
-    type: "debit",
-    title: "Connect Purchase",
-    amount: 2000,
-    date: "Mar 10, 2023",
-  },
-]
-
 export default function WalletPage() {
   const router = useRouter()
   const [showWithdrawModal, setShowWithdrawModal] = useState(false)
   const user = useAppStore((state) => state.user)
+  const transactions = useAppStore((state) => state.transactions)
   const balance = user?.walletBalance || 0
 
   return (
@@ -88,39 +58,45 @@ export default function WalletPage() {
         </div>
 
         <div className="space-y-3">
-          {transactions.map((tx) => (
-            <div
-              key={tx.id}
-              className="flex items-center gap-4 p-4 bg-secondary/50 rounded-2xl"
-            >
-              <div
-                className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                  tx.type === "credit" ? "bg-success/10" : "bg-destructive/10"
-                }`}
-              >
-                {tx.type === "credit" ? (
-                  <ArrowDownLeft
-                    className={`w-5 h-5 ${
-                      tx.type === "credit" ? "text-success" : "text-destructive"
-                    }`}
-                  />
-                ) : (
-                  <ArrowUpRight className="w-5 h-5 text-destructive" />
-                )}
-              </div>
-              <div className="flex-1">
-                <p className="font-medium">{tx.title}</p>
-                <p className="text-sm text-muted-foreground">{tx.date}</p>
-              </div>
-              <p
-                className={`font-semibold ${
-                  tx.type === "credit" ? "text-success" : "text-destructive"
-                }`}
-              >
-                {tx.type === "credit" ? "+" : "-"}NGN {tx.amount.toLocaleString()}
-              </p>
+          {transactions.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">No transactions yet</p>
             </div>
-          ))}
+          ) : (
+            transactions.map((tx) => (
+              <div
+                key={tx.id}
+                className="flex items-center gap-4 p-4 bg-secondary/50 rounded-2xl"
+              >
+                <div
+                  className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                    tx.type === "credit" ? "bg-success/10" : "bg-destructive/10"
+                  }`}
+                >
+                  {tx.type === "credit" ? (
+                    <ArrowDownLeft
+                      className={`w-5 h-5 ${
+                        tx.type === "credit" ? "text-success" : "text-destructive"
+                      }`}
+                    />
+                  ) : (
+                    <ArrowUpRight className="w-5 h-5 text-destructive" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium">{tx.title}</p>
+                  <p className="text-sm text-muted-foreground">{tx.date}</p>
+                </div>
+                <p
+                  className={`font-semibold ${
+                    tx.type === "credit" ? "text-success" : "text-destructive"
+                  }`}
+                >
+                  {tx.type === "credit" ? "+" : "-"}NGN {tx.amount.toLocaleString()}
+                </p>
+              </div>
+            ))
+          )}
         </div>
       </div>
 

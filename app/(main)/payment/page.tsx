@@ -3,36 +3,39 @@
 import { useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { X, Wallet, CreditCard, Building2, Globe } from "lucide-react"
-
-const allPaymentMethods = [
-  {
-    id: "wallet",
-    name: "Pay with Wallet",
-    subtitle: "NGN 0.00",
-    icon: Wallet,
-  },
-  {
-    id: "card",
-    name: "Pay with Card",
-    icon: CreditCard,
-  },
-  {
-    id: "transfer",
-    name: "Pay with Transfer",
-    icon: Building2,
-  },
-  {
-    id: "country",
-    name: "Charge my Country",
-    icon: Globe,
-  },
-]
+import { useAppStore } from "@/lib/store"
 
 export default function PaymentPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null)
   const [showUnavailableModal, setShowUnavailableModal] = useState(false)
+  const user = useAppStore((state) => state.user)
+  const walletBalance = user?.walletBalance || 0
+
+  const allPaymentMethods = [
+    {
+      id: "wallet",
+      name: "Pay with Wallet",
+      subtitle: `NGN ${walletBalance.toLocaleString()}.00`,
+      icon: Wallet,
+    },
+    {
+      id: "card",
+      name: "Pay with Card",
+      icon: CreditCard,
+    },
+    {
+      id: "transfer",
+      name: "Pay with Transfer",
+      icon: Building2,
+    },
+    {
+      id: "country",
+      name: "Charge my Country",
+      icon: Globe,
+    },
+  ]
   
   const amount = parseInt(searchParams.get("amount") || "2000")
   const plan = searchParams.get("plan") || "basic"

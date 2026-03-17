@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { ChevronLeft, Plus, ArrowDownLeft, ArrowUpRight, MoreVertical } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { BottomNav } from "@/components/bottom-nav"
+import { useAppStore } from "@/lib/store"
 
 const transactions = [
   {
@@ -40,7 +41,8 @@ const transactions = [
 export default function WalletPage() {
   const router = useRouter()
   const [showWithdrawModal, setShowWithdrawModal] = useState(false)
-  const balance = 1500
+  const user = useAppStore((state) => state.user)
+  const balance = user?.walletBalance || 0
 
   return (
     <div className="min-h-screen bg-background pb-24">

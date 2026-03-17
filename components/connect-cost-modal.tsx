@@ -16,6 +16,7 @@ interface ConnectCostModalProps {
 export function ConnectCostModal({ isOpen, onClose, onConfirm, propertyTitle, agentId, propertyId }: ConnectCostModalProps) {
   const router = useRouter()
   const user = useAppStore((state) => state.user)
+  const deductConnect = useAppStore((state) => state.deductConnect)
   const connectsRemaining = user?.connectsRemaining || 0
 
   if (!isOpen) return null
@@ -24,6 +25,8 @@ export function ConnectCostModal({ isOpen, onClose, onConfirm, propertyTitle, ag
 
   const handlePrimaryAction = () => {
     if (hasEnoughConnects) {
+      // Deduct 1 connect when user clicks Chat
+      deductConnect()
       onConfirm()
       if (agentId) {
         router.push(`/chat/${agentId}${propertyId ? `?propertyId=${propertyId}` : ''}`)

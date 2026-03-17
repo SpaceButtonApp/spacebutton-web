@@ -103,8 +103,8 @@ export default function LoginPage() {
             <Image
               src={logoUrl}
               alt="Spacebutton"
-              width={200}
-              height={60}
+              width={100}
+              height={30}
               className="h-auto w-auto"
             />
           </div>

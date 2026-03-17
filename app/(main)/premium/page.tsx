@@ -1,9 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { useTheme } from "next-themes"
-import Image from "next/image"
 import { ChevronLeft, Check, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -42,16 +40,8 @@ const plans = {
 
 export default function PremiumPage() {
   const router = useRouter()
-  const { theme } = useTheme()
-  const [mounted, setMounted] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState<"basic" | "premium">("basic")
   const [selectedPricing, setSelectedPricing] = useState(0)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo-Z3o2DS9CjpuvL55ZsNkmvtolSu2dZz.png'
 
   const currentPlan = plans[selectedPlan]
 
@@ -67,16 +57,6 @@ export default function PremiumPage() {
       </header>
 
       <div className="px-4 pb-8">
-        <div className="flex items-center justify-center mb-6">
-          <Image
-            src={logoUrl}
-            alt="Spacebutton"
-            width={200}
-            height={60}
-            className="h-auto w-auto"
-          />
-        </div>
-
         <h1 className="text-2xl font-bold text-center mb-6">SpaceButton Premium</h1>
 
         <div className="bg-secondary rounded-full p-1 flex mb-6">

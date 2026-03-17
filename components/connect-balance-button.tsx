@@ -20,9 +20,9 @@ export function ConnectBalanceButton() {
   const hasNoConnects = connectBalance === 0
   const displayBalance = connectBalance === 999 ? 'Unlimited' : connectBalance
 
-  const handlePurchase = (type: 'basic-single' | 'basic-5' | 'premium-monthly' | 'premium-yearly', amount: number) => {
-    purchasePremium(type, amount)
+  const handlePurchase = (type: 'basic-single' | 'basic-5' | 'premium-monthly' | 'premium-yearly', amount: number, connects: number) => {
     setShowModal(false)
+    router.push(`/payment?amount=${amount}&plan=${type.includes('premium') ? 'premium' : 'basic'}&connects=${connects}`)
   }
 
   const handleDragStart = (e: React.MouseEvent) => {
@@ -111,7 +111,7 @@ export function ConnectBalanceButton() {
             <div className="space-y-3">
               {/* Single Connect */}
               <button
-                onClick={() => handlePurchase('basic-single', 2000)}
+                onClick={() => handlePurchase('basic-single', 2000, 1)}
                 className="w-full rounded-xl border-2 border-border p-4 text-left transition-all hover:border-primary hover:bg-primary/5"
               >
                 <div className="flex items-center justify-between">
@@ -125,7 +125,7 @@ export function ConnectBalanceButton() {
 
               {/* 5 Connects */}
               <button
-                onClick={() => handlePurchase('basic-5', 5000)}
+                onClick={() => handlePurchase('basic-5', 5000, 5)}
                 className="w-full rounded-xl border-2 border-border p-4 text-left transition-all hover:border-primary hover:bg-primary/5"
               >
                 <div className="flex items-center justify-between">
@@ -139,7 +139,7 @@ export function ConnectBalanceButton() {
 
               {/* Monthly Premium */}
               <button
-                onClick={() => handlePurchase('premium-monthly', 50000)}
+                onClick={() => handlePurchase('premium-monthly', 50000, 999)}
                 className="w-full rounded-xl border-2 border-primary/30 bg-primary/5 p-4 text-left transition-all hover:border-primary hover:bg-primary/10"
               >
                 <div className="flex items-center justify-between">
@@ -153,7 +153,7 @@ export function ConnectBalanceButton() {
 
               {/* Yearly Premium */}
               <button
-                onClick={() => handlePurchase('premium-yearly', 480000)}
+                onClick={() => handlePurchase('premium-yearly', 480000, 999)}
                 className="w-full rounded-xl border-2 border-primary/30 bg-primary/5 p-4 text-left transition-all hover:border-primary hover:bg-primary/10"
               >
                 <div className="flex items-center justify-between">

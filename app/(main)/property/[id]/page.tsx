@@ -284,6 +284,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
         onConfirm={handleConnectConfirm}
         propertyTitle={property.title}
         agentId={property.agent.id}
+        propertyId={property.id}
       />
     </div>
   )

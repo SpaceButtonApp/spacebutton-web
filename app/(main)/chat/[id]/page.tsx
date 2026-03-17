@@ -2,16 +2,19 @@
 
 import { useState, use, useEffect } from 'react'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft, Video, Phone, MoreVertical, Send, X, CheckSquare, MessageSquare, Star } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { mockAgents, mockMessages } from '@/lib/mock-data'
+import { mockAgents, mockMessages, mockProperties } from '@/lib/mock-data'
 import { cn } from '@/lib/utils'
 
 export default function ChatPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const propertyId = searchParams.get('propertyId')
+  
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState(mockMessages)
   const [showMenu, setShowMenu] = useState(false)
@@ -22,6 +25,11 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [feedback, setFeedback] = useState('')
   
   const agent = mockAgents.find((a) => a.id === id) || mockAgents[0]
+  
+  // Get property details from propertyId param or find first property by this agent
+  const property = propertyId 
+    ? mockProperties.find((p) => p.id === propertyId) 
+    : mockProperties.find((p) => p.agent.id === id) || mockProperties[0]
 
   const handleSend = () => {
     if (!message.trim()) return
@@ -113,33 +121,31 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       </div>
 
       {/* Apartment Banner */}
-      <div className="px-4 py-2">
-        <button
-          onClick={() => {
-            // Find the apartment ID from mock data or pass it through context
-            // For now, navigate to first property as example
-            router.push('/property/1')
-          }}
-          className="w-full bg-secondary rounded-xl overflow-hidden border border-border hover:bg-secondary/80 transition-colors"
-        >
-          <div className="flex gap-3 p-3">
-            <div className="relative flex-shrink-0">
-              <Image
-                src="https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=100&h=100&fit=crop"
-                alt="Apartment"
-                width={80}
-                height={80}
-                className="rounded-lg object-cover"
-              />
+      {property && (
+        <div className="px-4 py-2">
+          <button
+            onClick={() => router.push(`/property/${property.id}`)}
+            className="w-full bg-secondary rounded-xl overflow-hidden border border-border hover:bg-secondary/80 transition-colors"
+          >
+            <div className="flex gap-3 p-3">
+              <div className="relative flex-shrink-0">
+                <Image
+                  src={property.image}
+                  alt={property.title}
+                  width={80}
+                  height={80}
+                  className="rounded-lg object-cover"
+                />
+              </div>
+              <div className="flex-1 text-left">
+                <p className="font-semibold text-sm line-clamp-1">{property.title}</p>
+                <p className="text-muted-foreground text-xs mb-1">{property.location}</p>
+                <p className="text-primary font-bold text-sm">₦{property.price.toLocaleString()}</p>
+              </div>
             </div>
-            <div className="flex-1 text-left">
-              <p className="font-semibold text-sm line-clamp-1">Beautiful 3-bedroom Apartment</p>
-              <p className="text-muted-foreground text-xs mb-1">Lekki, Lagos</p>
-              <p className="text-primary font-bold text-sm">₦250,000/month</p>
-            </div>
-          </div>
-        </button>
-      </div>
+          </button>
+        </div>
+      )}
 
       {/* Menu Popup */}
       {showMenu && !showFeedback && (

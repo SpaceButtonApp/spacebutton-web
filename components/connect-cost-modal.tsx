@@ -10,9 +10,10 @@ interface ConnectCostModalProps {
   onConfirm: () => void
   propertyTitle: string
   agentId?: string
+  propertyId?: string
 }
 
-export function ConnectCostModal({ isOpen, onClose, onConfirm, propertyTitle, agentId }: ConnectCostModalProps) {
+export function ConnectCostModal({ isOpen, onClose, onConfirm, propertyTitle, agentId, propertyId }: ConnectCostModalProps) {
   const router = useRouter()
   const user = useAppStore((state) => state.user)
   const connectsRemaining = user?.connectsRemaining || 0
@@ -25,7 +26,7 @@ export function ConnectCostModal({ isOpen, onClose, onConfirm, propertyTitle, ag
     if (hasEnoughConnects) {
       onConfirm()
       if (agentId) {
-        router.push(`/chat/${agentId}`)
+        router.push(`/chat/${agentId}${propertyId ? `?propertyId=${propertyId}` : ''}`)
       }
     } else {
       router.push('/premium')

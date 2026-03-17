@@ -77,7 +77,12 @@ export default function SearchPage() {
       if (searchQuery && !property.title.toLowerCase().includes(searchQuery.toLowerCase())) {
         return false
       }
-      if (filters.location && !property.location.toLowerCase().includes(filters.location.toLowerCase())) {
+      // Filter by state (location)
+      if (filters.location && !property.location.toLowerCase().includes(filters.location.toLowerCase().replace(' state', ''))) {
+        return false
+      }
+      // Filter by LGA - check if property location includes the LGA
+      if (filters.lga && !property.location.toLowerCase().includes(filters.lga.toLowerCase())) {
         return false
       }
       if (filters.apartmentType && property.category !== filters.apartmentType.toLowerCase()) {

@@ -113,10 +113,15 @@ export const useAppStore = create<AppState>()(
             break
         }
         
+        // Only deduct from wallet if amount > 0 (wallet payment)
+        const newWalletBalance = amount > 0 
+          ? state.user.walletBalance - amount 
+          : state.user.walletBalance
+        
         return {
           user: {
             ...state.user,
-            walletBalance: state.user.walletBalance - amount,
+            walletBalance: newWalletBalance,
             isPremium,
             premiumType,
             connectsRemaining: state.user.connectsRemaining + connectsToAdd

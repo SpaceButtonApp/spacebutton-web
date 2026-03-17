@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { useAppStore } from '@/lib/store'
 import { ArrowRight, Home, Search, Shield, Users } from 'lucide-react'
+import { SplashScreen } from '@/components/splash-screen'
 
 const features = [
   {
@@ -30,6 +31,7 @@ export default function LandingPage() {
   const router = useRouter()
   const { theme } = useTheme()
   const [mounted, setMounted] = useState(false)
+  const [showSplash, setShowSplash] = useState(true)
   const user = useAppStore((state) => state.user)
 
   useEffect(() => {
@@ -43,6 +45,10 @@ export default function LandingPage() {
   }, [user, router])
 
   const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo-Z3o2DS9CjpuvL55ZsNkmvtolSu2dZz.png'
+
+  if (showSplash) {
+    return <SplashScreen onComplete={() => setShowSplash(false)} />
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

@@ -1,14 +1,48 @@
 "use client"
 
+import { useEffect, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { BottomNav } from "@/components/bottom-nav"
+import { useAppStore } from "@/lib/store"
 
 export default function PaymentSuccessPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const amount = parseInt(searchParams.get("amount") || "2000")
+  const plan = searchParams.get("plan") || "basic"
+  const connects = parseInt(searchParams.get("connects") || "1")
+  const type = searchParams.get("type") || ""
+  
+  const { purchasePremium, addToWallet } = useAppStore()
+  const hasProcessed = useRef(false)
+  
+  // Add connects or wallet balance after successful payment
+  useEffect(() => {
+    if (hasProcessed.current) return
+    hasProcessed.current = true
+    
+    if (type === "wallet") {
+      // Funding wallet
+      addToWallet(amount)
+    } else {
+      // Purchasing connects/premium
+      let purchaseType: 'basic-single' | 'basic-5' | 'premium-monthly' | 'premium-yearly' = 'basic-single'
+      
+      if (plan === "basic" && connects === 1) {
+        purchaseType = 'basic-single'
+      } else if (plan === "basic" && connects === 5) {
+        purchaseType = 'basic-5'
+      } else if (plan === "premium" && amount === 50000) {
+        purchaseType = 'premium-monthly'
+      } else if (plan === "premium") {
+        purchaseType = 'premium-yearly'
+      }
+      
+      purchasePremium(purchaseType, 0) // Pass 0 since payment is already made
+    }
+  }, [amount, plan, connects, type, purchasePremium, addToWallet])
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

@@ -42,15 +42,15 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
         {/* Icon - always visible, moves left when full logo shows */}
         <div 
           className={`transition-all duration-700 ease-out ${
-            showFullLogo ? 'transform -translate-x-2' : ''
+            showFullLogo ? 'transform -translate-x-1' : ''
           }`}
         >
           <Image
             src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-kJSONfc9hORfv0xhwC97LF0eSOCvJL.png"
             alt="SpaceButton Icon"
-            width={80}
-            height={80}
-            className="h-20 w-20"
+            width={56}
+            height={56}
+            className="h-14 w-14"
             priority
           />
         </div>
@@ -62,8 +62,8 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
           }`}
         >
           <span 
-            className="text-3xl font-bold whitespace-nowrap"
-            style={{ color: '#6B3CE9' }}
+            className="text-2xl font-bold whitespace-nowrap"
+            style={{ color: '#6C3AE1' }}
           >
             SpaceButton
           </span>

@@ -59,7 +59,12 @@ interface LocationInputProps {
 export function LocationInput({ value, onChange }: LocationInputProps) {
   const [openDropdown, setOpenDropdown] = useState<'state' | 'lga' | 'community' | null>(null)
 
-  const states = Object.keys(nigerianLocations).sort()
+  // Priority states: Lagos, Ogun, Rivers (Port Harcourt), FCT (Abuja)
+  const priorityStates = ['Lagos', 'Ogun', 'Rivers', 'Federal Capital Territory']
+  const allStates = Object.keys(nigerianLocations)
+  const otherStates = allStates.filter(s => !priorityStates.includes(s)).sort()
+  const states = [...priorityStates, ...otherStates]
+  
   const lgas = value.state ? Object.keys(nigerianLocations[value.state] || {}).sort() : []
   const communities = value.state && value.lga 
     ? (nigerianLocations[value.state]?.[value.lga] || []).sort()

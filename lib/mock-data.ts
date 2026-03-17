@@ -412,6 +412,8 @@ export const mockReviews: Review[] = [
 export const locations = [
   'Lagos State',
   'Ogun State',
+  'Rivers State',
+  'Federal Capital Territory',
   'Abia State',
   'Adamawa State',
   'Akwa Ibom State',
@@ -441,12 +443,10 @@ export const locations = [
   'Osun State',
   'Oyo State',
   'Plateau State',
-  'Rivers State',
   'Sokoto State',
   'Taraba State',
   'Yobe State',
   'Zamfara State',
-  'Federal Capital Territory',
 ]
 
 export const apartmentTypes = [

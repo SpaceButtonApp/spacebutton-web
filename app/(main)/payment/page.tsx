@@ -53,12 +53,13 @@ export default function PaymentPage() {
   }
 
   const handleContinue = () => {
+    const params = `amount=${amount}&plan=${plan}&connects=${connects}&type=${type}`
     if (selectedMethod === "transfer") {
-      router.push(`/payment/transfer?amount=${amount}`)
+      router.push(`/payment/transfer?${params}`)
     } else if (selectedMethod === "card") {
-      router.push(`/payment/card?amount=${amount}`)
+      router.push(`/payment/card?${params}`)
     } else {
-      router.push(`/payment/success?amount=${amount}&plan=${plan}&connects=${connects}`)
+      router.push(`/payment/success?${params}`)
     }
   }
 

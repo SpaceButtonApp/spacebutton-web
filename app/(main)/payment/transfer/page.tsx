@@ -13,6 +13,9 @@ export default function TransferPage() {
   const [showHelpModal, setShowHelpModal] = useState(false)
 
   const amount = parseInt(searchParams.get("amount") || "2000")
+  const plan = searchParams.get("plan") || "basic"
+  const connects = searchParams.get("connects") || "1"
+  const type = searchParams.get("type") || ""
 
   const bankDetails = {
     bankName: "Sterling Bank",
@@ -119,7 +122,7 @@ export default function TransferPage() {
         </p>
 
         <Button
-          onClick={() => router.push(`/payment/success?amount=${amount}`)}
+          onClick={() => router.push(`/payment/success?amount=${amount}&plan=${plan}&connects=${connects}&type=${type}`)}
           className="w-full h-14 text-base font-semibold mb-4"
         >
           I've sent the Money

@@ -190,7 +190,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
             <h2 className="text-lg font-bold mb-3">Current rent due date</h2>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Calendar className="w-4 h-4" />
-              <span>{property.rentDueDate}</span>
+              <span>{new Date(property.rentDueDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
             </div>
           </div>
         )}

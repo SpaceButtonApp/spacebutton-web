@@ -6,7 +6,8 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft, Video, Phone, MoreVertical, Send, X, CheckSquare, MessageSquare, Star } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { mockAgents, mockMessages, mockProperties } from '@/lib/mock-data'
+import { mockAgents, mockMessages } from '@/lib/mock-data'
+import { useAppStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
 
 export default function ChatPage({ params }: { params: Promise<{ id: string }> }) {
@@ -14,6 +15,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const router = useRouter()
   const searchParams = useSearchParams()
   const propertyId = searchParams.get('propertyId')
+  const { properties } = useAppStore()
   
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState(mockMessages)
@@ -28,8 +30,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   
   // Get property details from propertyId param or find first property by this agent
   const property = propertyId 
-    ? mockProperties.find((p) => p.id === propertyId) 
-    : mockProperties.find((p) => p.agent.id === id) || mockProperties[0]
+    ? properties.find((p) => p.id === propertyId) 
+    : properties.find((p) => p.agent?.id === id) || properties[0]
 
   const handleSend = () => {
     if (!message.trim()) return

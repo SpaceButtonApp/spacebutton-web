@@ -77,7 +77,9 @@ export default function AddPostPage() {
     }
   }
 
-  const [currentMonth, setCurrentMonth] = useState(new Date(2024, 3))
+  const today = new Date()
+  const minSelectableDate = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000) // 1 week from today
+  const [currentMonth, setCurrentMonth] = useState(new Date(today.getFullYear(), today.getMonth()))
 
   // Reward is 5% of rent price, auto-calculated
   const calculatedReward = Math.round(parseInt(rentPrice.replace(/,/g, '') || '0') * 0.05)
@@ -403,14 +405,19 @@ export default function AddPostPage() {
                 ))}
                 {Array.from({ length: getDaysInMonth(currentMonth) }).map((_, i) => {
                   const day = i + 1
-                  const isSelected = selectedDate?.getDate() === day && selectedDate?.getMonth() === currentMonth.getMonth()
+                  const dateToCheck = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day)
+                  const isDisabled = dateToCheck < minSelectableDate
+                  const isSelected = selectedDate?.getDate() === day && selectedDate?.getMonth() === currentMonth.getMonth() && selectedDate?.getFullYear() === currentMonth.getFullYear()
                   return (
                     <button
                       key={day}
-                      onClick={() => setSelectedDate(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day))}
+                      disabled={isDisabled}
+                      onClick={() => !isDisabled && setSelectedDate(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day))}
                       className={`py-2 rounded-lg text-sm ${
                         isSelected
                           ? "bg-primary text-primary-foreground"
+                          : isDisabled
+                          ? "text-muted-foreground/40 cursor-not-allowed"
                           : "hover:bg-secondary"
                       }`}
                     >

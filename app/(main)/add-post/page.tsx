@@ -440,6 +440,7 @@ export default function AddPostPage() {
                   className="flex-1 rounded-xl"
                   onClick={() => {
                     // Create new property from form data
+                    const propertyType = listingType.toLowerCase() as 'connect' | 'agent'
                     const newProperty = {
                       id: Date.now().toString(),
                       title: listingTitle || `${bedrooms} Bedroom ${selectedCategory}`,
@@ -450,7 +451,8 @@ export default function AddPostPage() {
                       bathrooms,
                       size: bedrooms * 400,
                       category: selectedCategory.toLowerCase() as 'flat' | 'self con' | 'duplex' | 'storey' | 'penthouse',
-                      listingType: listingType.toLowerCase() as 'connect' | 'agent',
+                      type: propertyType,
+                      listingType: propertyType,
                       rating: 5.0,
                       reviews: 0,
                       description: descriptions || `Beautiful ${bedrooms} bedroom ${selectedCategory.toLowerCase()} available for ${selectedCondition.toLowerCase()}.`,

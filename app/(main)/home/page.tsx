@@ -9,7 +9,6 @@ import { BottomNav } from '@/components/bottom-nav'
 import { PropertyCard } from '@/components/property-card'
 import { ConnectBalanceButton } from '@/components/connect-balance-button'
 import { useAppStore } from '@/lib/store'
-import { mockProperties } from '@/lib/mock-data'
 import { cn } from '@/lib/utils'
 
 const tabs = ['Connect', 'Agent', 'Shortlet', 'Properties'] as const
@@ -19,7 +18,7 @@ export default function HomePage() {
   const router = useRouter()
   const { theme } = useTheme()
   const [mounted, setMounted] = useState(false)
-  const { user, activeTab, setActiveTab } = useAppStore()
+  const { user, activeTab, setActiveTab, properties } = useAppStore()
   const [currentTab, setCurrentTab] = useState<Tab>('Connect')
 
   useEffect(() => {
@@ -35,9 +34,10 @@ export default function HomePage() {
     }
   }
 
-  const filteredProperties = mockProperties.filter((property) => {
-    if (currentTab === 'Connect') return property.type === 'connect'
-    if (currentTab === 'Agent') return property.type === 'agent'
+  const filteredProperties = properties.filter((property) => {
+    const type = property.listingType || property.type
+    if (currentTab === 'Connect') return type === 'connect'
+    if (currentTab === 'Agent') return type === 'agent'
     return false
   })
 

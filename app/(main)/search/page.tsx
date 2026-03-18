@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { BottomNav } from '@/components/bottom-nav'
 import { PropertyCard } from '@/components/property-card'
 import { useAppStore } from '@/lib/store'
-import { mockProperties, locations, apartmentTypes, priceRanges } from '@/lib/mock-data'
+import { locations, apartmentTypes, priceRanges } from '@/lib/mock-data'
 import { cn } from '@/lib/utils'
 
 // Complete Nigerian states with their LGAs - matching the location-input component
@@ -54,6 +54,7 @@ const stateWithLGAs: Record<string, string[]> = {
 
 export default function SearchPage() {
   const router = useRouter()
+  const { properties } = useAppStore()
   const [searchQuery, setSearchQuery] = useState('')
   const [filters, setFilters] = useState({
     location: '',
@@ -73,8 +74,12 @@ export default function SearchPage() {
   }
 
   const filteredProperties = useMemo(() => {
-    return mockProperties.filter((property) => {
-      if (searchQuery && !property.title.toLowerCase().includes(searchQuery.toLowerCase())) {
+    return properties.filter((property) => {
+      const searchLower = searchQuery.toLowerCase()
+      // Search by title OR location
+      if (searchQuery && 
+          !property.title.toLowerCase().includes(searchLower) && 
+          !property.location.toLowerCase().includes(searchLower)) {
         return false
       }
       // Filter by state (location)
@@ -96,9 +101,9 @@ export default function SearchPage() {
       }
       return true
     })
-  }, [searchQuery, filters])
+  }, [searchQuery, filters, properties])
 
-  const suggestedProperties = mockProperties.slice(0, 2)
+  const suggestedProperties = properties.slice(0, 2)
 
   return (
     <div className="min-h-screen bg-secondary pb-24">

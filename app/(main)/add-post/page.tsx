@@ -68,13 +68,15 @@ export default function AddPostPage() {
   }
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setPhotos((prev) => [...prev, reader.result as string])
-      }
-      reader.readAsDataURL(file)
+    const files = e.target.files
+    if (files && files.length > 0) {
+      Array.from(files).forEach((file) => {
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          setPhotos((prev) => [...prev, reader.result as string])
+        }
+        reader.readAsDataURL(file)
+      })
     }
   }
 
@@ -305,6 +307,7 @@ export default function AddPostPage() {
                 const input = document.createElement('input')
                 input.type = 'file'
                 input.accept = 'image/*'
+                input.multiple = true
                 input.onchange = (e) => handlePhotoUpload(e as any)
                 input.click()
               }}

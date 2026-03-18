@@ -45,6 +45,7 @@ export default function AddPostPage() {
   const [showReviewModal, setShowReviewModal] = useState(false)
   const [showValidationModal, setShowValidationModal] = useState(false)
   const [validationMessage, setValidationMessage] = useState("")
+  const [totalPackage, setTotalPackage] = useState("")
 
   const toggleCondition = (condition: string) => {
     setSelectedCondition(condition)
@@ -163,6 +164,13 @@ export default function AddPostPage() {
     // For Connect listing type, check rent due date
     if (listingType === "Connect" && !selectedDate) {
       setValidationMessage("Please select the current rent due date")
+      setShowValidationModal(true)
+      return false
+    }
+    
+    // For Agent listing type, check total package
+    if (listingType === "Agent" && (!totalPackage || parseInt(totalPackage.replace(/,/g, '')) <= 0)) {
+      setValidationMessage("Please enter the total package amount")
       setShowValidationModal(true)
       return false
     }
@@ -332,6 +340,22 @@ export default function AddPostPage() {
                 className="h-14 rounded-2xl pr-12 bg-primary/10 border-primary/20"
               />
               <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+            </div>
+          </div>
+        )}
+
+        {/* Total Package - Only visible for Agent listing type */}
+        {listingType === "Agent" && (
+          <div>
+            <h3 className="font-medium mb-3">Total Package</h3>
+            <div className="relative">
+              <Input
+                value={totalPackage}
+                onChange={(e) => setTotalPackage(e.target.value.replace(/[^0-9,]/g, ''))}
+                placeholder="Enter total package amount"
+                className="h-14 rounded-2xl pr-12"
+              />
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground">₦</span>
             </div>
           </div>
         )}
@@ -572,6 +596,7 @@ export default function AddPostPage() {
                       saved: false,
                       photoCount: photos.length,
                       bonus: listingType === 'Connect' ? `₦${calculatedReward.toLocaleString()} Reward` : undefined,
+                      totalPackage: listingType === 'Agent' ? parseInt(totalPackage.replace(/,/g, '') || '0') : undefined,
                       rentDueDate: selectedDate ? selectedDate.toISOString() : undefined,
                       createdAt: new Date().toISOString(),
                     }

@@ -20,6 +20,7 @@ export interface Property {
   photoCount: number
   bonus?: string
   rentDueDate?: string
+  totalPackage?: number
   agent: Agent
   ownerId: string
 }

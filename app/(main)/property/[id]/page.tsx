@@ -119,10 +119,13 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
         {/* Title & Price */}
         <div>
           <h1 className="text-2xl font-bold mb-2">{property.title}</h1>
-          <div className="flex items-baseline gap-2">
+          <div className="flex items-baseline gap-2 flex-wrap">
             <span className="text-2xl font-bold text-primary">{formatPrice(property.price)}</span>
             {property.bonus && (
               <span className="text-sm text-success">{property.bonus}</span>
+            )}
+            {property.totalPackage && (
+              <span className="text-sm text-primary font-medium">Total Package: ₦{property.totalPackage.toLocaleString()}</span>
             )}
           </div>
           <div className="flex items-center gap-1 mt-2 text-muted-foreground">

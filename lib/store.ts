@@ -200,7 +200,7 @@ export const useAppStore = create<AppState>()(
         user: state.user,
         savedProperties: state.savedProperties,
         transactions: state.transactions,
-        properties: state.properties,
+        // Note: properties not persisted to avoid localStorage quota issues with base64 images
       }),
     }
   )

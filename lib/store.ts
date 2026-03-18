@@ -40,6 +40,7 @@ interface AppState {
   properties: Property[]
   savedProperties: string[]
   toggleSaveProperty: (id: string) => void
+  addProperty: (property: Property) => void
   
   // Conversations
   conversations: Conversation[]
@@ -85,6 +86,9 @@ export const useAppStore = create<AppState>()(
         savedProperties: state.savedProperties.includes(id)
           ? state.savedProperties.filter((pId) => pId !== id)
           : [...state.savedProperties, id]
+      })),
+      addProperty: (property) => set((state) => ({
+        properties: [property, ...state.properties]
       })),
       
       // Conversations
@@ -196,6 +200,7 @@ export const useAppStore = create<AppState>()(
         user: state.user,
         savedProperties: state.savedProperties,
         transactions: state.transactions,
+        properties: state.properties,
       }),
     }
   )

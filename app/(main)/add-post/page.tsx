@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LocationInput } from "@/components/location-input"
 import Image from "next/image"
+import { useAppStore } from "@/lib/store"
+import { mockAgents } from "@/lib/mock-data"
 
 const listingConditions = ["Rent", "Roommate", "Flatmate"]
 const propertyCategories = ["Flat", "Self Con", "Duplex", "Storey", "Penthouse"]
@@ -14,6 +16,7 @@ const facilities = ["Parking Lot", "Pet Allowed", "Park", "Garden", "Estate", "K
 
 export default function AddPostPage() {
   const router = useRouter()
+  const { addProperty, user } = useAppStore()
   const [listingType, setListingType] = useState<"Connect" | "Agent">("Connect")
   const [listingTitle, setListingTitle] = useState("")
   const [selectedCondition, setSelectedCondition] = useState("Rent")
@@ -422,7 +425,7 @@ export default function AddPostPage() {
               <h2 className="mb-1 text-2xl">Your listing is now</h2>
               <h3 className="mb-4 text-2xl font-bold">Under Review</h3>
               <p className="mb-6 text-muted-foreground">
-                Lorem ipsum dolor sit amet, consectetur.
+                Your property will be visible on the home page shortly.
               </p>
 
               <div className="flex w-full gap-3">
@@ -435,7 +438,31 @@ export default function AddPostPage() {
                 </Button>
                 <Button
                   className="flex-1 rounded-xl"
-                  onClick={() => router.push('/home')}
+                  onClick={() => {
+                    // Create new property from form data
+                    const newProperty = {
+                      id: Date.now().toString(),
+                      title: listingTitle || `${bedrooms} Bedroom ${selectedCategory}`,
+                      location: `${location.community ? location.community + ', ' : ''}${location.lga ? location.lga + ', ' : ''}${location.state}`,
+                      price: parseInt(rentPrice.replace(/,/g, '') || '0'),
+                      images: photos.length > 0 ? photos : ['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&h=600&fit=crop'],
+                      bedrooms,
+                      bathrooms,
+                      size: bedrooms * 400,
+                      category: selectedCategory.toLowerCase() as 'flat' | 'self con' | 'duplex' | 'storey' | 'penthouse',
+                      listingType: listingType.toLowerCase() as 'connect' | 'agent',
+                      rating: 5.0,
+                      reviews: 0,
+                      description: descriptions || `Beautiful ${bedrooms} bedroom ${selectedCategory.toLowerCase()} available for ${selectedCondition.toLowerCase()}.`,
+                      amenities: selectedFacilities,
+                      agent: mockAgents[0],
+                      isVerified: true,
+                      isFeatured: false,
+                      createdAt: new Date().toISOString(),
+                    }
+                    addProperty(newProperty)
+                    router.push('/home')
+                  }}
                 >
                   Finish
                 </Button>

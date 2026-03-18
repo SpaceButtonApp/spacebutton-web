@@ -115,7 +115,7 @@ export default function LandingPage() {
               Find Your Perfect Space
             </h1>
             <p className="text-muted-foreground text-balance">
-              Connect with verified agents and landlords to find your dream apartment
+              Connect with landlords, tenants or verified agents to find your dream apartment
             </p>
           </div>
 

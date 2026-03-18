@@ -12,18 +12,18 @@ import { BottomNav } from '@/components/bottom-nav'
 import { ConnectCostModal } from '@/components/connect-cost-modal'
 import { SuggestedApartments } from '@/components/suggested-apartments'
 import { useAppStore } from '@/lib/store'
-import { mockProperties, formatPrice, safetyTips } from '@/lib/mock-data'
+import { formatPrice, safetyTips } from '@/lib/mock-data'
 import { cn } from '@/lib/utils'
 
 export default function PropertyDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
-  const { savedProperties, toggleSaveProperty, user, connectsRemaining, deductConnect } = useAppStore()
+  const { savedProperties, toggleSaveProperty, user, connectsRemaining, deductConnect, properties } = useAppStore()
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [showFullScreen, setShowFullScreen] = useState(false)
   const [showConnectModal, setShowConnectModal] = useState(false)
   
-  const property = mockProperties.find((p) => p.id === id)
+  const property = properties.find((p) => p.id === id)
   const isSaved = savedProperties.includes(id)
   
   if (!property) {
@@ -274,7 +274,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
 
       {/* Suggested Apartments */}
       <div className="px-4 pb-8">
-        <SuggestedApartments apartments={mockProperties} currentPropertyId={id} />
+        <SuggestedApartments apartments={properties} currentPropertyId={id} />
       </div>
 
       {/* Connect Cost Modal */}

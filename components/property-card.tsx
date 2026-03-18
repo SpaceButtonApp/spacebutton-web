@@ -81,7 +81,7 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
             </div>
             <div className="flex items-center gap-1">
               <Users className="w-3 h-3" />
-              <span>{property.condition === 'roommate' ? 'Roommate' : 'Flatmate'}</span>
+              <span className="capitalize">{property.condition || 'rent'}</span>
             </div>
             <div className="flex items-center gap-1">
               <Building2 className="w-3 h-3" />
@@ -151,7 +151,7 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
           </div>
           <div className="flex items-center gap-1">
             <Users className="w-4 h-4" />
-            <span>{property.condition === 'roommate' ? 'Roommate' : 'Flatmate'}</span>
+            <span className="capitalize">{property.condition || 'rent'}</span>
           </div>
           <div className="flex items-center gap-1">
             <Building2 className="w-4 h-4" />

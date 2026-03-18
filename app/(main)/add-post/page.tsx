@@ -43,6 +43,8 @@ export default function AddPostPage() {
   const [showCalendar, setShowCalendar] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [showReviewModal, setShowReviewModal] = useState(false)
+  const [showValidationModal, setShowValidationModal] = useState(false)
+  const [validationMessage, setValidationMessage] = useState("")
 
   const toggleCondition = (condition: string) => {
     setSelectedCondition(condition)
@@ -94,6 +96,82 @@ export default function AddPostPage() {
 
   const handleNextMonth = () => {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))
+  }
+
+  const validateForm = () => {
+    // Check listing title
+    if (!listingTitle.trim()) {
+      setValidationMessage("Please enter a listing title")
+      setShowValidationModal(true)
+      return false
+    }
+    
+    // Check location - must have state, LGA, and community
+    if (!location.state) {
+      setValidationMessage("Please select a state in the location")
+      setShowValidationModal(true)
+      return false
+    }
+    if (!location.lga) {
+      setValidationMessage("Please select an LGA in the location")
+      setShowValidationModal(true)
+      return false
+    }
+    if (!location.community.trim()) {
+      setValidationMessage("Please enter a community/area in the location")
+      setShowValidationModal(true)
+      return false
+    }
+    
+    // Check photos
+    if (photos.length === 0) {
+      setValidationMessage("Please add at least one photo of the property")
+      setShowValidationModal(true)
+      return false
+    }
+    
+    // Check rent price
+    if (!rentPrice || parseInt(rentPrice.replace(/,/g, '')) <= 0) {
+      setValidationMessage("Please enter a valid rent price")
+      setShowValidationModal(true)
+      return false
+    }
+    
+    // Check bedrooms
+    if (bedrooms <= 0) {
+      setValidationMessage("Please specify at least one bedroom")
+      setShowValidationModal(true)
+      return false
+    }
+    
+    // Check bathrooms
+    if (bathrooms <= 0) {
+      setValidationMessage("Please specify at least one bathroom")
+      setShowValidationModal(true)
+      return false
+    }
+    
+    // Check facilities
+    if (selectedFacilities.length === 0) {
+      setValidationMessage("Please select at least one facility/environment feature")
+      setShowValidationModal(true)
+      return false
+    }
+    
+    // For Connect listing type, check rent due date
+    if (listingType === "Connect" && !selectedDate) {
+      setValidationMessage("Please select the current rent due date")
+      setShowValidationModal(true)
+      return false
+    }
+    
+    return true
+  }
+
+  const handleFinishClick = () => {
+    if (validateForm()) {
+      setShowReviewModal(true)
+    }
   }
 
   return (
@@ -404,12 +482,28 @@ export default function AddPostPage() {
         </div>
 
         <Button
-          onClick={() => setShowReviewModal(true)}
+          onClick={handleFinishClick}
           className="w-full h-14 text-base font-semibold"
         >
           Finish
         </Button>
       </div>
+
+      {/* Validation Error Modal */}
+      {showValidationModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-background p-6">
+            <h2 className="text-lg font-semibold mb-2 text-destructive">Incomplete Details</h2>
+            <p className="text-muted-foreground mb-6">{validationMessage}</p>
+            <Button
+              onClick={() => setShowValidationModal(false)}
+              className="w-full h-12 rounded-xl"
+            >
+              Okay
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Under Review Modal */}
       {showReviewModal && (
@@ -441,25 +535,37 @@ export default function AddPostPage() {
                   onClick={() => {
                     // Create new property from form data
                     const propertyType = listingType.toLowerCase() as 'connect' | 'agent'
+                    const propertyCondition = selectedCondition.toLowerCase() as 'rent' | 'roommate' | 'flatmate'
                     const newProperty = {
                       id: Date.now().toString(),
-                      title: listingTitle || `${bedrooms} Bedroom ${selectedCategory}`,
-                      location: `${location.community ? location.community + ', ' : ''}${location.lga ? location.lga + ', ' : ''}${location.state}`,
+                      title: listingTitle,
+                      location: `${location.community}, ${location.lga}, ${location.state}`,
                       price: parseInt(rentPrice.replace(/,/g, '') || '0'),
-                      images: photos.length > 0 ? photos : ['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&h=600&fit=crop'],
+                      images: photos,
                       bedrooms,
                       bathrooms,
+                      beds: bedrooms,
+                      baths: bathrooms,
+                      reception: sittingRooms,
                       size: bedrooms * 400,
-                      category: selectedCategory.toLowerCase() as 'flat' | 'self con' | 'duplex' | 'storey' | 'penthouse',
+                      category: selectedCategory.toLowerCase() as 'flat' | 'self-con' | 'duplex' | 'storey' | 'penthouse',
                       type: propertyType,
                       listingType: propertyType,
+                      condition: propertyCondition,
                       rating: 5.0,
                       reviews: 0,
                       description: descriptions || `Beautiful ${bedrooms} bedroom ${selectedCategory.toLowerCase()} available for ${selectedCondition.toLowerCase()}.`,
                       amenities: selectedFacilities,
+                      features: selectedFacilities,
                       agent: mockAgents[0],
+                      ownerId: user?.id || '1',
+                      verified: true,
                       isVerified: true,
                       isFeatured: false,
+                      saved: false,
+                      photoCount: photos.length,
+                      bonus: listingType === 'Connect' ? `₦${calculatedReward.toLocaleString()} Reward` : undefined,
+                      rentDueDate: selectedDate ? selectedDate.toISOString() : undefined,
                       createdAt: new Date().toISOString(),
                     }
                     addProperty(newProperty)

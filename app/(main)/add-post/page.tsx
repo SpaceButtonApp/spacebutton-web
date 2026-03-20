@@ -18,6 +18,7 @@ export default function AddPostPage() {
   const router = useRouter()
   const { addProperty, user } = useAppStore()
   const [listingType, setListingType] = useState<"Connect" | "Agent">("Connect")
+  const [connectRole, setConnectRole] = useState<"Tenant" | "Landlord">("Tenant")
   const [listingTitle, setListingTitle] = useState("")
   const [selectedCondition, setSelectedCondition] = useState("Rent")
   const [selectedCategory, setSelectedCategory] = useState("Flat")
@@ -163,15 +164,16 @@ export default function AddPostPage() {
       return false
     }
     
-    // For Connect listing type, check rent due date
-    if (listingType === "Connect" && !selectedDate) {
+    // For Connect listing type with Tenant role, check rent due date
+    if (listingType === "Connect" && connectRole === "Tenant" && !selectedDate) {
       setValidationMessage("Please select the current rent due date")
       setShowValidationModal(true)
       return false
     }
     
-    // For Agent listing type, check total package
-    if (listingType === "Agent" && (!totalPackage || parseInt(totalPackage.replace(/,/g, '')) <= 0)) {
+    // For Agent listing type OR Connect with Landlord role, check total package
+    if ((listingType === "Agent" || (listingType === "Connect" && connectRole === "Landlord")) && 
+        (!totalPackage || parseInt(totalPackage.replace(/,/g, '')) <= 0)) {
       setValidationMessage("Please enter the total package amount")
       setShowValidationModal(true)
       return false
@@ -218,12 +220,38 @@ export default function AddPostPage() {
           </div>
         </div>
 
+        {/* Connect Role - Only visible for Connect listing type */}
+        {listingType === "Connect" && (
+          <div>
+            <h3 className="font-medium mb-3">I am a</h3>
+            <div className="flex gap-3">
+              {["Tenant", "Landlord"].map((role) => (
+                <button
+                  key={role}
+                  onClick={() => setConnectRole(role as "Tenant" | "Landlord")}
+                  className={`px-6 py-2.5 rounded-full text-sm font-medium transition-colors ${
+                    connectRole === role
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary"
+                  }`}
+                >
+                  {role}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div>
           <h3 className="font-medium mb-3">Listing Title</h3>
           <div className="relative">
             <Input
               value={listingTitle}
-              onChange={(e) => setListingTitle(e.target.value)}
+              onChange={(e) => {
+                // Only allow letters and spaces (no numbers)
+                const textOnly = e.target.value.replace(/[^a-zA-Z\s]/g, '')
+                setListingTitle(textOnly)
+              }}
               placeholder="Two Bedroom Flat"
               className="h-14 rounded-2xl pr-12"
             />
@@ -331,8 +359,8 @@ export default function AddPostPage() {
           </div>
         </div>
 
-        {/* Reward - Only visible for Connect listing type */}
-        {listingType === "Connect" && (
+        {/* Reward - Only visible for Connect listing type with Tenant role */}
+        {listingType === "Connect" && connectRole === "Tenant" && (
           <div>
             <h3 className="font-medium mb-3">Reward (5% of Rent)</h3>
             <div className="relative">
@@ -347,8 +375,8 @@ export default function AddPostPage() {
           </div>
         )}
 
-        {/* Total Package - Only visible for Agent listing type */}
-        {listingType === "Agent" && (
+        {/* Total Package - Visible for Agent OR Connect with Landlord role */}
+        {(listingType === "Agent" || (listingType === "Connect" && connectRole === "Landlord")) && (
           <div>
             <h3 className="font-medium mb-3">Total Package</h3>
             <div className="relative">
@@ -362,6 +390,8 @@ export default function AddPostPage() {
             </div>
           </div>
         )}
+
+
 
         <div>
           <h3 className="font-medium mb-3">Property Features</h3>
@@ -397,8 +427,8 @@ export default function AddPostPage() {
           </div>
         </div>
 
-        {/* Select Rent Due Date - Only visible for Connect */}
-        {listingType === "Connect" && (
+        {/* Select Rent Due Date - Only visible for Connect with Tenant role */}
+        {listingType === "Connect" && connectRole === "Tenant" && (
           <div>
           <h3 className="font-medium mb-3">Select Current Rent Due Date</h3>
           <button
@@ -598,9 +628,12 @@ export default function AddPostPage() {
                       isFeatured: false,
                       saved: false,
                       photoCount: photos.length,
-                      bonus: listingType === 'Connect' ? `₦${calculatedReward.toLocaleString()} Reward` : undefined,
-                      totalPackage: listingType === 'Agent' ? parseInt(totalPackage.replace(/,/g, '') || '0') : undefined,
-                      rentDueDate: selectedDate ? selectedDate.toISOString() : undefined,
+                      bonus: listingType === 'Connect' && connectRole === 'Tenant' ? `₦${calculatedReward.toLocaleString()} Reward` : undefined,
+                      totalPackage: (listingType === 'Agent' || (listingType === 'Connect' && connectRole === 'Landlord')) ? parseInt(totalPackage.replace(/,/g, '') || '0') : undefined,
+                      rentDueDate: listingType === 'Connect' && connectRole === 'Tenant' && selectedDate ? selectedDate.toISOString() : undefined,
+                      connectRole: listingType === 'Connect' ? connectRole : undefined,
+                      landlordPresence: landlordPresence,
+                      balconies: balconies,
                       createdAt: new Date().toISOString(),
                     }
                     addProperty(newProperty)

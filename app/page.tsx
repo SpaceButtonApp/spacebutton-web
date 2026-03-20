@@ -64,9 +64,11 @@ export default function LandingPage() {
             <Image
               src={logoUrl}
               alt="Spacebutton"
-              width={110}
-              height={33}
+              width={55}
+              height={17}
               className="h-auto w-auto"
+              loading="eager"
+              priority
             />
           </div>
 

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import Image from 'next/image'
 
 export default function VerificationCodePage() {
   const router = useRouter()
@@ -89,7 +90,12 @@ export default function VerificationCodePage() {
 
         <div className="text-center mb-8">
           <div className="inline-block p-3 bg-primary/10 rounded-full mb-4">
-            <div className="text-3xl font-bold text-primary">S</div>
+            <Image
+              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-kJSONfc9hORfv0xhwC97LF0eSOCvJL.png"
+              alt="SpaceButton"
+              width={40}
+              height={40}
+            />
           </div>
         </div>
 

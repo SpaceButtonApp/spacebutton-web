@@ -23,6 +23,9 @@ export interface Property {
   totalPackage?: number
   agent: Agent
   ownerId: string
+  connectRole?: 'Tenant' | 'Landlord'
+  landlordPresence?: 'stays' | 'not-stays'
+  balconies?: number
 }
 
 export interface Agent {

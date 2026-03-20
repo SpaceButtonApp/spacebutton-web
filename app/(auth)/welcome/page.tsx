@@ -5,6 +5,14 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { useAppStore } from '@/lib/store'
 
+interface SignupData {
+  name: string
+  profileType: 'individual' | 'agent'
+  email: string
+  phone: string
+  invitationCode?: string
+}
+
 // Confetti ribbon component
 function Confetti() {
   const [ribbons, setRibbons] = useState<Array<{ id: number; left: number; delay: number; duration: number; color: string }>>([])
@@ -59,6 +67,32 @@ function Confetti() {
 export default function WelcomePage() {
   const router = useRouter()
   const user = useAppStore((state) => state.user)
+  const setUser = useAppStore((state) => state.setUser)
+  
+  // Create user from signup data on mount
+  useEffect(() => {
+    const signupDataStr = localStorage.getItem('signupData')
+    if (signupDataStr && !user) {
+      const signupData: SignupData = JSON.parse(signupDataStr)
+      localStorage.removeItem('signupData')
+      
+      setUser({
+        id: `user-${Date.now()}`,
+        name: signupData.name,
+        email: signupData.email,
+        phone: signupData.phone,
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+        type: signupData.profileType,
+        isLoggedIn: true,
+        referralCode: `REF${Date.now().toString(36).toUpperCase()}`,
+        referredCount: 0,
+        location: 'Nigeria',
+        walletBalance: 0,
+        isPremium: false,
+        connectsRemaining: 0,
+      })
+    }
+  }, [user, setUser])
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 relative overflow-hidden">

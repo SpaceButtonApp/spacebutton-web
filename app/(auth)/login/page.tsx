@@ -44,18 +44,23 @@ export default function LoginPage() {
       return
     }
 
-    // Mock login
+    // Mock login - derive name from email
+    const emailName = formData.emailOrPhone.includes('@') 
+      ? formData.emailOrPhone.split('@')[0].replace(/[._]/g, ' ')
+      : 'User'
+    const capitalizedName = emailName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+    
     setUser({
-      id: 'user-1',
-      name: 'Indica Watson',
-      email: 'indica@example.com',
-      phone: '+234 800 000 0000',
+      id: `user-${Date.now()}`,
+      name: capitalizedName,
+      email: formData.emailOrPhone.includes('@') ? formData.emailOrPhone : '',
+      phone: formData.emailOrPhone.includes('@') ? '' : formData.emailOrPhone,
       avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-      type: 'agent',
+      type: 'individual',
       isLoggedIn: true,
-      referralCode: 'INDICA123',
-      referredCount: 5,
-      location: 'Lagos, Nigeria',
+      referralCode: `REF${Date.now().toString(36).toUpperCase()}`,
+      referredCount: 0,
+      location: 'Nigeria',
       walletBalance: 0,
       isPremium: false,
       connectsRemaining: 0,
@@ -103,9 +108,11 @@ export default function LoginPage() {
             <Image
               src={logoUrl}
               alt="Spacebutton"
-              width={100}
-              height={30}
+              width={50}
+              height={15}
               className="h-auto w-auto"
+              loading="eager"
+              priority
             />
           </div>
           <h1 className="text-3xl font-bold mb-2">Welcome back</h1>

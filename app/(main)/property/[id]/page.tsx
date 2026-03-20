@@ -151,20 +151,38 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
         </div>
 
         {/* Room details */}
-        <div className="flex items-center justify-start gap-6">
-          <div className="flex flex-col items-center gap-2 px-6 py-4 rounded-xl bg-secondary">
+        <div className="flex items-center justify-start gap-4 flex-wrap">
+          <div className="flex flex-col items-center gap-2 px-5 py-4 rounded-xl bg-secondary">
             <Bed className="w-6 h-6 text-muted-foreground" />
             <span className="text-sm font-medium">{property.beds} Beds</span>
           </div>
-          <div className="flex flex-col items-center gap-2 px-6 py-4 rounded-xl bg-secondary">
+          <div className="flex flex-col items-center gap-2 px-5 py-4 rounded-xl bg-secondary">
             <Bath className="w-6 h-6 text-muted-foreground" />
             <span className="text-sm font-medium">{property.baths} Bath</span>
           </div>
-          <div className="flex flex-col items-center gap-2 px-6 py-4 rounded-xl bg-secondary">
+          <div className="flex flex-col items-center gap-2 px-5 py-4 rounded-xl bg-secondary">
             <Sofa className="w-6 h-6 text-muted-foreground" />
             <span className="text-sm font-medium">{property.reception} reception</span>
           </div>
+          {property.balconies && property.balconies > 0 && (
+            <div className="flex flex-col items-center gap-2 px-5 py-4 rounded-xl bg-secondary">
+              <Building2 className="w-6 h-6 text-muted-foreground" />
+              <span className="text-sm font-medium">{property.balconies} Balcony</span>
+            </div>
+          )}
         </div>
+
+        {/* Landlord Presence */}
+        {property.landlordPresence && (
+          <div>
+            <h2 className="text-lg font-bold mb-3">Landlord Presence</h2>
+            <p className="text-sm text-muted-foreground">
+              {property.landlordPresence === 'stays' 
+                ? 'Landlord stays in the compound' 
+                : 'Landlord does not stay in the compound'}
+            </p>
+          </div>
+        )}
 
         {/* Features */}
         <div>

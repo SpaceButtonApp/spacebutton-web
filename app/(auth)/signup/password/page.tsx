@@ -60,11 +60,12 @@ export default function CreatePasswordPage() {
       return
     }
 
-    // Get signup data from localStorage
+    // Get signup data from localStorage and keep it for verification
     const signupData = localStorage.getItem('signupData')
     if (signupData) {
       const data = JSON.parse(signupData)
-      localStorage.removeItem('signupData')
+      // Store password in signup data for final user creation after verification
+      localStorage.setItem('signupData', JSON.stringify({ ...data, password: formData.password }))
     }
     
     router.push(`/verify?email=${encodeURIComponent(formData.email)}`)

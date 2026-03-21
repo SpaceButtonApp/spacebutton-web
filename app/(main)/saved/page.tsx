@@ -5,13 +5,12 @@ import { ArrowLeft, MoreVertical, Bookmark } from 'lucide-react'
 import { BottomNav } from '@/components/bottom-nav'
 import { PropertyCard } from '@/components/property-card'
 import { useAppStore } from '@/lib/store'
-import { mockProperties } from '@/lib/mock-data'
 
 export default function SavedPage() {
   const router = useRouter()
-  const savedProperties = useAppStore((state) => state.savedProperties)
+  const { savedProperties, properties } = useAppStore()
   
-  const savedItems = mockProperties.filter((p) => savedProperties.includes(p.id))
+  const savedItems = properties.filter((p) => savedProperties.includes(p.id))
 
   return (
     <div className="min-h-screen bg-secondary pb-24">
@@ -25,7 +24,7 @@ export default function SavedPage() {
             <ArrowLeft className="w-5 h-5" />
           </button>
           
-          <h1 className="text-lg font-bold">Liked Properties</h1>
+          <h1 className="text-lg font-bold">Saved Properties</h1>
           
           <button className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary">
             <MoreVertical className="w-5 h-5" />

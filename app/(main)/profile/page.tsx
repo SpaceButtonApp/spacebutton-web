@@ -7,7 +7,7 @@ import { ArrowLeft, MoreVertical, Star, Edit } from 'lucide-react'
 import { BottomNav } from '@/components/bottom-nav'
 import { PropertyCard } from '@/components/property-card'
 import { useAppStore } from '@/lib/store'
-import { mockProperties, mockReviews } from '@/lib/mock-data'
+import { mockReviews } from '@/lib/mock-data'
 import { cn } from '@/lib/utils'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -16,12 +16,17 @@ type Tab = typeof tabs[number]
 
 export default function ProfilePage() {
   const router = useRouter()
-  const user = useAppStore((state) => state.user)
+  const { user, properties, closedProperties, closeProperty } = useAppStore()
   const [activeTab, setActiveTab] = useState<Tab>('Listings')
   const [showMenu, setShowMenu] = useState(false)
 
-  const userProperties = mockProperties.slice(0, 3)
-  const closedProperties = mockProperties.slice(0, 2)
+  // Filter user's own listings (where ownerId matches current user)
+  const userProperties = properties.filter((p) => 
+    p.ownerId === user?.id && !closedProperties.includes(p.id)
+  )
+  const userClosedProperties = properties.filter((p) => 
+    p.ownerId === user?.id && closedProperties.includes(p.id)
+  )
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -63,11 +68,11 @@ export default function ProfilePage() {
         {/* Stats */}
         <div className="flex items-center justify-center gap-4 mt-6">
           <div className="px-6 py-4 rounded-xl border border-border text-center min-w-[100px]">
-            <p className="text-2xl font-bold">{userProperties.length + 27}</p>
+            <p className="text-2xl font-bold">{userProperties.length}</p>
             <p className="text-sm text-muted-foreground">Listings</p>
           </div>
           <div className="px-6 py-4 rounded-xl border border-border text-center min-w-[100px]">
-            <p className="text-2xl font-bold">12</p>
+            <p className="text-2xl font-bold">{userClosedProperties.length}</p>
             <p className="text-sm text-muted-foreground">Closed</p>
           </div>
           <div className="px-6 py-4 rounded-xl border border-border text-center min-w-[100px]">
@@ -143,38 +148,50 @@ export default function ProfilePage() {
 
         {activeTab === 'Listings' && (
           <div className="space-y-3">
-            {userProperties.map((property) => (
-              <div key={property.id} className="relative">
-                <PropertyCard property={property} variant="compact" />
-                <div className="absolute top-2 right-2 flex gap-2">
-                  <button
-                    onClick={() => router.push(`/edit-post/${property.id}`)}
-                    className="px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-medium"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => alert('Listing closed!')}
-                    className="px-3 py-1 bg-destructive text-destructive-foreground rounded-full text-xs font-medium"
-                  >
-                    Close
-                  </button>
-                </div>
+            {userProperties.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <p>You haven&apos;t posted any listings yet.</p>
               </div>
-            ))}
+            ) : (
+              userProperties.map((property) => (
+                <div key={property.id} className="relative">
+                  <PropertyCard property={property} variant="compact" />
+                  <div className="absolute top-2 right-2 flex gap-2">
+                    <button
+                      onClick={() => router.push(`/edit-post/${property.id}`)}
+                      className="px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-medium"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => closeProperty(property.id)}
+                      className="px-3 py-1 bg-destructive text-destructive-foreground rounded-full text-xs font-medium"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         )}
 
         {activeTab === 'Closed' && (
           <div className="space-y-3">
-            {closedProperties.map((property) => (
-              <div key={property.id} className="relative">
-                <PropertyCard property={property} variant="compact" />
-                <div className="absolute top-2 left-2 px-2 py-1 bg-success text-success-foreground rounded text-xs font-medium">
-                  Closed
-                </div>
+            {userClosedProperties.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <p>No closed listings yet.</p>
               </div>
-            ))}
+            ) : (
+              userClosedProperties.map((property) => (
+                <div key={property.id} className="relative">
+                  <PropertyCard property={property} variant="compact" />
+                  <div className="absolute top-2 left-2 px-2 py-1 bg-success text-success-foreground rounded text-xs font-medium">
+                    Closed
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         )}
       </div>

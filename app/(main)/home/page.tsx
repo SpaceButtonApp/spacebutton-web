@@ -18,7 +18,7 @@ export default function HomePage() {
   const router = useRouter()
   const { theme } = useTheme()
   const [mounted, setMounted] = useState(false)
-  const { user, activeTab, setActiveTab, properties } = useAppStore()
+  const { user, activeTab, setActiveTab, properties, closedProperties } = useAppStore()
   const [currentTab, setCurrentTab] = useState<Tab>('Connect')
 
   useEffect(() => {
@@ -35,6 +35,9 @@ export default function HomePage() {
   }
 
   const filteredProperties = properties.filter((property) => {
+    // Exclude closed properties
+    if (closedProperties.includes(property.id)) return false
+    
     const type = property.listingType || property.type
     if (currentTab === 'Connect') return type === 'connect'
     if (currentTab === 'Agent') return type === 'agent'

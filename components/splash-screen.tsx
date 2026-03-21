@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
+import { useTheme } from 'next-themes'
 
 interface SplashScreenProps {
   onComplete: () => void
@@ -9,6 +10,12 @@ interface SplashScreenProps {
 
 export function SplashScreen({ onComplete }: SplashScreenProps) {
   const [showFullLogo, setShowFullLogo] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  const { resolvedTheme } = useTheme()
+  
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     // Show icon for 1 second, then animate to full logo
@@ -27,8 +34,10 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
     }
   }, [onComplete])
 
+  const isDark = mounted && resolvedTheme === 'dark'
+
   return (
-    <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center overflow-hidden">
+    <div className={`fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden ${isDark ? 'bg-[#121212]' : 'bg-white'}`}>
       {/* Hexagonal network background */}
       <div 
         className="absolute inset-0 bg-no-repeat bg-bottom bg-contain opacity-30"
@@ -62,8 +71,8 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
           }`}
         >
           <span 
-            className="text-2xl font-bold whitespace-nowrap"
-            style={{ color: '#5B21B6' }}
+            className={`text-2xl font-bold whitespace-nowrap ${isDark ? 'text-white' : ''}`}
+            style={{ color: isDark ? '#ffffff' : '#5B21B6' }}
           >
             SpaceButton
           </span>
@@ -72,7 +81,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
 
       {/* Loading indicator */}
       <div className="absolute bottom-32 left-1/2 -translate-x-1/2">
-        <div className="w-32 h-1 bg-gray-200 rounded-full overflow-hidden">
+        <div className={`w-32 h-1 rounded-full overflow-hidden ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
           <div 
             className="h-full rounded-full transition-all duration-[3000ms] ease-linear"
             style={{ 

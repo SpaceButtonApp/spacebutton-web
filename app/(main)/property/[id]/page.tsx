@@ -138,7 +138,9 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-secondary text-sm">
             <Users className="w-4 h-4" />
-            <span>{property.type === 'connect' ? 'Connect' : 'Agent'}</span>
+            <span>{property.type === 'connect' 
+              ? (property.connectRole === 'Landlord' ? 'Landlord' : 'Tenant') 
+              : 'Agent'}</span>
           </div>
           <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-secondary text-sm">
             <Users className="w-4 h-4" />
@@ -218,13 +220,13 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
 
         {/* Safety Tips */}
         <div>
-          <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
-            Safety Tips <AlertTriangle className="w-5 h-5 text-warning" />
+          <h2 className="text-lg font-bold mb-3 flex items-center gap-2 text-destructive">
+            Safety Tips <AlertTriangle className="w-5 h-5 text-destructive" />
           </h2>
           <ol className="space-y-3">
             {safetyTips.map((tip, index) => (
-              <li key={index} className="flex gap-2 text-sm text-muted-foreground">
-                <span className="font-semibold text-foreground">{index + 1}.</span>
+              <li key={index} className="flex gap-2 text-sm text-destructive/80">
+                <span className="font-semibold text-destructive">{index + 1}.</span>
                 <span>{tip}</span>
               </li>
             ))}

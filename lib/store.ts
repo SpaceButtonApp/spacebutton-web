@@ -30,6 +30,14 @@ interface Transaction {
   date: string
 }
 
+interface DoneDealState {
+  [chatId: string]: {
+    user: boolean
+    agent: boolean
+    locked: boolean
+  }
+}
+
 interface AppState {
   // User
   user: User | null
@@ -38,9 +46,15 @@ interface AppState {
   
   // Properties
   properties: Property[]
+  closedProperties: string[]
   savedProperties: string[]
   toggleSaveProperty: (id: string) => void
   addProperty: (property: Property) => void
+  closeProperty: (id: string) => void
+  
+  // Done Deal
+  doneDealStates: DoneDealState
+  toggleDoneDeal: (chatId: string, propertyId: string, isAgent: boolean) => boolean
   
   // Conversations
   conversations: Conversation[]
@@ -81,6 +95,7 @@ export const useAppStore = create<AppState>()(
       
       // Properties
       properties: mockProperties,
+      closedProperties: [],
       savedProperties: [],
       toggleSaveProperty: (id) => set((state) => ({
         savedProperties: state.savedProperties.includes(id)
@@ -90,6 +105,50 @@ export const useAppStore = create<AppState>()(
       addProperty: (property) => set((state) => ({
         properties: [property, ...state.properties]
       })),
+      closeProperty: (id) => set((state) => ({
+        closedProperties: [...state.closedProperties, id]
+      })),
+      
+      // Done Deal
+      doneDealStates: {},
+      toggleDoneDeal: (chatId, propertyId, isAgent) => {
+        const state = get()
+        const currentState = state.doneDealStates[chatId] || { user: false, agent: false, locked: false }
+        
+        // If already locked, can't toggle
+        if (currentState.locked) return false
+        
+        // Update the appropriate side
+        const newState = {
+          ...currentState,
+          [isAgent ? 'agent' : 'user']: !currentState[isAgent ? 'agent' : 'user']
+        }
+        
+        // Check if both sides have agreed
+        if (newState.user && newState.agent) {
+          newState.locked = true
+          // Close the property
+          set((s) => ({
+            doneDealStates: { ...s.doneDealStates, [chatId]: newState },
+            closedProperties: [...s.closedProperties, propertyId],
+            notifications: [{
+              id: Date.now().toString(),
+              type: 'done_deal',
+              title: 'Congratulations! Done Deal',
+              message: 'Both parties have confirmed the deal. The property has been closed.',
+              read: false,
+              createdAt: new Date().toISOString(),
+              propertyId
+            }, ...s.notifications]
+          }))
+          return true
+        }
+        
+        set((s) => ({
+          doneDealStates: { ...s.doneDealStates, [chatId]: newState }
+        }))
+        return false
+      },
       
       // Conversations
       conversations: mockConversations,
@@ -200,6 +259,8 @@ export const useAppStore = create<AppState>()(
         user: state.user,
         savedProperties: state.savedProperties,
         transactions: state.transactions,
+        closedProperties: state.closedProperties,
+        doneDealStates: state.doneDealStates,
         // Note: properties not persisted to avoid localStorage quota issues with base64 images
       }),
     }

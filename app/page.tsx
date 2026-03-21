@@ -44,7 +44,10 @@ export default function LandingPage() {
     }
   }, [user, router])
 
-  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo-Z3o2DS9CjpuvL55ZsNkmvtolSu2dZz.png'
+  // Use different logo for light/dark mode
+  const logoUrl = mounted && theme === 'dark'
+    ? 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/white%20logo-cLCysqANWjxVue2pY5HYLM9cJlzK4x.png'
+    : 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo-Z3o2DS9CjpuvL55ZsNkmvtolSu2dZz.png'
 
   if (showSplash) {
     return <SplashScreen onComplete={() => setShowSplash(false)} />

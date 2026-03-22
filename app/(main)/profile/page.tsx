@@ -7,7 +7,6 @@ import { ArrowLeft, MoreVertical, Star, Edit } from 'lucide-react'
 import { BottomNav } from '@/components/bottom-nav'
 import { PropertyCard } from '@/components/property-card'
 import { useAppStore } from '@/lib/store'
-import { mockReviews } from '@/lib/mock-data'
 import { cn } from '@/lib/utils'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -16,7 +15,7 @@ type Tab = typeof tabs[number]
 
 export default function ProfilePage() {
   const router = useRouter()
-  const { user, properties, closedProperties, closeProperty } = useAppStore()
+  const { user, properties, closedProperties, closeProperty, reviews } = useAppStore()
   const [activeTab, setActiveTab] = useState<Tab>('Listings')
   const [showMenu, setShowMenu] = useState(false)
 
@@ -27,6 +26,12 @@ export default function ProfilePage() {
   const userClosedProperties = properties.filter((p) => 
     p.ownerId === user?.id && closedProperties.includes(p.id)
   )
+  
+  // Get reviews for the current user
+  const userReviews = reviews.filter((r) => r.toUserId === user?.id)
+  const averageRating = userReviews.length > 0 
+    ? (userReviews.reduce((sum, r) => sum + r.rating, 0) / userReviews.length).toFixed(1)
+    : '0.0'
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -76,7 +81,7 @@ export default function ProfilePage() {
             <p className="text-sm text-muted-foreground">Closed</p>
           </div>
           <div className="px-6 py-4 rounded-xl border border-border text-center min-w-[100px]">
-            <p className="text-2xl font-bold">4.8</p>
+            <p className="text-2xl font-bold">{averageRating}</p>
             <p className="text-sm text-muted-foreground">Rating</p>
           </div>
         </div>
@@ -108,41 +113,47 @@ export default function ProfilePage() {
       <div className="px-4">
         {activeTab === 'Reviews' && (
           <div className="space-y-4">
-            {mockReviews.map((review) => (
-              <div key={review.id} className="p-4 rounded-xl bg-secondary">
-                <div className="flex items-start gap-3">
-                  <Image
-                    src={review.userAvatar}
-                    alt={review.userName}
-                    width={48}
-                    height={48}
-                    className="rounded-full"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold">{review.userName}</h3>
-                      <span className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(review.date, { addSuffix: true })}
-                      </span>
+            {userReviews.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <p>No reviews yet.</p>
+              </div>
+            ) : (
+              userReviews.map((review) => (
+                <div key={review.id} className="p-4 rounded-xl bg-secondary">
+                  <div className="flex items-start gap-3">
+                    <Image
+                      src={review.fromUserAvatar}
+                      alt={review.fromUserName}
+                      width={48}
+                      height={48}
+                      className="rounded-full"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold">{review.fromUserName}</h3>
+                        <span className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(review.createdAt), { addSuffix: true })}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1 mt-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star 
+                            key={star}
+                            className={cn(
+                              'w-4 h-4',
+                              star <= review.rating 
+                                ? 'fill-yellow-400 text-yellow-400' 
+                                : 'text-muted-foreground'
+                            )} 
+                          />
+                        ))}
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-2">{review.feedback}</p>
                     </div>
-                    <div className="flex items-center gap-1 mt-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star 
-                          key={star}
-                          className={cn(
-                            'w-4 h-4',
-                            star <= review.rating 
-                              ? 'fill-yellow-400 text-yellow-400' 
-                              : 'text-muted-foreground'
-                          )} 
-                        />
-                      ))}
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-2">{review.comment}</p>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         )}
 

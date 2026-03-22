@@ -38,6 +38,17 @@ interface DoneDealState {
   }
 }
 
+interface Review {
+  id: string
+  fromUserId: string
+  fromUserName: string
+  fromUserAvatar: string
+  toUserId: string
+  rating: number
+  feedback: string
+  createdAt: string
+}
+
 interface AppState {
   // User
   user: User | null
@@ -50,7 +61,12 @@ interface AppState {
   savedProperties: string[]
   toggleSaveProperty: (id: string) => void
   addProperty: (property: Property) => void
+  updateProperty: (id: string, updates: Partial<Property>) => void
   closeProperty: (id: string) => void
+  
+  // Reviews
+  reviews: Review[]
+  addReview: (review: Omit<Review, 'id' | 'createdAt'>) => void
   
   // Done Deal
   doneDealStates: DoneDealState
@@ -105,8 +121,23 @@ export const useAppStore = create<AppState>()(
       addProperty: (property) => set((state) => ({
         properties: [property, ...state.properties]
       })),
+      updateProperty: (id, updates) => set((state) => ({
+        properties: state.properties.map((p) => 
+          p.id === id ? { ...p, ...updates } : p
+        )
+      })),
       closeProperty: (id) => set((state) => ({
         closedProperties: [...state.closedProperties, id]
+      })),
+      
+      // Reviews
+      reviews: [],
+      addReview: (review) => set((state) => ({
+        reviews: [{
+          ...review,
+          id: Date.now().toString(),
+          createdAt: new Date().toISOString()
+        }, ...state.reviews]
       })),
       
       // Done Deal
@@ -261,6 +292,7 @@ export const useAppStore = create<AppState>()(
         transactions: state.transactions,
         closedProperties: state.closedProperties,
         doneDealStates: state.doneDealStates,
+        reviews: state.reviews,
         // Note: properties not persisted to avoid localStorage quota issues with base64 images
       }),
     }

@@ -89,7 +89,7 @@ export default function WelcomePage() {
         location: 'Nigeria',
         walletBalance: 0,
         isPremium: false,
-        connectsRemaining: 0,
+        connectsRemaining: 1, // 1 free connect for new users
       })
     }
   }, [user, setUser])

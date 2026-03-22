@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import { mockProperties } from '@/lib/mock-data'
+import { useAppStore } from '@/lib/store'
 
 const conditions = ['Rent', 'Roommate', 'Flatmate']
 const categories = ['Flat', 'Self Con', 'Duplex', 'Storey', 'Penthouse']
@@ -17,7 +17,9 @@ const facilities = ['Parking Lot', 'Pet Allowed', 'Park', 'Garden', 'Estate', "K
 export default function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
-  const property = mockProperties.find((p) => p.id === id)
+  const { properties, updateProperty } = useAppStore()
+  const property = properties.find((p) => p.id === id)
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
 
   const [title, setTitle] = useState(property?.title || '')
   const [selectedCondition, setSelectedCondition] = useState(property?.condition || 'rent')
@@ -49,6 +51,22 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   }
 
   const handleFinish = () => {
+    // Update the property in the store
+    updateProperty(id, {
+      title,
+      location,
+      price: parseInt(price.replace(/,/g, '') || '0'),
+      condition: selectedCondition as 'rent' | 'roommate' | 'flatmate',
+      category: selectedCategory as 'flat' | 'self-con' | 'duplex' | 'storey' | 'penthouse',
+      beds: bedrooms,
+      baths: bathrooms,
+      reception: sittingRoom,
+      balconies: balcony,
+      features: selectedFacilities,
+      landlordPresence: landlordPresence,
+      description: descriptions,
+      images: images,
+    })
     setShowReviewModal(true)
   }
 

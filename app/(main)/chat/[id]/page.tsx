@@ -15,7 +15,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const router = useRouter()
   const searchParams = useSearchParams()
   const propertyId = searchParams.get('propertyId')
-  const { properties, doneDealStates, toggleDoneDeal, user } = useAppStore()
+  const { properties, doneDealStates, toggleDoneDeal, user, addReview } = useAppStore()
   
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState(mockMessages)
@@ -26,19 +26,19 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [rating, setRating] = useState(0)
   const [feedback, setFeedback] = useState('')
   
-  // Create a unique chat ID for this conversation
-  const chatId = `${id}-${propertyId || 'default'}`
-  const doneDealState = doneDealStates[chatId] || { user: false, agent: false, locked: false }
-  
-  // Check if current user is the agent (property owner) or the interested user
-  const isAgent = property?.ownerId === user?.id
-  
   const agent = mockAgents.find((a) => a.id === id) || mockAgents[0]
   
   // Get property details from propertyId param or find first property by this agent
   const property = propertyId 
     ? properties.find((p) => p.id === propertyId) 
     : properties.find((p) => p.agent?.id === id) || properties[0]
+
+  // Create a unique chat ID for this conversation
+  const chatId = `${id}-${propertyId || 'default'}`
+  const doneDealState = doneDealStates[chatId] || { user: false, agent: false, locked: false }
+  
+  // Check if current user is the agent (property owner) or the interested user
+  const isAgent = property?.ownerId === user?.id
 
   const handleSend = () => {
     if (!message.trim()) return
@@ -75,9 +75,21 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   }
 
   const handleSubmitFeedback = () => {
+    if (rating > 0 && feedback.trim() && user) {
+      // Add review for the agent/property owner
+      addReview({
+        fromUserId: user.id,
+        fromUserName: user.name,
+        fromUserAvatar: user.avatar,
+        toUserId: agent.id,
+        rating,
+        feedback: feedback.trim()
+      })
+    }
     setShowFeedback(false)
     setShowMenu(false)
-    alert('Thank you for your feedback!')
+    setRating(0)
+    setFeedback('')
   }
 
   return (

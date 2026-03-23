@@ -21,7 +21,7 @@ export default function AdminLoginPage() {
     setIsLoading(true)
 
     // Demo credentials check
-    if (email === 'demo@admin.com' && password === 'admin123') {
+    if ((email === 'dame@admin.com' || email === 'demo@admin.com') && password === 'admin123') {
       localStorage.setItem('adminAuth', JSON.stringify({
         email,
         name: 'Dame Dame',
@@ -30,7 +30,7 @@ export default function AdminLoginPage() {
       }))
       router.push('/admin/dashboard')
     } else {
-      setError('Invalid credentials. Use demo@admin.com / admin123')
+      setError('Invalid credentials. Use dame@admin.com / admin123')
     }
     setIsLoading(false)
   }
@@ -72,7 +72,7 @@ export default function AdminLoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="demo@admin.com"
+                  placeholder="dame@admin.com"
                   className="h-12 pl-12 rounded-xl"
                   required
                 />
@@ -115,7 +115,7 @@ export default function AdminLoginPage() {
           </form>
 
           <p className="text-sm text-muted-foreground text-center mt-6">
-            Demo credentials: demo@admin.com / admin123
+            Demo credentials: dame@admin.com / admin123
           </p>
         </div>
       </div>

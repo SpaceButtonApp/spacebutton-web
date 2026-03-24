@@ -1,6 +1,6 @@
 'use client'
 
-import { AdminHeader } from '@/components/admin-v2/header'
+import { AdminHeader } from '@/components/admin/header'
 import { useAppStore } from '@/lib/store'
 import { 
   CreditCard,

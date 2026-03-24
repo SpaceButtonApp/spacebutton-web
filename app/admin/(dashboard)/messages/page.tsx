@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { AdminHeader } from '@/components/admin-v2/header'
+import { AdminHeader } from '@/components/admin/header'
 import { useAppStore } from '@/lib/store'
 import { Search, Send, Phone, Video, MoreVertical, Paperclip, Image as ImageIcon, Smile } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'

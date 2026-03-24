@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { AdminHeader } from '@/components/admin-v2/header'
+import { AdminHeader } from '@/components/admin/header'
 import { 
   User, 
   Lock, 
@@ -53,7 +53,7 @@ export default function SettingsPage() {
 
   // Load profile from localStorage
   useEffect(() => {
-    const auth = localStorage.getItem('admin-v2-auth')
+    const auth = localStorage.getItem('admin-auth')
     if (auth) {
       const data = JSON.parse(auth)
       setProfile(prev => ({
@@ -87,7 +87,7 @@ export default function SettingsPage() {
 
   // Save profile changes
   const handleSaveProfile = () => {
-    const auth = localStorage.getItem('admin-v2-auth')
+    const auth = localStorage.getItem('admin-auth')
     const existingData = auth ? JSON.parse(auth) : {}
     
     const updatedAuth = {
@@ -98,7 +98,7 @@ export default function SettingsPage() {
       avatar: profile.avatar
     }
     
-    localStorage.setItem('admin-v2-auth', JSON.stringify(updatedAuth))
+    localStorage.setItem('admin-auth', JSON.stringify(updatedAuth))
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
@@ -108,7 +108,7 @@ export default function SettingsPage() {
     setPasswordErrors({ current: '', confirm: '' })
     
     // Check if current password matches (demo password is 'admin123')
-    const auth = localStorage.getItem('admin-v2-auth')
+    const auth = localStorage.getItem('admin-auth')
     const currentPassword = auth ? JSON.parse(auth).password || 'admin123' : 'admin123'
     
     if (passwords.current !== currentPassword) {
@@ -130,7 +130,7 @@ export default function SettingsPage() {
     
     // Save new password
     const existingAuth = auth ? JSON.parse(auth) : {}
-    localStorage.setItem('admin-v2-auth', JSON.stringify({
+    localStorage.setItem('admin-auth', JSON.stringify({
       ...existingAuth,
       password: passwords.new
     }))

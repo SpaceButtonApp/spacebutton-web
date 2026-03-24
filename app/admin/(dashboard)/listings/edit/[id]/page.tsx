@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { AdminHeader } from '@/components/admin-v2/header'
+import { AdminHeader } from '@/components/admin/header'
 import { useAppStore } from '@/lib/store'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Save, Upload, X, Check } from 'lucide-react'
@@ -48,7 +48,7 @@ export default function EditListingPage() {
       setSaved(true)
       setTimeout(() => {
         setSaved(false)
-        router.push('/admin-v2/listings')
+        router.push('/admin/listings')
       }, 1500)
     }
   }
@@ -60,7 +60,7 @@ export default function EditListingPage() {
         <div className="p-6">
           <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-12 text-center">
             <p className="text-gray-400">Listing not found</p>
-            <Link href="/admin-v2/listings" className="text-purple-400 hover:text-purple-300 mt-2 inline-block">
+            <Link href="/admin/listings" className="text-purple-400 hover:text-purple-300 mt-2 inline-block">
               Back to listings
             </Link>
           </div>
@@ -234,7 +234,7 @@ export default function EditListingPage() {
                 )}
               </button>
               <button
-                onClick={() => router.push('/admin-v2/listings')}
+                onClick={() => router.push('/admin/listings')}
                 className="w-full px-4 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-xl transition-colors"
               >
                 Cancel

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { AdminHeader } from '@/components/admin-v2/header'
+import { AdminHeader } from '@/components/admin/header'
 import { useAppStore } from '@/lib/store'
 import { 
   Search, 

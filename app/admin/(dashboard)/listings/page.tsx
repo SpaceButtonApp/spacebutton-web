@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { AdminHeader } from '@/components/admin-v2/header'
+import { AdminHeader } from '@/components/admin/header'
 import { useAppStore } from '@/lib/store'
 import { 
   Search, 
@@ -57,7 +57,7 @@ export default function ListingsPage() {
 
   const handleEditListing = (id: string) => {
     // Navigate to edit post page
-    router.push(`/admin-v2/listings/edit/${id}`)
+    router.push(`/admin/listings/edit/${id}`)
     setShowActionMenu(null)
   }
 

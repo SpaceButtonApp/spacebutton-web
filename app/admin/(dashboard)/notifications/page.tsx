@@ -1,6 +1,6 @@
 'use client'
 
-import { AdminHeader } from '@/components/admin-v2/header'
+import { AdminHeader } from '@/components/admin/header'
 import { useAppStore } from '@/lib/store'
 import { Bell, CheckCircle, Check, Trash2, XCircle } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'

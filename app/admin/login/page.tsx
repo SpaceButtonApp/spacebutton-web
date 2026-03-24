@@ -21,20 +21,20 @@ export default function AdminLoginPage() {
     await new Promise(resolve => setTimeout(resolve, 800))
 
     // Check stored password or default
-    const storedAuth = localStorage.getItem('admin-v2-auth')
+    const storedAuth = localStorage.getItem('admin-auth')
     const storedPassword = storedAuth ? JSON.parse(storedAuth).password || 'admin123' : 'admin123'
 
-    if (email === 'demo@admin.com' && password === storedPassword) {
-      localStorage.setItem('admin-v2-auth', JSON.stringify({ 
+    if (email === 'newdemo@admin.com' && password === storedPassword) {
+      localStorage.setItem('admin-auth', JSON.stringify({ 
         email, 
         name: 'Admin User',
         role: 'Super Admin',
         password: storedPassword,
         loggedIn: true 
       }))
-      router.push('/admin-v2/dashboard')
+      router.push('/admin/dashboard')
     } else {
-      setError('Invalid credentials. Use demo@admin.com / admin123')
+      setError('Invalid credentials. Use newdemo@admin.com / admin123')
       setLoading(false)
     }
   }
@@ -83,7 +83,7 @@ export default function AdminLoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="demo@admin.com"
+                  placeholder="newdemo@admin.com"
                   className="w-full pl-11 pr-4 py-3 bg-[#1a1a24] border border-gray-800 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all"
                   required
                 />
@@ -132,7 +132,7 @@ export default function AdminLoginPage() {
 
           <div className="mt-6 pt-6 border-t border-gray-800">
             <p className="text-xs text-gray-500 text-center">
-              Demo: demo@admin.com / admin123
+              Demo: newdemo@admin.com / admin123
             </p>
           </div>
         </div>

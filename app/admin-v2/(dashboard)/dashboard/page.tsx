@@ -9,13 +9,14 @@ import {
   TrendingUp, 
   ArrowUpRight, 
   ArrowDownRight,
-  MoreHorizontal,
   Eye
 } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 
 export default function DashboardPage() {
+  const router = useRouter()
   const { properties, closedProperties, reviews, transactions } = useAppStore()
 
   // Calculate stats from real data
@@ -62,6 +63,11 @@ export default function DashboardPage() {
 
   const recentListings = properties.slice(0, 5)
   const recentReviews = reviews.slice(0, 4)
+
+  const handleViewListing = (listingId: string) => {
+    // Open property details in new tab for main app
+    window.open(`/property/${listingId}`, '_blank')
+  }
 
   return (
     <div className="min-h-screen">
@@ -175,7 +181,11 @@ export default function DashboardPage() {
                         </span>
                       </td>
                       <td className="px-5 py-4 text-right">
-                        <button className="p-1 hover:bg-gray-800 rounded transition-colors text-gray-400 hover:text-white">
+                        <button 
+                          onClick={() => handleViewListing(listing.id)}
+                          className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-white"
+                          title="View listing details"
+                        >
                           <Eye className="w-4 h-4" />
                         </button>
                       </td>

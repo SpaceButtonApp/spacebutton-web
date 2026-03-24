@@ -1,25 +1,24 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { AdminHeader } from '@/components/admin-v2/header'
-import { useAppStore } from '@/lib/store'
 import { 
   Search, 
-  Filter, 
   MoreVertical, 
   Mail, 
   Trash2, 
   Ban, 
   Eye,
-  UserPlus,
   Download,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  MessageSquare,
+  CheckCircle
 } from 'lucide-react'
-import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 
 // Mock users data - in production this would come from database
-const mockUsers = [
+const initialMockUsers = [
   { id: '1', name: 'John Doe', email: 'john@example.com', phone: '+234 812 345 6789', status: 'active', type: 'individual', listings: 3, joined: '2024-01-15' },
   { id: '2', name: 'Jane Smith', email: 'jane@example.com', phone: '+234 813 456 7890', status: 'active', type: 'agent', listings: 12, joined: '2024-02-20' },
   { id: '3', name: 'Mike Johnson', email: 'mike@example.com', phone: '+234 814 567 8901', status: 'suspended', type: 'individual', listings: 0, joined: '2024-03-10' },
@@ -31,11 +30,14 @@ const mockUsers = [
 ]
 
 export default function UsersPage() {
+  const router = useRouter()
+  const [mockUsers, setMockUsers] = useState(initialMockUsers)
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'suspended' | 'inactive'>('all')
   const [typeFilter, setTypeFilter] = useState<'all' | 'individual' | 'agent'>('all')
-  const [selectedUser, setSelectedUser] = useState<typeof mockUsers[0] | null>(null)
   const [showActionMenu, setShowActionMenu] = useState<string | null>(null)
+  const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null)
+  const [showSuspendModal, setShowSuspendModal] = useState<string | null>(null)
 
   const filteredUsers = mockUsers.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -44,6 +46,66 @@ export default function UsersPage() {
     const matchesType = typeFilter === 'all' || user.type === typeFilter
     return matchesSearch && matchesStatus && matchesType
   })
+
+  // Export users to Excel/CSV
+  const handleExport = () => {
+    const headers = ['ID', 'Name', 'Email', 'Phone', 'Status', 'Type', 'Listings', 'Joined']
+    const csvContent = [
+      headers.join(','),
+      ...mockUsers.map(user => [
+        user.id,
+        user.name,
+        user.email,
+        user.phone,
+        user.status,
+        user.type,
+        user.listings,
+        user.joined
+      ].join(','))
+    ].join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `spacebutton_users_${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  // Send email to user
+  const handleSendEmail = (email: string) => {
+    window.location.href = `mailto:${email}`
+    setShowActionMenu(null)
+  }
+
+  // Suspend user
+  const handleSuspend = (userId: string) => {
+    setMockUsers(prev => prev.map(user => 
+      user.id === userId 
+        ? { ...user, status: user.status === 'suspended' ? 'active' : 'suspended' }
+        : user
+    ))
+    setShowSuspendModal(null)
+    setShowActionMenu(null)
+  }
+
+  // Delete user (flag and remove)
+  const handleDelete = (userId: string) => {
+    // In production, this would flag the user in the database
+    // and prevent them from creating new accounts with their details
+    setMockUsers(prev => prev.filter(user => user.id !== userId))
+    setShowDeleteModal(null)
+    setShowActionMenu(null)
+  }
+
+  // Go to messages with user
+  const handleMessage = (userId: string) => {
+    router.push(`/admin-v2/messages?user=${userId}`)
+    setShowActionMenu(null)
+  }
 
   return (
     <div className="min-h-screen">
@@ -102,7 +164,10 @@ export default function UsersPage() {
               <option value="individual">Individual</option>
               <option value="agent">Agent</option>
             </select>
-            <button className="px-4 py-2.5 bg-[#12121a] border border-gray-800 rounded-xl text-sm text-gray-400 hover:text-white hover:bg-gray-800 transition-colors flex items-center gap-2">
+            <button 
+              onClick={handleExport}
+              className="px-4 py-2.5 bg-purple-600 hover:bg-purple-500 border border-purple-500 rounded-xl text-sm text-white transition-colors flex items-center gap-2"
+            >
               <Download className="w-4 h-4" />
               Export
             </button>
@@ -178,17 +243,33 @@ export default function UsersPage() {
                           <MoreVertical className="w-4 h-4" />
                         </button>
                         {showActionMenu === user.id && (
-                          <div className="absolute right-0 top-full mt-1 w-40 bg-[#1a1a24] border border-gray-800 rounded-lg shadow-xl z-10 overflow-hidden">
-                            <button className="w-full px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-gray-800 flex items-center gap-2">
-                              <Eye className="w-4 h-4" /> View Details
-                            </button>
-                            <button className="w-full px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-gray-800 flex items-center gap-2">
+                          <div className="absolute right-0 top-full mt-1 w-44 bg-[#1a1a24] border border-gray-800 rounded-lg shadow-xl z-10 overflow-hidden">
+                            <button 
+                              onClick={() => handleSendEmail(user.email)}
+                              className="w-full px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-gray-800 flex items-center gap-2"
+                            >
                               <Mail className="w-4 h-4" /> Send Email
                             </button>
-                            <button className="w-full px-4 py-2.5 text-left text-sm text-yellow-400 hover:bg-gray-800 flex items-center gap-2">
-                              <Ban className="w-4 h-4" /> Suspend
+                            <button 
+                              onClick={() => handleMessage(user.id)}
+                              className="w-full px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-gray-800 flex items-center gap-2"
+                            >
+                              <MessageSquare className="w-4 h-4" /> Message
                             </button>
-                            <button className="w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-gray-800 flex items-center gap-2">
+                            <button 
+                              onClick={() => setShowSuspendModal(user.id)}
+                              className="w-full px-4 py-2.5 text-left text-sm text-yellow-400 hover:bg-gray-800 flex items-center gap-2"
+                            >
+                              {user.status === 'suspended' ? (
+                                <><CheckCircle className="w-4 h-4" /> Unsuspend</>
+                              ) : (
+                                <><Ban className="w-4 h-4" /> Suspend</>
+                              )}
+                            </button>
+                            <button 
+                              onClick={() => setShowDeleteModal(user.id)}
+                              className="w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-gray-800 flex items-center gap-2"
+                            >
                               <Trash2 className="w-4 h-4" /> Delete
                             </button>
                           </div>
@@ -219,6 +300,70 @@ export default function UsersPage() {
           </div>
         </div>
       </div>
+
+      {/* Suspend Confirmation Modal */}
+      {showSuspendModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#12121a] border border-gray-800 rounded-2xl p-6 max-w-sm w-full">
+            <div className="w-14 h-14 rounded-full bg-yellow-500/20 flex items-center justify-center mx-auto mb-4">
+              <Ban className="w-7 h-7 text-yellow-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-white text-center mb-2">
+              {mockUsers.find(u => u.id === showSuspendModal)?.status === 'suspended' 
+                ? 'Unsuspend User?' 
+                : 'Suspend User?'}
+            </h3>
+            <p className="text-gray-400 text-sm text-center mb-6">
+              {mockUsers.find(u => u.id === showSuspendModal)?.status === 'suspended' 
+                ? 'This will restore the user\'s access to the platform.'
+                : 'This will prevent the user from accessing the platform until they are unsuspended.'}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowSuspendModal(null)}
+                className="flex-1 px-4 py-2.5 bg-gray-800 hover:bg-gray-700 text-white rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleSuspend(showSuspendModal)}
+                className="flex-1 px-4 py-2.5 bg-yellow-500 hover:bg-yellow-400 text-black font-medium rounded-xl transition-colors"
+              >
+                {mockUsers.find(u => u.id === showSuspendModal)?.status === 'suspended' ? 'Unsuspend' : 'Suspend'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#12121a] border border-gray-800 rounded-2xl p-6 max-w-sm w-full">
+            <div className="w-14 h-14 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
+              <Trash2 className="w-7 h-7 text-red-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-white text-center mb-2">Delete User?</h3>
+            <p className="text-gray-400 text-sm text-center mb-6">
+              This action cannot be undone. The user will be permanently removed and flagged, preventing them from creating a new account with their details.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteModal(null)}
+                className="flex-1 px-4 py-2.5 bg-gray-800 hover:bg-gray-700 text-white rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDelete(showDeleteModal)}
+                className="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-400 text-white font-medium rounded-xl transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

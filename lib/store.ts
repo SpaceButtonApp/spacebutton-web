@@ -62,6 +62,7 @@ interface AppState {
   toggleSaveProperty: (id: string) => void
   addProperty: (property: Property) => void
   updateProperty: (id: string, updates: Partial<Property>) => void
+  deleteProperty: (id: string) => void
   closeProperty: (id: string) => void
   
   // Reviews
@@ -125,6 +126,9 @@ export const useAppStore = create<AppState>()(
         properties: state.properties.map((p) => 
           p.id === id ? { ...p, ...updates } : p
         )
+      })),
+      deleteProperty: (id) => set((state) => ({
+        properties: state.properties.filter((p) => p.id !== id)
       })),
       closeProperty: (id) => set((state) => ({
         closedProperties: [...state.closedProperties, id]

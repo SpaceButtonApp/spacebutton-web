@@ -1,310 +1,257 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import Image from 'next/image'
+import { AdminHeader } from '@/components/admin/header'
 import { useAppStore } from '@/lib/store'
 import { 
   Users, 
-  CheckCircle2, 
-  ListChecks, 
-  Wallet,
-  MoreVertical,
-  TrendingUp,
-  ChevronDown
+  Building2, 
+  CreditCard, 
+  TrendingUp, 
+  ArrowUpRight, 
+  ArrowDownRight,
+  Eye
 } from 'lucide-react'
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Area,
-  AreaChart
-} from 'recharts'
+import Link from 'next/link'
+import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 
-const weeklyData = [
-  { day: 'Sun', value: 15000 },
-  { day: 'Mon', value: 22000 },
-  { day: 'Tue', value: 25000 },
-  { day: 'Wed', value: 30000 },
-  { day: 'Thu', value: 14000 },
-  { day: 'Fri', value: 35000 },
-  { day: 'Sat', value: 45000 },
-]
+export default function DashboardPage() {
+  const router = useRouter()
+  const { properties, closedProperties, reviews, transactions } = useAppStore()
 
-const usersByState = [
-  { state: 'Lagos', count: '30k', rate: 25.8, up: true },
-  { state: 'Ogun', count: '3k', rate: 15.8, up: false },
-  { state: 'Abuja', count: '2k', rate: 35.8, up: true },
-]
-
-const pendingReviews = [
-  { id: 1, user: '@Kanyin', action: 'just made a new listing', time: '30 mins ago', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop' },
-  { id: 2, user: '@Peru and @Tunde', action: 'just completed a deal', time: '1 hour ago', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop' },
-  { id: 3, user: '@Michael', action: 'just dropped a feedback', time: '3 hours ago', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop' },
-]
-
-export default function AdminDashboardPage() {
-  const { properties, closedProperties, reviews, user } = useAppStore()
-  const [adminName, setAdminName] = useState('DAME')
-  const [activeWeek, setActiveWeek] = useState<'this' | 'last'>('this')
-
-  useEffect(() => {
-    const adminAuth = localStorage.getItem('adminAuth')
-    if (adminAuth) {
-      const admin = JSON.parse(adminAuth)
-      setAdminName(admin.name.split(' ')[0].toUpperCase())
-    }
-  }, [])
-
-  const totalUsers = 200000
-  const doneDeals = closedProperties.length > 0 ? closedProperties.length * 1000 : 70000
-  const totalListings = properties.length > 0 ? properties.length * 1000 : 143000
-  const totalRevenue = 90000000
+  // Calculate stats from real data
+  const totalUsers = 1250 // Mock - would come from DB
+  const totalListings = properties.length
+  const activeListings = properties.filter(p => !closedProperties.includes(p.id)).length
+  const closedDeals = closedProperties.length
+  const totalRevenue = transactions.reduce((sum, t) => t.type === 'credit' ? sum + t.amount : sum, 0)
 
   const stats = [
     { 
-      label: 'Total users', 
+      label: 'Total Users', 
       value: totalUsers.toLocaleString(), 
-      change: '+5%', 
-      subtext: '+120 this month',
+      change: '+12.5%',
+      trend: 'up',
       icon: Users,
-      iconBg: 'bg-amber-100 dark:bg-amber-900/30',
-      iconColor: 'text-amber-600'
+      color: 'purple'
     },
     { 
-      label: 'Done Deals', 
-      value: doneDeals.toLocaleString(), 
-      change: '+10%', 
-      subtext: '+200 this month',
-      icon: CheckCircle2,
-      iconBg: 'bg-green-100 dark:bg-green-900/30',
-      iconColor: 'text-green-600'
+      label: 'Active Listings', 
+      value: activeListings.toString(), 
+      change: '+8.2%',
+      trend: 'up',
+      icon: Building2,
+      color: 'blue'
     },
     { 
-      label: 'Total Listings', 
-      value: totalListings.toLocaleString(), 
-      change: '+8%', 
-      subtext: '+20 this month',
-      icon: ListChecks,
-      iconBg: 'bg-blue-100 dark:bg-blue-900/30',
-      iconColor: 'text-blue-600'
+      label: 'Closed Deals', 
+      value: closedDeals.toString(), 
+      change: '+23.1%',
+      trend: 'up',
+      icon: TrendingUp,
+      color: 'green'
     },
     { 
-      label: 'Total revenue generated', 
-      value: `₦${(totalRevenue / 1000000).toFixed(0)},000,000`, 
-      change: '+10%', 
-      subtext: '+₦2,000,000 this month',
-      icon: Wallet,
-      iconBg: 'bg-purple-100 dark:bg-purple-900/30',
-      iconColor: 'text-purple-600'
+      label: 'Revenue', 
+      value: `N${totalRevenue.toLocaleString()}`, 
+      change: '+5.4%',
+      trend: 'up',
+      icon: CreditCard,
+      color: 'orange'
     },
   ]
 
-  const reportStats = [
-    { label: 'Users', value: '52k' },
-    { label: 'Total listings', value: '3.5k' },
-    { label: 'Done Deals', value: '2.5k' },
-    { label: 'Closed listings', value: '3.5k' },
-    { label: 'Revenue', value: '250k' },
-  ]
+  const recentListings = properties.slice(0, 5)
+  const recentReviews = reviews.slice(0, 4)
+
+  const handleViewListing = (listingId: string) => {
+    // Open property details in new tab for main app
+    window.open(`/property/${listingId}`, '_blank')
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Hello {adminName}!</h1>
-          <p className="text-muted-foreground">
-            Welcome to your dashboard, here you can see an overview of the SPACEBUTTON platform.
-          </p>
+    <div className="min-h-screen">
+      <AdminHeader title="Dashboard" />
+      
+      <div className="p-6 space-y-6">
+        {/* Welcome Banner */}
+        <div className="bg-gradient-to-r from-purple-600/20 to-blue-600/20 border border-purple-500/20 rounded-2xl p-6">
+          <h2 className="text-2xl font-bold text-white mb-2">Welcome back, Admin!</h2>
+          <p className="text-gray-400">Here&apos;s what&apos;s happening with SpaceButton today.</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 border border-border rounded-lg bg-card">
-          <span className="text-sm">This month</span>
-          <ChevronDown className="w-4 h-4" />
-        </button>
-      </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-4 gap-4">
-        {stats.map((stat) => {
-          const Icon = stat.icon
-          return (
-            <div key={stat.label} className="bg-card rounded-2xl p-5 border border-border">
-              <div className="flex items-center gap-2 mb-3">
-                <div className={`p-2 rounded-lg ${stat.iconBg}`}>
-                  <Icon className={`w-4 h-4 ${stat.iconColor}`} />
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {stats.map((stat, index) => (
+            <div key={index} className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5 hover:border-gray-700 transition-colors">
+              <div className="flex items-start justify-between mb-4">
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                  stat.color === 'purple' ? 'bg-purple-500/20' :
+                  stat.color === 'blue' ? 'bg-blue-500/20' :
+                  stat.color === 'green' ? 'bg-green-500/20' :
+                  'bg-orange-500/20'
+                }`}>
+                  <stat.icon className={`w-6 h-6 ${
+                    stat.color === 'purple' ? 'text-purple-400' :
+                    stat.color === 'blue' ? 'text-blue-400' :
+                    stat.color === 'green' ? 'text-green-400' :
+                    'text-orange-400'
+                  }`} />
                 </div>
-                <span className="text-sm text-muted-foreground">{stat.label}</span>
-              </div>
-              <p className="text-3xl font-bold mb-1">{stat.value}</p>
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-green-500 flex items-center gap-1">
-                  <TrendingUp className="w-3 h-3" />
+                <div className={`flex items-center gap-1 text-sm ${
+                  stat.trend === 'up' ? 'text-green-400' : 'text-red-400'
+                }`}>
+                  {stat.trend === 'up' ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
                   {stat.change}
-                </span>
-                <span className="text-muted-foreground">{stat.subtext}</span>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Report and Users Section */}
-      <div className="grid grid-cols-3 gap-6">
-        {/* Report Chart */}
-        <div className="col-span-2 bg-card rounded-2xl p-6 border border-border">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold">Report for this week</h2>
-            <div className="flex items-center gap-2">
-              <div className="flex bg-secondary rounded-lg p-1">
-                <button 
-                  onClick={() => setActiveWeek('this')}
-                  className={`px-4 py-1.5 text-sm rounded-md transition-colors ${
-                    activeWeek === 'this' ? 'bg-card shadow-sm' : ''
-                  }`}
-                >
-                  This week
-                </button>
-                <button 
-                  onClick={() => setActiveWeek('last')}
-                  className={`px-4 py-1.5 text-sm rounded-md transition-colors ${
-                    activeWeek === 'last' ? 'bg-card shadow-sm' : ''
-                  }`}
-                >
-                  Last week
-                </button>
-              </div>
-              <button className="p-2 hover:bg-secondary rounded-lg">
-                <MoreVertical className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          {/* Report Stats */}
-          <div className="flex gap-8 mb-6">
-            {reportStats.map((s) => (
-              <div key={s.label}>
-                <p className="text-2xl font-bold">{s.value}</p>
-                <p className="text-sm text-muted-foreground">{s.label}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Chart */}
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={weeklyData}>
-                <defs>
-                  <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e5e5" />
-                <XAxis dataKey="day" axisLine={false} tickLine={false} />
-                <YAxis axisLine={false} tickLine={false} tickFormatter={(v) => `${v/1000}k`} />
-                <Tooltip 
-                  content={({ active, payload, label }) => {
-                    if (active && payload && payload.length) {
-                      return (
-                        <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
-                          <p className="text-sm font-medium">{label}</p>
-                          <p className="text-lg font-bold">{(payload[0].value as number / 1000).toFixed(0)}k</p>
-                        </div>
-                      )
-                    }
-                    return null
-                  }}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="value" 
-                  stroke="#10B981" 
-                  strokeWidth={2}
-                  fill="url(#colorValue)" 
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Users by State */}
-        <div className="bg-card rounded-2xl p-6 border border-border">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-sm text-muted-foreground">Users in last 30 minutes</p>
-              <p className="text-3xl font-bold">21.5K</p>
-            </div>
-            <button className="p-2 hover:bg-secondary rounded-lg">
-              <MoreVertical className="w-4 h-4" />
-            </button>
-          </div>
-
-          <p className="text-sm text-muted-foreground mb-2">Users per minute</p>
-          <div className="flex gap-1 mb-6">
-            {Array.from({ length: 20 }).map((_, i) => (
-              <div 
-                key={i} 
-                className="w-1 bg-green-500 rounded-full"
-                style={{ height: `${Math.random() * 30 + 10}px` }}
-              />
-            ))}
-          </div>
-
-          <div className="flex items-center justify-between mb-4">
-            <p className="font-medium">Users by State</p>
-            <p className="text-sm text-muted-foreground">Rate%</p>
-          </div>
-
-          <div className="space-y-4">
-            {usersByState.map((state) => (
-              <div key={state.state} className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">{state.count}</p>
-                  <p className="text-sm text-muted-foreground">{state.state}</p>
-                </div>
-                <span className={`text-sm ${state.up ? 'text-green-500' : 'text-red-500'}`}>
-                  {state.up ? '↗' : '↘'} {state.rate}%
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <button className="w-full mt-6 py-2 border border-border rounded-lg text-sm font-medium hover:bg-secondary transition-colors">
-            View Insight
-          </button>
-        </div>
-      </div>
-
-      {/* Pending Reviews */}
-      <div className="bg-card rounded-2xl p-6 border border-border">
-        <h2 className="text-lg font-semibold mb-4">Pending reviews</h2>
-        <div className="space-y-4">
-          {pendingReviews.map((review) => (
-            <div key={review.id} className="flex items-center justify-between py-2">
-              <div className="flex items-center gap-3">
-                <Image
-                  src={review.avatar}
-                  alt={review.user}
-                  width={40}
-                  height={40}
-                  className="rounded-full"
-                />
-                <div>
-                  <p className="text-sm">
-                    <span className="font-medium">{review.user}</span> {review.action}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{review.time}</p>
                 </div>
               </div>
-              <button className="text-primary text-sm font-medium hover:underline">
-                Review
-              </button>
+              <p className="text-2xl font-bold text-white mb-1">{stat.value}</p>
+              <p className="text-sm text-gray-400">{stat.label}</p>
             </div>
           ))}
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Recent Listings */}
+          <div className="lg:col-span-2 bg-[#12121a] border border-gray-800/50 rounded-xl overflow-hidden">
+            <div className="p-5 border-b border-gray-800/50 flex items-center justify-between">
+              <h3 className="font-semibold text-white">Recent Listings</h3>
+              <Link href="/admin/listings" className="text-sm text-purple-400 hover:text-purple-300">
+                View all
+              </Link>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-800/50">
+                    <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-3">Property</th>
+                    <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-3">Type</th>
+                    <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-3">Price</th>
+                    <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-3">Status</th>
+                    <th className="text-right text-xs font-medium text-gray-400 uppercase px-5 py-3">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentListings.map((listing) => (
+                    <tr key={listing.id} className="border-b border-gray-800/30 hover:bg-gray-800/20">
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-gray-800 overflow-hidden">
+                            {listing.images?.[0] && (
+                              <Image 
+                                src={listing.images[0]} 
+                                alt={listing.title} 
+                                width={40} 
+                                height={40}
+                                className="w-full h-full object-cover"
+                              />
+                            )}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-white truncate max-w-[150px]">{listing.title}</p>
+                            <p className="text-xs text-gray-500">{listing.location}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4">
+                        <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                          listing.type === 'connect' 
+                            ? 'bg-purple-500/20 text-purple-400' 
+                            : 'bg-blue-500/20 text-blue-400'
+                        }`}>
+                          {listing.type === 'connect' ? 'Connect' : 'Agent'}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 text-sm text-white">
+                        N{listing.price?.toLocaleString() || '0'}
+                      </td>
+                      <td className="px-5 py-4">
+                        <span className={`inline-flex items-center gap-1 text-xs font-medium ${
+                          closedProperties.includes(listing.id) 
+                            ? 'text-gray-400' 
+                            : 'text-green-400'
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            closedProperties.includes(listing.id) 
+                              ? 'bg-gray-400' 
+                              : 'bg-green-400'
+                          }`} />
+                          {closedProperties.includes(listing.id) ? 'Closed' : 'Active'}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 text-right">
+                        <button 
+                          onClick={() => handleViewListing(listing.id)}
+                          className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-white"
+                          title="View listing details"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Recent Reviews */}
+          <div className="bg-[#12121a] border border-gray-800/50 rounded-xl overflow-hidden">
+            <div className="p-5 border-b border-gray-800/50 flex items-center justify-between">
+              <h3 className="font-semibold text-white">Recent Reviews</h3>
+              <Link href="/admin/reviews" className="text-sm text-purple-400 hover:text-purple-300">
+                View all
+              </Link>
+            </div>
+            <div className="p-3">
+              {recentReviews.length > 0 ? recentReviews.map((review) => (
+                <div key={review.id} className="p-3 rounded-lg hover:bg-gray-800/30 transition-colors">
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-sm font-medium shrink-0">
+                      {review.fromUserName.charAt(0)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-white truncate">{review.fromUserName}</p>
+                        <div className="flex items-center gap-0.5">
+                          {[1,2,3,4,5].map((star) => (
+                            <svg key={star} className={`w-3 h-3 ${star <= review.rating ? 'text-yellow-400' : 'text-gray-600'}`} fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1 line-clamp-2">{review.feedback}</p>
+                    </div>
+                  </div>
+                </div>
+              )) : (
+                <div className="text-center py-8 text-gray-500 text-sm">
+                  No reviews yet
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Link href="/admin/users" className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5 hover:border-purple-500/50 transition-all group">
+            <Users className="w-8 h-8 text-purple-400 mb-3 group-hover:scale-110 transition-transform" />
+            <h4 className="font-semibold text-white mb-1">Manage Users</h4>
+            <p className="text-sm text-gray-400">View and manage all platform users</p>
+          </Link>
+          <Link href="/admin/listings" className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5 hover:border-blue-500/50 transition-all group">
+            <Building2 className="w-8 h-8 text-blue-400 mb-3 group-hover:scale-110 transition-transform" />
+            <h4 className="font-semibold text-white mb-1">Manage Listings</h4>
+            <p className="text-sm text-gray-400">Review and approve property listings</p>
+          </Link>
+          <Link href="/admin/transactions" className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5 hover:border-green-500/50 transition-all group">
+            <CreditCard className="w-8 h-8 text-green-400 mb-3 group-hover:scale-110 transition-transform" />
+            <h4 className="font-semibold text-white mb-1">View Transactions</h4>
+            <p className="text-sm text-gray-400">Track all platform transactions</p>
+          </Link>
         </div>
       </div>
     </div>

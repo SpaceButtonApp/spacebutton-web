@@ -2,32 +2,31 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { AdminSidebar } from '@/components/admin/admin-sidebar'
-import { AdminHeader } from '@/components/admin/admin-header'
+import { AdminSidebar } from '@/components/admin/sidebar'
 
-export default function AdminDashboardLayout({
+export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   const router = useRouter()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const adminAuth = localStorage.getItem('adminAuth')
-    if (!adminAuth) {
+    const auth = localStorage.getItem('admin-auth')
+    if (!auth) {
       router.push('/admin/login')
     } else {
       setIsAuthenticated(true)
     }
-    setIsLoading(false)
+    setLoading(false)
   }, [router])
 
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
       </div>
     )
   }
@@ -37,14 +36,11 @@ export default function AdminDashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f7fc] dark:bg-background">
+    <div className="min-h-screen bg-[#0a0a0f]">
       <AdminSidebar />
-      <div className="ml-64">
-        <AdminHeader />
-        <main className="p-6">
-          {children}
-        </main>
-      </div>
+      <main className="pl-64 min-h-screen">
+        {children}
+      </main>
     </div>
   )
 }

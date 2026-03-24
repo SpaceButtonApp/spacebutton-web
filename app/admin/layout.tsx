@@ -1,7 +1,9 @@
-'use client'
+import type { Metadata } from 'next'
 
-import { ThemeProvider } from '@/components/theme-provider'
-import '../globals.css'
+export const metadata: Metadata = {
+  title: 'SpaceButton Admin',
+  description: 'SpaceButton Administration Dashboard',
+}
 
 export default function AdminLayout({
   children,
@@ -9,8 +11,8 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <div className="min-h-screen bg-[#0a0a0f]">
       {children}
-    </ThemeProvider>
+    </div>
   )
 }

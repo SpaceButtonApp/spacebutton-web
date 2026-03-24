@@ -7,8 +7,8 @@ export default function AdminPage() {
   const router = useRouter()
 
   useEffect(() => {
-    const adminAuth = localStorage.getItem('adminAuth')
-    if (adminAuth) {
+    const auth = localStorage.getItem('admin-auth')
+    if (auth) {
       router.push('/admin/dashboard')
     } else {
       router.push('/admin/login')
@@ -16,8 +16,8 @@ export default function AdminPage() {
   }, [router])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+    <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
+      <div className="w-8 h-8 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
     </div>
   )
 }

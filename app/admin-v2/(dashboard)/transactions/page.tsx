@@ -5,12 +5,10 @@ import { useAppStore } from '@/lib/store'
 import { 
   CreditCard,
   TrendingUp,
-  TrendingDown,
   ArrowUpRight,
   ChevronLeft,
   ChevronRight,
   Download,
-  Filter,
   Search
 } from 'lucide-react'
 import { useState } from 'react'
@@ -41,6 +39,33 @@ export default function TransactionsPage() {
     const matchesStatus = statusFilter === 'all' || t.status === statusFilter
     return matchesSearch && matchesStatus
   })
+
+  // Export transactions to Excel/CSV
+  const handleExport = () => {
+    const headers = ['Transaction ID', 'User', 'Email', 'Type', 'Amount', 'Status', 'Date']
+    const csvContent = [
+      headers.join(','),
+      ...mockTransactions.map(txn => [
+        `TXN-${txn.id.padStart(6, '0')}`,
+        txn.user,
+        txn.email,
+        txn.type,
+        txn.amount,
+        txn.status,
+        txn.date
+      ].join(','))
+    ].join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `spacebutton_transactions_${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
 
   return (
     <div className="min-h-screen">
@@ -113,7 +138,10 @@ export default function TransactionsPage() {
               <option value="pending">Pending</option>
               <option value="failed">Failed</option>
             </select>
-            <button className="px-4 py-2.5 bg-[#12121a] border border-gray-800 rounded-xl text-sm text-gray-400 hover:text-white hover:bg-gray-800 transition-colors flex items-center gap-2">
+            <button 
+              onClick={handleExport}
+              className="px-4 py-2.5 bg-purple-600 hover:bg-purple-500 border border-purple-500 rounded-xl text-sm text-white transition-colors flex items-center gap-2"
+            >
               <Download className="w-4 h-4" />
               Export
             </button>

@@ -1,286 +1,223 @@
 'use client'
 
-import { useState } from 'react'
-import Image from 'next/image'
+import { AdminHeader } from '@/components/admin-v2/header'
 import { useAppStore } from '@/lib/store'
 import { 
-  Wallet,
-  CheckCircle2,
-  Clock,
-  XCircle,
+  CreditCard,
   TrendingUp,
-  TrendingDown,
-  MoreVertical,
-  Search,
-  Filter,
-  ArrowUpDown,
+  ArrowUpRight,
   ChevronLeft,
   ChevronRight,
-  Plus
+  Download,
+  Search
 } from 'lucide-react'
-import { Input } from '@/components/ui/input'
+import { useState } from 'react'
 
+// Mock transactions for display
 const mockTransactions = [
-  { id: 1, name: 'John Doe', email: 'john.doe@mail.com', date: '01-01-2026', total: 5000, method: 'CC', status: 'Complete' },
-  { id: 2, name: 'John Doe', email: 'john.doe@mail.com', date: '01-01-2026', total: 15000, method: 'Bank', status: 'Complete' },
-  { id: 3, name: 'John Doe', email: 'john.doe@mail.com', date: '01-01-2026', total: 2000, method: 'CC', status: 'Complete' },
-  { id: 4, name: 'John Doe', email: 'john.doe@mail.com', date: '01-01-2026', total: 10000, method: 'Bank', status: 'Complete' },
-  { id: 5, name: 'Jane Smith', email: 'jane.smith@mail.com', date: '01-01-2026', total: 50000, method: 'CC', status: 'Canceled' },
-  { id: 6, name: 'Emily Davis', email: 'emily.davis@mail.com', date: '01-01-2026', total: 30000, method: 'Bank', status: 'Pending' },
-  { id: 7, name: 'Jane Smith', email: 'jane.smith@mail.com', date: '01-01-2026', total: 20000, method: 'Bank', status: 'Canceled' },
-  { id: 8, name: 'John Doe', email: 'john.doe@mail.com', date: '01-01-2026', total: 30000, method: 'CC', status: 'Complete' },
-  { id: 9, name: 'Emily Davis', email: 'emily.smith@mail.com', date: '01-01-2026', total: 5000, method: 'Wallet', status: 'Pending' },
-  { id: 10, name: 'Jane Smith', email: 'jane.smith@mail.com', date: '01-01-2026', total: 2000, method: 'Bank', status: 'Canceled' },
+  { id: '1', user: 'John Doe', email: 'john@example.com', type: 'Subscription', amount: 5000, status: 'completed', date: '2024-05-20' },
+  { id: '2', user: 'Jane Smith', email: 'jane@example.com', type: 'Connect Pack', amount: 2500, status: 'completed', date: '2024-05-19' },
+  { id: '3', user: 'Mike Johnson', email: 'mike@example.com', type: 'Wallet Top-up', amount: 10000, status: 'completed', date: '2024-05-18' },
+  { id: '4', user: 'Sarah Williams', email: 'sarah@example.com', type: 'Subscription', amount: 5000, status: 'pending', date: '2024-05-17' },
+  { id: '5', user: 'David Brown', email: 'david@example.com', type: 'Connect Single', amount: 500, status: 'completed', date: '2024-05-16' },
+  { id: '6', user: 'Emily Davis', email: 'emily@example.com', type: 'Subscription', amount: 50000, status: 'completed', date: '2024-05-15' },
+  { id: '7', user: 'Chris Wilson', email: 'chris@example.com', type: 'Wallet Top-up', amount: 20000, status: 'failed', date: '2024-05-14' },
+  { id: '8', user: 'Lisa Anderson', email: 'lisa@example.com', type: 'Connect Pack', amount: 2500, status: 'completed', date: '2024-05-13' },
 ]
 
 export default function TransactionsPage() {
   const { transactions } = useAppStore()
-  const [currentPage, setCurrentPage] = useState(1)
-  const [activeTab, setActiveTab] = useState<'all' | 'completed' | 'pending' | 'canceled'>('all')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'completed' | 'pending' | 'failed'>('all')
 
-  const filteredTransactions = activeTab === 'all' 
-    ? mockTransactions 
-    : mockTransactions.filter(t => t.status.toLowerCase() === activeTab)
+  const totalRevenue = mockTransactions.filter(t => t.status === 'completed').reduce((sum, t) => sum + t.amount, 0)
+  const pendingAmount = mockTransactions.filter(t => t.status === 'pending').reduce((sum, t) => sum + t.amount, 0)
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Complete': return 'text-green-500'
-      case 'Pending': return 'text-amber-500'
-      case 'Canceled': return 'text-red-500'
-      default: return 'text-muted-foreground'
-    }
+  const filteredTransactions = mockTransactions.filter(t => {
+    const matchesSearch = t.user.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         t.email.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesStatus = statusFilter === 'all' || t.status === statusFilter
+    return matchesSearch && matchesStatus
+  })
+
+  // Export transactions to Excel/CSV
+  const handleExport = () => {
+    const headers = ['Transaction ID', 'User', 'Email', 'Type', 'Amount', 'Status', 'Date']
+    const csvContent = [
+      headers.join(','),
+      ...mockTransactions.map(txn => [
+        `TXN-${txn.id.padStart(6, '0')}`,
+        txn.user,
+        txn.email,
+        txn.type,
+        txn.amount,
+        txn.status,
+        txn.date
+      ].join(','))
+    ].join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `spacebutton_transactions_${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
   return (
-    <div className="space-y-6">
-      {/* Stats Cards */}
-      <div className="grid grid-cols-5 gap-4">
-        <div className="bg-card rounded-2xl p-5 border border-border">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm text-muted-foreground">Total Revenue</span>
-            <button className="p-1 hover:bg-secondary rounded">
-              <MoreVertical className="w-4 h-4" />
-            </button>
+    <div className="min-h-screen">
+      <AdminHeader title="Transactions" />
+      
+      <div className="p-6 space-y-6">
+        {/* Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-green-400" />
+              </div>
+              <span className="text-xs text-green-400 flex items-center gap-1">
+                <ArrowUpRight className="w-3 h-3" /> +12.5%
+              </span>
+            </div>
+            <p className="text-2xl font-bold text-white">N{totalRevenue.toLocaleString()}</p>
+            <p className="text-sm text-gray-400">Total Revenue</p>
           </div>
-          <p className="text-2xl font-bold mb-1">₦9,045,000</p>
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-green-500 flex items-center gap-1">
-              <TrendingUp className="w-3 h-3" />
-              14.4%
-            </span>
+          <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-lg bg-yellow-500/20 flex items-center justify-center">
+                <CreditCard className="w-5 h-5 text-yellow-400" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-white">N{pendingAmount.toLocaleString()}</p>
+            <p className="text-sm text-gray-400">Pending</p>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">Last 7 days</p>
+          <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                <CreditCard className="w-5 h-5 text-purple-400" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-white">{mockTransactions.length}</p>
+            <p className="text-sm text-gray-400">Total Transactions</p>
+          </div>
+          <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-blue-400" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-white">{mockTransactions.filter(t => t.status === 'completed').length}</p>
+            <p className="text-sm text-gray-400">Successful</p>
+          </div>
         </div>
 
-        <div className="bg-card rounded-2xl p-5 border border-border">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm text-muted-foreground">Completed Transactions</span>
-            <button className="p-1 hover:bg-secondary rounded">
-              <MoreVertical className="w-4 h-4" />
+        {/* Filters */}
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <input
+              type="text"
+              placeholder="Search transactions..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 bg-[#12121a] border border-gray-800 rounded-xl text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500"
+            />
+          </div>
+          <div className="flex gap-3">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as any)}
+              className="px-4 py-2.5 bg-[#12121a] border border-gray-800 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+            >
+              <option value="all">All Status</option>
+              <option value="completed">Completed</option>
+              <option value="pending">Pending</option>
+              <option value="failed">Failed</option>
+            </select>
+            <button 
+              onClick={handleExport}
+              className="px-4 py-2.5 bg-purple-600 hover:bg-purple-500 border border-purple-500 rounded-xl text-sm text-white transition-colors flex items-center gap-2"
+            >
+              <Download className="w-4 h-4" />
+              Export
             </button>
           </div>
-          <p className="text-2xl font-bold mb-1">3,150</p>
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-green-500 flex items-center gap-1">
-              <TrendingUp className="w-3 h-3" />
-              20%
-            </span>
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">Last 7 days</p>
         </div>
 
-        <div className="bg-card rounded-2xl p-5 border border-border">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm text-muted-foreground">Pending Transactions</span>
-            <button className="p-1 hover:bg-secondary rounded">
-              <MoreVertical className="w-4 h-4" />
-            </button>
-          </div>
-          <p className="text-2xl font-bold mb-1">150</p>
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-green-500 flex items-center gap-1">
-              <TrendingUp className="w-3 h-3" />
-              85%
-            </span>
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">Last 7 days</p>
-        </div>
-
-        <div className="bg-card rounded-2xl p-5 border border-border">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm text-muted-foreground">Failed Transactions</span>
-            <button className="p-1 hover:bg-secondary rounded">
-              <MoreVertical className="w-4 h-4" />
-            </button>
-          </div>
-          <p className="text-2xl font-bold mb-1">75</p>
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-red-500 flex items-center gap-1">
-              <TrendingDown className="w-3 h-3" />
-              15%
-            </span>
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">Last 7 days</p>
-        </div>
-
-        {/* Payment Method Card */}
-        <div className="bg-card rounded-2xl p-5 border border-border">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-medium">Payment Method</span>
-            <button className="p-1 hover:bg-secondary rounded">
-              <MoreVertical className="w-4 h-4" />
-            </button>
-          </div>
-          
-          <div className="flex gap-4">
-            {/* Card Visual */}
-            <div className="w-24 h-16 rounded-lg bg-gradient-to-br from-teal-500 to-emerald-600 p-2 text-white text-[6px] flex flex-col justify-between">
-              <span className="text-[8px] font-medium">Finaci</span>
-              <div className="flex gap-1">
-                {[1,2,3,4].map(i => (
-                  <span key={i} className="tracking-wider">****</span>
+        {/* Transactions Table */}
+        <div className="bg-[#12121a] border border-gray-800/50 rounded-xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-800/50">
+                  <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">Transaction ID</th>
+                  <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">User</th>
+                  <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">Type</th>
+                  <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">Amount</th>
+                  <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">Status</th>
+                  <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredTransactions.map((txn) => (
+                  <tr key={txn.id} className="border-b border-gray-800/30 hover:bg-gray-800/20">
+                    <td className="px-5 py-4">
+                      <span className="text-sm font-mono text-gray-400">TXN-{txn.id.padStart(6, '0')}</span>
+                    </td>
+                    <td className="px-5 py-4">
+                      <div>
+                        <p className="text-sm font-medium text-white">{txn.user}</p>
+                        <p className="text-xs text-gray-500">{txn.email}</p>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className="text-sm text-gray-300">{txn.type}</span>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className="text-sm font-semibold text-white">N{txn.amount.toLocaleString()}</span>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+                        txn.status === 'completed' ? 'bg-green-500/20 text-green-400' :
+                        txn.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
+                        'bg-red-500/20 text-red-400'
+                      }`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${
+                          txn.status === 'completed' ? 'bg-green-400' :
+                          txn.status === 'pending' ? 'bg-yellow-400' :
+                          'bg-red-400'
+                        }`} />
+                        {txn.status.charAt(0).toUpperCase() + txn.status.slice(1)}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 text-sm text-gray-400">
+                      {new Date(txn.date).toLocaleDateString()}
+                    </td>
+                  </tr>
                 ))}
-                <span>2345</span>
-              </div>
-              <div className="flex justify-between text-[5px]">
-                <div>
-                  <p className="opacity-70">Card Holder name</p>
-                  <p>Noman Manzoor</p>
-                </div>
-                <div className="text-right">
-                  <p className="opacity-70">Expiry Date</p>
-                  <p>02/30</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="text-xs space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">Status:</span>
-                <span className="text-green-500 font-medium">Active</span>
-              </div>
-              <p><span className="text-muted-foreground">Transactions:</span> 11,250</p>
-              <p><span className="text-muted-foreground">Revenue:</span> ₦90,000,000</p>
-              <button className="text-primary text-xs hover:underline">View Transactions</button>
-            </div>
+              </tbody>
+            </table>
           </div>
 
-          <div className="flex gap-2 mt-3">
-            <button className="flex-1 py-2 border border-border rounded-lg text-xs flex items-center justify-center gap-1 hover:bg-secondary">
-              <Plus className="w-3 h-3" />
-              Add Card
-            </button>
-            <button className="px-4 py-2 bg-green-500 text-white rounded-lg text-xs font-medium">
-              Deactivate
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Transactions Table */}
-      <div className="bg-card rounded-2xl border border-border overflow-hidden">
-        {/* Tabs and Search */}
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <div className="flex gap-2">
-            {(['all', 'completed', 'pending', 'canceled'] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 rounded-full text-sm font-medium capitalize transition-colors ${
-                  activeTab === tab
-                    ? 'bg-secondary text-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {tab === 'all' ? `All Transaction (240)` : tab.charAt(0).toUpperCase() + tab.slice(1)}
+          {/* Pagination */}
+          <div className="px-5 py-4 border-t border-gray-800/50 flex items-center justify-between">
+            <p className="text-sm text-gray-400">
+              Showing {filteredTransactions.length} transactions
+            </p>
+            <div className="flex items-center gap-2">
+              <button className="p-2 rounded-lg border border-gray-800 text-gray-400 hover:bg-gray-800 hover:text-white transition-colors disabled:opacity-50" disabled>
+                <ChevronLeft className="w-4 h-4" />
               </button>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Input
-                placeholder="Search payment history"
-                className="w-64 h-9 pl-4 pr-10 rounded-lg"
-              />
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            </div>
-            <button className="p-2 hover:bg-secondary rounded-lg border border-border">
-              <Filter className="w-4 h-4" />
-            </button>
-            <button className="p-2 hover:bg-secondary rounded-lg border border-border">
-              <ArrowUpDown className="w-4 h-4" />
-            </button>
-            <button className="p-2 hover:bg-secondary rounded-lg border border-border">
-              <MoreVertical className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Table */}
-        <table className="w-full">
-          <thead className="bg-secondary/50">
-            <tr>
-              <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Name</th>
-              <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Mail</th>
-              <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Date</th>
-              <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Total</th>
-              <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Method</th>
-              <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Status</th>
-              <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredTransactions.map((tx) => (
-              <tr key={tx.id} className="border-t border-border hover:bg-secondary/30">
-                <td className="px-6 py-4 text-sm font-medium">{tx.name}</td>
-                <td className="px-6 py-4 text-sm text-muted-foreground">{tx.email}</td>
-                <td className="px-6 py-4 text-sm">{tx.date}</td>
-                <td className="px-6 py-4 text-sm">₦{tx.total.toLocaleString()}</td>
-                <td className="px-6 py-4 text-sm">{tx.method}</td>
-                <td className="px-6 py-4">
-                  <span className={`flex items-center gap-1 text-sm ${getStatusColor(tx.status)}`}>
-                    <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                    {tx.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <button className="text-primary text-sm font-medium hover:underline">
-                    View Details
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {/* Pagination */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-border">
-          <button className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-            <ChevronLeft className="w-4 h-4" />
-            Previous
-          </button>
-          <div className="flex items-center gap-1">
-            {[1, 2, 3, 4, 5].map((page) => (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`w-8 h-8 rounded-lg text-sm ${
-                  currentPage === page
-                    ? 'bg-primary text-primary-foreground'
-                    : 'hover:bg-secondary'
-                }`}
-              >
-                {page}
+              <button className="px-3 py-1.5 rounded-lg bg-purple-600 text-white text-sm font-medium">1</button>
+              <button className="p-2 rounded-lg border border-gray-800 text-gray-400 hover:bg-gray-800 hover:text-white transition-colors">
+                <ChevronRight className="w-4 h-4" />
               </button>
-            ))}
-            <span className="px-2">.....</span>
-            <button className="w-8 h-8 rounded-lg text-sm hover:bg-secondary">24</button>
+            </div>
           </div>
-          <button className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-            Next
-            <ChevronRight className="w-4 h-4" />
-          </button>
         </div>
       </div>
     </div>

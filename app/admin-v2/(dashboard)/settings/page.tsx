@@ -1,35 +1,44 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { AdminHeader } from '@/components/admin-v2/header'
 import { 
   User, 
-  Mail, 
   Lock, 
   Bell, 
   Shield, 
   Eye,
   EyeOff,
   Save,
-  Check
+  Check,
+  Camera,
+  AlertCircle
 } from 'lucide-react'
+import Image from 'next/image'
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications'>('profile')
   const [showPassword, setShowPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [saved, setSaved] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   
   const [profile, setProfile] = useState({
     name: 'Admin User',
-    email: 'newdemo@admin.com',
+    email: 'demo@admin.com',
     phone: '+234 800 000 0000',
-    role: 'Super Admin'
+    role: 'Super Admin',
+    avatar: ''
   })
 
   const [passwords, setPasswords] = useState({
     current: '',
     new: '',
+    confirm: ''
+  })
+
+  const [passwordErrors, setPasswordErrors] = useState({
+    current: '',
     confirm: ''
   })
 
@@ -42,6 +51,7 @@ export default function SettingsPage() {
     emailDigest: false
   })
 
+  // Load profile from localStorage
   useEffect(() => {
     const auth = localStorage.getItem('admin-v2-auth')
     if (auth) {
@@ -50,12 +60,89 @@ export default function SettingsPage() {
         ...prev,
         name: data.name || prev.name,
         email: data.email || prev.email,
-        role: data.role || prev.role
+        role: data.role || prev.role,
+        avatar: data.avatar || prev.avatar
       }))
+    }
+    
+    // Load notification preferences
+    const notifPrefs = localStorage.getItem('admin-notifications')
+    if (notifPrefs) {
+      setNotifications(JSON.parse(notifPrefs))
     }
   }, [])
 
-  const handleSave = () => {
+  // Handle photo change
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const base64 = reader.result as string
+        setProfile(prev => ({ ...prev, avatar: base64 }))
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  // Save profile changes
+  const handleSaveProfile = () => {
+    const auth = localStorage.getItem('admin-v2-auth')
+    const existingData = auth ? JSON.parse(auth) : {}
+    
+    const updatedAuth = {
+      ...existingData,
+      name: profile.name,
+      email: profile.email,
+      phone: profile.phone,
+      avatar: profile.avatar
+    }
+    
+    localStorage.setItem('admin-v2-auth', JSON.stringify(updatedAuth))
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
+
+  // Validate and update password
+  const handleUpdatePassword = () => {
+    setPasswordErrors({ current: '', confirm: '' })
+    
+    // Check if current password matches (demo password is 'admin123')
+    const auth = localStorage.getItem('admin-v2-auth')
+    const currentPassword = auth ? JSON.parse(auth).password || 'admin123' : 'admin123'
+    
+    if (passwords.current !== currentPassword) {
+      setPasswordErrors(prev => ({ ...prev, current: 'Current password does not match' }))
+      return
+    }
+    
+    // Check if new passwords match
+    if (passwords.new !== passwords.confirm) {
+      setPasswordErrors(prev => ({ ...prev, confirm: 'New passwords do not match' }))
+      return
+    }
+    
+    // Check minimum length
+    if (passwords.new.length < 6) {
+      setPasswordErrors(prev => ({ ...prev, confirm: 'Password must be at least 6 characters' }))
+      return
+    }
+    
+    // Save new password
+    const existingAuth = auth ? JSON.parse(auth) : {}
+    localStorage.setItem('admin-v2-auth', JSON.stringify({
+      ...existingAuth,
+      password: passwords.new
+    }))
+    
+    setPasswords({ current: '', new: '', confirm: '' })
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
+
+  // Save notification preferences
+  const handleSaveNotifications = () => {
+    localStorage.setItem('admin-notifications', JSON.stringify(notifications))
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
@@ -99,10 +186,38 @@ export default function SettingsPage() {
               </div>
 
               <div className="flex items-center gap-6">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-2xl font-bold">
-                  {profile.name.charAt(0)}
+                <div className="relative">
+                  {profile.avatar ? (
+                    <Image 
+                      src={profile.avatar} 
+                      alt={profile.name} 
+                      width={80} 
+                      height={80} 
+                      className="w-20 h-20 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-2xl font-bold">
+                      {profile.name.charAt(0)}
+                    </div>
+                  )}
+                  <button 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-purple-600 hover:bg-purple-500 flex items-center justify-center text-white transition-colors"
+                  >
+                    <Camera className="w-4 h-4" />
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoChange}
+                    className="hidden"
+                  />
                 </div>
-                <button className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium rounded-lg transition-colors">
+                <button 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium rounded-lg transition-colors"
+                >
                   Change Photo
                 </button>
               </div>
@@ -148,7 +263,7 @@ export default function SettingsPage() {
 
               <div className="flex justify-end">
                 <button 
-                  onClick={handleSave}
+                  onClick={handleSaveProfile}
                   className="flex items-center gap-2 px-6 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-xl transition-colors"
                 >
                   {saved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
@@ -173,8 +288,13 @@ export default function SettingsPage() {
                     <input
                       type={showPassword ? 'text' : 'password'}
                       value={passwords.current}
-                      onChange={(e) => setPasswords({ ...passwords, current: e.target.value })}
-                      className="w-full px-4 py-3 bg-[#1a1a24] border border-gray-800 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 pr-12"
+                      onChange={(e) => {
+                        setPasswords({ ...passwords, current: e.target.value })
+                        setPasswordErrors(prev => ({ ...prev, current: '' }))
+                      }}
+                      className={`w-full px-4 py-3 bg-[#1a1a24] border rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 pr-12 ${
+                        passwordErrors.current ? 'border-red-500' : 'border-gray-800'
+                      }`}
                     />
                     <button
                       type="button"
@@ -184,6 +304,12 @@ export default function SettingsPage() {
                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
                   </div>
+                  {passwordErrors.current && (
+                    <p className="text-red-400 text-sm mt-2 flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" />
+                      {passwordErrors.current}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">New Password</label>
@@ -208,19 +334,31 @@ export default function SettingsPage() {
                   <input
                     type="password"
                     value={passwords.confirm}
-                    onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
-                    className="w-full px-4 py-3 bg-[#1a1a24] border border-gray-800 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500"
+                    onChange={(e) => {
+                      setPasswords({ ...passwords, confirm: e.target.value })
+                      setPasswordErrors(prev => ({ ...prev, confirm: '' }))
+                    }}
+                    className={`w-full px-4 py-3 bg-[#1a1a24] border rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 ${
+                      passwordErrors.confirm ? 'border-red-500' : 'border-gray-800'
+                    }`}
                   />
+                  {passwordErrors.confirm && (
+                    <p className="text-red-400 text-sm mt-2 flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" />
+                      {passwordErrors.confirm}
+                    </p>
+                  )}
                 </div>
               </div>
 
               <div className="flex justify-end">
                 <button 
-                  onClick={handleSave}
-                  className="flex items-center gap-2 px-6 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-xl transition-colors"
+                  onClick={handleUpdatePassword}
+                  disabled={!passwords.current || !passwords.new || !passwords.confirm}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-purple-600 hover:bg-purple-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-medium rounded-xl transition-colors"
                 >
-                  <Lock className="w-4 h-4" />
-                  Update Password
+                  {saved ? <Check className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                  {saved ? 'Updated!' : 'Update Password'}
                 </button>
               </div>
             </div>
@@ -264,7 +402,7 @@ export default function SettingsPage() {
 
               <div className="flex justify-end">
                 <button 
-                  onClick={handleSave}
+                  onClick={handleSaveNotifications}
                   className="flex items-center gap-2 px-6 py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-xl transition-colors"
                 >
                   {saved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}

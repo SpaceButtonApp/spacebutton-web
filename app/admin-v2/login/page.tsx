@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react'
 
 export default function AdminLoginPage() {
@@ -21,16 +20,21 @@ export default function AdminLoginPage() {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 800))
 
-    if (email === 'newdemo@admin.com' && password === 'admin123') {
+    // Check stored password or default
+    const storedAuth = localStorage.getItem('admin-v2-auth')
+    const storedPassword = storedAuth ? JSON.parse(storedAuth).password || 'admin123' : 'admin123'
+
+    if (email === 'demo@admin.com' && password === storedPassword) {
       localStorage.setItem('admin-v2-auth', JSON.stringify({ 
         email, 
         name: 'Admin User',
         role: 'Super Admin',
+        password: storedPassword,
         loggedIn: true 
       }))
       router.push('/admin-v2/dashboard')
     } else {
-      setError('Invalid credentials. Use newdemo@admin.com / admin123')
+      setError('Invalid credentials. Use demo@admin.com / admin123')
       setLoading(false)
     }
   }
@@ -79,7 +83,7 @@ export default function AdminLoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="newdemo@admin.com"
+                  placeholder="demo@admin.com"
                   className="w-full pl-11 pr-4 py-3 bg-[#1a1a24] border border-gray-800 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all"
                   required
                 />
@@ -128,13 +132,13 @@ export default function AdminLoginPage() {
 
           <div className="mt-6 pt-6 border-t border-gray-800">
             <p className="text-xs text-gray-500 text-center">
-              Demo: newdemo@admin.com / admin123
+              Demo: demo@admin.com / admin123
             </p>
           </div>
         </div>
 
         <p className="text-center text-gray-500 text-xs mt-6">
-          SpaceButton Admin v2.0
+          SpaceButton Admin Panel
         </p>
       </div>
     </div>

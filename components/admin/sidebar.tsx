@@ -19,14 +19,14 @@ import { cn } from '@/lib/utils'
 import { useState } from 'react'
 
 const menuItems = [
-  { label: 'Dashboard', href: '/admin-v2/dashboard', icon: LayoutDashboard },
-  { label: 'Users', href: '/admin-v2/users', icon: Users },
-  { label: 'Listings', href: '/admin-v2/listings', icon: Building2 },
-  { label: 'Messages', href: '/admin-v2/messages', icon: MessageSquare },
-  { label: 'Transactions', href: '/admin-v2/transactions', icon: CreditCard },
-  { label: 'Reviews', href: '/admin-v2/reviews', icon: Star },
-  { label: 'Notifications', href: '/admin-v2/notifications', icon: Bell },
-  { label: 'Settings', href: '/admin-v2/settings', icon: Settings },
+  { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+  { label: 'Users', href: '/admin/users', icon: Users },
+  { label: 'Listings', href: '/admin/listings', icon: Building2 },
+  { label: 'Messages', href: '/admin/messages', icon: MessageSquare },
+  { label: 'Transactions', href: '/admin/transactions', icon: CreditCard },
+  { label: 'Reviews', href: '/admin/reviews', icon: Star },
+  { label: 'Notifications', href: '/admin/notifications', icon: Bell },
+  { label: 'Settings', href: '/admin/settings', icon: Settings },
 ]
 
 export function AdminSidebar() {
@@ -36,8 +36,8 @@ export function AdminSidebar() {
   const [showLogoutModal, setShowLogoutModal] = useState(false)
 
   const handleLogout = () => {
-    localStorage.removeItem('admin-v2-auth')
-    router.push('/admin-v2/login')
+    localStorage.removeItem('admin-auth')
+    router.push('/admin/login')
   }
 
   return (
@@ -48,7 +48,7 @@ export function AdminSidebar() {
       )}>
         {/* Logo */}
         <div className="p-6 border-b border-gray-800/50">
-          <Link href="/admin-v2/dashboard" className="flex items-center gap-3">
+          <Link href="/admin/dashboard" className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl flex items-center justify-center shrink-0">
               <span className="text-white font-bold text-lg">S</span>
             </div>

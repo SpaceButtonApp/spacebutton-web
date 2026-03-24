@@ -19,7 +19,7 @@ export function AdminHeader({ title }: { title: string }) {
   const { notifications } = useAppStore()
 
   useEffect(() => {
-    const auth = localStorage.getItem('admin-v2-auth')
+    const auth = localStorage.getItem('admin-auth')
     if (auth) {
       setAdmin(JSON.parse(auth))
     }
@@ -94,7 +94,7 @@ export function AdminHeader({ title }: { title: string }) {
               </div>
               <div className="p-3 border-t border-gray-800">
                 <Link 
-                  href="/admin-v2/notifications" 
+                  href="/admin/notifications" 
                   onClick={() => setShowNotifications(false)}
                   className="w-full block text-center text-sm text-purple-400 hover:text-purple-300"
                 >

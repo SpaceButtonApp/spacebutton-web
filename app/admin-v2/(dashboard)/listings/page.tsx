@@ -13,20 +13,22 @@ import {
   CheckCircle,
   ChevronLeft,
   ChevronRight,
-  Building2,
   MapPin,
   Bed,
   Bath
 } from 'lucide-react'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 
 export default function ListingsPage() {
-  const { properties, closedProperties, closeProperty } = useAppStore()
+  const router = useRouter()
+  const { properties, closedProperties, closeProperty, deleteProperty } = useAppStore()
   const [searchQuery, setSearchQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState<'all' | 'connect' | 'agent'>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'closed'>('all')
   const [showActionMenu, setShowActionMenu] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
+  const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null)
 
   const filteredListings = properties.filter(listing => {
     const matchesSearch = listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -44,6 +46,24 @@ export default function ListingsPage() {
 
   const handleCloseListing = (id: string) => {
     closeProperty(id)
+    setShowActionMenu(null)
+  }
+
+  const handleViewListing = (id: string) => {
+    // Open property details in new tab for main app
+    window.open(`/property/${id}`, '_blank')
+    setShowActionMenu(null)
+  }
+
+  const handleEditListing = (id: string) => {
+    // Navigate to edit post page
+    router.push(`/admin-v2/listings/edit/${id}`)
+    setShowActionMenu(null)
+  }
+
+  const handleDeleteListing = (id: string) => {
+    deleteProperty(id)
+    setShowDeleteModal(null)
     setShowActionMenu(null)
   }
 
@@ -198,10 +218,16 @@ export default function ListingsPage() {
                             </button>
                             {showActionMenu === listing.id && (
                               <div className="absolute right-0 top-full mt-1 w-40 bg-[#1a1a24] border border-gray-800 rounded-lg shadow-xl z-10 overflow-hidden">
-                                <button className="w-full px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-gray-800 flex items-center gap-2">
+                                <button 
+                                  onClick={() => handleViewListing(listing.id)}
+                                  className="w-full px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-gray-800 flex items-center gap-2"
+                                >
                                   <Eye className="w-4 h-4" /> View
                                 </button>
-                                <button className="w-full px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-gray-800 flex items-center gap-2">
+                                <button 
+                                  onClick={() => handleEditListing(listing.id)}
+                                  className="w-full px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-gray-800 flex items-center gap-2"
+                                >
                                   <Edit className="w-4 h-4" /> Edit
                                 </button>
                                 {!isClosed && (
@@ -212,7 +238,10 @@ export default function ListingsPage() {
                                     <XCircle className="w-4 h-4" /> Close
                                   </button>
                                 )}
-                                <button className="w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-gray-800 flex items-center gap-2">
+                                <button 
+                                  onClick={() => setShowDeleteModal(listing.id)}
+                                  className="w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-gray-800 flex items-center gap-2"
+                                >
                                   <Trash2 className="w-4 h-4" /> Delete
                                 </button>
                               </div>
@@ -285,17 +314,27 @@ export default function ListingsPage() {
                     <div className="flex items-center justify-between">
                       <p className="text-lg font-bold text-white">N{listing.price?.toLocaleString()}</p>
                       <div className="flex items-center gap-2">
-                        <button className="p-2 rounded-lg bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors">
+                        <button 
+                          onClick={() => handleViewListing(listing.id)}
+                          className="p-2 rounded-lg bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"
+                          title="View listing"
+                        >
                           <Eye className="w-4 h-4" />
                         </button>
-                        {!isClosed && (
-                          <button 
-                            onClick={() => handleCloseListing(listing.id)}
-                            className="p-2 rounded-lg bg-gray-800 text-yellow-400 hover:bg-yellow-500/20 transition-colors"
-                          >
-                            <XCircle className="w-4 h-4" />
-                          </button>
-                        )}
+                        <button 
+                          onClick={() => handleEditListing(listing.id)}
+                          className="p-2 rounded-lg bg-gray-800 text-blue-400 hover:bg-blue-500/20 transition-colors"
+                          title="Edit listing"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => setShowDeleteModal(listing.id)}
+                          className="p-2 rounded-lg bg-gray-800 text-red-400 hover:bg-red-500/20 transition-colors"
+                          title="Delete listing"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -305,6 +344,35 @@ export default function ListingsPage() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#12121a] border border-gray-800 rounded-2xl p-6 max-w-sm w-full">
+            <div className="w-14 h-14 rounded-full bg-red-500/20 flex items-center justify-center mx-auto mb-4">
+              <Trash2 className="w-7 h-7 text-red-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-white text-center mb-2">Delete Listing?</h3>
+            <p className="text-gray-400 text-sm text-center mb-6">
+              This action cannot be undone. The listing will be permanently removed from the platform.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteModal(null)}
+                className="flex-1 px-4 py-2.5 bg-gray-800 hover:bg-gray-700 text-white rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteListing(showDeleteModal)}
+                className="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-400 text-white font-medium rounded-xl transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

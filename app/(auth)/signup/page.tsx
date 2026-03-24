@@ -3,10 +3,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Check } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Checkbox } from '@/components/ui/checkbox'
+import Image from 'next/image'
+import { User, Mail, Phone, Ticket, Check } from 'lucide-react'
+import { BackButton } from '@/components/back-button'
 
 export default function SignupPage() {
   const router = useRouter()
@@ -19,6 +18,8 @@ export default function SignupPage() {
     agreeToTerms: false,
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-kJSONfc9hORfv0xhwC97LF0eSOCvJL.png'
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -40,157 +41,182 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header illustration */}
-      <div className="relative h-28 bg-gradient-to-b from-secondary to-background overflow-hidden">
-        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 120" preserveAspectRatio="xMidYMid slice">
-          {/* City skyline */}
-          <rect x="20" y="60" width="30" height="60" fill="#e5e5e5" />
-          <rect x="60" y="40" width="25" height="80" fill="#d4d4d4" />
-          <rect x="95" y="50" width="35" height="70" fill="#e5e5e5" />
-          <rect x="140" y="30" width="40" height="90" fill="#d4d4d4" />
-          <rect x="190" y="45" width="30" height="75" fill="#e5e5e5" />
-          <rect x="230" y="55" width="35" height="65" fill="#d4d4d4" />
-          <rect x="275" y="35" width="40" height="85" fill="#e5e5e5" />
-          <rect x="325" y="50" width="30" height="70" fill="#d4d4d4" />
-          <rect x="365" y="65" width="25" height="55" fill="#e5e5e5" />
-          {/* People */}
-          <circle cx="80" cy="105" r="6" fill="#703BF7" opacity="0.4" />
-          <rect x="77" y="111" width="6" height="9" fill="#703BF7" opacity="0.4" />
-          <circle cx="200" cy="100" r="6" fill="#10B981" opacity="0.5" />
-          <rect x="197" y="106" width="6" height="14" fill="#10B981" opacity="0.5" />
-          <circle cx="350" cy="103" r="6" fill="#703BF7" opacity="0.4" />
-          <rect x="347" y="109" width="6" height="11" fill="#703BF7" opacity="0.4" />
-        </svg>
-        
-        {/* Progress indicator */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2">
-          <div className="w-8 h-1 rounded-full bg-primary" />
-          <div className="w-8 h-1 rounded-full bg-border" />
+    <div className="min-h-screen bg-[#0a0a0f] flex flex-col">
+      {/* Background gradient effects */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 -left-40 w-80 h-80 bg-purple-600/20 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 -right-40 w-80 h-80 bg-blue-600/20 rounded-full blur-[120px]" />
+      </div>
+
+      {/* Progress bar */}
+      <div className="relative px-4 pt-4 pb-2">
+        <div className="flex items-center justify-between mb-4">
+          <BackButton fallbackUrl="/" variant="light" />
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-1 rounded-full bg-purple-500" />
+            <div className="w-8 h-1 rounded-full bg-gray-700" />
+          </div>
+          <span className="text-sm text-gray-400">1 of 2</span>
         </div>
       </div>
 
-      {/* Form */}
-      <div className="flex-1 px-6 py-4 overflow-auto">
-        <div className="flex items-center justify-between mb-6">
-          <button 
-            onClick={() => router.back()}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-xl font-bold">Create an account</h1>
-          <span className="text-sm text-muted-foreground">1 of 2</span>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Name</label>
-            <Input
-              type="text"
-              placeholder="Enter name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="h-14 rounded-xl border-border bg-background px-4"
-            />
-            {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
+      <div className="flex-1 px-4 py-4 overflow-auto relative">
+        <div className="max-w-md mx-auto">
+          {/* Header */}
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center gap-3 mb-2">
+              <Image
+                src={logoUrl}
+                alt="SpaceButton"
+                width={40}
+                height={40}
+                className="h-10 w-10"
+              />
+              <span className="text-xl font-bold text-white">SpaceButton</span>
+            </div>
+            <h1 className="text-2xl font-bold text-white mt-4 mb-2">Create an account</h1>
+            <p className="text-gray-400 text-sm">Join thousands finding their perfect space</p>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Profile Type</label>
-            <div className="flex gap-4">
+          {/* Form Card */}
+          <div className="bg-[#12121a] border border-gray-800 rounded-2xl p-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Full Name
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Enter your name"
+                    className="w-full pl-11 pr-4 py-3 bg-[#1a1a24] border border-gray-800 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all"
+                  />
+                </div>
+                {errors.name && <p className="mt-2 text-sm text-red-400">{errors.name}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Profile Type
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, profileType: 'individual' })}
+                    className={`py-3 rounded-xl font-medium transition-all ${
+                      formData.profileType === 'individual'
+                        ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white'
+                        : 'bg-[#1a1a24] border border-gray-800 text-gray-400 hover:border-gray-700'
+                    }`}
+                  >
+                    Individual
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, profileType: 'agent' })}
+                    className={`py-3 rounded-xl font-medium transition-all ${
+                      formData.profileType === 'agent'
+                        ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white'
+                        : 'bg-[#1a1a24] border border-gray-800 text-gray-400 hover:border-gray-700'
+                    }`}
+                  >
+                    Agent
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="Enter email address"
+                    className="w-full pl-11 pr-4 py-3 bg-[#1a1a24] border border-gray-800 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all"
+                  />
+                </div>
+                {errors.email && <p className="mt-2 text-sm text-red-400">{errors.email}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Phone Number
+                </label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                  <input
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    placeholder="Enter phone number"
+                    className="w-full pl-11 pr-4 py-3 bg-[#1a1a24] border border-gray-800 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all"
+                  />
+                </div>
+                {errors.phone && <p className="mt-2 text-sm text-red-400">{errors.phone}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Invitation Code (Optional)
+                </label>
+                <div className="relative">
+                  <Ticket className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                  <input
+                    type="text"
+                    value={formData.invitationCode}
+                    onChange={(e) => setFormData({ ...formData, invitationCode: e.target.value })}
+                    placeholder="Enter invite code"
+                    className="w-full pl-11 pr-4 py-3 bg-[#1a1a24] border border-gray-800 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, agreeToTerms: !formData.agreeToTerms })}
+                  className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                    formData.agreeToTerms 
+                      ? 'bg-purple-600 border-purple-600' 
+                      : 'border-gray-600 hover:border-gray-500'
+                  }`}
+                >
+                  {formData.agreeToTerms && <Check className="w-3 h-3 text-white" />}
+                </button>
+                <label className="text-sm text-gray-400">
+                  I agree to SpaceButton{' '}
+                  <Link href="/terms" className="text-purple-400 hover:text-purple-300">
+                    Terms & Conditions
+                  </Link>
+                </label>
+              </div>
+              {errors.terms && <p className="text-sm text-red-400">{errors.terms}</p>}
+
               <button
-                type="button"
-                onClick={() => setFormData({ ...formData, profileType: 'individual' })}
-                className={`flex-1 h-14 rounded-xl font-medium transition-all ${
-                  formData.profileType === 'individual'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-background border border-border text-foreground'
-                }`}
+                type="submit"
+                className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white font-semibold rounded-xl transition-all duration-200"
               >
-                Individual
+                Continue
               </button>
-              <button
-                type="button"
-                onClick={() => setFormData({ ...formData, profileType: 'agent' })}
-                className={`flex-1 h-14 rounded-xl font-medium transition-all ${
-                  formData.profileType === 'agent'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-background border border-border text-foreground'
-                }`}
-              >
-                Agent
-              </button>
+            </form>
+
+            <div className="mt-6 pt-6 border-t border-gray-800">
+              <p className="text-center text-gray-400 text-sm">
+                Already have an account?{' '}
+                <Link href="/login" className="text-white font-semibold hover:text-purple-400 transition-colors">
+                  Sign In
+                </Link>
+              </p>
             </div>
           </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Email Address</label>
-            <Input
-              type="email"
-              placeholder="Enter email address"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="h-14 rounded-xl border-border bg-background px-4"
-            />
-            {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Phone Number</label>
-            <Input
-              type="tel"
-              placeholder="Enter Phone Number"
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              className="h-14 rounded-xl border-border bg-background px-4"
-            />
-            {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Invitation Code</label>
-            <Input
-              type="text"
-              placeholder="Enter Invite Code"
-              value={formData.invitationCode}
-              onChange={(e) => setFormData({ ...formData, invitationCode: e.target.value })}
-              className="h-14 rounded-xl border-border bg-background px-4"
-            />
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Checkbox
-              id="terms"
-              checked={formData.agreeToTerms}
-              onCheckedChange={(checked) => 
-                setFormData({ ...formData, agreeToTerms: checked as boolean })
-              }
-              className="w-5 h-5 rounded data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-            />
-            <label htmlFor="terms" className="text-sm">
-              I agree to SpaceButton{' '}
-              <Link href="/terms" className="text-primary font-medium">
-                Terms & Condition
-              </Link>
-            </label>
-          </div>
-          {errors.terms && <p className="text-sm text-destructive">{errors.terms}</p>}
-
-          <Button
-            type="submit"
-            className="w-full h-14 rounded-xl bg-primary text-primary-foreground font-semibold text-base"
-          >
-            Sign Up
-          </Button>
-        </form>
-
-        <p className="text-center mt-6 text-muted-foreground pb-4">
-          Do You Have An Account?{' '}
-          <Link href="/login" className="text-foreground font-semibold">
-            Sign In
-          </Link>
-        </p>
+        </div>
       </div>
     </div>
   )

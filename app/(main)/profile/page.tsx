@@ -3,8 +3,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { ArrowLeft, MoreVertical, Star, Edit } from 'lucide-react'
+import { Star, Edit } from 'lucide-react'
 import { BottomNav } from '@/components/bottom-nav'
+import { BackButton } from '@/components/back-button'
 import { PropertyCard } from '@/components/property-card'
 import { useAppStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
@@ -38,12 +39,7 @@ export default function ProfilePage() {
       {/* Header */}
       <div className="bg-background px-4 py-4 sticky top-0 z-40 border-b border-border">
         <div className="flex items-center justify-between">
-          <button 
-            onClick={() => router.back()}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
+          <BackButton fallbackUrl="/home" />
           
           <h1 className="text-lg font-bold">Profile</h1>
           

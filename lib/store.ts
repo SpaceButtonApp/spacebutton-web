@@ -297,6 +297,7 @@ export const useAppStore = create<AppState>()(
         closedProperties: state.closedProperties,
         doneDealStates: state.doneDealStates,
         reviews: state.reviews,
+        notifications: state.notifications,
         // Note: properties not persisted to avoid localStorage quota issues with base64 images
       }),
     }

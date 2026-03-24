@@ -1,34 +1,26 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTheme } from 'next-themes'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Eye, EyeOff, ArrowLeft } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 
 export default function LoginPage() {
   const router = useRouter()
-  const { theme } = useTheme()
-  const [mounted, setMounted] = useState(false)
   const setUser = useAppStore((state) => state.setUser)
   const [showPassword, setShowPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     emailOrPhone: '',
     password: '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-kJSONfc9hORfv0xhwC97LF0eSOCvJL.png'
 
-  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo-Z3o2DS9CjpuvL55ZsNkmvtolSu2dZz.png'
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const newErrors: Record<string, string> = {}
 
@@ -43,6 +35,10 @@ export default function LoginPage() {
       setErrors(newErrors)
       return
     }
+
+    setLoading(true)
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 800))
 
     // Mock login - derive name from email
     const emailName = formData.emailOrPhone.includes('@') 
@@ -70,112 +66,122 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header illustration */}
-      <div className="relative h-32 bg-gradient-to-b from-secondary to-background overflow-hidden">
-        <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 150" preserveAspectRatio="xMidYMid slice">
-          {/* City skyline */}
-          <rect x="20" y="80" width="30" height="70" fill="#e5e5e5" />
-          <rect x="60" y="60" width="25" height="90" fill="#d4d4d4" />
-          <rect x="95" y="70" width="35" height="80" fill="#e5e5e5" />
-          <rect x="140" y="50" width="40" height="100" fill="#d4d4d4" />
-          <rect x="190" y="65" width="30" height="85" fill="#e5e5e5" />
-          <rect x="230" y="75" width="35" height="75" fill="#d4d4d4" />
-          <rect x="275" y="55" width="40" height="95" fill="#e5e5e5" />
-          <rect x="325" y="70" width="30" height="80" fill="#d4d4d4" />
-          <rect x="365" y="85" width="25" height="65" fill="#e5e5e5" />
-          {/* People silhouettes */}
-          <circle cx="50" cy="130" r="8" fill="#703BF7" opacity="0.3" />
-          <rect x="46" y="138" width="8" height="12" fill="#703BF7" opacity="0.3" />
-          <circle cx="150" cy="125" r="8" fill="#10B981" opacity="0.4" />
-          <rect x="146" y="133" width="8" height="17" fill="#10B981" opacity="0.4" />
-          <circle cx="300" cy="128" r="8" fill="#703BF7" opacity="0.3" />
-          <rect x="296" y="136" width="8" height="14" fill="#703BF7" opacity="0.3" />
-        </svg>
+    <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center p-4">
+      {/* Background gradient effects */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-0 -left-40 w-80 h-80 bg-purple-600/20 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 -right-40 w-80 h-80 bg-blue-600/20 rounded-full blur-[120px]" />
       </div>
 
-      {/* Logo & Title Section */}
-      <div className="flex-1 px-6 py-8 flex flex-col">
-        <button
-          onClick={() => router.push('/')}
-          className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary mb-8"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-
+      <div className="relative w-full max-w-md">
+        {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-block mb-6">
+          <div className="inline-flex items-center gap-3 mb-2">
             <Image
               src={logoUrl}
-              alt="Spacebutton"
-              width={50}
-              height={15}
-              className="h-auto w-auto"
-              loading="eager"
-              priority
+              alt="SpaceButton"
+              width={48}
+              height={48}
+              className="h-12 w-12"
             />
+            <span className="text-2xl font-bold text-white">SpaceButton</span>
           </div>
-          <h1 className="text-3xl font-bold mb-2">Welcome back</h1>
-          <p className="text-muted-foreground">Please enter your login details</p>
+          <p className="text-gray-400 text-sm">Find your perfect space</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Email Address or Phone Number</label>
-            <Input
-              type="text"
-              placeholder="Enter email or phone number"
-              value={formData.emailOrPhone}
-              onChange={(e) => setFormData({ ...formData, emailOrPhone: e.target.value })}
-              className="h-14 rounded-xl border-border bg-background px-4"
-            />
-            {errors.emailOrPhone && (
-              <p className="text-sm text-destructive">{errors.emailOrPhone}</p>
-            )}
+        {/* Login Card */}
+        <div className="bg-[#12121a] border border-gray-800 rounded-2xl p-8">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-white mb-2">Welcome back</h1>
+            <p className="text-gray-400 text-sm">Sign in to continue to your account</p>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Password</label>
-            <div className="relative">
-              <Input
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Enter your password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="h-14 rounded-xl border-border bg-background px-4 pr-12"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground"
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {errors.general && (
+              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
+                {errors.general}
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Email Address or Phone Number
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <input
+                  type="text"
+                  value={formData.emailOrPhone}
+                  onChange={(e) => setFormData({ ...formData, emailOrPhone: e.target.value })}
+                  placeholder="Enter email or phone number"
+                  className="w-full pl-11 pr-4 py-3 bg-[#1a1a24] border border-gray-800 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all"
+                />
+              </div>
+              {errors.emailOrPhone && (
+                <p className="mt-2 text-sm text-red-400">{errors.emailOrPhone}</p>
+              )}
             </div>
-            {errors.password && (
-              <p className="text-sm text-destructive">{errors.password}</p>
-            )}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder="Enter your password"
+                  className="w-full pl-11 pr-12 py-3 bg-[#1a1a24] border border-gray-800 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              {errors.password && (
+                <p className="mt-2 text-sm text-red-400">{errors.password}</p>
+              )}
+            </div>
+
+            <div className="text-right">
+              <Link href="/forgot-password" className="text-sm text-purple-400 hover:text-purple-300 transition-colors">
+                Forgot Password?
+              </Link>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                'Sign In'
+              )}
+            </button>
+          </form>
+
+          <div className="mt-6 pt-6 border-t border-gray-800">
+            <p className="text-center text-gray-400 text-sm">
+              Don&apos;t have an account?{' '}
+              <Link href="/signup" className="text-white font-semibold hover:text-purple-400 transition-colors">
+                Sign Up
+              </Link>
+            </p>
           </div>
+        </div>
 
-          <div className="text-right">
-            <Link href="/forgot-password" className="text-sm text-primary font-medium">
-              Forgot Password?
-            </Link>
-          </div>
-
-          <Button
-            type="submit"
-            className="w-full h-14 rounded-xl bg-primary text-primary-foreground font-semibold text-base"
-          >
-            Sign In
-          </Button>
-        </form>
-
-        <p className="text-center mt-8 text-muted-foreground">
-          Don&apos;t Have An Account?{' '}
-          <Link href="/signup" className="text-foreground font-semibold">
-            Sign Up
-          </Link>
+        <p className="text-center text-gray-500 text-xs mt-6">
+          By signing in, you agree to our Terms of Service
         </p>
       </div>
     </div>

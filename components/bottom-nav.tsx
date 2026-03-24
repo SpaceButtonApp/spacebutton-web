@@ -16,8 +16,8 @@ export function BottomNav() {
   const router = useRouter()
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-secondary/80 backdrop-blur-xl border-t border-border">
-      <div className="max-w-lg mx-auto flex items-center justify-between px-4 py-2">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#12121a]/90 backdrop-blur-xl border-t border-gray-800/50">
+      <div className="max-w-lg mx-auto flex items-center justify-between px-2 py-2">
         {navItems.map((item) => {
           const isActive = pathname.startsWith(item.href)
           return (
@@ -25,23 +25,25 @@ export function BottomNav() {
               key={item.href}
               onClick={() => router.push(item.href)}
               className={cn(
-                'flex flex-col items-center justify-center p-2 rounded-2xl transition-all duration-200',
+                'flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-[60px]',
                 isActive 
-                  ? 'bg-foreground text-background shadow-lg' 
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'bg-gradient-to-br from-purple-600/20 to-purple-800/20 text-purple-400' 
+                  : 'text-gray-500 hover:text-gray-300'
               )}
             >
-              <item.icon className="w-6 h-6" strokeWidth={isActive ? 2.5 : 2} />
-              <span className="text-xs mt-1 font-medium">{item.label}</span>
+              <item.icon className={cn('w-6 h-6', isActive && 'text-purple-400')} strokeWidth={isActive ? 2.5 : 2} />
+              <span className={cn('text-xs mt-1 font-medium', isActive && 'text-purple-400')}>{item.label}</span>
             </button>
           )
         })}
         <button
           onClick={() => router.push('/add-post')}
-          className="flex flex-col items-center justify-center p-2 rounded-2xl transition-all duration-200 text-muted-foreground hover:text-foreground"
+          className="flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-[60px] text-gray-500 hover:text-gray-300"
         >
-          <Plus className="w-6 h-6" />
-          <span className="text-xs mt-1 font-medium">Add Post</span>
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center shadow-lg shadow-purple-500/20">
+            <Plus className="w-5 h-5 text-white" />
+          </div>
+          <span className="text-xs mt-1 font-medium">Post</span>
         </button>
       </div>
     </nav>

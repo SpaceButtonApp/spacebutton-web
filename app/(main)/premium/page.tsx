@@ -2,8 +2,9 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { ChevronLeft, Check, X } from "lucide-react"
+import { Check, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { BackButton } from '@/components/back-button'
 
 const plans = {
   basic: {
@@ -48,12 +49,7 @@ export default function PremiumPage() {
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-10 bg-background px-4 py-4 flex items-center gap-4">
-        <button
-          onClick={() => router.back()}
-          className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
+        <BackButton fallbackUrl="/settings" />
       </header>
 
       <div className="px-4 pb-8">

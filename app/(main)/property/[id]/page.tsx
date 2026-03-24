@@ -4,11 +4,12 @@ import { useState, use } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { 
-  ArrowLeft, Bookmark, ChevronLeft, ChevronRight, Bed, Bath, 
+  Bookmark, ChevronLeft, ChevronRight, Bed, Bath, 
   Sofa, MapPin, Calendar, AlertTriangle, Users, Building2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { BottomNav } from '@/components/bottom-nav'
+import { BackButton } from '@/components/back-button'
 import { ConnectCostModal } from '@/components/connect-cost-modal'
 import { SuggestedApartments } from '@/components/suggested-apartments'
 import { useAppStore } from '@/lib/store'
@@ -61,12 +62,10 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-40 p-4 flex items-center justify-between">
-        <button 
-          onClick={() => router.back()}
-          className="w-10 h-10 flex items-center justify-center rounded-full bg-background/80 backdrop-blur-sm"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
+        <BackButton 
+          fallbackUrl="/home"
+          className="bg-background/80 backdrop-blur-sm"
+        />
         
         <button 
           onClick={() => toggleSaveProperty(id)}

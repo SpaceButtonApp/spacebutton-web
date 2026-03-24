@@ -60,9 +60,11 @@ export interface Notification {
   id: string
   title: string
   message: string
-  timestamp: Date
+  timestamp?: Date
+  createdAt?: string
   read: boolean
-  type: 'recent' | 'old' | 'marked'
+  type: 'recent' | 'old' | 'marked' | 'done_deal' | 'general'
+  propertyId?: string
 }
 
 export interface Review {

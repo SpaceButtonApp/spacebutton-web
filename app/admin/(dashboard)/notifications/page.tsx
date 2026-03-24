@@ -2,30 +2,53 @@
 
 import { AdminHeader } from '@/components/admin/header'
 import { useAppStore } from '@/lib/store'
-import { Bell, CheckCircle, Check, Trash2, XCircle } from 'lucide-react'
+import { Bell, CheckCircle, Check, Trash2, XCircle, Handshake } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+import { useState } from 'react'
+
+interface AdminNotification {
+  id: string
+  type: string
+  title: string
+  message: string
+  read: boolean
+  createdAt: string
+}
 
 export default function NotificationsPage() {
   const { notifications } = useAppStore()
+  const [localNotifications, setLocalNotifications] = useState<AdminNotification[]>([])
 
-  // Mock admin notifications combined with app notifications
-  const adminNotifications = [
+  // Combine app notifications with admin-specific ones
+  const adminNotifications: AdminNotification[] = [
     { id: 'admin-1', type: 'user', title: 'New user registered', message: 'John Doe just created an account', read: false, createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString() },
     { id: 'admin-2', type: 'listing', title: 'New listing submitted', message: 'A new property listing needs review', read: false, createdAt: new Date(Date.now() - 1000 * 60 * 15).toISOString() },
     { id: 'admin-3', type: 'transaction', title: 'Transaction completed', message: 'Payment of N5,000 received from Jane Smith', read: true, createdAt: new Date(Date.now() - 1000 * 60 * 60).toISOString() },
     { id: 'admin-4', type: 'review', title: 'New review posted', message: 'A user left a 5-star review', read: true, createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString() },
+    // Map store notifications
     ...notifications.map(n => ({
-      ...n,
-      type: n.type || 'general'
-    }))
+      id: n.id,
+      type: n.type || 'general',
+      title: n.title,
+      message: n.message,
+      read: n.read,
+      createdAt: n.createdAt || (n.timestamp ? new Date(n.timestamp).toISOString() : new Date().toISOString())
+    })),
+    ...localNotifications
   ]
 
-  const unreadCount = adminNotifications.filter(n => !n.read).length
+  // Sort by date, most recent first
+  const sortedNotifications = adminNotifications.sort((a, b) => 
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  )
+
+  const unreadCount = sortedNotifications.filter(n => !n.read).length
+  const doneDealCount = sortedNotifications.filter(n => n.type === 'done_deal').length
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'done_deal':
-        return <CheckCircle className="w-5 h-5 text-green-400" />
+        return <Handshake className="w-5 h-5 text-green-400" />
       case 'user':
         return <Bell className="w-5 h-5 text-blue-400" />
       case 'listing':
@@ -39,6 +62,14 @@ export default function NotificationsPage() {
     }
   }
 
+  const markAllAsRead = () => {
+    setLocalNotifications(prev => prev.map(n => ({ ...n, read: true })))
+  }
+
+  const clearAll = () => {
+    setLocalNotifications([])
+  }
+
   return (
     <div className="min-h-screen">
       <AdminHeader title="Notifications" />
@@ -48,15 +79,18 @@ export default function NotificationsPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
             <p className="text-sm text-gray-400 mb-1">Total Notifications</p>
-            <p className="text-2xl font-bold text-white">{adminNotifications.length}</p>
+            <p className="text-2xl font-bold text-white">{sortedNotifications.length}</p>
           </div>
           <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
             <p className="text-sm text-gray-400 mb-1">Unread</p>
             <p className="text-2xl font-bold text-purple-400">{unreadCount}</p>
           </div>
           <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
-            <p className="text-sm text-gray-400 mb-1">Done Deals</p>
-            <p className="text-2xl font-bold text-green-400">{adminNotifications.filter(n => n.type === 'done_deal').length}</p>
+            <div className="flex items-center gap-2 mb-1">
+              <Handshake className="w-4 h-4 text-green-400" />
+              <p className="text-sm text-gray-400">Done Deals</p>
+            </div>
+            <p className="text-2xl font-bold text-green-400">{doneDealCount}</p>
           </div>
         </div>
 
@@ -64,11 +98,17 @@ export default function NotificationsPage() {
         <div className="flex justify-between items-center">
           <h2 className="text-lg font-semibold text-white">All Notifications</h2>
           <div className="flex gap-2">
-            <button className="px-4 py-2 text-sm text-gray-400 hover:text-white bg-[#12121a] border border-gray-800 rounded-lg hover:bg-gray-800 transition-colors flex items-center gap-2">
+            <button 
+              onClick={markAllAsRead}
+              className="px-4 py-2 text-sm text-gray-400 hover:text-white bg-[#12121a] border border-gray-800 rounded-lg hover:bg-gray-800 transition-colors flex items-center gap-2"
+            >
               <Check className="w-4 h-4" />
               Mark all as read
             </button>
-            <button className="px-4 py-2 text-sm text-red-400 hover:text-red-300 bg-[#12121a] border border-gray-800 rounded-lg hover:bg-red-500/10 transition-colors flex items-center gap-2">
+            <button 
+              onClick={clearAll}
+              className="px-4 py-2 text-sm text-red-400 hover:text-red-300 bg-[#12121a] border border-gray-800 rounded-lg hover:bg-red-500/10 transition-colors flex items-center gap-2"
+            >
               <Trash2 className="w-4 h-4" />
               Clear all
             </button>
@@ -77,9 +117,9 @@ export default function NotificationsPage() {
 
         {/* Notifications List */}
         <div className="bg-[#12121a] border border-gray-800/50 rounded-xl overflow-hidden">
-          {adminNotifications.length > 0 ? (
+          {sortedNotifications.length > 0 ? (
             <div className="divide-y divide-gray-800/50">
-              {adminNotifications.map((notification) => (
+              {sortedNotifications.map((notification) => (
                 <div
                   key={notification.id}
                   className={`p-5 hover:bg-gray-800/20 transition-colors cursor-pointer ${
@@ -101,6 +141,11 @@ export default function NotificationsPage() {
                         <p className="font-medium text-white">{notification.title}</p>
                         {!notification.read && (
                           <span className="w-2 h-2 rounded-full bg-purple-500" />
+                        )}
+                        {notification.type === 'done_deal' && (
+                          <span className="px-2 py-0.5 text-xs rounded-full bg-green-500/20 text-green-400">
+                            Done Deal
+                          </span>
                         )}
                       </div>
                       <p className="text-sm text-gray-400 mt-1">{notification.message}</p>

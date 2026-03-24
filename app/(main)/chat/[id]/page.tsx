@@ -3,8 +3,9 @@
 import { useState, use, useEffect } from 'react'
 import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ArrowLeft, Video, Phone, MoreVertical, Send, X, CheckSquare, MessageSquare, Star } from 'lucide-react'
+import { Video, Phone, MoreVertical, Send, X, CheckSquare, MessageSquare, Star } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { BackButton } from '@/components/back-button'
 import { Button } from '@/components/ui/button'
 import { mockAgents, mockMessages } from '@/lib/mock-data'
 import { useAppStore } from '@/lib/store'
@@ -96,12 +97,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <div className="bg-background px-4 py-3 border-b border-border flex items-center gap-3 sticky top-0 z-40">
-        <button 
-          onClick={() => router.back()}
-          className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
+        <BackButton fallbackUrl="/messages" />
 
         <button 
           onClick={() => router.push(`/profile/${agent.id}`)}

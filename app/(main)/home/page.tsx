@@ -33,7 +33,6 @@ export default function HomePage() {
   }
 
   const filteredProperties = properties.filter((property) => {
-    // Exclude closed properties
     if (closedProperties.includes(property.id)) return false
     
     const type = property.listingType || property.type
@@ -43,20 +42,20 @@ export default function HomePage() {
   })
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] pb-24">
+    <div className="min-h-screen bg-background pb-24">
       {/* Background gradient effects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 -left-40 w-80 h-80 bg-purple-600/10 rounded-full blur-[120px]" />
+        <div className="absolute top-0 -left-40 w-80 h-80 bg-primary/10 rounded-full blur-[120px]" />
         <div className="absolute top-40 -right-40 w-80 h-80 bg-blue-600/10 rounded-full blur-[120px]" />
       </div>
 
       {/* Header */}
-      <div className="bg-[#12121a]/80 backdrop-blur-xl px-4 py-4 sticky top-0 z-40 border-b border-gray-800/50">
-        {/* Top Row - Logo and User Actions */}
+      <div className="bg-card/80 backdrop-blur-xl px-4 py-4 sticky top-0 z-40 border-b border-border">
+        {/* Top Row */}
         <div className="flex items-center justify-between mb-4">
           <button 
             onClick={() => router.push('/profile')}
-            className="w-12 h-12 rounded-full overflow-hidden border-2 border-purple-500/50 flex-shrink-0 hover:border-purple-400 transition-colors"
+            className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary/50 flex-shrink-0 hover:border-primary transition-colors"
           >
             <Image
               src={user?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'}
@@ -76,7 +75,7 @@ export default function HomePage() {
               height={36}
               className="h-9 w-9"
             />
-            <span className="text-lg font-bold text-white">SpaceButton</span>
+            <span className="text-lg font-bold text-foreground">SpaceButton</span>
           </div>
           
           {/* Right Actions */}
@@ -84,16 +83,16 @@ export default function HomePage() {
             <ConnectBalanceButton />
             <button 
               onClick={() => router.push('/saved')}
-              className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-600 to-purple-700 flex items-center justify-center shadow-lg shadow-purple-500/20 hover:shadow-purple-500/30 transition-all"
+              className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
             >
-              <Bookmark className="w-5 h-5 text-white" />
+              <Bookmark className="w-5 h-5 text-primary-foreground" />
             </button>
           </div>
         </div>
 
         {/* Tabs */}
         <div className="flex items-center justify-center">
-          <div className="inline-flex bg-[#1a1a24] rounded-full p-1 border border-gray-800/50">
+          <div className="inline-flex bg-secondary rounded-full p-1 border border-border">
             {tabs.map((tab) => (
               <button
                 key={tab}
@@ -101,8 +100,8 @@ export default function HomePage() {
                 className={cn(
                   'px-4 py-2 rounded-full text-sm font-medium transition-all duration-200',
                   currentTab === tab
-                    ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg'
-                    : 'text-gray-400 hover:text-white'
+                    ? 'bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-lg'
+                    : 'text-muted-foreground hover:text-foreground'
                 )}
               >
                 {tab}
@@ -116,14 +115,14 @@ export default function HomePage() {
       <div className="px-4 py-6 relative">
         {currentTab === 'Shortlet' || currentTab === 'Properties' ? (
           <div className="flex flex-col items-center justify-center py-20">
-            <div className="w-24 h-24 rounded-2xl bg-[#12121a] border border-gray-800 flex items-center justify-center mb-4">
-              <Clock className="w-12 h-12 text-purple-400" />
+            <div className="w-24 h-24 rounded-2xl bg-card border border-border flex items-center justify-center mb-4">
+              <Clock className="w-12 h-12 text-primary" />
             </div>
-            <h2 className="text-xl font-bold text-white mb-2">Coming Soon</h2>
-            <p className="text-gray-400 text-center max-w-xs">
+            <h2 className="text-xl font-bold text-foreground mb-2">Coming Soon</h2>
+            <p className="text-muted-foreground text-center max-w-xs">
               We&apos;re working on bringing you amazing {currentTab.toLowerCase()} options.
             </p>
-            <div className="flex items-center gap-2 mt-4 text-purple-400">
+            <div className="flex items-center gap-2 mt-4 text-primary">
               <Sparkles className="w-4 h-4" />
               <span className="text-sm">Stay tuned for updates</span>
             </div>
@@ -132,11 +131,11 @@ export default function HomePage() {
           <div className="space-y-4">
             {filteredProperties.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20">
-                <div className="w-24 h-24 rounded-2xl bg-[#12121a] border border-gray-800 flex items-center justify-center mb-4">
-                  <Bookmark className="w-12 h-12 text-gray-600" />
+                <div className="w-24 h-24 rounded-2xl bg-card border border-border flex items-center justify-center mb-4">
+                  <Bookmark className="w-12 h-12 text-muted-foreground" />
                 </div>
-                <h2 className="text-xl font-bold text-white mb-2">No Listings Yet</h2>
-                <p className="text-gray-400 text-center max-w-xs">
+                <h2 className="text-xl font-bold text-foreground mb-2">No Listings Yet</h2>
+                <p className="text-muted-foreground text-center max-w-xs">
                   Be the first to post a listing in this category.
                 </p>
               </div>

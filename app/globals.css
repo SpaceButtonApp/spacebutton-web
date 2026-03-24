@@ -3,6 +3,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Light Theme */
 :root {
   --background: #ffffff;
   --foreground: #121212;
@@ -39,43 +40,58 @@
   --sidebar-accent-foreground: #121212;
   --sidebar-border: #e5e5e5;
   --sidebar-ring: #703BF7;
+  
+  /* Custom app colors for light mode */
+  --app-bg: #f8f9fa;
+  --app-card: #ffffff;
+  --app-card-border: #e5e7eb;
+  --app-header: rgba(255, 255, 255, 0.9);
+  --app-nav: #ffffff;
 }
 
+/* Dark Theme */
 .dark {
-  --background: #121212;
+  --background: #0a0a0f;
   --foreground: #ffffff;
-  --card: #1e1e1e;
+  --card: #12121a;
   --card-foreground: #ffffff;
-  --popover: #1e1e1e;
+  --popover: #12121a;
   --popover-foreground: #ffffff;
   --primary: #703BF7;
   --primary-foreground: #ffffff;
-  --secondary: #2a2a2a;
+  --secondary: #1a1a24;
   --secondary-foreground: #ffffff;
-  --muted: #2a2a2a;
+  --muted: #1a1a24;
   --muted-foreground: #9ca3af;
-  --accent: #2a2a2a;
+  --accent: #1a1a24;
   --accent-foreground: #ffffff;
   --destructive: #EF4444;
   --destructive-foreground: #ffffff;
   --success: #10B981;
   --success-foreground: #ffffff;
-  --border: #2a2a2a;
-  --input: #2a2a2a;
+  --border: #2a2a35;
+  --input: #1a1a24;
   --ring: #703BF7;
   --chart-1: #703BF7;
   --chart-2: #10B981;
   --chart-3: #EF4444;
   --chart-4: #F59E0B;
   --chart-5: #6366F1;
-  --sidebar: #1e1e1e;
+  --sidebar: #12121a;
   --sidebar-foreground: #ffffff;
   --sidebar-primary: #703BF7;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #2a2a2a;
+  --sidebar-accent: #1a1a24;
   --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: #2a2a2a;
+  --sidebar-border: #2a2a35;
   --sidebar-ring: #703BF7;
+  
+  /* Custom app colors for dark mode */
+  --app-bg: #0a0a0f;
+  --app-card: #12121a;
+  --app-card-border: rgba(128, 128, 128, 0.2);
+  --app-header: rgba(18, 18, 26, 0.8);
+  --app-nav: #12121a;
 }
 
 @theme inline {

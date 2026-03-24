@@ -9,12 +9,9 @@ import { cn } from '@/lib/utils'
 
 export function ConnectBalanceButton() {
   const router = useRouter()
-  const { user, purchasePremium } = useAppStore()
+  const { user } = useAppStore()
   const [showModal, setShowModal] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
-  const [modalPos, setModalPos] = useState({ x: 0, y: 0 })
-  const [isDragging, setIsDragging] = useState(false)
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
 
   const connectBalance = user?.connectsRemaining || 0
   const hasNoConnects = connectBalance === 0
@@ -23,27 +20,6 @@ export function ConnectBalanceButton() {
   const handlePurchase = (type: 'basic-single' | 'basic-5' | 'premium-monthly' | 'premium-yearly', amount: number, connects: number) => {
     setShowModal(false)
     router.push(`/payment?amount=${amount}&plan=${type.includes('premium') ? 'premium' : 'basic'}&connects=${connects}`)
-  }
-
-  const handleDragStart = (e: React.MouseEvent) => {
-    setIsDragging(true)
-    setDragOffset({
-      x: e.clientX - modalPos.x,
-      y: e.clientY - modalPos.y,
-    })
-  }
-
-  const handleDragMove = (e: React.MouseEvent) => {
-    if (isDragging) {
-      setModalPos({
-        x: e.clientX - dragOffset.x,
-        y: e.clientY - dragOffset.y,
-      })
-    }
-  }
-
-  const handleDragEnd = () => {
-    setIsDragging(false)
   }
 
   return (
@@ -63,8 +39,7 @@ export function ConnectBalanceButton() {
         {hasNoConnects ? (
           <>
             <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            {isHovered && <span>0</span>}
-            {!isHovered && <span>0</span>}
+            <span>0</span>
           </>
         ) : (
           <>
@@ -74,37 +49,20 @@ export function ConnectBalanceButton() {
         )}
       </button>
 
-      {/* Purchase Modal */}
+      {/* Purchase Modal - Centered */}
       {showModal && (
-        <div 
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50"
-          onMouseMove={handleDragMove}
-          onMouseUp={handleDragEnd}
-          onMouseLeave={handleDragEnd}
-        >
-          <div 
-            className="w-full max-w-md rounded-t-3xl bg-background p-6 pb-8 relative"
-            style={{
-              transform: `translate(${modalPos.x}px, ${modalPos.y}px)`,
-              transition: isDragging ? 'none' : 'transform 0.2s ease-out',
-            }}
-          >
-            {/* Close Button - Top Right */}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl bg-[#12121a] border border-gray-800/50 p-6 relative shadow-2xl">
+            {/* Close Button */}
             <button
               onClick={() => setShowModal(false)}
-              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-secondary hover:bg-secondary/80 flex items-center justify-center transition-colors"
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
 
-            {/* Drag Handle */}
-            <div
-              onMouseDown={handleDragStart}
-              className="mx-auto mb-6 h-1 w-12 rounded-full bg-muted cursor-grab active:cursor-grabbing"
-            />
-
-            <h2 className="mb-2 text-2xl font-bold">Get Connects</h2>
-            <p className="mb-6 text-muted-foreground">
+            <h2 className="mb-2 text-xl font-bold text-white">Get Connects</h2>
+            <p className="mb-6 text-sm text-gray-400">
               Purchase connects to reach out to property owners and agents
             </p>
 
@@ -112,56 +70,56 @@ export function ConnectBalanceButton() {
               {/* Single Connect */}
               <button
                 onClick={() => handlePurchase('basic-single', 2000, 1)}
-                className="w-full rounded-xl border-2 border-border p-4 text-left transition-all hover:border-primary hover:bg-primary/5"
+                className="w-full rounded-xl border border-gray-700 bg-gray-800/50 p-4 text-left transition-all hover:border-purple-500 hover:bg-purple-500/10"
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-bold">1 Connect</p>
-                    <p className="text-sm text-muted-foreground">Single reach out</p>
+                    <p className="font-bold text-white">1 Connect</p>
+                    <p className="text-sm text-gray-400">Single reach out</p>
                   </div>
-                  <p className="font-bold text-primary">₦2,000</p>
+                  <p className="font-bold text-purple-400">N2,000</p>
                 </div>
               </button>
 
               {/* 5 Connects */}
               <button
                 onClick={() => handlePurchase('basic-5', 5000, 5)}
-                className="w-full rounded-xl border-2 border-border p-4 text-left transition-all hover:border-primary hover:bg-primary/5"
+                className="w-full rounded-xl border border-gray-700 bg-gray-800/50 p-4 text-left transition-all hover:border-purple-500 hover:bg-purple-500/10"
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-bold">5 Connects</p>
-                    <p className="text-sm text-muted-foreground">Multiple reach outs</p>
+                    <p className="font-bold text-white">5 Connects</p>
+                    <p className="text-sm text-gray-400">Multiple reach outs</p>
                   </div>
-                  <p className="font-bold text-primary">₦5,000</p>
+                  <p className="font-bold text-purple-400">N5,000</p>
                 </div>
               </button>
 
               {/* Monthly Premium */}
               <button
                 onClick={() => handlePurchase('premium-monthly', 50000, 999)}
-                className="w-full rounded-xl border-2 border-primary/30 bg-primary/5 p-4 text-left transition-all hover:border-primary hover:bg-primary/10"
+                className="w-full rounded-xl border border-purple-500/50 bg-purple-500/10 p-4 text-left transition-all hover:border-purple-400 hover:bg-purple-500/20"
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-bold">Unlimited Connects (Monthly)</p>
-                    <p className="text-sm text-muted-foreground">Premium access</p>
+                    <p className="font-bold text-white">Unlimited (Monthly)</p>
+                    <p className="text-sm text-gray-400">Premium access</p>
                   </div>
-                  <p className="font-bold text-primary">₦50,000</p>
+                  <p className="font-bold text-purple-400">N50,000</p>
                 </div>
               </button>
 
               {/* Yearly Premium */}
               <button
                 onClick={() => handlePurchase('premium-yearly', 480000, 999)}
-                className="w-full rounded-xl border-2 border-primary/30 bg-primary/5 p-4 text-left transition-all hover:border-primary hover:bg-primary/10"
+                className="w-full rounded-xl border border-purple-500/50 bg-purple-500/10 p-4 text-left transition-all hover:border-purple-400 hover:bg-purple-500/20"
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-bold">Unlimited Connects (Yearly)</p>
-                    <p className="text-sm text-muted-foreground">Best value</p>
+                    <p className="font-bold text-white">Unlimited (Yearly)</p>
+                    <p className="text-sm text-gray-400">Best value - Save 20%</p>
                   </div>
-                  <p className="font-bold text-primary">₦480,000</p>
+                  <p className="font-bold text-purple-400">N480,000</p>
                 </div>
               </button>
             </div>
@@ -169,7 +127,7 @@ export function ConnectBalanceButton() {
             <Button
               variant="outline"
               onClick={() => setShowModal(false)}
-              className="mt-6 w-full rounded-xl"
+              className="mt-6 w-full h-12 rounded-xl border-gray-700 bg-gray-800/50 text-white hover:bg-gray-700"
             >
               Close
             </Button>

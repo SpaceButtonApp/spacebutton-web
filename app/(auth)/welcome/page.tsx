@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { useAppStore } from '@/lib/store'
+import { Sparkles, Home, Users, Zap, CheckCircle } from 'lucide-react'
 
 interface SignupData {
   name: string
@@ -18,8 +20,8 @@ function Confetti() {
   const [ribbons, setRibbons] = useState<Array<{ id: number; left: number; delay: number; duration: number; color: string }>>([])
   
   useEffect(() => {
-    const colors = ['#703BF7', '#10B981', '#F59E0B', '#EF4444', '#6366F1', '#EC4899']
-    const newRibbons = Array.from({ length: 50 }, (_, i) => ({
+    const colors = ['#703BF7', '#10B981', '#F59E0B', '#3B82F6', '#6366F1', '#EC4899']
+    const newRibbons = Array.from({ length: 60 }, (_, i) => ({
       id: i,
       left: Math.random() * 100,
       delay: Math.random() * 3,
@@ -68,6 +70,7 @@ export default function WelcomePage() {
   const router = useRouter()
   const user = useAppStore((state) => state.user)
   const setUser = useAppStore((state) => state.setUser)
+  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-kJSONfc9hORfv0xhwC97LF0eSOCvJL.png'
   
   // Create user from signup data on mount
   useEffect(() => {
@@ -89,60 +92,82 @@ export default function WelcomePage() {
         location: 'Nigeria',
         walletBalance: 0,
         isPremium: false,
-        connectsRemaining: 1, // 1 free connect for new users
+        connectsRemaining: 1,
       })
     }
   }, [user, setUser])
 
+  const features = [
+    { icon: Home, label: 'Find your perfect space' },
+    { icon: Users, label: 'Connect with agents' },
+    { icon: Zap, label: '1 Free Connect included' },
+  ]
+
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 relative overflow-hidden">
+    <div className="min-h-screen bg-[#0a0a0f] flex flex-col relative overflow-hidden">
+      {/* Background gradient effects */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 -left-40 w-80 h-80 bg-purple-600/20 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 -right-40 w-80 h-80 bg-blue-600/20 rounded-full blur-[120px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-500/5 rounded-full blur-[100px]" />
+      </div>
+      
       {/* Confetti */}
       <Confetti />
       
-      {/* City skyline background */}
-      <div className="absolute top-0 left-0 right-0 h-40 bg-muted/30 flex items-end justify-center">
-        <div className="flex items-end gap-2 opacity-30">
-          <div className="w-8 h-20 bg-muted-foreground/20 rounded-t" />
-          <div className="w-12 h-32 bg-muted-foreground/20 rounded-t" />
-          <div className="w-6 h-16 bg-muted-foreground/20 rounded-t" />
-          <div className="w-10 h-24 bg-muted-foreground/20 rounded-t" />
-          <div className="w-8 h-28 bg-muted-foreground/20 rounded-t" />
-          <div className="w-14 h-20 bg-muted-foreground/20 rounded-t" />
-          <div className="w-6 h-12 bg-muted-foreground/20 rounded-t" />
-        </div>
-      </div>
-      
-      {/* 3D Illustration placeholder */}
-      <div className="relative mb-8 z-10">
-        <div className="w-48 h-48 rounded-3xl bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center">
-          <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-primary/40 to-primary/60 flex items-center justify-center shadow-lg">
-            <div className="w-20 h-16 rounded-lg bg-primary/80 flex items-center justify-center">
-              <div className="w-8 h-8 rounded bg-primary-foreground/30" />
-            </div>
+      {/* Content */}
+      <div className="relative flex-1 flex flex-col items-center justify-center px-6 py-12 z-10">
+        {/* Success Icon */}
+        <div className="relative mb-8">
+          <div className="w-28 h-28 rounded-full bg-gradient-to-br from-green-500/20 to-green-600/30 flex items-center justify-center shadow-2xl shadow-green-500/20 border border-green-500/30">
+            <CheckCircle className="w-14 h-14 text-green-400" />
+          </div>
+          <div className="absolute -top-2 -right-2 w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/30">
+            <Sparkles className="w-5 h-5 text-white" />
           </div>
         </div>
-        {/* Decorative elements */}
-        <div className="absolute -left-4 bottom-4 w-12 h-12 rounded-lg bg-primary/30 flex flex-col gap-1 p-2">
-          <div className="h-1 w-full bg-primary/50 rounded" />
-          <div className="h-1 w-full bg-primary/50 rounded" />
-          <div className="h-1 w-full bg-primary/50 rounded" />
-          <div className="h-1 w-full bg-primary/50 rounded" />
+
+        {/* Logo */}
+        <div className="flex items-center gap-3 mb-6">
+          <Image
+            src={logoUrl}
+            alt="SpaceButton"
+            width={48}
+            height={48}
+            className="h-12 w-12"
+          />
+          <span className="text-2xl font-bold text-white">SpaceButton</span>
         </div>
+
+        {/* Welcome Text */}
+        <h1 className="text-3xl font-bold text-white mb-3 text-center">Welcome aboard!</h1>
+        <p className="text-gray-400 text-center max-w-sm mb-8">
+          Your account is ready. Start exploring the best spaces tailored just for you.
+        </p>
+
+        {/* Features */}
+        <div className="w-full max-w-sm space-y-3 mb-10">
+          {features.map((feature, index) => (
+            <div
+              key={index}
+              className="flex items-center gap-4 p-4 rounded-xl bg-[#12121a]/80 border border-gray-800/50 backdrop-blur-sm"
+            >
+              <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                <feature.icon className="w-5 h-5 text-purple-400" />
+              </div>
+              <span className="text-white font-medium">{feature.label}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* CTA Button */}
+        <Button
+          onClick={() => router.push('/home')}
+          className="w-full max-w-sm h-14 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white font-semibold text-base shadow-lg shadow-purple-500/25 transition-all"
+        >
+          Start Exploring
+        </Button>
       </div>
-
-      {/* Welcome Text */}
-      <h1 className="text-3xl font-bold mb-2 text-center z-10">Welcome SpaceButton</h1>
-      <p className="text-muted-foreground text-center max-w-sm mb-12 z-10">
-        Your account is ready to use. you will be redirected to the home page. Welcome on board
-      </p>
-
-      {/* CTA Button */}
-      <Button
-        onClick={() => router.push('/home')}
-        className="w-full max-w-sm h-14 rounded-xl bg-primary text-primary-foreground font-semibold text-base z-10"
-      >
-        Explore
-      </Button>
     </div>
   )
 }

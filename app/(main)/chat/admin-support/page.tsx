@@ -8,28 +8,15 @@ import { Input } from '@/components/ui/input'
 import { BackButton } from '@/components/back-button'
 import { useAppStore } from '@/lib/store'
 
-interface Message {
-  id: string
-  text: string
-  sender: 'user' | 'admin'
-  timestamp: Date
-}
-
-const initialMessages: Message[] = [
-  {
-    id: '1',
-    text: 'Hello! Welcome to SpaceButton Support. How can I help you today?',
-    sender: 'admin',
-    timestamp: new Date(Date.now() - 60000),
-  },
-]
-
 export default function AdminSupportChatPage() {
   const router = useRouter()
-  const { user, addNotification } = useAppStore()
-  const [messages, setMessages] = useState<Message[]>(initialMessages)
+  const { user, supportChats, addSupportMessage, addNotification } = useAppStore()
   const [newMessage, setNewMessage] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Get current user's support chat
+  const currentChat = supportChats.find(c => c.userId === user?.id)
+  const messages = currentChat?.messages || []
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -39,28 +26,34 @@ export default function AdminSupportChatPage() {
     scrollToBottom()
   }, [messages])
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return
-
-    const userMsg: Message = {
-      id: `user-${Date.now()}`,
-      text: newMessage,
-      sender: 'user',
-      timestamp: new Date(),
+  // Add initial welcome message if no messages exist
+  useEffect(() => {
+    if (user && messages.length === 0) {
+      addSupportMessage(
+        user.id,
+        user.name,
+        'Hello! Welcome to SpaceButton Support. How can I help you today?',
+        'admin'
+      )
     }
+  }, [user, messages.length, addSupportMessage])
 
-    setMessages((prev) => [...prev, userMsg])
-    setNewMessage('')
+  const handleSendMessage = () => {
+    if (!newMessage.trim() || !user) return
 
-    // Send notification to admin
+    // Add message to support chat
+    addSupportMessage(user.id, user.name, newMessage.trim(), 'user')
+
+    // Add notification for admin
     addNotification({
-      id: `support-${Date.now()}`,
       title: 'New Support Message',
-      message: `${user?.firstName || 'User'}: ${newMessage}`,
+      message: `${user.name}: ${newMessage.trim()}`,
       type: 'general',
       read: false,
       createdAt: new Date().toISOString(),
     })
+
+    setNewMessage('')
 
     // Simulate admin response after delay
     setTimeout(() => {
@@ -74,19 +67,14 @@ export default function AdminSupportChatPage() {
       
       const randomResponse = adminResponses[Math.floor(Math.random() * adminResponses.length)]
       
-      const adminMsg: Message = {
-        id: `admin-${Date.now()}`,
-        text: randomResponse,
-        sender: 'admin',
-        timestamp: new Date(),
+      if (user) {
+        addSupportMessage(user.id, user.name, randomResponse, 'admin')
       }
-      
-      setMessages((prev) => [...prev, adminMsg])
     }, 1500)
   }
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+  const formatTime = (timestamp: string) => {
+    return new Date(timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
   }
 
   return (

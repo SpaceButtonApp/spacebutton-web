@@ -99,7 +99,7 @@ export default function WelcomePage() {
 
   const features = [
     { icon: Home, label: 'Find your perfect space' },
-    { icon: Users, label: 'Connect with agents' },
+    { icon: Users, label: 'Verified property listings' },
     { icon: Zap, label: '1 Free Connect included' },
   ]
 

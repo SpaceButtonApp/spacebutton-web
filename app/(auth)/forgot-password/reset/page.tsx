@@ -2,9 +2,10 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Eye, EyeOff, Check, X } from 'lucide-react'
+import Image from 'next/image'
+import { Eye, EyeOff, Check, X, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { BackButton } from '@/components/back-button'
 
 interface PasswordRequirement {
   label: string
@@ -27,6 +28,8 @@ export default function ResetPasswordPage() {
     confirmPassword: '',
   })
 
+  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-kJSONfc9hORfv0xhwC97LF0eSOCvJL.png'
+
   const allRequirementsMet = requirements.every((req) => req.test(formData.password))
   const passwordsMatch = formData.password === formData.confirmPassword && formData.confirmPassword.length > 0
 
@@ -42,39 +45,60 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-[#0a0a0f] flex flex-col">
+      {/* Background gradient effects */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 -left-40 w-80 h-80 bg-[#703BF7]/20 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 -right-40 w-80 h-80 bg-[#703BF7]/10 rounded-full blur-[120px]" />
+      </div>
+
       {/* Header */}
-      <div className="px-6 pt-6 pb-4">
-        <button 
-          onClick={() => router.back()}
-          className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
+      <div className="relative px-4 pt-6 pb-4">
+        <BackButton fallbackUrl="/forgot-password/verify" variant="light" />
       </div>
 
       {/* Content */}
-      <div className="flex-1 px-6 py-4">
-        <h1 className="text-2xl font-bold mb-2">Reset Password</h1>
-        <p className="text-muted-foreground mb-8">
-          Create a new password for your account.
-        </p>
+      <div className="relative flex-1 px-6 py-4">
+        {/* Icon */}
+        <div className="flex justify-center mb-6">
+          <div className="w-20 h-20 rounded-2xl bg-[#703BF7]/20 flex items-center justify-center border border-[#703BF7]/30">
+            <Lock className="w-10 h-10 text-[#703BF7]" />
+          </div>
+        </div>
+
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 mb-4">
+            <Image
+              src={logoUrl}
+              alt="SpaceButton"
+              width={32}
+              height={32}
+              className="h-8 w-8"
+            />
+            <span className="text-lg font-bold text-white">SpaceButton</span>
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-3">Reset Password</h1>
+          <p className="text-gray-400 text-sm">
+            Create a new password for your account.
+          </p>
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
-            <label className="text-sm font-medium">New Password</label>
+            <label className="text-sm font-medium text-gray-300">New Password</label>
             <div className="relative">
-              <Input
+              <input
                 type={showPassword ? 'text' : 'password'}
                 placeholder="**********"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="h-14 rounded-xl border-border bg-background px-4 pr-12"
+                className="w-full h-14 px-4 pr-12 bg-[#12121a] border border-gray-800 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#703BF7]/50 focus:border-[#703BF7] transition-all"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
               >
                 {showPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
               </button>
@@ -82,19 +106,19 @@ export default function ResetPasswordPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Confirm New Password</label>
+            <label className="text-sm font-medium text-gray-300">Confirm New Password</label>
             <div className="relative">
-              <Input
+              <input
                 type={showConfirmPassword ? 'text' : 'password'}
                 placeholder="**********"
                 value={formData.confirmPassword}
                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                className="h-14 rounded-xl border-border bg-background px-4 pr-12"
+                className="w-full h-14 px-4 pr-12 bg-[#12121a] border border-gray-800 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#703BF7]/50 focus:border-[#703BF7] transition-all"
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
               >
                 {showConfirmPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
               </button>
@@ -103,17 +127,17 @@ export default function ResetPasswordPage() {
 
           {/* Password requirements */}
           <div className="space-y-3 py-2">
-            <p className="text-sm font-medium">Your password must include:</p>
+            <p className="text-sm font-medium text-gray-300">Your password must include:</p>
             {requirements.map((req, index) => {
               const isMet = req.test(formData.password)
               return (
                 <div key={index} className="flex items-center gap-3">
                   {isMet ? (
-                    <Check className="w-4 h-4 text-success" />
+                    <Check className="w-4 h-4 text-green-500" />
                   ) : (
-                    <X className="w-4 h-4 text-destructive" />
+                    <X className="w-4 h-4 text-red-400" />
                   )}
-                  <span className={`text-sm ${isMet ? 'text-success' : 'text-foreground'}`}>
+                  <span className={`text-sm ${isMet ? 'text-green-500' : 'text-gray-400'}`}>
                     {req.label}
                   </span>
                 </div>
@@ -124,7 +148,7 @@ export default function ResetPasswordPage() {
           <Button
             type="submit"
             disabled={!allRequirementsMet || !passwordsMatch}
-            className="w-full h-14 rounded-xl bg-primary text-primary-foreground font-semibold text-base disabled:opacity-50"
+            className="w-full h-14 rounded-xl bg-gradient-to-r from-[#703BF7] to-[#5f32d4] hover:from-[#8b5cf6] hover:to-[#703BF7] text-white font-semibold text-base disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#703BF7]/20"
           >
             Reset Password
           </Button>

@@ -2,14 +2,18 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, CheckCircle } from 'lucide-react'
+import Image from 'next/image'
+import { CheckCircle, Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { BackButton } from '@/components/back-button'
 
 export default function VerificationPage() {
   const router = useRouter()
   const [code, setCode] = useState(['', '', '', '', '', ''])
   const [isVerified, setIsVerified] = useState(false)
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
+
+  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-kJSONfc9hORfv0xhwC97LF0eSOCvJL.png'
 
   useEffect(() => {
     inputRefs.current[0]?.focus()
@@ -66,37 +70,52 @@ export default function VerificationPage() {
     <div className="min-h-screen bg-[#0a0a0f] flex flex-col relative overflow-hidden">
       {/* Background gradient effects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 -left-40 w-80 h-80 bg-purple-600/20 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 -right-40 w-80 h-80 bg-blue-600/20 rounded-full blur-[120px]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-500/5 rounded-full blur-[100px]" />
+        <div className="absolute top-0 -left-40 w-80 h-80 bg-[#703BF7]/20 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 -right-40 w-80 h-80 bg-[#703BF7]/10 rounded-full blur-[120px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#703BF7]/5 rounded-full blur-[100px]" />
       </div>
 
       {/* Header */}
       <div className="relative px-4 pt-6 pb-4">
-        <button
-          onClick={() => router.back()}
-          className="w-10 h-10 rounded-full bg-[#1a1a24] border border-gray-800 flex items-center justify-center text-white hover:bg-gray-800 transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
+        <BackButton fallbackUrl="/signup/password" variant="light" />
       </div>
 
       {/* Content */}
       <div className="relative flex-1 flex flex-col px-6 py-8">
         {isVerified ? (
           <div className="flex-1 flex flex-col items-center justify-center">
-            <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mb-6">
-              <CheckCircle className="w-10 h-10 text-green-400" />
+            <div className="w-24 h-24 rounded-full bg-green-500/20 flex items-center justify-center mb-6 border border-green-500/30">
+              <CheckCircle className="w-12 h-12 text-green-400" />
             </div>
             <h1 className="text-2xl font-bold text-white mb-2">Verified!</h1>
             <p className="text-gray-400">Redirecting you to your account...</p>
           </div>
         ) : (
           <>
-            <h1 className="text-3xl font-bold text-white mb-3">Enter verification code</h1>
-            <p className="text-gray-400 mb-8">
-              We have sent a 6-digit code to your email address. Enter the code below to verify your account.
-            </p>
+            {/* Icon */}
+            <div className="flex justify-center mb-6">
+              <div className="w-20 h-20 rounded-2xl bg-[#703BF7]/20 flex items-center justify-center border border-[#703BF7]/30">
+                <Mail className="w-10 h-10 text-[#703BF7]" />
+              </div>
+            </div>
+
+            {/* Header */}
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center gap-2 mb-4">
+                <Image
+                  src={logoUrl}
+                  alt="SpaceButton"
+                  width={32}
+                  height={32}
+                  className="h-8 w-8"
+                />
+                <span className="text-lg font-bold text-white">SpaceButton</span>
+              </div>
+              <h1 className="text-2xl font-bold text-white mb-3">Enter verification code</h1>
+              <p className="text-gray-400 text-sm">
+                We sent a 6-digit code to your email address. Enter the code below to verify your account.
+              </p>
+            </div>
 
             {/* OTP Inputs */}
             <div className="flex justify-center gap-3 mb-8" onPaste={handlePaste}>
@@ -110,7 +129,7 @@ export default function VerificationPage() {
                   value={digit}
                   onChange={(e) => handleChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
-                  className="w-12 h-14 text-center text-xl font-bold bg-[#12121a] border-2 border-gray-800 rounded-xl text-white focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all"
+                  className="w-12 h-14 text-center text-xl font-bold bg-[#12121a] border-2 border-gray-800 rounded-xl text-white focus:border-[#703BF7] focus:outline-none focus:ring-2 focus:ring-[#703BF7]/20 transition-all"
                 />
               ))}
             </div>
@@ -121,7 +140,7 @@ export default function VerificationPage() {
                 Didn&apos;t receive a code?{' '}
                 <button
                   onClick={handleResend}
-                  className="text-purple-400 font-medium hover:text-purple-300 transition-colors"
+                  className="text-[#703BF7] font-medium hover:text-[#8b5cf6] transition-colors"
                 >
                   Resend
                 </button>
@@ -132,7 +151,7 @@ export default function VerificationPage() {
             <Button
               onClick={handleVerify}
               disabled={code.some(digit => digit === '')}
-              className="w-full h-14 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-purple-500/20"
+              className="w-full h-14 rounded-xl bg-gradient-to-r from-[#703BF7] to-[#5f32d4] hover:from-[#8b5cf6] hover:to-[#703BF7] text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-[#703BF7]/20"
             >
               Verify
             </Button>

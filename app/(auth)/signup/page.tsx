@@ -4,8 +4,21 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { User, Mail, Phone, Ticket, Check } from 'lucide-react'
+import { User, Mail, Ticket, Check, ChevronDown } from 'lucide-react'
 import { BackButton } from '@/components/back-button'
+
+const countryCodes = [
+  { code: '+234', country: 'Nigeria', flag: '🇳🇬' },
+  { code: '+1', country: 'USA', flag: '🇺🇸' },
+  { code: '+44', country: 'UK', flag: '🇬🇧' },
+  { code: '+91', country: 'India', flag: '🇮🇳' },
+  { code: '+27', country: 'South Africa', flag: '🇿🇦' },
+  { code: '+254', country: 'Kenya', flag: '🇰🇪' },
+  { code: '+233', country: 'Ghana', flag: '🇬🇭' },
+  { code: '+971', country: 'UAE', flag: '🇦🇪' },
+  { code: '+86', country: 'China', flag: '🇨🇳' },
+  { code: '+81', country: 'Japan', flag: '🇯🇵' },
+]
 
 export default function SignupPage() {
   const router = useRouter()
@@ -14,12 +27,22 @@ export default function SignupPage() {
     profileType: 'individual' as 'individual' | 'agent',
     email: '',
     phone: '',
+    countryCode: '+234',
     invitationCode: '',
     agreeToTerms: false,
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [showCountryPicker, setShowCountryPicker] = useState(false)
 
   const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-kJSONfc9hORfv0xhwC97LF0eSOCvJL.png'
+
+  const selectedCountry = countryCodes.find(c => c.code === formData.countryCode) || countryCodes[0]
+
+  const handlePhoneChange = (value: string) => {
+    // Only allow numbers
+    const numericValue = value.replace(/\D/g, '')
+    setFormData({ ...formData, phone: numericValue })
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,6 +51,7 @@ export default function SignupPage() {
     if (!formData.name) newErrors.name = 'Name is required'
     if (!formData.email) newErrors.email = 'Email is required'
     if (!formData.phone) newErrors.phone = 'Phone number is required'
+    if (formData.phone.length < 10) newErrors.phone = 'Please enter a valid phone number'
     if (!formData.agreeToTerms) newErrors.terms = 'You must agree to the terms'
     
     if (Object.keys(newErrors).length > 0) {
@@ -35,8 +59,11 @@ export default function SignupPage() {
       return
     }
 
-    // Store form data and navigate to password page
-    localStorage.setItem('signupData', JSON.stringify(formData))
+    // Store form data with full phone number and navigate to password page
+    localStorage.setItem('signupData', JSON.stringify({
+      ...formData,
+      phone: `${formData.countryCode}${formData.phone}`
+    }))
     router.push('/signup/password')
   }
 
@@ -149,14 +176,51 @@ export default function SignupPage() {
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Phone Number
                 </label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <div className="flex gap-2">
+                  {/* Country Code Selector */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowCountryPicker(!showCountryPicker)}
+                      className="flex items-center gap-2 px-3 py-3 bg-[#1a1a24] border border-gray-800 rounded-xl text-white hover:border-gray-700 transition-all min-w-[100px]"
+                    >
+                      <span className="text-lg">{selectedCountry.flag}</span>
+                      <span className="text-sm">{selectedCountry.code}</span>
+                      <ChevronDown className="w-4 h-4 text-gray-500" />
+                    </button>
+                    
+                    {showCountryPicker && (
+                      <div className="absolute z-50 top-full left-0 mt-2 w-64 bg-[#1a1a24] border border-gray-800 rounded-xl shadow-xl max-h-60 overflow-y-auto">
+                        {countryCodes.map((country) => (
+                          <button
+                            key={country.code}
+                            type="button"
+                            onClick={() => {
+                              setFormData({ ...formData, countryCode: country.code })
+                              setShowCountryPicker(false)
+                            }}
+                            className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-800/50 transition-colors ${
+                              formData.countryCode === country.code ? 'bg-[#703BF7]/20' : ''
+                            }`}
+                          >
+                            <span className="text-lg">{country.flag}</span>
+                            <span className="text-white text-sm flex-1 text-left">{country.country}</span>
+                            <span className="text-gray-400 text-sm">{country.code}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Phone Number Input */}
                   <input
                     type="tel"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    onChange={(e) => handlePhoneChange(e.target.value)}
                     placeholder="Enter phone number"
-                    className="w-full pl-11 pr-4 py-3 bg-[#1a1a24] border border-gray-800 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#703BF7]/50 focus:border-[#703BF7] transition-all"
+                    className="flex-1 px-4 py-3 bg-[#1a1a24] border border-gray-800 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#703BF7]/50 focus:border-[#703BF7] transition-all"
                   />
                 </div>
                 {errors.phone && <p className="mt-2 text-sm text-red-400">{errors.phone}</p>}

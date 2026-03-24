@@ -3,86 +3,36 @@
 import { useState, useRef, useEffect } from 'react'
 import { AdminHeader } from '@/components/admin/header'
 import { useAppStore } from '@/lib/store'
-import { Search, Send, Phone, Video, MoreVertical, Paperclip, Image as ImageIcon, Smile } from 'lucide-react'
+import { Search, Send, Phone, Video, MoreVertical, Paperclip, Image as ImageIcon, Smile, MessageSquare } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
-import data from '@emoji-mart/data'
-import Picker from '@emoji-mart/react'
-
-// Mock messages for demo
-const initialMockChats = [
-  { id: '1', name: 'John Doe', lastMessage: 'Thanks for your help!', time: '2m ago', unread: 2, online: true },
-  { id: '2', name: 'Jane Smith', lastMessage: 'I have a question about the listing', time: '15m ago', unread: 0, online: true },
-  { id: '3', name: 'Mike Johnson', lastMessage: 'The property looks great', time: '1h ago', unread: 1, online: false },
-  { id: '4', name: 'Sarah Williams', lastMessage: 'When can we schedule a viewing?', time: '3h ago', unread: 0, online: false },
-  { id: '5', name: 'David Brown', lastMessage: 'Interested in the apartment', time: '5h ago', unread: 0, online: true },
-]
-
-interface Message {
-  id: string
-  sender: 'user' | 'admin'
-  text: string
-  time: string
-}
-
-const initialMockMessages: Message[] = [
-  { id: '1', sender: 'user', text: 'Hello, I have a question about a listing', time: '10:30 AM' },
-  { id: '2', sender: 'admin', text: 'Hi! Sure, how can I help you today?', time: '10:32 AM' },
-  { id: '3', sender: 'user', text: 'I saw a property on Ogunlana Drive. Is it still available?', time: '10:33 AM' },
-  { id: '4', sender: 'admin', text: 'Yes, that property is still available. Would you like to schedule a viewing?', time: '10:35 AM' },
-  { id: '5', sender: 'user', text: 'That would be great! Thanks for your help!', time: '10:36 AM' },
-]
 
 export default function MessagesPage() {
   const searchParams = useSearchParams()
   const userIdFromUrl = searchParams.get('user')
   
-  const [mockChats, setMockChats] = useState(initialMockChats)
-  const [selectedChat, setSelectedChat] = useState(
-    userIdFromUrl ? mockChats.find(c => c.id === userIdFromUrl) || mockChats[0] : mockChats[0]
-  )
+  const { supportChats, addSupportMessage } = useAppStore()
+  const [selectedChatId, setSelectedChatId] = useState<string | null>(userIdFromUrl || (supportChats[0]?.userId || null))
   const [message, setMessage] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
-  const [messages, setMessages] = useState<Message[]>(initialMockMessages)
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
 
-  const filteredChats = mockChats.filter(chat => 
-    chat.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const selectedChat = supportChats.find(c => c.userId === selectedChatId)
+
+  const filteredChats = supportChats.filter(chat => 
+    chat.userName.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  }, [selectedChat?.messages])
 
   // Handle sending messages
   const handleSendMessage = () => {
-    if (!message.trim()) return
+    if (!message.trim() || !selectedChat) return
     
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      sender: 'admin',
-      text: message.trim(),
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    }
-    
-    setMessages(prev => [...prev, newMessage])
+    addSupportMessage(selectedChat.userId, selectedChat.userName, message.trim(), 'admin')
     setMessage('')
-    setShowEmojiPicker(false)
-    
-    // Update last message in chat list
-    setMockChats(prev => prev.map(chat => 
-      chat.id === selectedChat.id 
-        ? { ...chat, lastMessage: message.trim(), time: 'Just now' }
-        : chat
-    ))
-  }
-
-  // Handle emoji selection
-  const handleEmojiSelect = (emoji: any) => {
-    setMessage(prev => prev + emoji.native)
-    inputRef.current?.focus()
   }
 
   // Handle Enter key
@@ -93,8 +43,12 @@ export default function MessagesPage() {
     }
   }
 
+  const formatTime = (timestamp: string) => {
+    return new Date(timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+  }
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[#0a0a0f]">
       <AdminHeader title="Messages" />
       
       <div className="flex h-[calc(100vh-64px)]">
@@ -108,141 +62,146 @@ export default function MessagesPage() {
                 placeholder="Search conversations..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-[#1a1a24] border border-gray-800 rounded-xl text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                className="w-full pl-10 pr-4 py-2.5 bg-[#1a1a24] border border-gray-800 rounded-xl text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#703BF7]/50"
               />
             </div>
           </div>
           
           <div className="flex-1 overflow-y-auto">
-            {filteredChats.map((chat) => (
-              <button
-                key={chat.id}
-                onClick={() => setSelectedChat(chat)}
-                className={`w-full p-4 flex items-center gap-3 hover:bg-gray-800/30 transition-colors ${
-                  selectedChat.id === chat.id ? 'bg-purple-500/10 border-l-2 border-purple-500' : ''
-                }`}
-              >
-                <div className="relative">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-medium">
-                    {chat.name.charAt(0)}
-                  </div>
-                  {chat.online && (
+            {filteredChats.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center p-6">
+                <div className="w-16 h-16 rounded-full bg-[#703BF7]/20 flex items-center justify-center mb-4">
+                  <MessageSquare className="w-8 h-8 text-[#703BF7]" />
+                </div>
+                <p className="text-gray-400 text-sm">No support conversations yet</p>
+                <p className="text-gray-500 text-xs mt-1">Messages from users will appear here</p>
+              </div>
+            ) : (
+              filteredChats.map((chat) => (
+                <button
+                  key={chat.id}
+                  onClick={() => setSelectedChatId(chat.userId)}
+                  className={`w-full p-4 flex items-center gap-3 hover:bg-gray-800/30 transition-colors ${
+                    selectedChatId === chat.userId ? 'bg-[#703BF7]/10 border-l-2 border-[#703BF7]' : ''
+                  }`}
+                >
+                  <div className="relative">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#703BF7] to-[#5f32d4] flex items-center justify-center text-white font-medium">
+                      {chat.userName.charAt(0)}
+                    </div>
                     <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-[#12121a] rounded-full" />
-                  )}
-                </div>
-                <div className="flex-1 text-left min-w-0">
-                  <div className="flex items-center justify-between">
-                    <p className="font-medium text-white truncate">{chat.name}</p>
-                    <span className="text-xs text-gray-500">{chat.time}</span>
                   </div>
-                  <p className="text-sm text-gray-400 truncate">{chat.lastMessage}</p>
-                </div>
-                {chat.unread > 0 && (
-                  <span className="w-5 h-5 bg-purple-600 rounded-full text-xs text-white flex items-center justify-center">
-                    {chat.unread}
-                  </span>
-                )}
-              </button>
-            ))}
+                  <div className="flex-1 text-left min-w-0">
+                    <div className="flex items-center justify-between">
+                      <p className="font-medium text-white truncate">{chat.userName}</p>
+                      <span className="text-xs text-gray-500">{chat.lastMessageTime}</span>
+                    </div>
+                    <p className="text-sm text-gray-400 truncate">{chat.lastMessage}</p>
+                  </div>
+                  {chat.unread > 0 && (
+                    <span className="w-5 h-5 bg-[#703BF7] rounded-full text-xs text-white flex items-center justify-center">
+                      {chat.unread}
+                    </span>
+                  )}
+                </button>
+              ))
+            )}
           </div>
         </div>
 
         {/* Chat Area */}
         <div className="flex-1 flex flex-col bg-[#0a0a0f]">
-          {/* Chat Header */}
-          <div className="px-6 py-4 border-b border-gray-800/50 flex items-center justify-between bg-[#12121a]">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-medium">
-                  {selectedChat.name.charAt(0)}
+          {selectedChat ? (
+            <>
+              {/* Chat Header */}
+              <div className="px-6 py-4 border-b border-gray-800/50 flex items-center justify-between bg-[#12121a]">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#703BF7] to-[#5f32d4] flex items-center justify-center text-white font-medium">
+                      {selectedChat.userName.charAt(0)}
+                    </div>
+                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-[#12121a] rounded-full" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-white">{selectedChat.userName}</p>
+                    <p className="text-xs text-gray-500">Online</p>
+                  </div>
                 </div>
-                {selectedChat.online && (
-                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-[#12121a] rounded-full" />
-                )}
-              </div>
-              <div>
-                <p className="font-medium text-white">{selectedChat.name}</p>
-                <p className="text-xs text-gray-500">{selectedChat.online ? 'Online' : 'Offline'}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button className="p-2 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition-colors">
-                <Phone className="w-5 h-5" />
-              </button>
-              <button className="p-2 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition-colors">
-                <Video className="w-5 h-5" />
-              </button>
-              <button className="p-2 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition-colors">
-                <MoreVertical className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
-            {messages.map((msg) => (
-              <div key={msg.id} className={`flex ${msg.sender === 'admin' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[70%] px-4 py-3 rounded-2xl ${
-                  msg.sender === 'admin' 
-                    ? 'bg-purple-600 text-white rounded-br-none' 
-                    : 'bg-[#1a1a24] text-white rounded-bl-none'
-                }`}>
-                  <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
-                  <p className={`text-xs mt-1 ${msg.sender === 'admin' ? 'text-purple-200' : 'text-gray-500'}`}>{msg.time}</p>
+                <div className="flex items-center gap-2">
+                  <button className="p-2 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition-colors">
+                    <Phone className="w-5 h-5" />
+                  </button>
+                  <button className="p-2 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition-colors">
+                    <Video className="w-5 h-5" />
+                  </button>
+                  <button className="p-2 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition-colors">
+                    <MoreVertical className="w-5 h-5" />
+                  </button>
                 </div>
               </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
 
-          {/* Message Input */}
-          <div className="p-4 border-t border-gray-800/50 bg-[#12121a] relative">
-            {/* Emoji Picker */}
-            {showEmojiPicker && (
-              <div className="absolute bottom-full left-4 mb-2">
-                <Picker 
-                  data={data} 
-                  onEmojiSelect={handleEmojiSelect}
-                  theme="dark"
-                  previewPosition="none"
-                  skinTonePosition="none"
-                />
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                {selectedChat.messages.map((msg) => (
+                  <div key={msg.id} className={`flex ${msg.sender === 'admin' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[70%] px-4 py-3 rounded-2xl ${
+                      msg.sender === 'admin' 
+                        ? 'bg-[#703BF7] text-white rounded-br-none' 
+                        : 'bg-[#1a1a24] text-white rounded-bl-none'
+                    }`}>
+                      <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
+                      <p className={`text-xs mt-1 ${msg.sender === 'admin' ? 'text-purple-200' : 'text-gray-500'}`}>
+                        {formatTime(msg.timestamp)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+                <div ref={messagesEndRef} />
               </div>
-            )}
-            
-            <div className="flex items-center gap-3">
-              <button className="p-2 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition-colors">
-                <Paperclip className="w-5 h-5" />
-              </button>
-              <button className="p-2 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition-colors">
-                <ImageIcon className="w-5 h-5" />
-              </button>
-              <div className="flex-1 relative">
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Type a message..."
-                  className="w-full px-4 py-3 bg-[#1a1a24] border border-gray-800 rounded-xl text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 pr-12"
-                />
-                <button 
-                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-yellow-400 transition-colors"
-                >
-                  <Smile className="w-5 h-5" />
-                </button>
+
+              {/* Message Input */}
+              <div className="p-4 border-t border-gray-800/50 bg-[#12121a]">
+                <div className="flex items-center gap-3">
+                  <button className="p-2 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition-colors">
+                    <Paperclip className="w-5 h-5" />
+                  </button>
+                  <button className="p-2 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition-colors">
+                    <ImageIcon className="w-5 h-5" />
+                  </button>
+                  <div className="flex-1 relative">
+                    <input
+                      type="text"
+                      value={message}
+                      onChange={(e) => setMessage(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      placeholder="Type a message..."
+                      className="w-full px-4 py-3 bg-[#1a1a24] border border-gray-800 rounded-xl text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#703BF7]/50 pr-12"
+                    />
+                    <button className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-yellow-400 transition-colors">
+                      <Smile className="w-5 h-5" />
+                    </button>
+                  </div>
+                  <button 
+                    onClick={handleSendMessage}
+                    disabled={!message.trim()}
+                    className="p-3 rounded-xl bg-[#703BF7] hover:bg-[#5f32d4] disabled:bg-gray-700 disabled:cursor-not-allowed text-white transition-colors"
+                  >
+                    <Send className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
-              <button 
-                onClick={handleSendMessage}
-                disabled={!message.trim()}
-                className="p-3 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:bg-gray-700 disabled:cursor-not-allowed text-white transition-colors"
-              >
-                <Send className="w-5 h-5" />
-              </button>
+            </>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-6">
+              <div className="w-20 h-20 rounded-full bg-[#703BF7]/20 flex items-center justify-center mb-4">
+                <MessageSquare className="w-10 h-10 text-[#703BF7]" />
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">No conversation selected</h3>
+              <p className="text-gray-400 text-sm max-w-sm">
+                Select a conversation from the list to view messages, or wait for users to send support requests.
+              </p>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

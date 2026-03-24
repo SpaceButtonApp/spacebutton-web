@@ -49,6 +49,26 @@ interface Review {
   createdAt: string
 }
 
+interface SupportMessage {
+  id: string
+  text: string
+  sender: 'user' | 'admin'
+  userId: string
+  userName: string
+  timestamp: string
+}
+
+interface SupportChat {
+  id: string
+  userId: string
+  userName: string
+  userAvatar?: string
+  messages: SupportMessage[]
+  lastMessage: string
+  lastMessageTime: string
+  unread: number
+}
+
 interface AppState {
   // User
   user: User | null
@@ -79,6 +99,15 @@ interface AppState {
   // Notifications
   notifications: Notification[]
   markNotificationRead: (id: string) => void
+  addNotification: (notification: Omit<Notification, 'id'> & { id?: string }) => void
+  markAllNotificationsRead: () => void
+  clearAllNotifications: () => void
+  deleteNotification: (id: string) => void
+  
+  // Support Chat
+  supportChats: SupportChat[]
+  addSupportMessage: (userId: string, userName: string, message: string, sender: 'user' | 'admin') => void
+  getSupportChat: (userId: string) => SupportChat | undefined
   
   // UI State
   activeTab: 'connect' | 'agent' | 'shortlet' | 'properties'
@@ -195,6 +224,63 @@ export const useAppStore = create<AppState>()(
           n.id === id ? { ...n, read: true } : n
         )
       })),
+      addNotification: (notification) => set((state) => ({
+        notifications: [{
+          ...notification,
+          id: notification.id || Date.now().toString(),
+        } as Notification, ...state.notifications]
+      })),
+      markAllNotificationsRead: () => set((state) => ({
+        notifications: state.notifications.map((n) => ({ ...n, read: true }))
+      })),
+      clearAllNotifications: () => set({ notifications: [] }),
+      deleteNotification: (id) => set((state) => ({
+        notifications: state.notifications.filter((n) => n.id !== id)
+      })),
+      
+      // Support Chat
+      supportChats: [],
+      addSupportMessage: (userId, userName, message, sender) => set((state) => {
+        const existingChat = state.supportChats.find(c => c.userId === userId)
+        const newMessage: SupportMessage = {
+          id: Date.now().toString(),
+          text: message,
+          sender,
+          userId,
+          userName,
+          timestamp: new Date().toISOString()
+        }
+        
+        if (existingChat) {
+          return {
+            supportChats: state.supportChats.map(chat => 
+              chat.userId === userId 
+                ? {
+                    ...chat,
+                    messages: [...chat.messages, newMessage],
+                    lastMessage: message,
+                    lastMessageTime: 'Just now',
+                    unread: sender === 'user' ? chat.unread + 1 : 0
+                  }
+                : chat
+            )
+          }
+        } else {
+          const newChat: SupportChat = {
+            id: Date.now().toString(),
+            userId,
+            userName,
+            messages: [newMessage],
+            lastMessage: message,
+            lastMessageTime: 'Just now',
+            unread: sender === 'user' ? 1 : 0
+          }
+          return {
+            supportChats: [newChat, ...state.supportChats]
+          }
+        }
+      }),
+      getSupportChat: (userId) => get().supportChats.find(c => c.userId === userId),
       
       // UI State
       activeTab: 'connect',
@@ -298,6 +384,7 @@ export const useAppStore = create<AppState>()(
         doneDealStates: state.doneDealStates,
         reviews: state.reviews,
         notifications: state.notifications,
+        supportChats: state.supportChats,
         // Note: properties not persisted to avoid localStorage quota issues with base64 images
       }),
     }

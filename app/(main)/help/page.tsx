@@ -80,8 +80,8 @@ const contactItems = [
   {
     id: 6,
     icon: () => (
-      <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
-        <span className="text-[#0a0a0f] text-sm font-bold">f</span>
+      <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+        <span className="text-primary-foreground text-sm font-bold">f</span>
       </div>
     ),
     title: "Facebook",
@@ -106,27 +106,27 @@ export default function HelpPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] pb-24">
+    <div className="min-h-screen bg-background pb-24">
       {/* Background gradient effects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 -left-40 w-80 h-80 bg-[#703BF7]/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 -right-40 w-80 h-80 bg-[#703BF7]/10 rounded-full blur-[120px]" />
+        <div className="absolute top-0 -left-40 w-80 h-80 bg-primary/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-[120px]" />
       </div>
 
-      <header className="sticky top-0 z-10 bg-[#12121a]/80 backdrop-blur-xl px-4 py-4 flex items-center gap-4 border-b border-gray-800/50">
+      <header className="sticky top-0 z-10 bg-card/80 backdrop-blur-xl px-4 py-4 flex items-center gap-4 border-b border-border">
         <BackButton fallbackUrl="/settings" />
-        <h1 className="text-lg font-semibold text-white flex-1 text-center pr-10">Help & Support</h1>
+        <h1 className="text-lg font-semibold text-foreground flex-1 text-center pr-10">Help & Support</h1>
       </header>
 
       <div className="relative px-4 pt-6">
         {/* Tab Switcher */}
-        <div className="bg-[#1a1a24] rounded-full p-1 flex mb-6 border border-gray-800/50">
+        <div className="bg-secondary rounded-full p-1 flex mb-6 border border-border">
           <button
             onClick={() => setActiveTab("faq")}
             className={`flex-1 py-3 rounded-full text-sm font-medium transition-colors ${
               activeTab === "faq" 
-                ? "bg-gradient-to-r from-[#703BF7] to-[#5f32d4] text-white shadow-lg" 
-                : "text-gray-400 hover:text-white"
+                ? "bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-lg" 
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             FAQ
@@ -135,8 +135,8 @@ export default function HelpPage() {
             onClick={() => setActiveTab("contact")}
             className={`flex-1 py-3 rounded-full text-sm font-medium transition-colors ${
               activeTab === "contact" 
-                ? "bg-gradient-to-r from-[#703BF7] to-[#5f32d4] text-white shadow-lg" 
-                : "text-gray-400 hover:text-white"
+                ? "bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-lg" 
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
             Contact Us
@@ -149,12 +149,12 @@ export default function HelpPage() {
               <button
                 key={item.id}
                 onClick={() => router.push(item.href)}
-                className="w-full flex items-center gap-4 p-4 rounded-xl bg-[#12121a] border border-gray-800/50 hover:border-[#703BF7]/30 transition-all"
+                className="w-full flex items-center gap-4 p-4 rounded-xl bg-card border border-border hover:border-primary/30 transition-all"
               >
-                <div className="w-10 h-10 rounded-lg bg-[#703BF7]/20 flex items-center justify-center">
-                  <item.icon className="w-5 h-5 text-[#703BF7]" />
+                <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                  <item.icon className="w-5 h-5 text-primary" />
                 </div>
-                <span className="font-medium text-white">{item.title}</span>
+                <span className="font-medium text-foreground">{item.title}</span>
               </button>
             ))}
           </div>
@@ -164,16 +164,16 @@ export default function HelpPage() {
               <button
                 key={item.id}
                 onClick={() => handleContactClick(item)}
-                className="w-full flex items-center gap-4 p-4 rounded-xl bg-[#12121a] border border-gray-800/50 hover:border-[#703BF7]/30 transition-all"
+                className="w-full flex items-center gap-4 p-4 rounded-xl bg-card border border-border hover:border-primary/30 transition-all"
               >
-                <div className="w-10 h-10 rounded-lg bg-[#703BF7]/20 flex items-center justify-center text-[#703BF7]">
+                <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
                   {typeof item.icon === "function" ? (
                     <item.icon />
                   ) : (
                     <item.icon className="w-5 h-5" />
                   )}
                 </div>
-                <span className="font-medium text-white">{item.title}</span>
+                <span className="font-medium text-foreground">{item.title}</span>
               </button>
             ))}
           </div>

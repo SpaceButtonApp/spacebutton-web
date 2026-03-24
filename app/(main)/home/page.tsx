@@ -80,7 +80,6 @@ export default function HomePage() {
           
           {/* Right Actions */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            <ConnectBalanceButton />
             <button 
               onClick={() => router.push('/saved')}
               className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
@@ -90,24 +89,27 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex items-center justify-center">
-          <div className="inline-flex bg-secondary rounded-full p-1 border border-border">
-            {tabs.map((tab) => (
-              <button
-                key={tab}
-                onClick={() => handleTabChange(tab)}
-                className={cn(
-                  'px-4 py-2 rounded-full text-sm font-medium transition-all duration-200',
-                  currentTab === tab
-                    ? 'bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-lg'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                {tab}
-              </button>
-            ))}
+        {/* Tabs with Connect Balance */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex-1 overflow-x-auto scrollbar-hide">
+            <div className="inline-flex bg-secondary rounded-full p-1 border border-border">
+              {tabs.map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => handleTabChange(tab)}
+                  className={cn(
+                    'px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 whitespace-nowrap',
+                    currentTab === tab
+                      ? 'bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-lg'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
           </div>
+          <ConnectBalanceButton />
         </div>
       </div>
 

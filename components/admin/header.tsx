@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Bell, Search, Sun, Moon } from 'lucide-react'
-import { useTheme } from 'next-themes'
+import { Bell, Search } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAppStore } from '@/lib/store'
@@ -17,12 +16,9 @@ interface AdminUser {
 export function AdminHeader({ title }: { title: string }) {
   const [admin, setAdmin] = useState<AdminUser | null>(null)
   const [showNotifications, setShowNotifications] = useState(false)
-  const [mounted, setMounted] = useState(false)
   const { notifications } = useAppStore()
-  const { theme, setTheme } = useTheme()
 
   useEffect(() => {
-    setMounted(true)
     const auth = localStorage.getItem('admin-auth')
     if (auth) {
       setAdmin(JSON.parse(auth))
@@ -44,10 +40,6 @@ export function AdminHeader({ title }: { title: string }) {
 
   const unreadCount = allNotifications.filter(n => !n.read).length
 
-  const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark')
-  }
-
   return (
     <header className="h-16 bg-card/80 backdrop-blur-xl border-b border-border flex items-center justify-between px-6 sticky top-0 z-40">
       <div className="flex items-center gap-4">
@@ -64,21 +56,6 @@ export function AdminHeader({ title }: { title: string }) {
             className="w-64 pl-10 pr-4 py-2 bg-secondary border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
           />
         </div>
-
-        {/* Theme Toggle */}
-        {mounted && (
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-lg bg-secondary border border-border text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-          >
-            {theme === 'dark' ? (
-              <Sun className="w-5 h-5" />
-            ) : (
-              <Moon className="w-5 h-5" />
-            )}
-          </button>
-        )}
 
         {/* Notifications */}
         <div className="relative">

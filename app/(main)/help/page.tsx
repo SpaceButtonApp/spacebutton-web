@@ -33,7 +33,7 @@ const contactItems = [
     icon: Headphones,
     title: "Customer Services",
     action: "chat",
-    href: "/admin/messages",
+    href: "/chat/admin-support",
   },
   {
     id: 2,
@@ -109,8 +109,8 @@ export default function HelpPage() {
     <div className="min-h-screen bg-[#0a0a0f] pb-24">
       {/* Background gradient effects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 -left-40 w-80 h-80 bg-purple-600/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 -right-40 w-80 h-80 bg-blue-600/10 rounded-full blur-[120px]" />
+        <div className="absolute top-0 -left-40 w-80 h-80 bg-[#703BF7]/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 -right-40 w-80 h-80 bg-[#703BF7]/10 rounded-full blur-[120px]" />
       </div>
 
       <header className="sticky top-0 z-10 bg-[#12121a]/80 backdrop-blur-xl px-4 py-4 flex items-center gap-4 border-b border-gray-800/50">
@@ -125,7 +125,7 @@ export default function HelpPage() {
             onClick={() => setActiveTab("faq")}
             className={`flex-1 py-3 rounded-full text-sm font-medium transition-colors ${
               activeTab === "faq" 
-                ? "bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg" 
+                ? "bg-gradient-to-r from-[#703BF7] to-[#5f32d4] text-white shadow-lg" 
                 : "text-gray-400 hover:text-white"
             }`}
           >
@@ -135,7 +135,7 @@ export default function HelpPage() {
             onClick={() => setActiveTab("contact")}
             className={`flex-1 py-3 rounded-full text-sm font-medium transition-colors ${
               activeTab === "contact" 
-                ? "bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg" 
+                ? "bg-gradient-to-r from-[#703BF7] to-[#5f32d4] text-white shadow-lg" 
                 : "text-gray-400 hover:text-white"
             }`}
           >
@@ -149,10 +149,10 @@ export default function HelpPage() {
               <button
                 key={item.id}
                 onClick={() => router.push(item.href)}
-                className="w-full flex items-center gap-4 p-4 rounded-xl bg-[#12121a] border border-gray-800/50 hover:border-purple-500/30 transition-all"
+                className="w-full flex items-center gap-4 p-4 rounded-xl bg-[#12121a] border border-gray-800/50 hover:border-[#703BF7]/30 transition-all"
               >
-                <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                  <item.icon className="w-5 h-5 text-purple-400" />
+                <div className="w-10 h-10 rounded-lg bg-[#703BF7]/20 flex items-center justify-center">
+                  <item.icon className="w-5 h-5 text-[#703BF7]" />
                 </div>
                 <span className="font-medium text-white">{item.title}</span>
               </button>
@@ -164,9 +164,9 @@ export default function HelpPage() {
               <button
                 key={item.id}
                 onClick={() => handleContactClick(item)}
-                className="w-full flex items-center gap-4 p-4 rounded-xl bg-[#12121a] border border-gray-800/50 hover:border-purple-500/30 transition-all"
+                className="w-full flex items-center gap-4 p-4 rounded-xl bg-[#12121a] border border-gray-800/50 hover:border-[#703BF7]/30 transition-all"
               >
-                <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400">
+                <div className="w-10 h-10 rounded-lg bg-[#703BF7]/20 flex items-center justify-center text-[#703BF7]">
                   {typeof item.icon === "function" ? (
                     <item.icon />
                   ) : (

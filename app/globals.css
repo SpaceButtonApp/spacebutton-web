@@ -17,7 +17,7 @@
   --secondary-foreground: #121212;
   --muted: #f5f5f5;
   --muted-foreground: #6b7280;
-  --accent: #f5f5f5;
+  --accent: #f0f0f0;
   --accent-foreground: #121212;
   --destructive: #EF4444;
   --destructive-foreground: #ffffff;
@@ -30,7 +30,7 @@
   --chart-2: #10B981;
   --chart-3: #EF4444;
   --chart-4: #F59E0B;
-  --chart-5: #6366F1;
+  --chart-5: #703BF7;
   --radius: 0.75rem;
   --sidebar: #ffffff;
   --sidebar-foreground: #121212;
@@ -45,8 +45,10 @@
   --app-bg: #f8f9fa;
   --app-card: #ffffff;
   --app-card-border: #e5e7eb;
-  --app-header: rgba(255, 255, 255, 0.9);
+  --app-header: rgba(255, 255, 255, 0.95);
   --app-nav: #ffffff;
+  --app-text: #121212;
+  --app-text-muted: #6b7280;
 }
 
 /* Dark Theme */
@@ -76,7 +78,7 @@
   --chart-2: #10B981;
   --chart-3: #EF4444;
   --chart-4: #F59E0B;
-  --chart-5: #6366F1;
+  --chart-5: #703BF7;
   --sidebar: #12121a;
   --sidebar-foreground: #ffffff;
   --sidebar-primary: #703BF7;
@@ -90,8 +92,10 @@
   --app-bg: #0a0a0f;
   --app-card: #12121a;
   --app-card-border: rgba(128, 128, 128, 0.2);
-  --app-header: rgba(18, 18, 26, 0.8);
+  --app-header: rgba(18, 18, 26, 0.9);
   --app-nav: #12121a;
+  --app-text: #ffffff;
+  --app-text-muted: #9ca3af;
 }
 
 @theme inline {

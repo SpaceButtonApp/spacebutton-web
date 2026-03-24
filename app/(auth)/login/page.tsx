@@ -69,8 +69,8 @@ export default function LoginPage() {
     <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center p-4">
       {/* Background gradient effects */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-0 -left-40 w-80 h-80 bg-purple-600/20 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 -right-40 w-80 h-80 bg-blue-600/20 rounded-full blur-[120px]" />
+        <div className="absolute top-0 -left-40 w-80 h-80 bg-[#703BF7]/20 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 -right-40 w-80 h-80 bg-[#703BF7]/10 rounded-full blur-[120px]" />
       </div>
 
       <div className="relative w-full max-w-md">
@@ -114,7 +114,7 @@ export default function LoginPage() {
                   value={formData.emailOrPhone}
                   onChange={(e) => setFormData({ ...formData, emailOrPhone: e.target.value })}
                   placeholder="Enter email or phone number"
-                  className="w-full pl-11 pr-4 py-3 bg-[#1a1a24] border border-gray-800 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all"
+                  className="w-full pl-11 pr-4 py-3 bg-[#1a1a24] border border-gray-800 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#703BF7]/50 focus:border-[#703BF7] transition-all"
                 />
               </div>
               {errors.emailOrPhone && (
@@ -133,7 +133,7 @@ export default function LoginPage() {
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   placeholder="Enter your password"
-                  className="w-full pl-11 pr-12 py-3 bg-[#1a1a24] border border-gray-800 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all"
+                  className="w-full pl-11 pr-12 py-3 bg-[#1a1a24] border border-gray-800 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#703BF7]/50 focus:border-[#703BF7] transition-all"
                 />
                 <button
                   type="button"
@@ -149,7 +149,7 @@ export default function LoginPage() {
             </div>
 
             <div className="text-right">
-              <Link href="/forgot-password" className="text-sm text-purple-400 hover:text-purple-300 transition-colors">
+              <Link href="/forgot-password" className="text-sm text-[#703BF7] hover:text-[#8b5cf6] transition-colors">
                 Forgot Password?
               </Link>
             </div>
@@ -157,7 +157,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full py-3.5 bg-gradient-to-r from-[#703BF7] to-[#5f32d4] hover:from-[#8b5cf6] hover:to-[#703BF7] text-white font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
@@ -173,7 +173,7 @@ export default function LoginPage() {
           <div className="mt-6 pt-6 border-t border-gray-800">
             <p className="text-center text-gray-400 text-sm">
               Don&apos;t have an account?{' '}
-              <Link href="/signup" className="text-white font-semibold hover:text-purple-400 transition-colors">
+              <Link href="/signup" className="text-white font-semibold hover:text-[#703BF7] transition-colors">
                 Sign Up
               </Link>
             </p>

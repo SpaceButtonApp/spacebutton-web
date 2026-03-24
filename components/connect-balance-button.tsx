@@ -32,7 +32,7 @@ export function ConnectBalanceButton() {
           'rounded-full font-medium text-sm transition-all flex items-center gap-2 whitespace-nowrap overflow-hidden',
           hasNoConnects
             ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
-            : 'bg-primary text-primary-foreground hover:bg-primary/90',
+            : 'bg-[#703BF7] text-white hover:bg-[#5f32d4]',
           isHovered ? 'px-3 py-2 w-auto' : 'px-2 py-2 w-auto'
         )}
       >
@@ -49,77 +49,83 @@ export function ConnectBalanceButton() {
         )}
       </button>
 
-      {/* Purchase Modal - Centered */}
+      {/* Purchase Modal - Fully Centered and Compact */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-2xl bg-[#12121a] border border-gray-800/50 p-6 relative shadow-2xl">
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+          onClick={() => setShowModal(false)}
+        >
+          <div 
+            className="w-[90%] max-w-[320px] rounded-2xl bg-card border border-border p-5 relative shadow-2xl mx-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Close Button */}
             <button
               onClick={() => setShowModal(false)}
-              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+              className="absolute top-3 right-3 w-7 h-7 rounded-full bg-secondary hover:bg-accent flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
 
-            <h2 className="mb-2 text-xl font-bold text-white">Get Connects</h2>
-            <p className="mb-6 text-sm text-gray-400">
-              Purchase connects to reach out to property owners and agents
+            <h2 className="mb-1 text-lg font-bold text-foreground">Get Connects</h2>
+            <p className="mb-4 text-xs text-muted-foreground">
+              Purchase connects to reach property owners
             </p>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               {/* Single Connect */}
               <button
                 onClick={() => handlePurchase('basic-single', 2000, 1)}
-                className="w-full rounded-xl border border-gray-700 bg-gray-800/50 p-4 text-left transition-all hover:border-purple-500 hover:bg-purple-500/10"
+                className="w-full rounded-xl border border-border bg-secondary/50 p-3 text-left transition-all hover:border-[#703BF7] hover:bg-[#703BF7]/10"
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-bold text-white">1 Connect</p>
-                    <p className="text-sm text-gray-400">Single reach out</p>
+                    <p className="font-semibold text-sm text-foreground">1 Connect</p>
+                    <p className="text-xs text-muted-foreground">Single reach out</p>
                   </div>
-                  <p className="font-bold text-purple-400">N2,000</p>
+                  <p className="font-bold text-sm text-[#703BF7]">N2,000</p>
                 </div>
               </button>
 
               {/* 5 Connects */}
               <button
                 onClick={() => handlePurchase('basic-5', 5000, 5)}
-                className="w-full rounded-xl border border-gray-700 bg-gray-800/50 p-4 text-left transition-all hover:border-purple-500 hover:bg-purple-500/10"
+                className="w-full rounded-xl border border-border bg-secondary/50 p-3 text-left transition-all hover:border-[#703BF7] hover:bg-[#703BF7]/10"
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-bold text-white">5 Connects</p>
-                    <p className="text-sm text-gray-400">Multiple reach outs</p>
+                    <p className="font-semibold text-sm text-foreground">5 Connects</p>
+                    <p className="text-xs text-muted-foreground">Multiple reach outs</p>
                   </div>
-                  <p className="font-bold text-purple-400">N5,000</p>
+                  <p className="font-bold text-sm text-[#703BF7]">N5,000</p>
                 </div>
               </button>
 
               {/* Monthly Premium */}
               <button
                 onClick={() => handlePurchase('premium-monthly', 50000, 999)}
-                className="w-full rounded-xl border border-purple-500/50 bg-purple-500/10 p-4 text-left transition-all hover:border-purple-400 hover:bg-purple-500/20"
+                className="w-full rounded-xl border border-[#703BF7]/50 bg-[#703BF7]/10 p-3 text-left transition-all hover:border-[#703BF7] hover:bg-[#703BF7]/20"
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-bold text-white">Unlimited (Monthly)</p>
-                    <p className="text-sm text-gray-400">Premium access</p>
+                    <p className="font-semibold text-sm text-foreground">Unlimited (Monthly)</p>
+                    <p className="text-xs text-muted-foreground">Premium access</p>
                   </div>
-                  <p className="font-bold text-purple-400">N50,000</p>
+                  <p className="font-bold text-sm text-[#703BF7]">N50,000</p>
                 </div>
               </button>
 
               {/* Yearly Premium */}
               <button
                 onClick={() => handlePurchase('premium-yearly', 480000, 999)}
-                className="w-full rounded-xl border border-purple-500/50 bg-purple-500/10 p-4 text-left transition-all hover:border-purple-400 hover:bg-purple-500/20"
+                className="w-full rounded-xl border border-[#703BF7]/50 bg-[#703BF7]/10 p-3 text-left transition-all hover:border-[#703BF7] hover:bg-[#703BF7]/20"
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-bold text-white">Unlimited (Yearly)</p>
-                    <p className="text-sm text-gray-400">Best value - Save 20%</p>
+                    <p className="font-semibold text-sm text-foreground">Unlimited (Yearly)</p>
+                    <p className="text-xs text-muted-foreground">Best value - Save 20%</p>
                   </div>
-                  <p className="font-bold text-purple-400">N480,000</p>
+                  <p className="font-bold text-sm text-[#703BF7]">N480,000</p>
                 </div>
               </button>
             </div>
@@ -127,7 +133,7 @@ export function ConnectBalanceButton() {
             <Button
               variant="outline"
               onClick={() => setShowModal(false)}
-              className="mt-6 w-full h-12 rounded-xl border-gray-700 bg-gray-800/50 text-white hover:bg-gray-700"
+              className="mt-4 w-full h-10 rounded-xl"
             >
               Close
             </Button>

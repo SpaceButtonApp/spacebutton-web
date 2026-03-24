@@ -107,9 +107,9 @@ export default function WelcomePage() {
     <div className="min-h-screen bg-[#0a0a0f] flex flex-col relative overflow-hidden">
       {/* Background gradient effects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 -left-40 w-80 h-80 bg-purple-600/20 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 -right-40 w-80 h-80 bg-blue-600/20 rounded-full blur-[120px]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-500/5 rounded-full blur-[100px]" />
+        <div className="absolute top-0 -left-40 w-80 h-80 bg-[#703BF7]/20 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 -right-40 w-80 h-80 bg-[#703BF7]/10 rounded-full blur-[120px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#703BF7]/5 rounded-full blur-[100px]" />
       </div>
       
       {/* Confetti */}
@@ -122,7 +122,7 @@ export default function WelcomePage() {
           <div className="w-28 h-28 rounded-full bg-gradient-to-br from-green-500/20 to-green-600/30 flex items-center justify-center shadow-2xl shadow-green-500/20 border border-green-500/30">
             <CheckCircle className="w-14 h-14 text-green-400" />
           </div>
-          <div className="absolute -top-2 -right-2 w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center shadow-lg shadow-purple-500/30">
+          <div className="absolute -top-2 -right-2 w-10 h-10 rounded-full bg-[#703BF7] flex items-center justify-center shadow-lg shadow-[#703BF7]/30">
             <Sparkles className="w-5 h-5 text-white" />
           </div>
         </div>
@@ -152,8 +152,8 @@ export default function WelcomePage() {
               key={index}
               className="flex items-center gap-4 p-4 rounded-xl bg-[#12121a]/80 border border-gray-800/50 backdrop-blur-sm"
             >
-              <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                <feature.icon className="w-5 h-5 text-purple-400" />
+              <div className="w-10 h-10 rounded-lg bg-[#703BF7]/20 flex items-center justify-center">
+                <feature.icon className="w-5 h-5 text-[#703BF7]" />
               </div>
               <span className="text-white font-medium">{feature.label}</span>
             </div>
@@ -163,7 +163,7 @@ export default function WelcomePage() {
         {/* CTA Button */}
         <Button
           onClick={() => router.push('/home')}
-          className="w-full max-w-sm h-14 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white font-semibold text-base shadow-lg shadow-purple-500/25 transition-all"
+          className="w-full max-w-sm h-14 rounded-xl bg-gradient-to-r from-[#703BF7] to-[#5f32d4] hover:from-[#8b5cf6] hover:to-[#703BF7] text-white font-semibold text-base shadow-lg shadow-[#703BF7]/25 transition-all"
         >
           Start Exploring
         </Button>

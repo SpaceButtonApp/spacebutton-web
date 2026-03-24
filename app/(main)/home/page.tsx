@@ -46,7 +46,7 @@ export default function HomePage() {
       {/* Background gradient effects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 -left-40 w-80 h-80 bg-primary/10 rounded-full blur-[120px]" />
-        <div className="absolute top-40 -right-40 w-80 h-80 bg-blue-600/10 rounded-full blur-[120px]" />
+        <div className="absolute top-40 -right-40 w-80 h-80 bg-[#703BF7]/5 rounded-full blur-[120px]" />
       </div>
 
       {/* Header */}

@@ -44,8 +44,8 @@ export default function SignupPage() {
     <div className="min-h-screen bg-[#0a0a0f] flex flex-col">
       {/* Background gradient effects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 -left-40 w-80 h-80 bg-purple-600/20 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 -right-40 w-80 h-80 bg-blue-600/20 rounded-full blur-[120px]" />
+        <div className="absolute top-0 -left-40 w-80 h-80 bg-[#703BF7]/20 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 -right-40 w-80 h-80 bg-[#703BF7]/10 rounded-full blur-[120px]" />
       </div>
 
       {/* Progress bar */}
@@ -53,7 +53,7 @@ export default function SignupPage() {
         <div className="flex items-center justify-between mb-4">
           <BackButton fallbackUrl="/" variant="light" />
           <div className="flex items-center gap-2">
-            <div className="w-8 h-1 rounded-full bg-purple-500" />
+            <div className="w-8 h-1 rounded-full bg-[#703BF7]" />
             <div className="w-8 h-1 rounded-full bg-gray-700" />
           </div>
           <span className="text-sm text-gray-400">1 of 2</span>
@@ -92,7 +92,7 @@ export default function SignupPage() {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Enter your name"
-                    className="w-full pl-11 pr-4 py-3 bg-[#1a1a24] border border-gray-800 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all"
+                    className="w-full pl-11 pr-4 py-3 bg-[#1a1a24] border border-gray-800 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#703BF7]/50 focus:border-[#703BF7] transition-all"
                   />
                 </div>
                 {errors.name && <p className="mt-2 text-sm text-red-400">{errors.name}</p>}
@@ -108,7 +108,7 @@ export default function SignupPage() {
                     onClick={() => setFormData({ ...formData, profileType: 'individual' })}
                     className={`py-3 rounded-xl font-medium transition-all ${
                       formData.profileType === 'individual'
-                        ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white'
+                        ? 'bg-gradient-to-r from-[#703BF7] to-[#5f32d4] text-white'
                         : 'bg-[#1a1a24] border border-gray-800 text-gray-400 hover:border-gray-700'
                     }`}
                   >
@@ -119,7 +119,7 @@ export default function SignupPage() {
                     onClick={() => setFormData({ ...formData, profileType: 'agent' })}
                     className={`py-3 rounded-xl font-medium transition-all ${
                       formData.profileType === 'agent'
-                        ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white'
+                        ? 'bg-gradient-to-r from-[#703BF7] to-[#5f32d4] text-white'
                         : 'bg-[#1a1a24] border border-gray-800 text-gray-400 hover:border-gray-700'
                     }`}
                   >
@@ -139,7 +139,7 @@ export default function SignupPage() {
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="Enter email address"
-                    className="w-full pl-11 pr-4 py-3 bg-[#1a1a24] border border-gray-800 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all"
+                    className="w-full pl-11 pr-4 py-3 bg-[#1a1a24] border border-gray-800 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#703BF7]/50 focus:border-[#703BF7] transition-all"
                   />
                 </div>
                 {errors.email && <p className="mt-2 text-sm text-red-400">{errors.email}</p>}
@@ -156,7 +156,7 @@ export default function SignupPage() {
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     placeholder="Enter phone number"
-                    className="w-full pl-11 pr-4 py-3 bg-[#1a1a24] border border-gray-800 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all"
+                    className="w-full pl-11 pr-4 py-3 bg-[#1a1a24] border border-gray-800 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#703BF7]/50 focus:border-[#703BF7] transition-all"
                   />
                 </div>
                 {errors.phone && <p className="mt-2 text-sm text-red-400">{errors.phone}</p>}
@@ -173,7 +173,7 @@ export default function SignupPage() {
                     value={formData.invitationCode}
                     onChange={(e) => setFormData({ ...formData, invitationCode: e.target.value })}
                     placeholder="Enter invite code"
-                    className="w-full pl-11 pr-4 py-3 bg-[#1a1a24] border border-gray-800 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all"
+                    className="w-full pl-11 pr-4 py-3 bg-[#1a1a24] border border-gray-800 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#703BF7]/50 focus:border-[#703BF7] transition-all"
                   />
                 </div>
               </div>
@@ -184,7 +184,7 @@ export default function SignupPage() {
                   onClick={() => setFormData({ ...formData, agreeToTerms: !formData.agreeToTerms })}
                   className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
                     formData.agreeToTerms 
-                      ? 'bg-purple-600 border-purple-600' 
+                      ? 'bg-[#703BF7] border-[#703BF7]' 
                       : 'border-gray-600 hover:border-gray-500'
                   }`}
                 >
@@ -192,7 +192,7 @@ export default function SignupPage() {
                 </button>
                 <label className="text-sm text-gray-400">
                   I agree to SpaceButton{' '}
-                  <Link href="/terms" className="text-purple-400 hover:text-purple-300">
+                  <Link href="/terms" className="text-[#703BF7] hover:text-[#8b5cf6]">
                     Terms & Conditions
                   </Link>
                 </label>
@@ -201,7 +201,7 @@ export default function SignupPage() {
 
               <button
                 type="submit"
-                className="w-full py-3.5 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white font-semibold rounded-xl transition-all duration-200"
+                className="w-full py-3.5 bg-gradient-to-r from-[#703BF7] to-[#5f32d4] hover:from-[#8b5cf6] hover:to-[#703BF7] text-white font-semibold rounded-xl transition-all duration-200"
               >
                 Continue
               </button>
@@ -210,7 +210,7 @@ export default function SignupPage() {
             <div className="mt-6 pt-6 border-t border-gray-800">
               <p className="text-center text-gray-400 text-sm">
                 Already have an account?{' '}
-                <Link href="/login" className="text-white font-semibold hover:text-purple-400 transition-colors">
+                <Link href="/login" className="text-white font-semibold hover:text-[#703BF7] transition-colors">
                   Sign In
                 </Link>
               </p>

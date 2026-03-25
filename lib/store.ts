@@ -69,6 +69,18 @@ interface SupportChat {
   unread: number
 }
 
+interface RegisteredUser {
+  id: string
+  name: string
+  email: string
+  phone: string
+  avatar?: string
+  type: 'individual' | 'agent'
+  status: 'active' | 'suspended' | 'inactive'
+  listings: number
+  joined: string
+}
+
 interface AppState {
   // User
   user: User | null
@@ -108,6 +120,12 @@ interface AppState {
   supportChats: SupportChat[]
   addSupportMessage: (userId: string, userName: string, message: string, sender: 'user' | 'admin') => void
   getSupportChat: (userId: string) => SupportChat | undefined
+  
+  // Registered Users
+  registeredUsers: RegisteredUser[]
+  addRegisteredUser: (user: Omit<RegisteredUser, 'id' | 'joined' | 'listings' | 'status'>) => void
+  updateRegisteredUser: (id: string, updates: Partial<RegisteredUser>) => void
+  deleteRegisteredUser: (id: string) => void
   
   // UI State
   activeTab: 'connect' | 'agent' | 'shortlet' | 'properties'
@@ -282,6 +300,26 @@ export const useAppStore = create<AppState>()(
       }),
       getSupportChat: (userId) => get().supportChats.find(c => c.userId === userId),
       
+      // Registered Users
+      registeredUsers: [],
+      addRegisteredUser: (user) => set((state) => ({
+        registeredUsers: [{
+          ...user,
+          id: Date.now().toString(),
+          joined: new Date().toISOString().split('T')[0],
+          listings: 0,
+          status: 'active'
+        }, ...state.registeredUsers]
+      })),
+      updateRegisteredUser: (id, updates) => set((state) => ({
+        registeredUsers: state.registeredUsers.map(u => 
+          u.id === id ? { ...u, ...updates } : u
+        )
+      })),
+      deleteRegisteredUser: (id) => set((state) => ({
+        registeredUsers: state.registeredUsers.filter(u => u.id !== id)
+      })),
+      
       // UI State
       activeTab: 'connect',
       setActiveTab: (tab) => set({ activeTab: tab }),
@@ -385,6 +423,7 @@ export const useAppStore = create<AppState>()(
         reviews: state.reviews,
         notifications: state.notifications,
         supportChats: state.supportChats,
+        registeredUsers: state.registeredUsers,
         // Note: properties not persisted to avoid localStorage quota issues with base64 images
       }),
     }

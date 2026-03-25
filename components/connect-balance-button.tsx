@@ -49,29 +49,33 @@ export function ConnectBalanceButton() {
         )}
       </button>
 
-      {/* Purchase Modal - Positioned at bottom above nav bar */}
+      {/* Full Page Modal - Similar to Logout Modal */}
       {showModal && (
-        <div 
-          className="fixed inset-0 z-[100] flex items-end justify-center pb-20 bg-black/70 backdrop-blur-sm"
-          onClick={() => setShowModal(false)}
-        >
-          <div 
-            className="w-[95%] max-w-[400px] rounded-2xl bg-card border border-border p-5 relative shadow-2xl animate-in slide-in-from-bottom-4 duration-300"
-            onClick={(e) => e.stopPropagation()}
-          >
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="relative mx-4 w-full max-w-md rounded-2xl bg-card border border-border p-6 shadow-2xl">
             {/* Close Button */}
             <button
               onClick={() => setShowModal(false)}
-              className="absolute top-3 right-3 w-8 h-8 rounded-full bg-secondary hover:bg-accent flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+              className="absolute right-4 top-4 w-8 h-8 rounded-full bg-secondary hover:bg-accent flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
 
-            <h2 className="mb-1 text-xl font-bold text-foreground">Get Connects</h2>
-            <p className="mb-5 text-sm text-muted-foreground">
-              Purchase connects to reach property owners
-            </p>
+            {/* Header with Icon */}
+            <div className="flex flex-col items-center text-center mb-6">
+              <div className="relative mb-4">
+                <div className="absolute inset-0 bg-[#703BF7]/20 rounded-full blur-xl" />
+                <div className="relative w-16 h-16 rounded-full bg-[#703BF7]/10 border border-[#703BF7]/30 flex items-center justify-center">
+                  <Zap className="h-8 w-8 text-[#703BF7]" />
+                </div>
+              </div>
+              <h2 className="text-2xl font-bold text-foreground">Get Connects</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Purchase connects to reach property owners
+              </p>
+            </div>
 
+            {/* Options Grid */}
             <div className="space-y-3">
               {/* Single Connect */}
               <button
@@ -133,7 +137,7 @@ export function ConnectBalanceButton() {
             <Button
               variant="outline"
               onClick={() => setShowModal(false)}
-              className="mt-5 w-full h-11 rounded-xl"
+              className="mt-6 w-full h-12 rounded-xl"
             >
               Close
             </Button>

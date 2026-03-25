@@ -17,20 +17,22 @@ import { useRouter } from 'next/navigation'
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { properties, closedProperties, reviews, transactions } = useAppStore()
+  const { properties, closedProperties, reviews, transactions, registeredUsers } = useAppStore()
 
   // Calculate stats from real data
-  const totalUsers = 1250 // Mock - would come from DB
+  const totalUsers = registeredUsers.length
   const totalListings = properties.length
   const activeListings = properties.filter(p => !closedProperties.includes(p.id)).length
   const closedDeals = closedProperties.length
+  
+  // Calculate total revenue from transactions
   const totalRevenue = transactions.reduce((sum, t) => t.type === 'credit' ? sum + t.amount : sum, 0)
 
   const stats = [
     { 
       label: 'Total Users', 
       value: totalUsers.toLocaleString(), 
-      change: '+12.5%',
+      change: totalUsers > 0 ? '+' + Math.round((totalUsers / 10) * 100) / 10 + '%' : '0%',
       trend: 'up',
       icon: Users,
       color: 'purple'
@@ -38,7 +40,7 @@ export default function DashboardPage() {
     { 
       label: 'Active Listings', 
       value: activeListings.toString(), 
-      change: '+8.2%',
+      change: activeListings > 0 ? '+' + Math.round((activeListings / totalListings) * 100) + '%' : '0%',
       trend: 'up',
       icon: Building2,
       color: 'blue'
@@ -46,7 +48,7 @@ export default function DashboardPage() {
     { 
       label: 'Closed Deals', 
       value: closedDeals.toString(), 
-      change: '+23.1%',
+      change: closedDeals > 0 ? '+' + closedDeals : '0',
       trend: 'up',
       icon: TrendingUp,
       color: 'green'
@@ -54,7 +56,7 @@ export default function DashboardPage() {
     { 
       label: 'Revenue', 
       value: `N${totalRevenue.toLocaleString()}`, 
-      change: '+5.4%',
+      change: totalRevenue > 0 ? '+' + Math.round((totalRevenue / 100000) * 100) / 10 + '%' : '0%',
       trend: 'up',
       icon: CreditCard,
       color: 'orange'
@@ -65,7 +67,6 @@ export default function DashboardPage() {
   const recentReviews = reviews.slice(0, 4)
 
   const handleViewListing = (listingId: string) => {
-    // Open property details in new tab for main app
     window.open(`/property/${listingId}`, '_blank')
   }
 

@@ -70,6 +70,7 @@ export default function WelcomePage() {
   const router = useRouter()
   const user = useAppStore((state) => state.user)
   const setUser = useAppStore((state) => state.setUser)
+  const addRegisteredUser = useAppStore((state) => state.addRegisteredUser)
   const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-kJSONfc9hORfv0xhwC97LF0eSOCvJL.png'
   
   // Create user from signup data on mount
@@ -79,8 +80,19 @@ export default function WelcomePage() {
       const signupData: SignupData = JSON.parse(signupDataStr)
       localStorage.removeItem('signupData')
       
+      const userId = `user-${Date.now()}`
+      
+      // Add to registered users for admin tracking
+      addRegisteredUser({
+        name: signupData.name,
+        email: signupData.email,
+        phone: signupData.phone,
+        type: signupData.profileType,
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+      })
+      
       setUser({
-        id: `user-${Date.now()}`,
+        id: userId,
         name: signupData.name,
         email: signupData.email,
         phone: signupData.phone,
@@ -95,7 +107,7 @@ export default function WelcomePage() {
         connectsRemaining: 1,
       })
     }
-  }, [user, setUser])
+  }, [user, setUser, addRegisteredUser])
 
   const features = [
     { icon: Home, label: 'Find your perfect space' },

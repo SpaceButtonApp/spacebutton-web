@@ -33,6 +33,7 @@ export default function LandingPage() {
   const user = useAppStore((state) => state.user)
 
   const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/white%20logo-cLCysqANWjxVue2pY5HYLM9cJlzK4x.png'
+  const logoIcon = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-kJSONfc9hORfv0xhwC97LF0eSOCvJL.png'
 
   useEffect(() => {
     setMounted(true)
@@ -60,16 +61,17 @@ export default function LandingPage() {
       {/* Content */}
       <div className="relative flex-1 flex flex-col px-6 py-8">
         {/* Logo */}
-        <div className="mb-16">
+        <div className="flex items-center gap-3 mb-16">
           <Image
-            src={logoUrl}
+            src={logoIcon}
             alt="Spacebutton"
-            width={55}
-            height={17}
-            className="h-auto w-auto"
+            width={48}
+            height={48}
+            className="h-12 w-12"
             loading="eager"
             priority
           />
+          <span className="text-2xl font-bold text-white">SpaceButton</span>
         </div>
 
         {/* Hero Image/Illustration */}

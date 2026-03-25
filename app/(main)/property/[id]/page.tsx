@@ -217,20 +217,22 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
           </div>
         )}
 
-        {/* Safety Tips */}
-        <div>
-          <h2 className="text-lg font-bold mb-3 flex items-center gap-2 text-destructive">
-            Safety Tips <AlertTriangle className="w-5 h-5 text-destructive" />
-          </h2>
-          <ol className="space-y-3">
-            {safetyTips.map((tip, index) => (
-              <li key={index} className="flex gap-2 text-sm text-destructive/80">
-                <span className="font-semibold text-destructive">{index + 1}.</span>
-                <span>{tip}</span>
-              </li>
-            ))}
-          </ol>
-        </div>
+        {/* Safety Tips - Hidden for admin posts */}
+        {!property.isAdminPost && (
+          <div>
+            <h2 className="text-lg font-bold mb-3 flex items-center gap-2 text-destructive">
+              Safety Tips <AlertTriangle className="w-5 h-5 text-destructive" />
+            </h2>
+            <ol className="space-y-3">
+              {safetyTips.map((tip, index) => (
+                <li key={index} className="flex gap-2 text-sm text-destructive/80">
+                  <span className="font-semibold text-destructive">{index + 1}.</span>
+                  <span>{tip}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
 
         {/* Agent info */}
         <div className="flex items-center gap-3">

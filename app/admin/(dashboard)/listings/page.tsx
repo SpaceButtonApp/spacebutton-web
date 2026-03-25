@@ -15,7 +15,8 @@ import {
   ChevronRight,
   MapPin,
   Bed,
-  Bath
+  Bath,
+  Plus
 } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -137,6 +138,13 @@ export default function ListingsPage() {
                 Grid
               </button>
             </div>
+            <button 
+              onClick={() => router.push('/admin/listings/add')}
+              className="px-4 py-2.5 bg-purple-600 hover:bg-purple-500 border border-purple-500 rounded-xl text-sm text-white transition-colors flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Add Post
+            </button>
           </div>
         </div>
 

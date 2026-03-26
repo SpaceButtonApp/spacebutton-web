@@ -90,7 +90,7 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
             </div>
           </div>
 
-          <p className="text-[#703BF7] font-bold mt-2">{formatPrice(property.price)}</p>
+          <p className="text-[#703BF7] font-bold mt-2">{formatPrice(property.price, property.rentPeriod)}</p>
         </div>
       </div>
     )
@@ -163,7 +163,7 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
         </div>
 
         <div className="flex items-center justify-between">
-          <p className="text-[#703BF7] font-bold text-xl">{formatPrice(property.price)}</p>
+          <p className="text-[#703BF7] font-bold text-xl">{formatPrice(property.price, property.rentPeriod)}</p>
           <button 
             onClick={handleViewDetails}
             className="bg-[#703BF7] hover:bg-[#5f32d4] text-white rounded-xl px-6 h-10 font-medium transition-all duration-200 shadow-lg shadow-[#703BF7]/20"

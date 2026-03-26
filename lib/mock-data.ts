@@ -5,6 +5,7 @@ export interface Property {
   title: string
   location: string
   price: number
+  rentPeriod?: 'monthly' | 'yearly'
   images: string[]
   videoUrl?: string
   type: 'connect' | 'agent' | 'shortlet' | 'properties'
@@ -26,6 +27,7 @@ export interface Property {
   connectRole?: 'Tenant' | 'Landlord'
   landlordPresence?: 'stays' | 'not-stays'
   balconies?: number
+  isAdminPost?: boolean
 }
 
 export interface Agent {
@@ -533,11 +535,16 @@ export const safetyTips = [
   'After successful transaction between both parties both parties should make sure they toogle the done deal button in the chat section. To avoid the lister giving same apartment to someone else',
 ]
 
-export const formatPrice = (price: number): string => {
-  return new Intl.NumberFormat('en-NG', {
+export const formatPrice = (price: number, rentPeriod?: 'monthly' | 'yearly'): string => {
+  const formattedPrice = new Intl.NumberFormat('en-NG', {
     style: 'currency',
     currency: 'NGN',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(price).replace('NGN', '₦')
+  
+  if (rentPeriod) {
+    return `${formattedPrice}/${rentPeriod === 'monthly' ? 'month' : 'year'}`
+  }
+  return formattedPrice
 }

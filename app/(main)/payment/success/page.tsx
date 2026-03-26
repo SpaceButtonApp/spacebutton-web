@@ -15,7 +15,7 @@ export default function PaymentSuccessPage() {
   const connects = parseInt(searchParams.get("connects") || "1")
   const type = searchParams.get("type") || ""
   
-  const { purchasePremium, addToWallet } = useAppStore()
+  const { purchasePremium, addToWallet, addTransaction } = useAppStore()
   const hasProcessed = useRef(false)
   
   // Add connects or wallet balance after successful payment
@@ -29,20 +29,32 @@ export default function PaymentSuccessPage() {
     } else {
       // Purchasing connects/premium
       let purchaseType: 'basic-single' | 'basic-5' | 'premium-monthly' | 'premium-yearly' = 'basic-single'
+      let transactionTitle = ''
       
       if (plan === "basic" && connects === 1) {
         purchaseType = 'basic-single'
+        transactionTitle = 'Connect Purchase (1 Connect)'
       } else if (plan === "basic" && connects === 5) {
         purchaseType = 'basic-5'
+        transactionTitle = 'Connect Purchase (5 Connects)'
       } else if (plan === "premium" && amount === 50000) {
         purchaseType = 'premium-monthly'
+        transactionTitle = 'Premium Subscription (Monthly)'
       } else if (plan === "premium") {
         purchaseType = 'premium-yearly'
+        transactionTitle = 'Premium Subscription (Yearly)'
       }
       
       purchasePremium(purchaseType, 0) // Pass 0 since payment is already made
+      
+      // Record the connect/premium purchase as a transaction (revenue for the company)
+      addTransaction({
+        type: 'credit',
+        title: transactionTitle,
+        amount: amount
+      })
     }
-  }, [amount, plan, connects, type, purchasePremium, addToWallet])
+  }, [amount, plan, connects, type, purchasePremium, addToWallet, addTransaction])
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

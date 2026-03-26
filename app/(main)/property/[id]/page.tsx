@@ -119,7 +119,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
         <div>
           <h1 className="text-2xl font-bold mb-2">{property.title}</h1>
           <div className="flex items-baseline gap-2 flex-wrap">
-            <span className="text-2xl font-bold text-primary">{formatPrice(property.price)}</span>
+            <span className="text-2xl font-bold text-primary">{formatPrice(property.price, property.rentPeriod)}</span>
             {property.bonus && (
               <span className="text-sm text-success">{property.bonus}</span>
             )}

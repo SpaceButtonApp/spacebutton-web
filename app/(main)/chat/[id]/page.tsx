@@ -163,7 +163,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               <div className="flex-1 text-left">
                 <p className="font-semibold text-sm line-clamp-1">{property.title}</p>
                 <p className="text-muted-foreground text-xs mb-1">{property.location}</p>
-                <p className="text-primary font-bold text-sm">₦{property.price.toLocaleString()}</p>
+                <p className="text-primary font-bold text-sm">₦{property.price.toLocaleString()}{property.rentPeriod ? `/${property.rentPeriod === 'monthly' ? 'month' : 'year'}` : ''}</p>
               </div>
             </div>
           </button>

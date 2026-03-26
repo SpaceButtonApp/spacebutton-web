@@ -206,7 +206,7 @@ export default function ListingsPage() {
                           </span>
                         </td>
                         <td className="px-5 py-4 text-sm text-white font-medium">
-                          N{listing.price?.toLocaleString() || '0'}
+                          N{listing.price?.toLocaleString() || '0'}{listing.rentPeriod ? `/${listing.rentPeriod === 'monthly' ? 'mo' : 'yr'}` : ''}
                         </td>
                         <td className="px-5 py-4">
                           <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${
@@ -320,7 +320,7 @@ export default function ListingsPage() {
                       <MapPin className="w-4 h-4" /> {listing.location}
                     </p>
                     <div className="flex items-center justify-between">
-                      <p className="text-lg font-bold text-white">N{listing.price?.toLocaleString()}</p>
+                      <p className="text-lg font-bold text-white">N{listing.price?.toLocaleString()}{listing.rentPeriod ? `/${listing.rentPeriod === 'monthly' ? 'mo' : 'yr'}` : ''}</p>
                       <div className="flex items-center gap-2">
                         <button 
                           onClick={() => handleViewListing(listing.id)}

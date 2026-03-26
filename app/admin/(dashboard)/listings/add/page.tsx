@@ -19,6 +19,7 @@ export default function AdminAddPostPage() {
   const { addProperty } = useAppStore()
   
   const [listingType, setListingType] = useState<'Connect' | 'Agent'>('Connect')
+  const [connectRole, setConnectRole] = useState<'Tenant' | 'Landlord'>('Landlord')
   const [listingTitle, setListingTitle] = useState('')
   const [selectedCondition, setSelectedCondition] = useState('Rent')
   const [selectedCategory, setSelectedCategory] = useState('Flat')
@@ -31,6 +32,8 @@ export default function AdminAddPostPage() {
   })
   const [photos, setPhotos] = useState<string[]>([])
   const [rentPrice, setRentPrice] = useState('')
+  const [rentPeriod, setRentPeriod] = useState<'monthly' | 'yearly'>('yearly')
+  const [showRentPeriodDropdown, setShowRentPeriodDropdown] = useState(false)
   const [totalPackage, setTotalPackage] = useState('')
   const [bedrooms, setBedrooms] = useState(3)
   const [bathrooms, setBathrooms] = useState(2)
@@ -128,6 +131,15 @@ export default function AdminAddPostPage() {
       return false
     }
     
+    // Total package must be >= rent price
+    const rentAmount = parseInt(rentPrice.replace(/,/g, '') || '0')
+    const packageAmount = parseInt(totalPackage.replace(/,/g, '') || '0')
+    if (packageAmount < rentAmount) {
+      setValidationMessage('Total package must be equal to or greater than the rent price')
+      setShowValidationModal(true)
+      return false
+    }
+    
     return true
   }
 
@@ -146,6 +158,7 @@ export default function AdminAddPostPage() {
       title: listingTitle,
       location: `${location.community}, ${location.lga}, ${location.state}`,
       price: parseInt(rentPrice.replace(/,/g, '') || '0'),
+      rentPeriod: rentPeriod,
       images: photos,
       bedrooms,
       bathrooms,
@@ -187,6 +200,7 @@ export default function AdminAddPostPage() {
       totalPackage: parseInt(totalPackage.replace(/,/g, '') || '0'),
       landlordPresence: landlordPresence,
       balconies: balconies,
+      connectRole: listingType === 'Connect' ? connectRole : undefined,
       createdAt: new Date().toISOString(),
     }
     
@@ -227,6 +241,28 @@ export default function AdminAddPostPage() {
             ))}
           </div>
         </div>
+
+        {/* I am section - Only visible for Connect listing type */}
+        {listingType === 'Connect' && (
+          <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
+            <h3 className="font-medium text-white mb-3">I am a</h3>
+            <div className="flex gap-3">
+              {['Tenant', 'Landlord'].map((role) => (
+                <button
+                  key={role}
+                  onClick={() => setConnectRole(role as 'Tenant' | 'Landlord')}
+                  className={`px-6 py-2.5 rounded-full text-sm font-medium transition-colors ${
+                    connectRole === role
+                      ? 'bg-[#703BF7] text-white'
+                      : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                  }`}
+                >
+                  {role}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Basic Info */}
         <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5 space-y-5">
@@ -318,15 +354,44 @@ export default function AdminAddPostPage() {
         {/* Pricing */}
         <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5 space-y-5">
           <div>
-            <h3 className="font-medium text-white mb-3">Rent Price (per year)</h3>
-            <div className="relative">
-              <Input
-                value={rentPrice}
-                onChange={(e) => setRentPrice(e.target.value.replace(/[^0-9]/g, ''))}
-                placeholder="1500000"
-                className="h-12 bg-[#1a1a24] border-gray-800 text-white rounded-xl pr-12"
-              />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">NGN</span>
+            <h3 className="font-medium text-white mb-3">Rent Price</h3>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Input
+                  value={rentPrice}
+                  onChange={(e) => setRentPrice(e.target.value.replace(/[^0-9]/g, ''))}
+                  placeholder="1500000"
+                  className="h-12 bg-[#1a1a24] border-gray-800 text-white rounded-xl pr-12"
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">NGN</span>
+              </div>
+              <div className="relative">
+                <button
+                  onClick={() => setShowRentPeriodDropdown(!showRentPeriodDropdown)}
+                  className="h-12 px-4 rounded-xl bg-[#1a1a24] border border-gray-800 flex items-center gap-2 min-w-[120px] justify-between text-white"
+                >
+                  <span className="text-sm capitalize">{rentPeriod}</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${showRentPeriodDropdown ? 'rotate-180' : ''}`} />
+                </button>
+                {showRentPeriodDropdown && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-[#1a1a24] border border-gray-800 rounded-xl overflow-hidden z-10 shadow-lg">
+                    {(['monthly', 'yearly'] as const).map((period) => (
+                      <button
+                        key={period}
+                        onClick={() => {
+                          setRentPeriod(period)
+                          setShowRentPeriodDropdown(false)
+                        }}
+                        className={`w-full px-4 py-3 text-left text-sm capitalize hover:bg-gray-800 transition-colors ${
+                          rentPeriod === period ? 'bg-[#703BF7]/20 text-[#703BF7]' : 'text-white'
+                        }`}
+                      >
+                        {period}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

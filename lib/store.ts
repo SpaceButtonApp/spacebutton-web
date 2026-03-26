@@ -424,7 +424,7 @@ export const useAppStore = create<AppState>()(
         notifications: state.notifications,
         supportChats: state.supportChats,
         registeredUsers: state.registeredUsers,
-        // Note: properties not persisted to avoid localStorage quota issues with base64 images
+        properties: state.properties,
       }),
     }
   )

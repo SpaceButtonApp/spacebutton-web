@@ -35,6 +35,8 @@ export default function AddPostPage() {
     "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=300&h=200&fit=crop",
   ])
   const [rentPrice, setRentPrice] = useState("1500000")
+  const [rentPeriod, setRentPeriod] = useState<'monthly' | 'yearly'>('yearly')
+  const [showRentPeriodDropdown, setShowRentPeriodDropdown] = useState(false)
   const [bedrooms, setBedrooms] = useState(3)
   const [bathrooms, setBathrooms] = useState(2)
   const [sittingRooms, setSittingRooms] = useState(2)
@@ -177,6 +179,17 @@ export default function AddPostPage() {
       setValidationMessage("Please enter the total package amount")
       setShowValidationModal(true)
       return false
+    }
+    
+    // Total package must be >= rent price
+    if ((listingType === "Agent" || (listingType === "Connect" && connectRole === "Landlord"))) {
+      const rentAmount = parseInt(rentPrice.replace(/,/g, '') || '0')
+      const packageAmount = parseInt(totalPackage.replace(/,/g, '') || '0')
+      if (packageAmount < rentAmount) {
+        setValidationMessage("Total package must be equal to or greater than the rent price")
+        setShowValidationModal(true)
+        return false
+      }
     }
     
     return true
@@ -348,14 +361,43 @@ export default function AddPostPage() {
 
         <div>
           <h3 className="font-medium mb-3">Rent Price</h3>
-          <div className="relative">
-            <Input
-              value={rentPrice}
-              onChange={(e) => setRentPrice(e.target.value)}
-              placeholder="0"
-              className="h-14 rounded-2xl pr-12"
-            />
-            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Input
+                value={rentPrice}
+                onChange={(e) => setRentPrice(e.target.value.replace(/[^0-9]/g, ''))}
+                placeholder="0"
+                className="h-14 rounded-2xl pr-12"
+              />
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground">NGN</span>
+            </div>
+            <div className="relative">
+              <button
+                onClick={() => setShowRentPeriodDropdown(!showRentPeriodDropdown)}
+                className="h-14 px-4 rounded-2xl bg-secondary border border-border flex items-center gap-2 min-w-[120px] justify-between"
+              >
+                <span className="text-sm capitalize">{rentPeriod}</span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${showRentPeriodDropdown ? 'rotate-180' : ''}`} />
+              </button>
+              {showRentPeriodDropdown && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl overflow-hidden z-10 shadow-lg">
+                  {(['monthly', 'yearly'] as const).map((period) => (
+                    <button
+                      key={period}
+                      onClick={() => {
+                        setRentPeriod(period)
+                        setShowRentPeriodDropdown(false)
+                      }}
+                      className={`w-full px-4 py-3 text-left text-sm capitalize hover:bg-secondary transition-colors ${
+                        rentPeriod === period ? 'bg-primary/10 text-primary' : ''
+                      }`}
+                    >
+                      {period}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -605,6 +647,7 @@ export default function AddPostPage() {
                       title: listingTitle,
                       location: `${location.community}, ${location.lga}, ${location.state}`,
                       price: parseInt(rentPrice.replace(/,/g, '') || '0'),
+                      rentPeriod: rentPeriod,
                       images: photos,
                       bedrooms,
                       bathrooms,

@@ -40,7 +40,7 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
             fill
             className="object-cover"
           />
-          {property.verified && (
+          {property.isAdminPost && (
             <div className="absolute top-2 left-2 w-6 h-6 rounded-full bg-[#703BF7] flex items-center justify-center">
               <CheckCircle2 className="w-4 h-4 text-white" />
             </div>
@@ -107,8 +107,8 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
           className="object-cover"
         />
         
-        {/* Verified badge */}
-        {property.verified && (
+        {/* Verified badge - Only for admin posts */}
+        {property.isAdminPost && (
           <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-[#703BF7] flex items-center justify-center shadow-lg shadow-[#703BF7]/20">
             <CheckCircle2 className="w-5 h-5 text-white" />
           </div>

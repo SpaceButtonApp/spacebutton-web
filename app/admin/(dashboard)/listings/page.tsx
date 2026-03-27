@@ -51,8 +51,8 @@ export default function ListingsPage() {
   }
 
   const handleViewListing = (id: string) => {
-    // Open property details in new tab for main app
-    window.open(`/property/${id}`, '_blank')
+    // Navigate to admin property details page
+    router.push(`/admin/listings/${id}`)
     setShowActionMenu(null)
   }
 

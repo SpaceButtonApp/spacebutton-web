@@ -24,10 +24,10 @@ export default function AddPostPage() {
   const [selectedCategory, setSelectedCategory] = useState("Flat")
   const [descriptions, setDescriptions] = useState("")
   const [location, setLocation] = useState({
-    community: "",
+    country: "Nigeria",
     lga: "",
-    state: "",
-    country: "",
+    city: "",
+    nearestBusStop: "",
   })
   const [photos, setPhotos] = useState<string[]>([])
   const [rentPrice, setRentPrice] = useState("")
@@ -100,18 +100,18 @@ export default function AddPostPage() {
       return false
     }
     
-    if (!location.state) {
-      setValidationMessage("Please select a state in the location")
+    if (!location.lga.trim()) {
+      setValidationMessage("Please enter the Local Government Area (LGA)")
       setShowValidationModal(true)
       return false
     }
-    if (!location.lga) {
-      setValidationMessage("Please select an LGA in the location")
+    if (!location.city.trim()) {
+      setValidationMessage("Please enter the city or town")
       setShowValidationModal(true)
       return false
     }
-    if (!location.community.trim()) {
-      setValidationMessage("Please enter a community/area in the location")
+    if (!location.nearestBusStop.trim()) {
+      setValidationMessage("Please enter the nearest bus stop")
       setShowValidationModal(true)
       return false
     }

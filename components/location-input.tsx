@@ -1,190 +1,92 @@
 'use client'
 
-import { useState } from 'react'
-import { ChevronDown, MapPin } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { MapPin } from 'lucide-react'
+import { Input } from '@/components/ui/input'
 
-// Complete Nigerian location data - All 36 States + FCT - State → LGA → Key Towns/Communities
-const nigerianLocations: Record<string, Record<string, string[]>> = {
-  'Abia': { 'Aba North': ['Aba', 'Ariaria', 'Eziukwu', 'Ogbor Hill'], 'Aba South': ['Aba', 'Muri', 'Ulele', 'Obingwa'], 'Arochukwu': ['Arochukwu', 'Ohafia', 'Uturu', 'Ozu Abam'], 'Bende': ['Bende', 'Okigwe', 'Ameka', 'Ohaozara'], 'Ikwuano': ['Ikwuano', 'Ibeku', 'Umuahia', 'Okpuala'], 'Isuikwuato': ['Isuikwuato', 'Abam', 'Uzuakoli', 'Asaga'], 'Obi Ngwa': ['Aba', 'Itumbauzo', 'Obinagu', 'Osisioma'], 'Ohafia': ['Ohafia', 'Arochukwu', 'Afo Uno', 'Osuagwu'], 'Osisioma': ['Aba', 'Osisioma', 'Apata', 'Owerrinta'], 'Ugwunagbo': ['Calabar Road', 'Ezeoke', 'Umuahia', 'Ikot Ekpene Road'], 'Ukwa East': ['Ukwa', 'Igbere', 'Mma', 'Arochukwu'], 'Ukwa West': ['Ukwa', 'Mma', 'Igbere', 'Ubom'], 'Umuahia North': ['Umuahia', 'Ibeku', 'Olokoro', 'Afaraukwu'], 'Umuahia South': ['Umuahia', 'Ubakala', 'Itumbauzo', 'Ahiaba'], 'Umu Nneochi': ['Umu Nneochi', 'Isuikwuato', 'Uturu', 'Lokpanta'] },
-  'Adamawa': { 'Demsa': ['Demsa', 'Gire', 'Sorau', 'Gombi'], 'Fufore': ['Fufore', 'Djingliya', 'Maina', 'Ribadu'], 'Ganye': ['Ganye', 'Toungo', 'Jada', 'Bambur'], 'Girei': ['Girei', 'Yola', 'Lamido', 'Modibbo'], 'Gombi': ['Gombi', 'Demsa', 'Gire', 'Shelleng'], 'Guyuk': ['Guyuk', 'Jada', 'Mayo-Belwa', 'Song'], 'Hong': ['Hong', 'Demsa', 'Fufore', 'Gire'], 'Jada': ['Jada', 'Guyuk', 'Toungo', 'Ganye'], 'Lamurde': ['Lamurde', 'Demsa', 'Mubi', 'Shelleng'], 'Madagali': ['Madagali', 'Michika', 'Mubi', 'Shuwa'], 'Maiha': ['Maiha', 'Michika', 'Mubi', 'Kimanawa'], 'Mayo-Belwa': ['Mayo-Belwa', 'Guyuk', 'Jada', 'Toungo'], 'Michika': ['Michika', 'Madagali', 'Mubi', 'Shuwa'], 'Mubi North': ['Mubi', 'Maiha', 'Lamurde', 'Michika'], 'Mubi South': ['Mubi', 'Madagali', 'Michika', 'Shuwa'], 'Numan': ['Numan', 'Demsa', 'Lamurde', 'Gire'], 'Shelleng': ['Shelleng', 'Fufore', 'Demsa', 'Hong'], 'Song': ['Song', 'Guyuk', 'Ganye', 'Toungo'], 'Toungo': ['Toungo', 'Jada', 'Ganye', 'Guyuk'], 'Yola North': ['Yola', 'Jimeta', 'Girei', 'Modibbo'], 'Yola South': ['Yola', 'Modibbo', 'Girei', 'Sabon Gida'] },
-  'Akwa Ibom': { 'Abak': ['Abak', 'Uyo', 'Itu', 'Afaha Ikot'], 'Eastern Obolo': ['Oron', 'Obolo', 'Akassa', 'Iko'], 'Eket': ['Eket', 'Ibeno', 'Ibesikpo', 'Eyop'], 'Esit Eket': ['Esit Eket', 'Eket', 'Ibeno', 'Eyop'], 'Essien Udim': ['Essien Udim', 'Ikot Ekpene', 'Abak', 'Afaha Ikot'], 'Etim Ekpo': ['Etim Ekpo', 'Ibiono', 'Itu', 'Ukam'], 'Etinan': ['Etinan', 'Itu', 'Eket', 'Nwaniba'], 'Ibeno': ['Ibeno', 'Eket', 'Oron', 'Eyop'], 'Ibesikpo': ['Ibesikpo', 'Eket', 'Ibeno', 'Ndok Eto'], 'Ibiono Ibom': ['Ibiono', 'Etim Ekpo', 'Ini', 'Ukam'], 'Iko': ['Iko', 'Oron', 'Eastern Obolo', 'Iyat'], 'Ikot Abasi': ['Ikot Abasi', 'Oron', 'Eket', 'Iyat'], 'Ikot Ekpene': ['Ikot Ekpene', 'Abak', 'Essien Udim', 'Afaha Ikot'], 'Ini': ['Ini', 'Ibiono', 'Etim Ekpo', 'Ukam'], 'Itu': ['Itu', 'Etinan', 'Abak', 'Ukam'], 'Mbo': ['Mbo', 'Oron', 'Iko', 'Iyat'], 'Nsit Atai': ['Nsit Atai', 'Ikot Ekpene', 'Ini', 'Afaha Ikot'], 'Nsit Ibom': ['Nsit Ibom', 'Ikot Ekpene', 'Abak', 'Afaha Ikot'], 'Nsit Ubium': ['Nsit Ubium', 'Ikot Ekpene', 'Etinan', 'Nwaniba'], 'Obot Akara': ['Obot Akara', 'Itu', 'Eket', 'Ukam'], 'Oron': ['Oron', 'Ikot Abasi', 'Eastern Obolo', 'Iyat'], 'Uyo': ['Uyo', 'Uruan', 'Etinan', 'Abak'] },
-  'Bauchi': { 'Alkaleri': ['Alkaleri', 'Bauchi', 'Jemaa', 'Katagum'], 'Bauchi': ['Bauchi', 'Yelwa', 'Katagum', 'Lere'], 'Baure': ['Baure', 'Lere', 'Yakuba', 'Kirfi'], 'Bogoro': ['Bogoro', 'Bauchi', 'Giade', 'Dass'], 'Dambam': ['Dambam', 'Alkaleri', 'Jemaa', 'Bauchi'], 'Darazo': ['Darazo', 'Azare', 'Katagum', 'Bauchi'], 'Dass': ['Dass', 'Bauchi', 'Giade', 'Bogoro'], 'Gamawa': ['Gamawa', 'Azare', 'Katagum', 'Bauchi'], 'Giade': ['Giade', 'Bogoro', 'Dass', 'Bauchi'], 'Itas Gadau': ['Itas Gadau', 'Bauchi', 'Yelwa', 'Katagum'], 'Jemaa': ['Jemaa', 'Dambam', 'Alkaleri', 'Bauchi'], 'Katagum': ['Katagum', 'Azare', 'Bauchi', 'Darazo'], 'Kirfi': ['Kirfi', 'Bauchi', 'Lere', 'Baure'], 'Lere': ['Lere', 'Baure', 'Kirfi', 'Bauchi'], 'Misau': ['Misau', 'Bauchi', 'Katagum', 'Azare'], 'Ningi': ['Ningi', 'Bauchi', 'Katagum', 'Azare'], 'Shira': ['Shira', 'Gada', 'Dass', 'Bauchi'], 'Tafawa Balewa': ['Tafawa Balewa', 'Bauchi', 'Gada', 'Dass'], 'Toro': ['Toro', 'Bauchi', 'Katagum', 'Azare'], 'Warji': ['Warji', 'Baure', 'Lere', 'Kirfi'], 'Yakuba': ['Yakuba', 'Baure', 'Lere', 'Kirfi'], 'Yelwa': ['Yelwa', 'Bauchi', 'Katagum', 'Azare'], 'Zaki': ['Zaki', 'Azare', 'Katagum', 'Bauchi'] },
-  'Benue': { 'Ado': ['Ado', 'Mkpat Enin', 'Oturkpo', 'Otukpo'], 'Agatu': ['Agatu', 'Ado', 'Otukpo', 'Oturkpo'], 'Apa': ['Apa', 'Agatu', 'Otukpo', 'Oturkpo'], 'Buruku': ['Buruku', 'Gboko', 'Tiv', 'Makurdi'], 'Gboko': ['Gboko', 'Buruku', 'Makurdi', 'Tiv'], 'Guma': ['Guma', 'Makurdi', 'Logo', 'Obi'], 'Katsina Ala': ['Katsina Ala', 'Ukum', 'Logo', 'Konshisha'], 'Konshisha': ['Konshisha', 'Katsina Ala', 'Logo', 'Ukum'], 'Makurdi': ['Makurdi', 'Guma', 'Gboko', 'Logo'], 'Obi': ['Obi', 'Makurdi', 'Guma', 'Logo'], 'Ogbadibo': ['Ogbadibo', 'Ado', 'Otukpo', 'Oturkpo'], 'Otukpo': ['Otukpo', 'Ado', 'Ogbadibo', 'Oturkpo'], 'Tarka': ['Tarka', 'Gboko', 'Makurdi', 'Buruku'], 'Ukum': ['Ukum', 'Katsina Ala', 'Buruku', 'Gboko'], 'Ushongo': ['Ushongo', 'Katsina Ala', 'Konshisha', 'Logo'], 'Vandeikya': ['Vandeikya', 'Agatu', 'Apa', 'Otukpo'] },
-  'Borno': { 'Abadam': ['Abadam', 'Guzamala', 'Marte', 'Mobbar'], 'Askira Uba': ['Askira Uba', 'Bama', 'Gwoza', 'Biu'], 'Bama': ['Bama', 'Askira Uba', 'Gwoza', 'Biu'], 'Bayo': ['Bayo', 'Biu', 'Bama', 'Gwoza'], 'Biu': ['Biu', 'Gwoza', 'Chibok', 'Bayo'], 'Chibok': ['Chibok', 'Biu', 'Damboa', 'Gwoza'], 'Damboa': ['Damboa', 'Chibok', 'Maiduguri', 'Jere'], 'Dikwa': ['Dikwa', 'Kaga', 'Magumeri', 'Kala Balge'], 'Dusnma': ['Dusnma', 'Gwoza', 'Biu', 'Chibok'], 'Gamboru': ['Gamboru', 'Ngala', 'Marte', 'Abadam'], 'Guzamala': ['Guzamala', 'Abadam', 'Marte', 'Mobbar'], 'Gwoza': ['Gwoza', 'Askira Uba', 'Biu', 'Bama'], 'Jere': ['Jere', 'Maiduguri', 'Damboa', 'Konduga'], 'Kaga': ['Kaga', 'Dikwa', 'Magumeri', 'Kangarum'], 'Kala Balge': ['Kala Balge', 'Kaga', 'Dikwa', 'Magumeri'], 'Kanem': ['Kanem', 'Mobbar', 'Guzamala', 'Abadam'], 'Kangarum': ['Kangarum', 'Magumeri', 'Kaga', 'Dikwa'], 'Konduga': ['Konduga', 'Jere', 'Damboa', 'Maiduguri'], 'Kukawa': ['Kukawa', 'Kanem', 'Mobbar', 'Guzamala'], 'Kwaya Kusar': ['Kwaya Kusar', 'Ngala', 'Gamboru', 'Marte'], 'Maiduguri': ['Maiduguri', 'Jere', 'Konduga', 'Damboa'], 'Magumeri': ['Magumeri', 'Kaga', 'Kangarum', 'Dikwa'], 'Marte': ['Marte', 'Abadam', 'Guzamala', 'Mobbar'], 'Mobbar': ['Mobbar', 'Kanem', 'Kukawa', 'Guzamala'], 'Munguno': ['Munguno', 'Jere', 'Damboa', 'Konduga'], 'Ngala': ['Ngala', 'Gamboru', 'Marte', 'Abadam'], 'Nganzai': ['Nganzai', 'Kanem', 'Mobbar', 'Kukawa'], 'Shani': ['Shani', 'Dikwa', 'Kaga', 'Magumeri'] },
-  'Cross River': { 'Akamkpa': ['Akamkpa', 'Calabar South', 'Odukpani', 'Biase'], 'Akpabuyo': ['Akpabuyo', 'Calabar South', 'Odukpani', 'Biase'], 'Bakassi': ['Bakassi', 'Calabar South', 'Akpabuyo', 'Odukpani'], 'Bekwarra': ['Bekwarra', 'Obudu', 'Boki', 'Ogoja'], 'Biase': ['Biase', 'Akamkpa', 'Ikom', 'Odukpani'], 'Boki': ['Boki', 'Bekwarra', 'Obudu', 'Ogoja'], 'Calabar Municipality': ['Calabar', 'Marina', 'Waspener', 'Onikan'], 'Calabar South': ['Calabar South', 'Calabar Municipality', 'Akpabuyo', 'Akamkpa'], 'Etung': ['Etung', 'Ikom', 'Biase', 'Akamkpa'], 'Ikom': ['Ikom', 'Etung', 'Biase', 'Obubra'], 'Obubra': ['Obubra', 'Ikom', 'Yala', 'Etung'], 'Obudu': ['Obudu', 'Boki', 'Bekwarra', 'Ogoja'], 'Odukpani': ['Odukpani', 'Calabar South', 'Biase', 'Akamkpa'], 'Ogoja': ['Ogoja', 'Yala', 'Obubra', 'Okcukwu'], 'Okcukwu': ['Okcukwu', 'Ogoja', 'Obubra', 'Yala'], 'Yakurr': ['Yakurr', 'Ogoja', 'Ikom', 'Obubra'], 'Yala': ['Yala', 'Obubra', 'Ogoja', 'Okcukwu'] },
-  'Delta': { 'Aniocha North': ['Ibusa', 'Asaba', 'Onicha', 'Agbor'], 'Aniocha South': ['Agbor', 'Onicha', 'Ibusa', 'Asaba'], 'Bomadi': ['Bomadi', 'Burutu', 'Isoko South', 'Warri South'], 'Burutu': ['Burutu', 'Bomadi', 'Warri South', 'Patani'], 'Ethiope East': ['Sapele', 'Warri', 'Abraka', 'Ewu'], 'Ethiope West': ['Sapele', 'Warri', 'Ewu', 'Okpe'], 'Ika North East': ['Ika', 'Onicha', 'Agbor', 'Asaba'], 'Ika South': ['Ika', 'Onicha', 'Agbor', 'Asaba'], 'Isoko North': ['Isoko', 'Bomadi', 'Warri South', 'Warri North'], 'Isoko South': ['Isoko', 'Bomadi', 'Burutu', 'Warri South'], 'Ndokwa East': ['Ndokwa', 'Asaba', 'Agbor', 'Ibusa'], 'Ndokwa West': ['Ndokwa', 'Asaba', 'Agbor', 'Ibusa'], 'Okpe': ['Okpe', 'Warri', 'Sapele', 'Ethiope'], 'Oshimili North': ['Asaba', 'Ibusa', 'Onicha', 'Agbor'], 'Oshimili South': ['Asaba', 'Ibusa', 'Agbor', 'Onicha'], 'Patani': ['Patani', 'Bomadi', 'Isoko South', 'Burutu'], 'Sapele': ['Sapele', 'Okpe', 'Warri', 'Ethiope'], 'Udu': ['Udu', 'Warri', 'Okpe', 'Sapele'], 'Ughelli North': ['Ughelli', 'Udu', 'Sapele', 'Okpe'], 'Ughelli South': ['Ughelli', 'Isoko North', 'Isoko South', 'Warri'], 'Ukwuani': ['Ukwuani', 'Warri South', 'Bomadi', 'Burutu'], 'Uvwie': ['Uvwie', 'Warri', 'Udu', 'Okpe'], 'Warri North': ['Warri', 'Okpe', 'Udu', 'Sapele'], 'Warri South': ['Warri South', 'Warri', 'Warri North', 'Uvwie'], 'Warri South West': ['Warri', 'Warri South', 'Burutu', 'Patani'] },
-  'Ebonyi': { 'Abakaliki': ['Abakaliki', 'Afikpo', 'Ebonyi', 'Gabu'], 'Afikpo North': ['Afikpo', 'Abakaliki', 'Gabu', 'Ebonyi'], 'Afikpo South': ['Afikpo', 'Abakaliki', 'Gabu', 'Ebonyi'], 'Ebonyi': ['Ebonyi', 'Abakaliki', 'Afikpo', 'Gabu'], 'Ezza North': ['Ezza', 'Abakaliki', 'Enugu', 'Afikpo'], 'Ezza South': ['Ezza', 'Abakaliki', 'Enugu', 'Afikpo'], 'Gabu': ['Gabu', 'Afikpo', 'Ebonyi', 'Abakaliki'], 'Ikwo': ['Ikwo', 'Afikpo', 'Gabu', 'Ebonyi'], 'Ishielu': ['Ishielu', 'Ezza North', 'Enugu', 'Abakaliki'], 'Isuikwu': ['Isuikwu', 'Abakaliki', 'Ezza', 'Ebonyi'], 'Ivo': ['Ivo', 'Abakaliki', 'Afikpo', 'Ebonyi'], 'Izzi': ['Izzi', 'Abakaliki', 'Ezza', 'Enugu'], 'Ohaozara': ['Ohaozara', 'Abakaliki', 'Ebonyi', 'Ezza'], 'Ohaukwu': ['Ohaukwu', 'Ezza North', 'Afikpo', 'Enugu'], 'Onicha': ['Onicha', 'Abakaliki', 'Afikpo', 'Ebonyi'] },
-  'Edo': { 'Akoko Edo': ['Akoko', 'Owo', 'Ose', 'Benin'], 'Auchi': ['Auchi', 'Benin', 'Ubiaja', 'Lokoja'], 'Benin City': ['Benin City', 'Sapele Road', 'New Lagos Road', 'Airport Road'], 'Egor': ['Egor', 'Benin City', 'Orhionmwon', 'Irhue'], 'Esan Central': ['Esan', 'Benin', 'Uzebba', 'Iyanomon'], 'Esan North East': ['Esan', 'Benin', 'Uzebba', 'Iyanomon'], 'Esan South East': ['Esan', 'Benin', 'Uzebba', 'Iyanomon'], 'Esan West': ['Esan', 'Benin', 'Auchi', 'Uzebba'], 'Igueben': ['Igueben', 'Benin', 'Ubiaja', 'Orhionmwon'], 'Oredo': ['Oredo', 'Benin City', 'Egor', 'Irhue'], 'Ovia North East': ['Ovia', 'Benin', 'Orhionmwon', 'Irhue'], 'Ovia South West': ['Ovia', 'Benin', 'Orhionmwon', 'Igueben'], 'Owan East': ['Owan', 'Auchi', 'Lokoja', 'Benin'], 'Owan West': ['Owan', 'Auchi', 'Lokoja', 'Benin'], 'Uhunmwonde': ['Uhunmwonde', 'Orhionmwon', 'Benin', 'Egor'] },
-  'Ekiti': { 'Ado': ['Ado', 'Iyin Ekiti', 'Agenebode', 'Ekiti'], 'Akure': ['Akure', 'Ado', 'Iyin Ekiti', 'Ekiti'], 'Ekiti East': ['Ekiti', 'Abakaliki', 'Gbonyin', 'Ado'], 'Ekiti South West': ['Ekiti', 'Ila', 'Igbara Oke', 'Ijero'], 'Ekiti West': ['Ekiti', 'Ila', 'Iragbiji', 'Ijero'], 'Emure': ['Emure', 'Ekiti', 'Agenebode', 'Ado'], 'Gbonyin': ['Gbonyin', 'Ekiti East', 'Abakaliki', 'Ado'], 'Ido Osi': ['Ido Osi', 'Ido Ekiti', 'Ilesa', 'Owo'], 'Ijero': ['Ijero', 'Ekiti', 'Ado', 'Iwo'], 'Irepodun': ['Irepodun', 'Ikere', 'Ekiti', 'Ado'], 'Isin': ['Isin', 'Ekiti', 'Iwo', 'Osun'], 'Isuyin': ['Isuyin', 'Ekiti', 'Ado', 'Gbonyin'], 'Moba': ['Moba', 'Emure', 'Ekiti', 'Agenebode'], 'Oye': ['Oye', 'Ekiti', 'Agenebode', 'Ado'] },
-  'Enugu': { 'Aninri': ['Aninri', 'Enugu', 'Nsukka', 'Oji River'], 'Awgu': ['Awgu', 'Enugu', 'Aninri', 'Oji River'], 'Enugu East': ['Enugu', 'Aninri', 'Enugu North', 'Oji River'], 'Enugu North': ['Enugu', 'Aninri', 'Enugu South', 'Enugu East'], 'Enugu South': ['Enugu', 'Aninri', 'Enugu East', 'Enugu North'], 'Ezeagu': ['Ezeagu', 'Awgu', 'Enugu', 'Oji River'], 'Igbo Eze North': ['Igbo Eze', 'Nsukka', 'Enugu', 'Oji River'], 'Igbo Eze South': ['Igbo Eze', 'Nsukka', 'Enugu', 'Oji River'], 'Igbo Etiti': ['Igbo Etiti', 'Aninri', 'Enugu', 'Nsukka'], 'Isi Uzo': ['Isi Uzo', 'Nsukka', 'Igbo Eze', 'Enugu'], 'Nkanu East': ['Nkanu', 'Awgu', 'Ezeagu', 'Oji River'], 'Nkanu West': ['Nkanu', 'Awgu', 'Ezeagu', 'Oji River'], 'Nsukka': ['Nsukka', 'Igbo Eze', 'Enugu', 'Oji River'], 'Oji River': ['Oji River', 'Enugu', 'Awgu', 'Ezeagu'], 'Udenu': ['Udenu', 'Nsukka', 'Igbo Eze', 'Enugu'], 'Uzo Uwani': ['Uzo Uwani', 'Aninri', 'Enugu', 'Nsukka'] },
-  'Gombe': { 'Akko': ['Akko', 'Gombe', 'Balanga', 'Billiri'], 'Balanga': ['Balanga', 'Akko', 'Gombe', 'Billiri'], 'Billiri': ['Billiri', 'Gombe', 'Akko', 'Balanga'], 'Dukku': ['Dukku', 'Gombe', 'Balanga', 'Kaltungo'], 'Funakaye': ['Funakaye', 'Gombe', 'Kaltungo', 'Dukku'], 'Gombe': ['Gombe', 'Akko', 'Balanga', 'Billiri'], 'Kaltungo': ['Kaltungo', 'Funakaye', 'Gombe', 'Dukku'], 'Kwami': ['Kwami', 'Gombe', 'Balanga', 'Akko'], 'Nafada': ['Nafada', 'Gombe', 'Dukku', 'Kaltungo'], 'Shongom': ['Shongom', 'Gombe', 'Billiri', 'Akko'], 'Yamaltu Deba': ['Yamaltu Deba', 'Billiri', 'Gombe', 'Akko'] },
-  'Imo': { 'Aboh Mbaise': ['Aboh Mbaise', 'Mbaise', 'Umuahia', 'Owerri'], 'Ahiazu Mbaise': ['Ahiazu', 'Mbaise', 'Umuahia', 'Owerri'], 'Ehime Mbano': ['Ehime Mbano', 'Mbaise', 'Umuahia', 'Owerri'], 'Ezinihitte': ['Ezinihitte', 'Mbaise', 'Umuahia', 'Owerri'], 'Ikeduru': ['Ikeduru', 'Owerri', 'Mbaise', 'Ikeduru'], 'Isiala Mbano': ['Isiala Mbano', 'Mbaise', 'Umuahia', 'Owerri'], 'Mbaitoli': ['Mbaitoli', 'Owerri', 'Ikeduru', 'Mbaise'], 'Ngor Okpala': ['Ngor Okpala', 'Owerri', 'Mbaitoli', 'Ikeduru'], 'Nkwerre': ['Nkwerre', 'Owerri', 'Ikeduru', 'Mbaitoli'], 'Nwangele': ['Nwangele', 'Owerri', 'Ikeduru', 'Mbaitoli'], 'Obowo': ['Obowo', 'Mbaise', 'Umuahia', 'Owerri'], 'Oguta': ['Oguta', 'Owerri', 'Ikeduru', 'Okigwe'], 'Okigwe': ['Okigwe', 'Owerri', 'Mbaise', 'Ikeduru'], 'Onuimo': ['Onuimo', 'Owerri', 'Ikeduru', 'Mbaitoli'], 'Oru East': ['Oru East', 'Owerri', 'Okigwe', 'Oguta'], 'Oru West': ['Oru West', 'Owerri', 'Okigwe', 'Oguta'], 'Owerri': ['Owerri', 'Owerri North', 'Owerri West', 'Owerri Municipal'], 'Owerri Municipal': ['Owerri', 'Owerri North', 'Owerri West', 'Ikeduru'], 'Owerri North': ['Owerri North', 'Owerri', 'Mbaitoli', 'Ikeduru'], 'Owerri West': ['Owerri West', 'Owerri', 'Mbaitoli', 'Ikeduru'], 'Unuimo': ['Unuimo', 'Owerri', 'Ikeduru', 'Mbaitoli'] },
-  'Jigawa': { 'Auyo': ['Auyo', 'Jigawa', 'Taura', 'Gumel'], 'Babura': ['Babura', 'Jigawa', 'Kaumasu', 'Garki'], 'Birin Kudu': ['Birni Kudu', 'Jigawa', 'Garki', 'Kaugama'], 'Birnin Kudu': ['Birnin Kudu', 'Jigawa', 'Garki', 'Kaugama'], 'Dutse': ['Dutse', 'Jigawa', 'Garki', 'Birnin Kudu'], 'Gagarawa': ['Gagarawa', 'Jigawa', 'Taura', 'Auyo'], 'Garki': ['Garki', 'Dutse', 'Birnin Kudu', 'Kaugama'], 'Gumel': ['Gumel', 'Taura', 'Auyo', 'Kaugama'], 'Guri': ['Guri', 'Jigawa', 'Taura', 'Auyo'], 'Gwaram': ['Gwaram', 'Jigawa', 'Garki', 'Kaugama'], 'Hadejia': ['Hadejia', 'Kazaure', 'Jigawa', 'Kaugama'], 'Jahun': ['Jahun', 'Jigawa', 'Kaugama', 'Ringim'], 'Kaugama': ['Kaugama', 'Jahun', 'Ringim', 'Kiyawa'], 'Kiyawa': ['Kiyawa', 'Kaugama', 'Jahun', 'Ringim'], 'Koni': ['Koni', 'Jigawa', 'Kaumasu', 'Babura'], 'Maigatari': ['Maigatari', 'Hadejia', 'Kazaure', 'Jigawa'], 'Malam Madori': ['Malam Madori', 'Jigawa', 'Kazaure', 'Hadejia'], 'Miga': ['Miga', 'Jigawa', 'Taura', 'Auyo'], 'Ringim': ['Ringim', 'Kaugama', 'Jahun', 'Kiyawa'], 'Roni': ['Roni', 'Jigawa', 'Kaumasu', 'Babura'], 'Sule Tankarkar': ['Sule Tankarkar', 'Jigawa', 'Kazaure', 'Hadejia'], 'Taura': ['Taura', 'Auyo', 'Gumel', 'Guri'], 'Yankwashi': ['Yankwashi', 'Jigawa', 'Kaumasu', 'Babura'] },
-  'Kaduna': { 'Birnin Gwari': ['Birnin Gwari', 'Kaduna', 'Giwa', 'Saminaka'], 'Bombali': ['Bombali', 'Kaduna', 'Kachia', 'Kagarko'], 'Chikun': ['Chikun', 'Kaduna', 'Giwa', 'Igabi'], 'Giwa': ['Giwa', 'Kaduna', 'Chikun', 'Birnin Gwari'], 'Igabi': ['Igabi', 'Kaduna', 'Chikun', 'Giwa'], 'Ikara': ['Ikara', 'Kaduna', 'Kachia', 'Kagarko'], 'Jaba': ['Jaba', 'Kaduna', 'Kachia', 'Ikara'], 'Jema\'a': ['Jema\'a', 'Kaduna', 'Kachia', 'Kagarko'], 'Kachia': ['Kachia', 'Ikara', 'Jaba', 'Jema\'a'], 'Kagarko': ['Kagarko', 'Kachia', 'Ikara', 'Jema\'a'], 'Kajuru': ['Kajuru', 'Kaduna', 'Chikun', 'Giwa'], 'Kaura': ['Kaura', 'Kaduna', 'Zaria', 'Giwa'], 'Kauru': ['Kauru', 'Kaduna', 'Kachia', 'Kagarko'], 'Kudan': ['Kudan', 'Kaduna', 'Giwa', 'Zaria'], 'Kudinchi': ['Kudinchi', 'Kaduna', 'Birnin Gwari', 'Giwa'], 'Lere': ['Lere', 'Bauchi', 'Kaduna', 'Zaria'], 'Makarfi': ['Makarfi', 'Kaduna', 'Zaria', 'Giwa'], 'Malumfashi': ['Malumfashi', 'Katsina', 'Kaduna', 'Zaria'], 'Manchok': ['Manchok', 'Kaduna', 'Jema\'a', 'Kagarko'], 'Maru': ['Maru', 'Zamfara', 'Kaduna', 'Giwa'], 'Misau': ['Misau', 'Bauchi', 'Kaduna', 'Giwa'], 'Nasarawa': ['Nasarawa', 'Kaduna', 'FCT', 'Zaria'], 'Rigachikun': ['Rigachikun', 'Kaduna', 'Giwa', 'Chikun'], 'Saba': ['Saba', 'Kaduna', 'Giwa', 'Birnin Gwari'], 'Sabon Gida': ['Sabon Gida', 'Kaduna', 'Giwa', 'Chikun'], 'Saminaka': ['Saminaka', 'Kaduna', 'Birnin Gwari', 'Giwa'], 'Sanga': ['Sanga', 'Kaduna', 'Kachia', 'Kagarko'], 'Soba': ['Soba', 'Kaduna', 'Igabi', 'Giwa'], 'Zonkwa': ['Zonkwa', 'Kaduna', 'Kachia', 'Kagarko'], 'Zaria': ['Zaria', 'Kaduna', 'Giwa', 'Igabi'] },
-  'Kano': { 'Ajinkyia': ['Ajinkyia', 'Kano', 'Gwale', 'Fagge'], 'Albasa': ['Albasa', 'Kano', 'Gwale', 'Fagge'], 'Bebeji': ['Bebeji', 'Kano', 'Sumaila', 'Doguwa'], 'Bichi': ['Bichi', 'Kano', 'Warawa', 'Kumbotso'], 'Bunkure': ['Bunkure', 'Kano', 'Minjibir', 'Gwarzo'], 'Dala': ['Dala', 'Kano', 'Nassarawa', 'Kachumbari'], 'Dawakin Kudu': ['Dawakin Kudu', 'Kano', 'Batagarawa', 'Garun Mallam'], 'Dawakin Tofa': ['Dawakin Tofa', 'Kano', 'Dawakin Kudu', 'Gaya'], 'Doguwa': ['Doguwa', 'Kano', 'Sumaila', 'Bebeji'], 'Fagge': ['Fagge', 'Kano', 'Gwale', 'Ajinkyia'], 'Gabasawa': ['Gabasawa', 'Kano', 'Minjibir', 'Bunkure'], 'Garko': ['Garko', 'Kano', 'Nassarawa', 'Dala'], 'Garun Mallam': ['Garun Mallam', 'Kano', 'Dawakin Kudu', 'Kaita'], 'Gaya': ['Gaya', 'Kano', 'Dawakin Tofa', 'Karfi'], 'Gezawa': ['Gezawa', 'Kano', 'Sumaila', 'Rano'], 'Gwale': ['Gwale', 'Kano', 'Fagge', 'Ajinkyia'], 'Gwarzo': ['Gwarzo', 'Kano', 'Bunkure', 'Minjibir'], 'Kabo': ['Kabo', 'Kano', 'Sumaila', 'Rano'], 'Kachumbari': ['Kachumbari', 'Kano', 'Dala', 'Kurkur'], 'Kaia': ['Kaia', 'Kano', 'Dawakin Kudu', 'Garun Mallam'], 'Kajiji': ['Kajiji', 'Kano', 'Nassarawa', 'Dala'], 'Kaki': ['Kaki', 'Kano', 'Garko', 'Nassarawa'], 'Kano Municipal': ['Kano', 'Gwale', 'Fagge', 'Kumbotso'], 'Karfi': ['Karfi', 'Kano', 'Gaya', 'Rimin Gado'], 'Karaye': ['Karaye', 'Kano', 'Gezawa', 'Rano'], 'Kaura Namoda': ['Kaura Namoda', 'Kano', 'Dawakin Tofa', 'Gaya'], 'Kaya': ['Kaya', 'Kano', 'Dawakin Kudu', 'Garun Mallam'], 'Kiri': ['Kiri', 'Kano', 'Dawakin Tofa', 'Gaya'], 'Kumbotso': ['Kumbotso', 'Kano', 'Gwale', 'Fagge'], 'Kunchi': ['Kunchi', 'Kano', 'Bebeji', 'Bunkure'], 'Kura': ['Kura', 'Kano', 'Bichi', 'Warawa'], 'Kurkur': ['Kurkur', 'Kano', 'Nassarawa', 'Dala'], 'Kuwai': ['Kuwai', 'Kano', 'Dala', 'Nassarawa'], 'Minjibir': ['Minjibir', 'Kano', 'Bunkure', 'Gabasawa'], 'Nasarawa': ['Nassarawa', 'Kano', 'Dala', 'Kurkur'], 'Rano': ['Rano', 'Kano', 'Sumaila', 'Gezawa'], 'Rimin Gado': ['Rimin Gado', 'Kano', 'Gaya', 'Karfi'], 'Rogo': ['Rogo', 'Kano', 'Karaye', 'Gezawa'], 'Sanibari': ['Sanibari', 'Kano', 'Batagarawa', 'Dawakin Kudu'], 'Sumaila': ['Sumaila', 'Kano', 'Doguwa', 'Bebeji'], 'Tarauni': ['Tarauni', 'Kano', 'Karaye', 'Rimin Gado'], 'Takai': ['Takai', 'Kano', 'Gaya', 'Dawakin Tofa'], 'Taskade': ['Taskade', 'Kano', 'Batagarawa', 'Dawakin Kudu'], 'Tudun Maliki': ['Tudun Maliki', 'Kano', 'Dawakin Kudu', 'Kaita'], 'Tungar': ['Tungar', 'Kano', 'Bunkure', 'Minjibir'], 'Ungogo': ['Ungogo', 'Kano', 'Nassarawa', 'Dala'], 'Warawa': ['Warawa', 'Kano', 'Bichi', 'Kumbotso'] },
-  'Katsina': { 'Acida': ['Acida', 'Katsina', 'Katsina South', 'Bataiya'], 'Baure': ['Baure', 'Katsina', 'Musawa', 'Jibia'], 'Bataiya': ['Bataiya', 'Katsina', 'Katsina South', 'Acida'], 'Batsari': ['Batsari', 'Katsina', 'Faskari', 'Danja'], 'Dandume': ['Dandume', 'Katsina', 'Faskari', 'Batsari'], 'Danja': ['Danja', 'Katsina', 'Batsari', 'Faskari'], 'Daura': ['Daura', 'Katsina', 'Mai Adua', 'Kaita'], 'Faskari': ['Faskari', 'Katsina', 'Batsari', 'Dandume'], 'Funtua': ['Funtua', 'Katsina', 'Katsina South', 'Kankara'], 'Gandi': ['Gandi', 'Katsina', 'Safiyanu', 'Kankara'], 'Ingawa': ['Ingawa', 'Katsina', 'Faskari', 'Batsari'], 'Jibia': ['Jibia', 'Katsina', 'Baure', 'Musawa'], 'Kafur': ['Kafur', 'Katsina', 'Faskari', 'Dandume'], 'Kaita': ['Kaita', 'Katsina', 'Daura', 'Mai Adua'], 'Kankara': ['Kankara', 'Katsina', 'Katsina South', 'Funtua'], 'Kankia': ['Kankia', 'Katsina', 'Bataiya', 'Katsina South'], 'Kargi': ['Kargi', 'Katsina', 'Kankara', 'Katsina South'], 'Katsina': ['Katsina', 'Acida', 'Bataiya', 'Katsina South'], 'Katsina North': ['Katsina', 'Baure', 'Acida', 'Bataiya'], 'Katsina South': ['Katsina', 'Funtua', 'Bataiya', 'Kankara'], 'Kurfi': ['Kurfi', 'Katsina', 'Faskari', 'Batsari'], 'Kusada': ['Kusada', 'Katsina', 'Daura', 'Mai Adua'], 'Mai Adua': ['Mai Adua', 'Katsina', 'Daura', 'Kaita'], 'Malumfashi': ['Malumfashi', 'Katsina', 'Kankara', 'Katsina South'], 'Mani': ['Mani', 'Katsina', 'Kankara', 'Safiyanu'], 'Mashi': ['Mashi', 'Katsina', 'Katsina South', 'Funtua'], 'Matazu': ['Matazu', 'Katsina', 'Kankara', 'Katsina South'], 'Musawa': ['Musawa', 'Katsina', 'Baure', 'Jibia'], 'Rimi': ['Rimi', 'Katsina', 'Acida', 'Bataiya'], 'Sabuwa': ['Sabuwa', 'Katsina', 'Baure', 'Musawa'], 'Safiyanu': ['Safiyanu', 'Katsina', 'Gandi', 'Mani'], 'Sandamu': ['Sandamu', 'Katsina', 'Katsina South', 'Funtua'], 'Tarki': ['Tarki', 'Katsina', 'Katsina South', 'Funtua'], 'Tumbau': ['Tumbau', 'Katsina', 'Faskari', 'Batsari'], 'Zango': ['Zango', 'Katsina', 'Kargi', 'Kankara'] },
-  'Kebbi': { 'Aleiro': ['Aleiro', 'Kebbi', 'Kaoje', 'Danko'], 'Argungu': ['Argungu', 'Kebbi', 'Buhari', 'Bunza'], 'Bagudo': ['Bagudo', 'Kebbi', 'Augie', 'Aleiro'], 'Birnin Kebbi': ['Birnin Kebbi', 'Kebbi', 'Aliero', 'Gwandu'], 'Bunza': ['Bunza', 'Kebbi', 'Buhari', 'Argungu'], 'Buhari': ['Buhari', 'Kebbi', 'Argungu', 'Bunza'], 'Dandi': ['Dandi', 'Kebbi', 'Gaya', 'Jega'], 'Danko': ['Danko', 'Kebbi', 'Kaoje', 'Aleiro'], 'Fakai': ['Fakai', 'Kebbi', 'Kaoje', 'Danko'], 'Gaya': ['Gaya', 'Kebbi', 'Dandi', 'Jega'], 'Gwandu': ['Gwandu', 'Kebbi', 'Birnin Kebbi', 'Maiyama'], 'Jega': ['Jega', 'Kebbi', 'Gaya', 'Dandi'], 'Kaoje': ['Kaoje', 'Kebbi', 'Aleiro', 'Danko'], 'Kari': ['Kari', 'Kebbi', 'Gaya', 'Dandi'], 'Koko': ['Koko', 'Kebbi', 'Sakaba', 'Mezuma'], 'Kulle': ['Kulle', 'Kebbi', 'Kaoje', 'Danko'], 'Maiyama': ['Maiyama', 'Kebbi', 'Birnin Kebbi', 'Gwandu'], 'Makera': ['Makera', 'Kebbi', 'Aleiro', 'Kaoje'], 'Malando': ['Malando', 'Kebbi', 'Kaoje', 'Danko'], 'Mezuma': ['Mezuma', 'Kebbi', 'Sakaba', 'Koko'], 'Paikoro': ['Paikoro', 'Kebbi', 'Birnin Kebbi', 'Gwandu'], 'Sakaba': ['Sakaba', 'Kebbi', 'Koko', 'Mezuma'], 'Saminaka': ['Saminaka', 'Kebbi', 'Argungu', 'Buhari'], 'Shanga': ['Shanga', 'Kebbi', 'Argungu', 'Buhari'], 'Suru': ['Suru', 'Kebbi', 'Dandi', 'Gaya'], 'Tanko': ['Tanko', 'Kebbi', 'Maiyama', 'Birnin Kebbi'], 'Wasagu': ['Wasagu', 'Kebbi', 'Sakaba', 'Mezuma'], 'Yauri': ['Yauri', 'Kebbi', 'Gaya', 'Dandi'], 'Zuru': ['Zuru', 'Kebbi', 'Sakaba', 'Koko'] },
-  'Lagos': { 'Agege': ['Agege', 'Kara', 'Okota', 'Isolo'], 'Ajeromi-Ifelodun': ['Ajeromi', 'Ifelodun', 'Apapa', 'Ijora'], 'Alimosho': ['Alimosho', 'Mowe', 'Ifo', 'Jajiji'], 'Amuwo Odofin': ['Amuwo Odofin', 'Eko Atlantic', 'Alaro', 'Lekki'], 'Apapa': ['Apapa', 'Ijora', 'Costain', 'Tincan Island'], 'Badagry': ['Badagry', 'Olorunda', 'Agbara', 'Seme'], 'Bariga': ['Bariga', 'Shomolu', 'Surulere', 'Itire'], 'Epe': ['Epe', 'Ibeju Lekki', 'Ajah', 'Lekki'], 'Eti-Osa': ['Eti-Osa', 'Ikoyi', 'Victoria Island', 'Lekki'], 'Ifako-Ijaye': ['Ifako', 'Ijaye', 'Alagbado', 'Iju'], 'Ikoyi': ['Ikoyi', 'Victoria Island', 'Lekki', 'Ajah'], 'Ikorodu': ['Ikorodu', 'Imota', 'Ijede', 'Iwopin'], 'Isolo': ['Isolo', 'Oshodi', 'Oke Odo', 'Ilupeju'], 'Lagos Island': ['Lagos Island', 'Ikoyi', 'Victoria Island', 'Ajah'], 'Lagos Mainland': ['Lagos Mainland', 'Bariga', 'Yaba', 'Onikan'], 'Lekki': ['Lekki', 'Ajah', 'Ibeju Lekki', 'Epe'], 'Mushin': ['Mushin', 'Bariga', 'Surulere', 'Itire'], 'Ojo': ['Ojo', 'Apapa', 'Ajegunna', 'Akinpelu'], 'Oshodi-Isolo': ['Oshodi', 'Isolo', 'Shogunle', 'Mafoluku'], 'Shomolu': ['Shomolu', 'Bariga', 'Itire', 'Ijesha'], 'Surulere': ['Surulere', 'Ijesha', 'Itire', 'Bariga'], 'Ajah': ['Ajah', 'Lekki', 'Epe', 'Ibeju Lekki'], 'Ibeju-Lekki': ['Ibeju Lekki', 'Epe', 'Ajah', 'Lekki'] },
-  'Nasarawa': { 'Akwanga': ['Akwanga', 'Nasarawa', 'Obi', 'Karu'], 'Awe': ['Awe', 'Nasarawa', 'Akwanga', 'Obi'], 'Dinder': ['Dinder', 'Nasarawa', 'Lafia', 'Keana'], 'Garaku': ['Garaku', 'Nasarawa', 'Akwanga', 'Obi'], 'Gaya': ['Gaya', 'Nasarawa', 'Lafia', 'Dinder'], 'Karu': ['Karu', 'Nasarawa', 'Lafia', 'Keffi'], 'Keana': ['Keana', 'Nasarawa', 'Akwanga', 'Dinder'], 'Kokona': ['Kokona', 'Nasarawa', 'Gaya', 'Lafia'], 'Keffi': ['Keffi', 'Nasarawa', 'Karu', 'Lafia'], 'Lafia': ['Lafia', 'Nasarawa', 'Dinder', 'Gaya'], 'Nasarawa': ['Nasarawa', 'Lafia', 'Keffi', 'Akwanga'], 'Nasarawa Egon': ['Nasarawa Egon', 'Nasarawa', 'Akwanga', 'Keana'], 'Obi': ['Obi', 'Nasarawa', 'Akwanga', 'Awe'], 'Toto': ['Toto', 'Nasarawa', 'Keffi', 'Karu'], 'Wamba': ['Wamba', 'Nasarawa', 'Akwanga', 'Keana'] },
-  'Niger': { 'Agaie': ['Agaie', 'Niger', 'Minna', 'Bosso'], 'Agwara': ['Agwara', 'Niger', 'Suleja', 'Gurara'], 'Bida': ['Bida', 'Niger', 'Suleja', 'Katcha'], 'Bosso': ['Bosso', 'Niger', 'Minna', 'Chachaga'], 'Chachaga': ['Chachaga', 'Niger', 'Minna', 'Bosso'], 'Edati': ['Edati', 'Niger', 'Bida', 'Gbako'], 'Gbako': ['Gbako', 'Niger', 'Bida', 'Katcha'], 'Gurara': ['Gurara', 'Niger', 'Suleja', 'Agwara'], 'Katcha': ['Katcha', 'Niger', 'Bida', 'Gbako'], 'Kontagora': ['Kontagora', 'Niger', 'Bosso', 'Shiroro'], 'Lapai': ['Lapai', 'Niger', 'Bida', 'Edati'], 'Lavun': ['Lavun', 'Niger', 'Bida', 'Gbako'], 'Magama': ['Magama', 'Niger', 'Minna', 'Bosso'], 'Mariga': ['Mariga', 'Niger', 'Bosso', 'Mashegu'], 'Mashegu': ['Mashegu', 'Niger', 'Minna', 'Bosso'], 'Minna': ['Minna', 'Niger', 'Bosso', 'Chachaga'], 'Mokwa': ['Mokwa', 'Niger', 'Kontagora', 'Shiroro'], 'Muya': ['Muya', 'Niger', 'Minna', 'Bosso'], 'Paikoro': ['Paikoro', 'Niger', 'Suleja', 'Gurara'], 'Rafi': ['Rafi', 'Niger', 'Kontagora', 'Shiroro'], 'Rijau': ['Rijau', 'Niger', 'Kontagora', 'Mokwa'], 'Shiroro': ['Shiroro', 'Niger', 'Bosso', 'Kontagora'], 'Suleja': ['Suleja', 'Niger', 'Gurara', 'Agwara'], 'Tafa': ['Tafa', 'Niger', 'Suleja', 'Paikoro'], 'Wushishi': ['Wushishi', 'Niger', 'Bida', 'Katcha'] },
-  'Ogun': { 'Abeokuta North': ['Abeokuta', 'Ogun', 'Abeokuta South', 'Ado Odo Ota'], 'Abeokuta South': ['Abeokuta', 'Ogun', 'Abeokuta North', 'Odeda'], 'Ado-Odo Ota': ['Ado Odo', 'Ogun', 'Mowe', 'Abeokuta North'], 'Ijebu East': ['Ijebu', 'Ogun', 'Ijebu Ode', 'Ijebu North'], 'Ijebu North': ['Ijebu North', 'Ogun', 'Ijebu Ode', 'Ikenne'], 'Ijebu North East': ['Ijebu', 'Ogun', 'Ijebu Ode', 'Ijebu North'], 'Ijebu Ode': ['Ijebu Ode', 'Ogun', 'Ijebu East', 'Ijebu North'], 'Ikenne': ['Ikenne', 'Ogun', 'Ijebu North', 'Remo North'], 'Imeko-Afijo': ['Imeko', 'Ogun', 'Yewa North', 'Yewa South'], 'Ipokia': ['Ipokia', 'Ogun', 'Yewa South', 'Imeko'], 'Obafemi Owode': ['Obafemi Owode', 'Ogun', 'Odeda', 'Abeokuta North'], 'Odeda': ['Odeda', 'Ogun', 'Abeokuta North', 'Abeokuta South'], 'Odogbolu': ['Odogbolu', 'Ogun', 'Ijebu Ode', 'Ijebu East'], 'Ogun Waterside': ['Ogun Waterside', 'Ogun', 'Yewa South', 'Ipokia'], 'Remo North': ['Remo', 'Ogun', 'Ijebu East', 'Ikenne'], 'Sagamu': ['Sagamu', 'Ogun', 'Remo North', 'Odogbolu'], 'Yewa North': ['Yewa', 'Ogun', 'Imeko', 'Yewa South'], 'Yewa South': ['Yewa', 'Ogun', 'Imeko', 'Ipokia'] },
-  'Ondo': { 'Akoko North East': ['Akoko', 'Ondo', 'Owo', 'Ose'], 'Akoko North West': ['Akoko', 'Ondo', 'Owo', 'Ose'], 'Akoko South West': ['Akoko', 'Ondo', 'Owo', 'Ose'], 'Akoko South East': ['Akoko', 'Ondo', 'Owo', 'Ose'], 'Akure North': ['Akure', 'Ondo', 'Akure South', 'Ose'], 'Akure South': ['Akure South', 'Ondo', 'Akure North', 'Ose'], 'Ilaje': ['Ilaje', 'Ondo', 'Irele', 'Ondo Coastal'], 'Ilawole': ['Ilawole', 'Ondo', 'Ondo East', 'Ondo West'], 'Irele': ['Irele', 'Ondo', 'Ilaje', 'Ilawole'], 'Ondo': ['Ondo', 'Ilaje', 'Irele', 'Ondo East'], 'Ondo East': ['Ondo', 'Ondo West', 'Irele', 'Ondo Coastal'], 'Ondo West': ['Ondo West', 'Ondo', 'Ilaje', 'Ondo Coastal'], 'Ose': ['Ose', 'Ondo', 'Owo', 'Akure'], 'Owo': ['Owo', 'Ose', 'Akoko', 'Akure'], 'Oye': ['Oye', 'Ondo', 'Akure', 'Ose'] },
-  'Osun': { 'Aiyedade': ['Aiyedade', 'Osun', 'Ilesa', 'Ijebu Jesa'], 'Atakunrin': ['Atakunrin', 'Osun', 'Osogbo', 'Isokan'], 'Ede': ['Ede', 'Osun', 'Osogbo', 'Egbedore'], 'Egbedore': ['Egbedore', 'Osun', 'Osogbo', 'Ede'], 'Ejigbo': ['Ejigbo', 'Osun', 'Osogbo', 'Isokan'], 'Giwa': ['Giwa', 'Osun', 'Osogbo', 'Isokan'], 'Ifelodun': ['Ifelodun', 'Osun', 'Osogbo', 'Ejigbo'], 'Ife Central': ['Ife', 'Osun', 'Ife East', 'Ife North'], 'Ife East': ['Ife', 'Osun', 'Ife Central', 'Ife North'], 'Ife North': ['Ife', 'Osun', 'Ife East', 'Ife Central'], 'Ife South': ['Ife', 'Osun', 'Ife Central', 'Ife East'], 'Ila Orangun': ['Ila', 'Kwara', 'Osun', 'Ilesa'], 'Ilesa': ['Ilesa', 'Osun', 'Ijebu Jesa', 'Aiyedade'], 'Ilesa East': ['Ilesa', 'Osun', 'Ilesa West', 'Ijebu Jesa'], 'Ilesa West': ['Ilesa West', 'Osun', 'Ilesa', 'Aiyedade'], 'Ijebu Jesa': ['Ijebu Jesa', 'Osun', 'Ilesa', 'Aiyedade'], 'Isokan': ['Isokan', 'Osun', 'Osogbo', 'Ejigbo'], 'Isonyin': ['Isonyin', 'Osun', 'Osogbo', 'Ejigbo'], 'Obokun': ['Obokun', 'Osun', 'Ilesa', 'Aiyedade'], 'Olorunda': ['Olorunda', 'Osun', 'Osogbo', 'Ede'], 'Osogbo': ['Osogbo', 'Osun', 'Ede', 'Egbedore'], 'Owena': ['Owena', 'Osun', 'Osogbo', 'Ede'], 'Oyere': ['Oyere', 'Osun', 'Osogbo', 'Isokan'] },
-  'Oyo': { 'Afijio': ['Afijio', 'Oyo', 'Ibadan North', 'Ona Ara'], 'Akinyele': ['Akinyele', 'Oyo', 'Ibadan', 'Ona Ara'], 'Akobo': ['Akobo', 'Oyo', 'Ibadan South East', 'Lagelu'], 'Atiba': ['Atiba', 'Oyo', 'Oyo North', 'Oyo East'], 'Atisbo': ['Atisbo', 'Oyo', 'Oyo North', 'Atiba'], 'Egbeda': ['Egbeda', 'Oyo', 'Ibadan', 'Akinyele'], 'Ido': ['Ido', 'Oyo', 'Oyo East', 'Atiba'], 'Irepodun': ['Irepodun', 'Oyo', 'Oyo North', 'Atiba'], 'Iseyin': ['Iseyin', 'Oyo', 'Oyo North', 'Oyo East'], 'Itesiwaju': ['Itesiwaju', 'Oyo', 'Oyo North', 'Atisbo'], 'Iwajowa': ['Iwajowa', 'Oyo', 'Oyo North', 'Atisbo'], 'Iyaganku': ['Iyaganku', 'Oyo', 'Oyo East', 'Atiba'], 'Kajola': ['Kajola', 'Oyo', 'Oyo East', 'Atiba'], 'Kanla': ['Kanla', 'Oyo', 'Oyo North', 'Irepodun'], 'Lagelu': ['Lagelu', 'Oyo', 'Ibadan', 'Akobo'], 'Lanlate': ['Lanlate', 'Oyo', 'Oyo North', 'Oyo East'], 'Ogbomoso North': ['Ogbomoso', 'Oyo', 'Oyo North', 'Oyo East'], 'Ogbomoso South': ['Ogbomoso', 'Oyo', 'Oyo North', 'Oyo East'], 'Olorunyomi': ['Olorunyomi', 'Oyo', 'Oyo East', 'Atiba'], 'Oluyole': ['Oluyole', 'Oyo', 'Ibadan', 'Lagelu'], 'Ona-Ara': ['Ona-Ara', 'Oyo', 'Ibadan', 'Afijio'], 'Orelope': ['Orelope', 'Oyo', 'Oyo North', 'Kanla'], 'Oyo': ['Oyo', 'Oyo North', 'Oyo East', 'Atiba'], 'Oyo East': ['Oyo East', 'Oyo', 'Oyo North', 'Atiba'], 'Oyo North': ['Oyo North', 'Oyo', 'Oyo East', 'Atiba'], 'Saki East': ['Saki East', 'Oyo', 'Saki West', 'Atisbo'], 'Saki West': ['Saki West', 'Oyo', 'Saki East', 'Itesiwaju'], 'Surulere': ['Surulere', 'Oyo', 'Ibadan', 'Lagelu'] },
-  'Plateau': { 'Bokkos': ['Bokkos', 'Plateau', 'Riyom', 'Bassa'], 'Bassa': ['Bassa', 'Plateau', 'Jos South', 'Bokkos'], 'Barkin Ladi': ['Barkin Ladi', 'Plateau', 'Jos North', 'Riyom'], 'Gindiri': ['Gindiri', 'Plateau', 'Mangu', 'Kanam'], 'Jos East': ['Jos East', 'Plateau', 'Jos North', 'Jos South'], 'Jos North': ['Jos North', 'Plateau', 'Jos East', 'Jos South'], 'Jos South': ['Jos South', 'Plateau', 'Jos North', 'Bassa'], 'Kanam': ['Kanam', 'Plateau', 'Giyeng', 'Kanang'], 'Kaura': ['Kaura', 'Plateau', 'Kanam', 'Jema\'a'], 'Langtang North': ['Langtang', 'Plateau', 'Langtang South', 'Shendam'], 'Langtang South': ['Langtang South', 'Plateau', 'Langtang North', 'Shendam'], 'Mangu': ['Mangu', 'Plateau', 'Gindiri', 'Bokkos'], 'Mikang': ['Mikang', 'Plateau', 'Pankshin', 'Kanang'], 'Pankshin': ['Pankshin', 'Plateau', 'Kanang', 'Wase'], 'Riyom': ['Riyom', 'Plateau', 'Bokkos', 'Jos East'], 'Shendam': ['Shendam', 'Plateau', 'Kanam', 'Langtang North'], 'Toro': ['Toro', 'Plateau', 'Kanam', 'Jema\'a'], 'Wase': ['Wase', 'Plateau', 'Pankshin', 'Kanang'] },
-  'Rivers': { 'Abua Odual': ['Abua', 'Odual', 'Ahoada East', 'Emohua'], 'Ahoada East': ['Ahoada East', 'Abua', 'Odual', 'Emohua'], 'Ahoada West': ['Ahoada West', 'Ahoada East', 'Emohua', 'Ogba'], 'Akuku-Toru': ['Akuku', 'Toru', 'Tai', 'Eleme'], 'Andoni': ['Andoni', 'Opobo', 'Nkoro', 'Bonny'], 'Asari-Toru': ['Asari', 'Toru', 'Tai', 'Akuku'], 'Bonny': ['Bonny', 'Opobo', 'Nkoro', 'Andoni'], 'Degema': ['Degema', 'Ogoni', 'Gokana', 'Tai'], 'Eleme': ['Eleme', 'Tai', 'Ogoni', 'Gokana'], 'Emohua': ['Emohua', 'Ahoada East', 'Abua', 'Odual'], 'Etche': ['Etche', 'Tai', 'Ogoni', 'Eleme'], 'Gokana': ['Gokana', 'Khana', 'Ogoni', 'Degema'], 'Ibama': ['Ibama', 'Tai', 'Etche', 'Eleme'], 'Ikwerre': ['Ikwerre', 'Obio Akpor', 'Port Harcourt', 'Oyigbo'], 'Isiokpo': ['Isiokpo', 'Ikwerre', 'Obio Akpor', 'Port Harcourt'], 'Khana': ['Khana', 'Gokana', 'Ogoni', 'Degema'], 'Obio Akpor': ['Obio Akpor', 'Port Harcourt', 'Ikwerre', 'Oyigbo'], 'Ogoni': ['Ogoni', 'Gokana', 'Khana', 'Tai'], 'Opobo Nkoro': ['Opobo', 'Nkoro', 'Bonny', 'Andoni'], 'Oyigbo': ['Oyigbo', 'Etche', 'Ikwerre', 'Obio Akpor'], 'Port Harcourt': ['Port Harcourt', 'Obio Akpor', 'Ikwerre', 'Oyigbo'], 'Tai': ['Tai', 'Eleme', 'Ogoni', 'Akuku'] },
-  'Sokoto': { 'Binji': ['Binji', 'Sokoto', 'Bodinga', 'Gada'], 'Bodinga': ['Bodinga', 'Sokoto', 'Binji', 'Gada'], 'Dange-Shinari': ['Dange-Shinari', 'Sokoto', 'Tangaza', 'Illela'], 'Gada': ['Gada', 'Sokoto', 'Binji', 'Bodinga'], 'Gawabawa': ['Gawabawa', 'Sokoto', 'Yabo', 'Illela'], 'Goronyo': ['Goronyo', 'Sokoto', 'Gawon Nama', 'Sabon Birni'], 'Illela': ['Illela', 'Sokoto', 'Tangaza', 'Dange-Shinari'], 'Isa': ['Isa', 'Sokoto', 'Goronyo', 'Sabon Birni'], 'Kebbe': ['Kebbe', 'Sokoto', 'Binji', 'Gada'], 'Kware': ['Kware', 'Sokoto', 'Sokoto North', 'Sokoto South'], 'Rabah': ['Rabah', 'Sokoto', 'Dange-Shinari', 'Tangaza'], 'Sabon Birni': ['Sabon Birni', 'Sokoto', 'Isa', 'Goronyo'], 'Sokoto North': ['Sokoto North', 'Sokoto', 'Sokoto South', 'Kware'], 'Sokoto South': ['Sokoto South', 'Sokoto', 'Sokoto North', 'Kware'], 'Tambuwal': ['Tambuwal', 'Sokoto', 'Kware', 'Tureta'], 'Tangaza': ['Tangaza', 'Sokoto', 'Dange-Shinari', 'Illela'], 'Tureta': ['Tureta', 'Sokoto', 'Sabon Birni', 'Tambuwal'], 'Yabo': ['Yabo', 'Sokoto', 'Gawabawa', 'Illela'], 'Yagba': ['Yagba', 'Sokoto', 'Yabo', 'Gawabawa'] },
-  'Taraba': { 'Ardo Kola': ['Ardo Kola', 'Taraba', 'Gashaka', 'Bali'], 'Bali': ['Bali', 'Taraba', 'Gashaka', 'Donga'], 'Donga': ['Donga', 'Taraba', 'Gashaka', 'Bali'], 'Gashaka': ['Gashaka', 'Taraba', 'Bali', 'Sardauna'], 'Gassol': ['Gassol', 'Taraba', 'Lau', 'Wukari'], 'Ibi': ['Ibi', 'Taraba', 'Wukari', 'Takum'], 'Ising': ['Ising', 'Taraba', 'Lau', 'Jalingo'], 'Jalingo': ['Jalingo', 'Taraba', 'Lau', 'Ising'], 'Karim Lamido': ['Karim Lamido', 'Taraba', 'Gashaka', 'Sardauna'], 'Kurmi': ['Kurmi', 'Taraba', 'Lau', 'Jalingo'], 'Lau': ['Lau', 'Taraba', 'Kurmi', 'Gassol'], 'Sardauna': ['Sardauna', 'Taraba', 'Gashaka', 'Karim Lamido'], 'Takum': ['Takum', 'Taraba', 'Wukari', 'Ibi'], 'Ussa': ['Ussa', 'Taraba', 'Lau', 'Gassol'], 'Wukari': ['Wukari', 'Taraba', 'Ibi', 'Takum'] },
-  'Yobe': { 'Bade': ['Bade', 'Yobe', 'Geidam', 'Fune'], 'Bursari': ['Bursari', 'Yobe', 'Geidam', 'Karasuwa'], 'Damaturu': ['Damaturu', 'Yobe', 'Gujba', 'Gujba'], 'Fune': ['Fune', 'Yobe', 'Geidam', 'Bade'], 'Geidam': ['Geidam', 'Yobe', 'Bade', 'Fune'], 'Gujba': ['Gujba', 'Yobe', 'Damaturu', 'Jakusko'], 'Guyuk': ['Guyuk', 'Yobe', 'Damaturu', 'Potiskum'], 'Jakusko': ['Jakusko', 'Yobe', 'Gujba', 'Nguru'], 'Karasuwa': ['Karasuwa', 'Yobe', 'Bade', 'Bursari'], 'Karewa': ['Karewa', 'Yobe', 'Karasuwa', 'Nangere'], 'Kubar': ['Kubar', 'Yobe', 'Bursari', 'Geidam'], 'Machina': ['Machina', 'Yobe', 'Karasuwa', 'Nangere'], 'Mai Adua': ['Mai Adua', 'Yobe', 'Fune', 'Bade'], 'Nangere': ['Nangere', 'Yobe', 'Bade', 'Karasuwa'], 'Nguru': ['Nguru', 'Yobe', 'Gujba', 'Jakusko'], 'Potiskum': ['Potiskum', 'Yobe', 'Gujba', 'Guyuk'], 'Sahare': ['Sahare', 'Yobe', 'Bade', 'Fune'], 'Sakarai': ['Sakarai', 'Yobe', 'Bursari', 'Geidam'], 'Yunusari': ['Yunusari', 'Yobe', 'Bade', 'Nangere'], 'Yusufari': ['Yusufari', 'Yobe', 'Karasuwa', 'Machina'] },
-  'Zamfara': { 'Anka': ['Anka', 'Zamfara', 'Maru', 'Gada'], 'Bakura': ['Bakura', 'Zamfara', 'Anka', 'Maru'], 'Birnin Magaji': ['Birnin Magaji', 'Zamfara', 'Jigawa', 'Katsina'], 'Bukkuyum': ['Bukkuyum', 'Zamfara', 'Maru', 'Bungudu'], 'Bungudu': ['Bungudu', 'Zamfara', 'Maru', 'Bukkuyum'], 'Charanchi': ['Charanchi', 'Zamfara', 'Kaura Namoda', 'Dera'], 'Chafe': ['Chafe', 'Zamfara', 'Talata Mafara', 'Dandume'], 'Dandume': ['Dandume', 'Zamfara', 'Talata Mafara', 'Chafe'], 'Dera': ['Dera', 'Zamfara', 'Kaura Namoda', 'Charanchi'], 'Dukku': ['Dukku', 'Zamfara', 'Gummi', 'Gusau'], 'Fada': ['Fada', 'Zamfara', 'Gusau', 'Gummi'], 'Gada': ['Gada', 'Zamfara', 'Maru', 'Anka'], 'Gummi': ['Gummi', 'Zamfara', 'Dukku', 'Gusau'], 'Gusau': ['Gusau', 'Zamfara', 'Fada', 'Gummi'], 'Jigawa': ['Jigawa', 'Zamfara', 'Birnin Magaji', 'Katsina'], 'Kaura Namoda': ['Kaura Namoda', 'Kano', 'Zamfara', 'Charanchi'], 'Kazaure': ['Kazaure', 'Zamfara', 'Kaura Namoda', 'Jigawa'], 'Kiyawa': ['Kiyawa', 'Zamfara', 'Jigawa', 'Kazaure'], 'Kontagora': ['Kontagora', 'Niger', 'Zamfara', 'Gusau'], 'Maradun': ['Maradun', 'Zamfara', 'Talata Mafara', 'Dandume'], 'Maru': ['Maru', 'Zamfara', 'Anka', 'Gada'], 'Shinkafi': ['Shinkafi', 'Zamfara', 'Talata Mafara', 'Dandume'], 'Silame': ['Silame', 'Zamfara', 'Gusau', 'Fada'], 'Talata Mafara': ['Talata Mafara', 'Zamfara', 'Dandume', 'Maradun'], 'Taura': ['Taura', 'Jigawa', 'Zamfara', 'Kaura Namoda'], 'Tsafe': ['Tsafe', 'Zamfara', 'Talata Mafara', 'Dandume'], 'Zurmi': ['Zurmi', 'Zamfara', 'Maru', 'Anka'] },
-  'Federal Capital Territory': { 'Abuja Municipal': ['Abuja', 'Garki', 'Wuse', 'Maitama'], 'Bwari': ['Bwari', 'Kubwa', 'Gwagwa', 'Abaji'], 'Gwagwalada': ['Gwagwalada', 'Kubwa', 'Kuje', 'Suleja'], 'Kuje': ['Kuje', 'Gwagwalada', 'Jikwoyi', 'Lugbe'], 'Kwali': ['Kwali', 'Kuje', 'Abaji', 'Rubochi'] },
+interface LocationValue {
+  country: string
+  lga: string
+  city: string
+  nearestBusStop: string
 }
 
 interface LocationInputProps {
   value: {
-    community: string
-    lga: string
-    state: string
-    country: string
+    community?: string
+    lga?: string
+    state?: string
+    country?: string
+    city?: string
+    nearestBusStop?: string
   }
-  onChange: (location: {
-    community: string
-    lga: string
-    state: string
-    country: string
-  }) => void
+  onChange: (value: LocationValue) => void
 }
 
 export function LocationInput({ value, onChange }: LocationInputProps) {
-  const [openDropdown, setOpenDropdown] = useState<'state' | 'lga' | 'community' | null>(null)
+  // Only allow text characters (letters and spaces)
+  const handleTextOnly = (input: string) => {
+    return input.replace(/[^a-zA-Z\s]/g, '')
+  }
 
-  // Priority states: Lagos, Ogun, Rivers (Port Harcourt), FCT (Abuja)
-  const priorityStates = ['Lagos', 'Ogun', 'Rivers', 'Federal Capital Territory']
-  const allStates = Object.keys(nigerianLocations)
-  const otherStates = allStates.filter(s => !priorityStates.includes(s)).sort()
-  const states = [...priorityStates, ...otherStates]
-  
-  const lgas = value.state ? Object.keys(nigerianLocations[value.state] || {}).sort() : []
-  const communities = value.state && value.lga 
-    ? (nigerianLocations[value.state]?.[value.lga] || []).sort()
-    : []
-
-  const locationText = [value.community, value.lga, value.state, 'Nigeria'].filter(Boolean).join(', ')
-
-  const handleStateSelect = (state: string) => {
+  const handleChange = (field: keyof LocationValue, inputValue: string) => {
+    const cleanValue = handleTextOnly(inputValue)
     onChange({
       country: 'Nigeria',
-      state,
-      lga: '',
-      community: '',
+      lga: value.lga || '',
+      city: value.city || value.community || '',
+      nearestBusStop: value.nearestBusStop || '',
+      [field]: field === 'country' ? 'Nigeria' : cleanValue
     })
-    setOpenDropdown('lga')
-  }
-
-  const handleLgaSelect = (lga: string) => {
-    onChange({
-      ...value,
-      lga,
-      community: '',
-    })
-    setOpenDropdown('community')
-  }
-
-  const handleCommunitySelect = (community: string) => {
-    onChange({
-      ...value,
-      community,
-    })
-    setOpenDropdown(null)
   }
 
   return (
-    <div>
-      <h3 className="font-medium mb-3">Location</h3>
-      <div className="space-y-3">
-        {/* Display Button */}
-        <button
-          onClick={() => setOpenDropdown(openDropdown ? null : 'state')}
-          className="w-full flex items-center justify-between h-14 rounded-2xl border border-border px-4 bg-background hover:bg-secondary/50 transition-colors"
-        >
-          <div className="flex items-center gap-2 flex-1 text-left">
-            <MapPin className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-            <span className={cn('text-sm', locationText ? 'text-foreground' : 'text-muted-foreground')}>
-              {locationText || 'Select location'}
-            </span>
-          </div>
-          <ChevronDown className={cn('w-5 h-5 text-muted-foreground transition-transform', openDropdown && 'rotate-180')} />
-        </button>
+    <div className="space-y-4">
+      <div className="flex items-center gap-2 mb-3">
+        <MapPin className="w-5 h-5 text-[#703BF7]" />
+        <h3 className="font-medium text-white">Location</h3>
+      </div>
 
-        {/* State Dropdown */}
-        {openDropdown === 'state' && (
-          <div className="border border-border rounded-2xl p-3 space-y-2 bg-secondary/30 max-h-64 overflow-y-auto">
-            <label className="text-xs font-semibold text-muted-foreground px-1 sticky top-0">SELECT STATE</label>
-            <div className="space-y-1">
-              {states.map((state) => (
-                <button
-                  key={state}
-                  onClick={() => handleStateSelect(state)}
-                  className={cn(
-                    'w-full text-left px-3 py-2 rounded-lg text-sm transition-colors',
-                    value.state === state
-                      ? 'bg-primary text-primary-foreground'
-                      : 'hover:bg-secondary'
-                  )}
-                >
-                  {state}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+      {/* Country - Fixed Nigeria */}
+      <div>
+        <label className="block text-sm text-gray-400 mb-2">Country</label>
+        <Input
+          value="Nigeria"
+          disabled
+          className="h-12 bg-[#1a1a24] border-gray-800 text-white rounded-xl placeholder:text-gray-500 cursor-not-allowed opacity-70"
+        />
+      </div>
 
-        {/* LGA Dropdown */}
-        {openDropdown === 'lga' && value.state && (
-          <div className="border border-border rounded-2xl p-3 space-y-2 bg-secondary/30 max-h-64 overflow-y-auto">
-            <label className="text-xs font-semibold text-muted-foreground px-1 sticky top-0">SELECT LGA</label>
-            <div className="space-y-1">
-              {lgas.map((lga) => (
-                <button
-                  key={lga}
-                  onClick={() => handleLgaSelect(lga)}
-                  className={cn(
-                    'w-full text-left px-3 py-2 rounded-lg text-sm transition-colors',
-                    value.lga === lga
-                      ? 'bg-primary text-primary-foreground'
-                      : 'hover:bg-secondary'
-                  )}
-                >
-                  {lga}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+      {/* Local Government Area */}
+      <div>
+        <label className="block text-sm text-gray-400 mb-2">Local Government Area (LGA)</label>
+        <Input
+          value={value.lga || ''}
+          onChange={(e) => handleChange('lga', e.target.value)}
+          placeholder="Enter LGA"
+          className="h-12 bg-[#1a1a24] border-gray-800 text-white rounded-xl placeholder:text-gray-500"
+        />
+      </div>
 
-        {/* Community Dropdown */}
-        {openDropdown === 'community' && value.state && value.lga && (
-          <div className="border border-border rounded-2xl p-3 space-y-2 bg-secondary/30 max-h-64 overflow-y-auto">
-            <label className="text-xs font-semibold text-muted-foreground px-1 sticky top-0">SELECT COMMUNITY</label>
-            <div className="space-y-1">
-              {communities.map((community) => (
-                <button
-                  key={community}
-                  onClick={() => handleCommunitySelect(community)}
-                  className={cn(
-                    'w-full text-left px-3 py-2 rounded-lg text-sm transition-colors',
-                    value.community === community
-                      ? 'bg-primary text-primary-foreground'
-                      : 'hover:bg-secondary'
-                  )}
-                >
-                  {community}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+      {/* City/Town */}
+      <div>
+        <label className="block text-sm text-gray-400 mb-2">City/Town</label>
+        <Input
+          value={value.city || value.community || ''}
+          onChange={(e) => handleChange('city', e.target.value)}
+          placeholder="Enter city or town"
+          className="h-12 bg-[#1a1a24] border-gray-800 text-white rounded-xl placeholder:text-gray-500"
+        />
+      </div>
+
+      {/* Nearest Bus Stop */}
+      <div>
+        <label className="block text-sm text-gray-400 mb-2">Nearest Bus Stop</label>
+        <Input
+          value={value.nearestBusStop || ''}
+          onChange={(e) => handleChange('nearestBusStop', e.target.value)}
+          placeholder="Enter nearest bus stop"
+          className="h-12 bg-[#1a1a24] border-gray-800 text-white rounded-xl placeholder:text-gray-500"
+        />
       </div>
     </div>
   )

@@ -28,7 +28,7 @@ export default function ResetPasswordPage() {
     confirmPassword: '',
   })
 
-  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-kJSONfc9hORfv0xhwC97LF0eSOCvJL.png'
+  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png'
 
   const allRequirementsMet = requirements.every((req) => req.test(formData.password))
   const passwordsMatch = formData.password === formData.confirmPassword && formData.confirmPassword.length > 0

@@ -91,7 +91,7 @@ export default function VerificationCodePage() {
         <div className="text-center mb-8">
           <div className="inline-block p-3 bg-primary/10 rounded-full mb-4">
             <Image
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-kJSONfc9hORfv0xhwC97LF0eSOCvJL.png"
+              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png"
               alt="SpaceButton"
               width={40}
               height={40}

@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { 
   Bookmark, ChevronLeft, ChevronRight, Bed, Bath, 
-  Sofa, MapPin, Calendar, AlertTriangle, Users, Building2
+  Sofa, MapPin, Calendar, AlertTriangle, Users, Building2, ArrowLeft, X
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { BottomNav } from '@/components/bottom-nav'
@@ -262,35 +262,45 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
       </div>
 
       {/* Fullscreen image modal */}
-      {showFullScreen && (
+      {showFullScreen && property.images && property.images.length > 0 && (
         <div 
           className="fixed inset-0 z-50 bg-black flex items-center justify-center"
           onClick={() => setShowFullScreen(false)}
         >
           <button
             onClick={() => setShowFullScreen(false)}
-            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center"
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center z-10"
           >
-            <ArrowLeft className="w-5 h-5 text-white" />
+            <X className="w-5 h-5 text-white" />
           </button>
-          <Image
-            src={property.images[currentImageIndex]}
-            alt={property.title}
-            fill
-            className="object-contain"
-          />
-          <button
-            onClick={(e) => { e.stopPropagation(); handlePrevImage(); }}
-            className="absolute left-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center"
-          >
-            <ChevronLeft className="w-6 h-6 text-white" />
-          </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); handleNextImage(); }}
-            className="absolute right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center"
-          >
-            <ChevronRight className="w-6 h-6 text-white" />
-          </button>
+          <div className="relative w-full h-full">
+            <Image
+              src={property.images[currentImageIndex]}
+              alt={property.title}
+              fill
+              className="object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+          {property.images.length > 1 && (
+            <>
+              <button
+                onClick={(e) => { e.stopPropagation(); handlePrevImage(); }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center z-10"
+              >
+                <ChevronLeft className="w-6 h-6 text-white" />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); handleNextImage(); }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center z-10"
+              >
+                <ChevronRight className="w-6 h-6 text-white" />
+              </button>
+            </>
+          )}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 px-3 py-1 rounded-full text-white text-sm">
+            {currentImageIndex + 1} / {property.images.length}
+          </div>
         </div>
       )}
 

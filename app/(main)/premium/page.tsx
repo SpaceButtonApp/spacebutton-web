@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Check, X } from "lucide-react"
+import { Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { BackButton } from '@/components/back-button'
 
@@ -10,39 +10,39 @@ const plans = {
   basic: {
     name: "Basic",
     features: [
-      { text: "Basic premium", included: true },
+      { text: "Basic Premium", included: true },
       { text: "Get the chance to Chat the owner of the space", included: true },
       { text: "Get the chance to Call the owner of the space", included: true },
       { text: "Get the chance to Video Call the owner of the space", included: true },
-      { text: "Premium advantage", included: false },
-      { text: "First to review post", included: false },
     ],
     pricing: [
+      { connects: 50, price: 40000, label: "50 Connects" },
+      { connects: 10, price: 10000, label: "10 Connects" },
+      { connects: 5, price: 5000, label: "5 Connects" },
       { connects: 1, price: 2000, label: "1 Connect" },
-      { connects: 5, price: 5000, label: "5 Connect" },
     ],
   },
-  premium: {
-    name: "Premium",
+  basicPlus: {
+    name: "Basic+",
     features: [
-      { text: "All Basic features", included: true },
+      { text: "Basic Premium", included: true },
       { text: "Get the chance to Chat the owner of the space", included: true },
       { text: "Get the chance to Call the owner of the space", included: true },
       { text: "Get the chance to Video Call the owner of the space", included: true },
-      { text: "Premium advantage", included: true },
-      { text: "First to review post", included: true },
     ],
     pricing: [
-      { connects: 1, price: 50000, label: "Unlimited Connect" },
-      { connects: 100000000, price: 480000, label: "Unlimited Connect" },
+      { connects: 50, price: 40000, label: "50 Connects" },
+      { connects: 10, price: 10000, label: "10 Connects" },
+      { connects: 5, price: 5000, label: "5 Connects" },
+      { connects: 1, price: 2000, label: "1 Connect" },
     ],
   },
 }
 
 export default function PremiumPage() {
   const router = useRouter()
-  const [selectedPlan, setSelectedPlan] = useState<"basic" | "premium">("basic")
-  const [selectedPricing, setSelectedPricing] = useState(0)
+  const [selectedPlan, setSelectedPlan] = useState<"basic" | "basicPlus">("basic")
+  const [selectedPricing, setSelectedPricing] = useState(3) // Default to lowest price (1 Connect)
 
   const currentPlan = plans[selectedPlan]
 
@@ -64,11 +64,11 @@ export default function PremiumPage() {
             Basic
           </button>
           <button
-            onClick={() => setSelectedPlan("premium")}
-            className={`flex-1 py-3 rounded-full text-sm font-medium transition-colors ${selectedPlan === "premium" ? "bg-background shadow-sm" : ""
+            onClick={() => setSelectedPlan("basicPlus")}
+            className={`flex-1 py-3 rounded-full text-sm font-medium transition-colors ${selectedPlan === "basicPlus" ? "bg-background shadow-sm" : ""
               }`}
           >
-            Premium
+            Basic+
           </button>
         </div>
 
@@ -76,32 +76,30 @@ export default function PremiumPage() {
           <div className="space-y-4">
             {currentPlan.features.map((feature, index) => (
               <div key={index} className="flex items-start gap-3">
-                {feature.included ? (
-                  <Check className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
-                ) : (
-                  <X className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
-                )}
+                <Check className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
                 <span className="text-sm">{feature.text}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="flex gap-4 mb-8">
+        <div className="space-y-3 mb-8">
           {currentPlan.pricing.map((pricing, index) => (
             <button
               key={index}
               onClick={() => setSelectedPricing(index)}
-              className={`flex-1 p-4 rounded-xl border-2 transition-colors ${selectedPricing === index
-                ? "border-foreground"
+              className={`w-full p-4 rounded-xl border-2 transition-colors ${selectedPricing === index
+                ? "border-primary bg-primary/5"
                 : "border-border"
                 }`}
             >
-              <p className="text-sm text-muted-foreground">{pricing.label}</p>
-              <p className="text-2xl font-bold">
-                #{pricing.price.toLocaleString()}
-                <span className="text-sm font-normal text-muted-foreground">/monthly</span>
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">{pricing.label}</p>
+                <p className="text-xl font-bold">
+                  N{pricing.price.toLocaleString()}
+                  <span className="text-sm font-normal text-muted-foreground">/otp</span>
+                </p>
+              </div>
             </button>
           ))}
         </div>

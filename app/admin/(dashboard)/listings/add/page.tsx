@@ -25,10 +25,10 @@ export default function AdminAddPostPage() {
   const [selectedCategory, setSelectedCategory] = useState('Flat')
   const [descriptions, setDescriptions] = useState('')
   const [location, setLocation] = useState({
-    community: '',
-    lga: '',
+    country: 'Nigeria',
     state: '',
-    country: '',
+    lga: '',
+    nearestBusStop: '',
   })
   const [photos, setPhotos] = useState<string[]>([])
   const [rentPrice, setRentPrice] = useState('')
@@ -45,7 +45,7 @@ export default function AdminAddPostPage() {
   const [showValidationModal, setShowValidationModal] = useState(false)
   const [validationMessage, setValidationMessage] = useState('')
 
-  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-kJSONfc9hORfv0xhwC97LF0eSOCvJL.png'
+  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png'
 
   const toggleFacility = (facility: string) => {
     setSelectedFacilities((prev) =>
@@ -79,18 +79,18 @@ export default function AdminAddPostPage() {
       return false
     }
     
-    if (!location.state) {
-      setValidationMessage('Please select a state in the location')
+    if (!location.state?.trim()) {
+      setValidationMessage('Please enter the state')
       setShowValidationModal(true)
       return false
     }
-    if (!location.lga) {
-      setValidationMessage('Please select an LGA in the location')
+    if (!location.lga?.trim()) {
+      setValidationMessage('Please enter the LGA')
       setShowValidationModal(true)
       return false
     }
-    if (!location.community.trim()) {
-      setValidationMessage('Please enter a community/area in the location')
+    if (!location.nearestBusStop?.trim()) {
+      setValidationMessage('Please enter the nearest bus stop')
       setShowValidationModal(true)
       return false
     }
@@ -156,7 +156,7 @@ export default function AdminAddPostPage() {
     const newProperty = {
       id: `admin-${Date.now()}`,
       title: listingTitle,
-      location: `${location.community}, ${location.lga}, ${location.state}`,
+      location: `${location.nearestBusStop}, ${location.lga}, ${location.state}`,
       price: parseInt(rentPrice.replace(/,/g, '') || '0'),
       rentPeriod: rentPeriod,
       images: photos,

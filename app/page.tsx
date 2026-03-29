@@ -32,8 +32,8 @@ export default function LandingPage() {
   const [showSplash, setShowSplash] = useState(true)
   const user = useAppStore((state) => state.user)
 
-  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/white%20logo-cLCysqANWjxVue2pY5HYLM9cJlzK4x.png'
-  const logoIcon = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-kJSONfc9hORfv0xhwC97LF0eSOCvJL.png'
+  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/dark%20mode%20logo-CjRTz9JJQtYa2G7RQELe0ZpCK7Ox6J.png'
+  const logoIcon = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png'
 
   useEffect(() => {
     setMounted(true)
@@ -119,7 +119,7 @@ export default function LandingPage() {
             Find Your Perfect Space
           </h1>
           <p className="text-gray-400 text-balance">
-            Connect with landlords, tenants or verified agents to find your dream apartment
+            Find your dream apartment. Connect with vacating tenants, landlords, and verified agents.
           </p>
         </div>
 

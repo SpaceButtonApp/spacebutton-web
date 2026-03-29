@@ -2,101 +2,142 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { useTheme } from 'next-themes'
 
 interface SplashScreenProps {
   onComplete: () => void
 }
 
 export function SplashScreen({ onComplete }: SplashScreenProps) {
-  const [showFullLogo, setShowFullLogo] = useState(false)
-  const [mounted, setMounted] = useState(false)
-  const { resolvedTheme } = useTheme()
+  const [phase, setPhase] = useState<'draw' | 'connect' | 'reveal' | 'shrink'>('draw')
   
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const logoIcon = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png'
+  const darkLogo = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/dark%20mode%20logo-CjRTz9JJQtYa2G7RQELe0ZpCK7Ox6J.png'
 
   useEffect(() => {
-    // Show icon for 1 second, then animate to full logo
-    const iconTimer = setTimeout(() => {
-      setShowFullLogo(true)
-    }, 1000)
-
-    // Complete splash after 3 seconds total
-    const completeTimer = setTimeout(() => {
-      onComplete()
-    }, 3000)
+    // Phase 1: Draw lines (0-400ms)
+    const drawTimer = setTimeout(() => setPhase('connect'), 400)
+    
+    // Phase 2: Lines connect (400-600ms)
+    const connectTimer = setTimeout(() => setPhase('reveal'), 600)
+    
+    // Phase 3: Reveal full logo (600-900ms)
+    const revealTimer = setTimeout(() => setPhase('shrink'), 900)
+    
+    // Phase 4: Complete animation (1200ms total)
+    const completeTimer = setTimeout(() => onComplete(), 1200)
 
     return () => {
-      clearTimeout(iconTimer)
+      clearTimeout(drawTimer)
+      clearTimeout(connectTimer)
+      clearTimeout(revealTimer)
       clearTimeout(completeTimer)
     }
   }, [onComplete])
 
-  const isDark = mounted && resolvedTheme === 'dark'
-
   return (
-    <div className={`fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden ${isDark ? 'bg-[#121212]' : 'bg-white'}`}>
-      {/* Hexagonal network background */}
-      <div 
-        className="absolute inset-0 bg-no-repeat bg-bottom bg-contain opacity-30"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='600' height='400' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='hexagons' width='50' height='43.3' patternUnits='userSpaceOnUse' patternTransform='scale(2)'%3E%3Cpolygon points='25,0 50,14.43 50,43.3 25,57.74 0,43.3 0,14.43' fill='none' stroke='%23999' stroke-width='0.5'/%3E%3Ccircle cx='25' cy='0' r='2' fill='%23999'/%3E%3Ccircle cx='50' cy='14.43' r='2' fill='%23999'/%3E%3Ccircle cx='50' cy='43.3' r='2' fill='%23999'/%3E%3Ccircle cx='25' cy='57.74' r='2' fill='%23999'/%3E%3Ccircle cx='0' cy='43.3' r='2' fill='%23999'/%3E%3Ccircle cx='0' cy='14.43' r='2' fill='%23999'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23hexagons)'/%3E%3C/svg%3E")`,
-        }}
-      />
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0a0a0f] overflow-hidden">
+      {/* Subtle background gradient */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-[#703BF7]/10 rounded-full blur-[100px]" />
+      </div>
 
-      {/* Logo container */}
-      <div className="relative flex items-center justify-center">
-        {/* Icon - always visible, moves left when full logo shows */}
+      {/* Main animation container */}
+      <div 
+        className={`relative flex items-center justify-center transition-all duration-300 ease-out ${
+          phase === 'shrink' ? 'scale-90 -translate-y-8' : 'scale-100'
+        }`}
+      >
+        {/* SVG Line Drawing Animation */}
+        {(phase === 'draw' || phase === 'connect') && (
+          <svg 
+            viewBox="0 0 80 80" 
+            className="w-20 h-20 absolute"
+            style={{ overflow: 'visible' }}
+          >
+            {/* Top curve of S (drawing from top-right) */}
+            <path
+              d="M50,15 C50,15 65,20 65,35 C65,50 40,50 40,50"
+              fill="none"
+              stroke="#703BF7"
+              strokeWidth="8"
+              strokeLinecap="round"
+              className={`transition-all duration-400 ${
+                phase === 'draw' ? 'animate-draw-top' : ''
+              }`}
+              style={{
+                strokeDasharray: 100,
+                strokeDashoffset: phase === 'draw' ? 100 : 0,
+                animation: phase === 'draw' ? 'drawTop 0.4s ease-out forwards' : 'none'
+              }}
+            />
+            
+            {/* Bottom curve of B (drawing from bottom-left) */}
+            <path
+              d="M30,65 C30,65 15,60 15,45 C15,30 40,30 40,30"
+              fill="none"
+              stroke="#703BF7"
+              strokeWidth="8"
+              strokeLinecap="round"
+              style={{
+                strokeDasharray: 100,
+                strokeDashoffset: phase === 'draw' ? 100 : 0,
+                animation: phase === 'draw' ? 'drawBottom 0.4s ease-out forwards' : 'none'
+              }}
+            />
+          </svg>
+        )}
+
+        {/* Logo Icon - fades in after lines connect */}
         <div 
-          className={`transition-all duration-700 ease-out ${
-            showFullLogo ? 'transform -translate-x-1' : ''
+          className={`transition-all duration-200 ease-out ${
+            phase === 'connect' || phase === 'reveal' || phase === 'shrink'
+              ? 'opacity-100 scale-100' 
+              : 'opacity-0 scale-95'
           }`}
         >
           <Image
-            src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-kJSONfc9hORfv0xhwC97LF0eSOCvJL.png"
-            alt="SpaceButton Icon"
-            width={56}
-            height={56}
-            className="h-14 w-14"
+            src={logoIcon}
+            alt="SpaceButton"
+            width={80}
+            height={80}
+            className="w-20 h-20"
             priority
           />
         </div>
 
-        {/* Text - slides in from right */}
+        {/* SpaceButton text - slides in from right */}
         <div 
-          className={`overflow-hidden transition-all duration-700 ease-out ${
-            showFullLogo ? 'max-w-[200px] opacity-100 ml-2' : 'max-w-0 opacity-0 ml-0'
+          className={`overflow-hidden transition-all duration-300 ease-out ${
+            phase === 'reveal' || phase === 'shrink' 
+              ? 'max-w-[200px] opacity-100 ml-3' 
+              : 'max-w-0 opacity-0 ml-0'
           }`}
         >
-          <span 
-            className={`text-2xl font-bold whitespace-nowrap ${isDark ? 'text-white' : ''}`}
-            style={{ color: isDark ? '#ffffff' : '#5B21B6' }}
-          >
+          <span className="text-2xl font-bold text-white whitespace-nowrap">
             SpaceButton
           </span>
         </div>
       </div>
 
-      {/* Loading indicator */}
-      <div className="absolute bottom-32 left-1/2 -translate-x-1/2">
-        <div className={`w-32 h-1 rounded-full overflow-hidden ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
-          <div 
-            className="h-full rounded-full transition-all duration-[3000ms] ease-linear"
-            style={{ 
-              backgroundColor: '#5B21B6',
-              width: '100%',
-              animation: 'loadingBar 3s linear forwards'
-            }}
-          />
+      {/* Get Started button - appears during shrink phase */}
+      <div 
+        className={`absolute bottom-32 transition-all duration-300 ease-out ${
+          phase === 'shrink' ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        }`}
+      >
+        <div className="px-8 py-3 bg-[#703BF7] rounded-xl text-white font-semibold">
+          Get Started
         </div>
       </div>
 
       <style jsx>{`
-        @keyframes loadingBar {
-          from { width: 0%; }
-          to { width: 100%; }
+        @keyframes drawTop {
+          from { stroke-dashoffset: 100; }
+          to { stroke-dashoffset: 0; }
+        }
+        @keyframes drawBottom {
+          from { stroke-dashoffset: 100; }
+          to { stroke-dashoffset: 0; }
         }
       `}</style>
     </div>

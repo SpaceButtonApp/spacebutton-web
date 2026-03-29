@@ -5,8 +5,8 @@ import { Input } from '@/components/ui/input'
 
 interface LocationValue {
   country: string
+  state: string
   lga: string
-  city: string
   nearestBusStop: string
 }
 
@@ -32,8 +32,8 @@ export function LocationInput({ value, onChange }: LocationInputProps) {
     const cleanValue = handleTextOnly(inputValue)
     onChange({
       country: 'Nigeria',
+      state: value.state || value.city || '',
       lga: value.lga || '',
-      city: value.city || value.community || '',
       nearestBusStop: value.nearestBusStop || '',
       [field]: field === 'country' ? 'Nigeria' : cleanValue
     })
@@ -56,6 +56,17 @@ export function LocationInput({ value, onChange }: LocationInputProps) {
         />
       </div>
 
+      {/* State */}
+      <div>
+        <label className="block text-sm text-gray-400 mb-2">State</label>
+        <Input
+          value={value.state || value.city || ''}
+          onChange={(e) => handleChange('state', e.target.value)}
+          placeholder="Enter state"
+          className="h-12 bg-[#1a1a24] border-gray-800 text-white rounded-xl placeholder:text-gray-500"
+        />
+      </div>
+
       {/* Local Government Area */}
       <div>
         <label className="block text-sm text-gray-400 mb-2">Local Government Area (LGA)</label>
@@ -63,17 +74,6 @@ export function LocationInput({ value, onChange }: LocationInputProps) {
           value={value.lga || ''}
           onChange={(e) => handleChange('lga', e.target.value)}
           placeholder="Enter LGA"
-          className="h-12 bg-[#1a1a24] border-gray-800 text-white rounded-xl placeholder:text-gray-500"
-        />
-      </div>
-
-      {/* City/Town */}
-      <div>
-        <label className="block text-sm text-gray-400 mb-2">City/Town</label>
-        <Input
-          value={value.city || value.community || ''}
-          onChange={(e) => handleChange('city', e.target.value)}
-          placeholder="Enter city or town"
           className="h-12 bg-[#1a1a24] border-gray-800 text-white rounded-xl placeholder:text-gray-500"
         />
       </div>

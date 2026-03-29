@@ -34,7 +34,7 @@ export default function SignupPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [showCountryPicker, setShowCountryPicker] = useState(false)
 
-  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-kJSONfc9hORfv0xhwC97LF0eSOCvJL.png'
+  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png'
 
   const selectedCountry = countryCodes.find(c => c.code === formData.countryCode) || countryCodes[0]
 

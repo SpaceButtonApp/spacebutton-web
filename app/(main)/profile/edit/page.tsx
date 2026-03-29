@@ -119,7 +119,7 @@ export default function EditProfilePage() {
             <label className="text-sm text-muted-foreground">Referral Code</label>
             <div className="flex items-center gap-2 mt-1">
               <div className="flex-1 h-12 px-4 rounded-xl bg-background border border-border flex items-center">
-                <span className="font-mono font-semibold">{user?.referralCode || 'N/A'}</span>
+                <span className="font-mono font-semibold">{user?.name?.split(' ')[0] || user?.referralCode || 'N/A'}</span>
               </div>
               <button
                 onClick={copyReferralCode}
@@ -139,7 +139,7 @@ export default function EditProfilePage() {
           </div>
         </div>
 
-        {/* Editable Fields */}
+        {/* Editable Fields - Only Name is editable */}
         <div className="space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Name</label>
@@ -152,43 +152,33 @@ export default function EditProfilePage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Phone Number</label>
+            <label className="text-sm font-medium text-muted-foreground">Phone Number</label>
             <Input
               type="tel"
               value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              className="h-14 rounded-xl border-border bg-background px-4"
+              disabled
+              className="h-14 rounded-xl border-border bg-muted px-4 cursor-not-allowed opacity-60"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Location</label>
+            <label className="text-sm font-medium text-muted-foreground">Location</label>
             <Input
               type="text"
               value={formData.location}
-              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-              className="h-14 rounded-xl border-border bg-background px-4"
+              disabled
+              className="h-14 rounded-xl border-border bg-muted px-4 cursor-not-allowed opacity-60"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Email</label>
+            <label className="text-sm font-medium text-muted-foreground">Email</label>
             <Input
               type="email"
               value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="h-14 rounded-xl border-border bg-background px-4"
+              disabled
+              className="h-14 rounded-xl border-border bg-muted px-4 cursor-not-allowed opacity-60"
             />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Password</label>
-            <Input
-              type="password"
-              placeholder="••••••••"
-              className="h-14 rounded-xl border-border bg-background px-4"
-            />
-            <p className="text-xs text-muted-foreground">Leave blank to keep current password</p>
           </div>
         </div>
 

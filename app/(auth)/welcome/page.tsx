@@ -71,7 +71,7 @@ export default function WelcomePage() {
   const user = useAppStore((state) => state.user)
   const setUser = useAppStore((state) => state.setUser)
   const addRegisteredUser = useAppStore((state) => state.addRegisteredUser)
-  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-kJSONfc9hORfv0xhwC97LF0eSOCvJL.png'
+  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png'
   
   // Create user from signup data on mount
   useEffect(() => {

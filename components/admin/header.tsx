@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Bell, Search } from 'lucide-react'
+import { Bell, Search, MessageCircle } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAppStore } from '@/lib/store'
@@ -16,7 +16,7 @@ interface AdminUser {
 export function AdminHeader({ title }: { title: string }) {
   const [admin, setAdmin] = useState<AdminUser | null>(null)
   const [showNotifications, setShowNotifications] = useState(false)
-  const { notifications } = useAppStore()
+  const { notifications, markNotificationRead, supportChats } = useAppStore()
 
   useEffect(() => {
     const auth = localStorage.getItem('admin-auth')
@@ -25,24 +25,20 @@ export function AdminHeader({ title }: { title: string }) {
     }
   }, [])
 
-  // Combine admin notifications with app notifications
-  const allNotifications = [
-    { id: 'admin-1', title: 'New user registered', time: '5 min ago', read: false },
-    { id: 'admin-2', title: 'New listing submitted', time: '15 min ago', read: false },
-    { id: 'admin-3', title: 'Transaction completed', time: '1 hour ago', read: true },
-    ...notifications.slice(0, 3).map(n => ({
-      id: n.id,
-      title: n.title,
-      time: 'Recently',
-      read: n.read
-    }))
-  ]
+  // Use store notifications
+  const unreadCount = notifications.filter(n => !n.read).length
+  const unreadMessages = supportChats.filter(c => c.unread > 0).length
 
-  const unreadCount = allNotifications.filter(n => !n.read).length
+  const handleNotificationClick = (id: string) => {
+    markNotificationRead(id)
+  }
+
+  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png'
 
   return (
     <header className="h-16 bg-[#12121a] backdrop-blur-xl border-b border-gray-800/50 flex items-center justify-between px-6 sticky top-0 z-40">
       <div className="flex items-center gap-4">
+        <Image src={logoUrl} alt="SpaceButton" width={32} height={32} className="h-8 w-8" />
         <h1 className="text-xl font-semibold text-white">{title}</h1>
       </div>
 
@@ -56,6 +52,16 @@ export function AdminHeader({ title }: { title: string }) {
             className="w-64 pl-10 pr-4 py-2 bg-[#1a1a24] border border-gray-800 rounded-lg text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#703BF7]/50 focus:border-[#703BF7]"
           />
         </div>
+
+        {/* Messages */}
+        <Link href="/admin/messages" className="relative">
+          <button className="relative p-2 rounded-lg bg-[#1a1a24] border border-gray-800 text-gray-400 hover:text-white hover:bg-gray-800 transition-colors">
+            <MessageCircle className="w-5 h-5" />
+            {unreadMessages > 0 && (
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#703BF7] rounded-full" />
+            )}
+          </button>
+        </Link>
 
         {/* Notifications */}
         <div className="relative">
@@ -77,20 +83,27 @@ export function AdminHeader({ title }: { title: string }) {
                 <h3 className="font-semibold text-white">Notifications</h3>
               </div>
               <div className="max-h-80 overflow-y-auto">
-                {allNotifications.slice(0, 5).map((notif) => (
-                  <div
-                    key={notif.id}
-                    className={`p-4 border-b border-gray-800/50 hover:bg-gray-800/30 cursor-pointer ${!notif.read ? 'bg-[#703BF7]/5' : ''}`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className={`w-2 h-2 mt-2 rounded-full ${!notif.read ? 'bg-[#703BF7]' : 'bg-gray-600'}`} />
-                      <div>
-                        <p className="text-sm text-white">{notif.title}</p>
-                        <p className="text-xs text-gray-500 mt-1">{notif.time}</p>
+                {notifications.length === 0 ? (
+                  <div className="p-4 text-center text-gray-500 text-sm">
+                    No notifications
+                  </div>
+                ) : (
+                  notifications.slice(0, 5).map((notif) => (
+                    <div
+                      key={notif.id}
+                      onClick={() => handleNotificationClick(notif.id)}
+                      className={`p-4 border-b border-gray-800/50 hover:bg-gray-800/30 cursor-pointer ${!notif.read ? 'bg-[#703BF7]/5' : ''}`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`w-2 h-2 mt-2 rounded-full ${!notif.read ? 'bg-[#703BF7]' : 'bg-gray-600'}`} />
+                        <div>
+                          <p className="text-sm text-white">{notif.title}</p>
+                          <p className="text-xs text-gray-500 mt-1">{notif.message}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
               <div className="p-3 border-t border-gray-800">
                 <Link 

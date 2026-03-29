@@ -25,8 +25,8 @@ export default function AddPostPage() {
   const [descriptions, setDescriptions] = useState("")
   const [location, setLocation] = useState({
     country: "Nigeria",
+    state: "",
     lga: "",
-    city: "",
     nearestBusStop: "",
   })
   const [photos, setPhotos] = useState<string[]>([])
@@ -100,13 +100,13 @@ export default function AddPostPage() {
       return false
     }
     
-    if (!location.lga.trim()) {
-      setValidationMessage("Please enter the Local Government Area (LGA)")
+    if (!location.state.trim()) {
+      setValidationMessage("Please enter the state")
       setShowValidationModal(true)
       return false
     }
-    if (!location.city.trim()) {
-      setValidationMessage("Please enter the city or town")
+    if (!location.lga.trim()) {
+      setValidationMessage("Please enter the Local Government Area (LGA)")
       setShowValidationModal(true)
       return false
     }
@@ -178,7 +178,7 @@ export default function AddPostPage() {
     }
   }
 
-  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-kJSONfc9hORfv0xhwC97LF0eSOCvJL.png'
+  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png'
 
   return (
     <div className="min-h-screen bg-[#0a0a0f]">
@@ -297,33 +297,43 @@ export default function AddPostPage() {
           <LocationInput value={location} onChange={setLocation} />
         </div>
 
-        {/* Photos */}
+        {/* Photos & Videos */}
         <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
-          <h3 className="font-medium text-white mb-3">Listing Photos</h3>
+          <h3 className="font-medium text-white mb-3">Listing Photos & Videos</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {photos.map((photo, index) => (
               <div key={index} className="relative aspect-[4/3] rounded-xl overflow-hidden">
-                <Image src={photo} alt="" fill className="object-cover" />
+                {photo.startsWith('data:video') ? (
+                  <video src={photo} className="w-full h-full object-cover" muted />
+                ) : (
+                  <Image src={photo} alt="" fill className="object-cover" />
+                )}
                 <button
                   onClick={() => removePhoto(index)}
                   className="absolute top-2 right-2 w-6 h-6 bg-black/50 rounded-full flex items-center justify-center"
                 >
                   <X className="w-4 h-4 text-white" />
                 </button>
+                {photo.startsWith('data:video') && (
+                  <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/70 rounded text-xs text-white">
+                    Video
+                  </div>
+                )}
               </div>
             ))}
             <button 
               onClick={() => {
                 const input = document.createElement('input')
                 input.type = 'file'
-                input.accept = 'image/*'
+                input.accept = 'image/*,video/*'
                 input.multiple = true
                 input.onchange = (e) => handlePhotoUpload(e as any)
                 input.click()
               }}
-              className="aspect-[4/3] rounded-xl border-2 border-dashed border-gray-700 flex items-center justify-center hover:bg-gray-800/50 transition-colors"
+              className="aspect-[4/3] rounded-xl border-2 border-dashed border-gray-700 flex flex-col items-center justify-center hover:bg-gray-800/50 transition-colors"
             >
               <Plus className="w-8 h-8 text-gray-500" />
+              <span className="text-xs text-gray-500 mt-1">Photos/Videos</span>
             </button>
           </div>
         </div>
@@ -559,6 +569,17 @@ export default function AddPostPage() {
             placeholder="Write other descriptions if available"
             className="h-12 bg-[#1a1a24] border-gray-800 text-white rounded-xl placeholder:text-gray-500"
           />
+          {/* Disclaimer based on listing type */}
+          {listingType === "Agent" && (
+            <p className="mt-3 text-sm text-amber-500 bg-amber-500/10 p-3 rounded-lg">
+              Agent must not collect inspection fee.
+            </p>
+          )}
+          {listingType === "Connect" && connectRole === "Tenant" && (
+            <p className="mt-3 text-sm text-amber-500 bg-amber-500/10 p-3 rounded-lg">
+              Individual must not request for more than 5% of the annual rent.
+            </p>
+          )}
         </div>
 
         {/* Submit Button */}
@@ -619,7 +640,7 @@ export default function AddPostPage() {
                     const newProperty = {
                       id: Date.now().toString(),
                       title: listingTitle,
-                      location: `${location.community}, ${location.lga}, ${location.state}`,
+                      location: `${location.nearestBusStop}, ${location.lga}, ${location.state}`,
                       price: parseInt(rentPrice.replace(/,/g, '') || '0'),
                       rentPeriod: rentPeriod,
                       images: photos,

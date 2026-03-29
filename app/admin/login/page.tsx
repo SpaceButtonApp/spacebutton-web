@@ -51,9 +51,11 @@ export default function AdminLoginPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl flex items-center justify-center">
-              <span className="text-white font-bold text-lg">S</span>
-            </div>
+            <img 
+              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png" 
+              alt="SpaceButton" 
+              className="w-10 h-10"
+            />
             <span className="text-2xl font-bold text-white">SpaceButton</span>
           </div>
           <p className="text-gray-400 text-sm">Administration Portal</p>
@@ -83,7 +85,7 @@ export default function AdminLoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="newdemo@admin.com"
+                  placeholder="Enter your email"
                   className="w-full pl-11 pr-4 py-3 bg-[#1a1a24] border border-gray-800 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all"
                   required
                 />
@@ -130,11 +132,7 @@ export default function AdminLoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-gray-800">
-            <p className="text-xs text-gray-500 text-center">
-              Demo: newdemo@admin.com / admin123
-            </p>
-          </div>
+          
         </div>
 
         <p className="text-center text-gray-500 text-xs mt-6">

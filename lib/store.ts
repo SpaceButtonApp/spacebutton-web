@@ -132,7 +132,7 @@ interface AppState {
   setActiveTab: (tab: 'connect' | 'agent' | 'shortlet' | 'properties') => void
   
   // Premium
-  purchasePremium: (type: 'basic-single' | 'basic-5' | 'premium-monthly' | 'premium-yearly', amount: number) => void
+  purchasePremium: (type: 'basic-single' | 'basic-5' | 'basic-10' | 'basic-50' | 'premium-monthly' | 'premium-yearly', amount: number) => void
   
   // Wallet
   addToWallet: (amount: number) => void
@@ -338,6 +338,12 @@ export const useAppStore = create<AppState>()(
             break
           case 'basic-5':
             connectsToAdd = 5
+            break
+          case 'basic-10':
+            connectsToAdd = 10
+            break
+          case 'basic-50':
+            connectsToAdd = 50
             break
           case 'premium-monthly':
           case 'premium-yearly':

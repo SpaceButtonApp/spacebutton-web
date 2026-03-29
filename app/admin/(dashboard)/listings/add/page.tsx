@@ -320,26 +320,33 @@ export default function AdminAddPostPage() {
           <LocationInput value={location} onChange={setLocation} />
         </div>
 
-        {/* Photos */}
-        <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
-          <h3 className="font-medium text-white mb-3">Listing Photos</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {photos.map((photo, index) => (
-              <div key={index} className="relative aspect-[4/3] rounded-xl overflow-hidden">
-                <Image src={photo} alt="" fill className="object-cover" />
-                <button
-                  onClick={() => removePhoto(index)}
-                  className="absolute top-2 right-2 w-6 h-6 bg-black/50 rounded-full flex items-center justify-center"
-                >
-                  <X className="w-4 h-4 text-white" />
-                </button>
-              </div>
-            ))}
+{/* Photos & Videos */}
+  <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
+  <h3 className="font-medium text-white mb-3">Listing Photos & Videos</h3>
+  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+  {photos.map((photo, index) => (
+  <div key={index} className="relative aspect-[4/3] rounded-xl overflow-hidden">
+  {photo.startsWith('data:video') ? (
+    <video src={photo} className="w-full h-full object-cover" muted />
+  ) : (
+    <Image src={photo} alt="" fill className="object-cover" />
+  )}
+  <button
+  onClick={() => removePhoto(index)}
+  className="absolute top-2 right-2 w-6 h-6 bg-black/50 rounded-full flex items-center justify-center"
+  >
+  <X className="w-4 h-4 text-white" />
+  </button>
+  {photo.startsWith('data:video') && (
+    <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/70 rounded text-xs text-white">Video</div>
+  )}
+  </div>
+  ))}
             <button 
               onClick={() => {
                 const input = document.createElement('input')
                 input.type = 'file'
-                input.accept = 'image/*'
+                input.accept = 'image/*,video/*'
                 input.multiple = true
                 input.onchange = (e) => handlePhotoUpload(e as any)
                 input.click()

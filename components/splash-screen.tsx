@@ -8,23 +8,22 @@ interface SplashScreenProps {
 }
 
 export function SplashScreen({ onComplete }: SplashScreenProps) {
-  const [phase, setPhase] = useState<'draw' | 'connect' | 'reveal' | 'shrink'>('draw')
+  const [phase, setPhase] = useState<'draw' | 'connect' | 'reveal' | 'hold'>('draw')
   
   const logoIcon = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png'
-  const darkLogo = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/dark%20mode%20logo-CjRTz9JJQtYa2G7RQELe0ZpCK7Ox6J.png'
 
   useEffect(() => {
-    // Phase 1: Draw lines (0-400ms)
-    const drawTimer = setTimeout(() => setPhase('connect'), 400)
+    // Phase 1: Draw lines (0-600ms)
+    const drawTimer = setTimeout(() => setPhase('connect'), 600)
     
-    // Phase 2: Lines connect (400-600ms)
-    const connectTimer = setTimeout(() => setPhase('reveal'), 600)
+    // Phase 2: Lines connect and logo appears (600-1000ms)
+    const connectTimer = setTimeout(() => setPhase('reveal'), 1000)
     
-    // Phase 3: Reveal full logo (600-900ms)
-    const revealTimer = setTimeout(() => setPhase('shrink'), 900)
+    // Phase 3: Reveal full logo with text (1000-1500ms)
+    const revealTimer = setTimeout(() => setPhase('hold'), 1500)
     
-    // Phase 4: Complete animation (1200ms total)
-    const completeTimer = setTimeout(() => onComplete(), 1200)
+    // Phase 4: Hold and complete (2500ms total - enough time to read)
+    const completeTimer = setTimeout(() => onComplete(), 2500)
 
     return () => {
       clearTimeout(drawTimer)
@@ -42,16 +41,12 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
       </div>
 
       {/* Main animation container */}
-      <div 
-        className={`relative flex items-center justify-center transition-all duration-300 ease-out ${
-          phase === 'shrink' ? 'scale-90 -translate-y-8' : 'scale-100'
-        }`}
-      >
+      <div className="relative flex items-center justify-center">
         {/* SVG Line Drawing Animation */}
         {(phase === 'draw' || phase === 'connect') && (
           <svg 
             viewBox="0 0 80 80" 
-            className="w-20 h-20 absolute"
+            className="w-16 h-16 absolute"
             style={{ overflow: 'visible' }}
           >
             {/* Top curve of S (drawing from top-right) */}
@@ -61,13 +56,10 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
               stroke="#703BF7"
               strokeWidth="8"
               strokeLinecap="round"
-              className={`transition-all duration-400 ${
-                phase === 'draw' ? 'animate-draw-top' : ''
-              }`}
               style={{
                 strokeDasharray: 100,
                 strokeDashoffset: phase === 'draw' ? 100 : 0,
-                animation: phase === 'draw' ? 'drawTop 0.4s ease-out forwards' : 'none'
+                animation: phase === 'draw' ? 'drawTop 0.6s ease-out forwards' : 'none'
               }}
             />
             
@@ -81,7 +73,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
               style={{
                 strokeDasharray: 100,
                 strokeDashoffset: phase === 'draw' ? 100 : 0,
-                animation: phase === 'draw' ? 'drawBottom 0.4s ease-out forwards' : 'none'
+                animation: phase === 'draw' ? 'drawBottom 0.6s ease-out forwards' : 'none'
               }}
             />
           </svg>
@@ -89,8 +81,8 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
 
         {/* Logo Icon - fades in after lines connect */}
         <div 
-          className={`transition-all duration-200 ease-out ${
-            phase === 'connect' || phase === 'reveal' || phase === 'shrink'
+          className={`transition-all duration-300 ease-out ${
+            phase === 'connect' || phase === 'reveal' || phase === 'hold'
               ? 'opacity-100 scale-100' 
               : 'opacity-0 scale-95'
           }`}
@@ -98,17 +90,17 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
           <Image
             src={logoIcon}
             alt="SpaceButton"
-            width={80}
-            height={80}
-            className="w-20 h-20"
+            width={64}
+            height={64}
+            className="w-16 h-16"
             priority
           />
         </div>
 
         {/* SpaceButton text - slides in from right */}
         <div 
-          className={`overflow-hidden transition-all duration-300 ease-out ${
-            phase === 'reveal' || phase === 'shrink' 
+          className={`overflow-hidden transition-all duration-400 ease-out ${
+            phase === 'reveal' || phase === 'hold' 
               ? 'max-w-[200px] opacity-100 ml-3' 
               : 'max-w-0 opacity-0 ml-0'
           }`}
@@ -119,15 +111,13 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
         </div>
       </div>
 
-      {/* Get Started button - appears during shrink phase */}
+      {/* Tagline - appears during hold phase */}
       <div 
-        className={`absolute bottom-32 transition-all duration-300 ease-out ${
-          phase === 'shrink' ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+        className={`absolute bottom-32 text-center transition-all duration-300 ease-out ${
+          phase === 'hold' ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
         }`}
       >
-        <div className="px-8 py-3 bg-[#703BF7] rounded-xl text-white font-semibold">
-          Get Started
-        </div>
+        <p className="text-gray-400 text-sm">Find Your Perfect Space</p>
       </div>
 
       <style jsx>{`

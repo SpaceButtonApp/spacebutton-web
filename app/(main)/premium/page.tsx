@@ -16,10 +16,8 @@ const plans = {
       { text: "Get the chance to Video Call the owner of the space", included: true },
     ],
     pricing: [
-      { connects: 50, price: 40000, label: "50 Connects" },
-      { connects: 10, price: 10000, label: "10 Connects" },
-      { connects: 5, price: 5000, label: "5 Connects" },
       { connects: 1, price: 2000, label: "1 Connect" },
+      { connects: 5, price: 5000, label: "5 Connects" },
     ],
   },
   basicPlus: {
@@ -31,10 +29,8 @@ const plans = {
       { text: "Get the chance to Video Call the owner of the space", included: true },
     ],
     pricing: [
-      { connects: 50, price: 40000, label: "50 Connects" },
       { connects: 10, price: 10000, label: "10 Connects" },
-      { connects: 5, price: 5000, label: "5 Connects" },
-      { connects: 1, price: 2000, label: "1 Connect" },
+      { connects: 50, price: 40000, label: "50 Connects" },
     ],
   },
 }
@@ -42,7 +38,7 @@ const plans = {
 export default function PremiumPage() {
   const router = useRouter()
   const [selectedPlan, setSelectedPlan] = useState<"basic" | "basicPlus">("basic")
-  const [selectedPricing, setSelectedPricing] = useState(3) // Default to lowest price (1 Connect)
+  const [selectedPricing, setSelectedPricing] = useState(0)
 
   const currentPlan = plans[selectedPlan]
 
@@ -57,14 +53,20 @@ export default function PremiumPage() {
 
         <div className="bg-secondary rounded-full p-1 flex mb-6">
           <button
-            onClick={() => setSelectedPlan("basic")}
+            onClick={() => {
+              setSelectedPlan("basic")
+              setSelectedPricing(0)
+            }}
             className={`flex-1 py-3 rounded-full text-sm font-medium transition-colors ${selectedPlan === "basic" ? "bg-background shadow-sm" : ""
               }`}
           >
             Basic
           </button>
           <button
-            onClick={() => setSelectedPlan("basicPlus")}
+            onClick={() => {
+              setSelectedPlan("basicPlus")
+              setSelectedPricing(0)
+            }}
             className={`flex-1 py-3 rounded-full text-sm font-medium transition-colors ${selectedPlan === "basicPlus" ? "bg-background shadow-sm" : ""
               }`}
           >
@@ -83,23 +85,22 @@ export default function PremiumPage() {
           </div>
         </div>
 
-        <div className="space-y-3 mb-8">
+        {/* Pricing options side by side */}
+        <div className="grid grid-cols-2 gap-3 mb-8">
           {currentPlan.pricing.map((pricing, index) => (
             <button
               key={index}
               onClick={() => setSelectedPricing(index)}
-              className={`w-full p-4 rounded-xl border-2 transition-colors ${selectedPricing === index
+              className={`p-4 rounded-xl border-2 transition-colors text-center ${selectedPricing === index
                 ? "border-primary bg-primary/5"
                 : "border-border"
                 }`}
             >
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium">{pricing.label}</p>
-                <p className="text-xl font-bold">
-                  N{pricing.price.toLocaleString()}
-                  <span className="text-sm font-normal text-muted-foreground">/otp</span>
-                </p>
-              </div>
+              <p className="text-sm font-medium mb-1">{pricing.label}</p>
+              <p className="text-xl font-bold">
+                N{pricing.price.toLocaleString()}
+              </p>
+              <span className="text-xs text-muted-foreground">/otp</span>
             </button>
           ))}
         </div>

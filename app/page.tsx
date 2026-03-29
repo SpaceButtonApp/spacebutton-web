@@ -61,17 +61,17 @@ export default function LandingPage() {
       {/* Content */}
       <div className="relative flex-1 flex flex-col px-6 py-8">
         {/* Logo */}
-        <div className="flex items-center gap-3 mb-16">
+        <div className="flex items-center gap-2 mb-16">
           <Image
             src={logoIcon}
             alt="Spacebutton"
-            width={48}
-            height={48}
-            className="h-12 w-12"
+            width={32}
+            height={32}
+            className="h-8 w-8"
             loading="eager"
             priority
           />
-          <span className="text-2xl font-bold text-white">SpaceButton</span>
+          <span className="text-xl font-bold text-white">SpaceButton</span>
         </div>
 
         {/* Hero Image/Illustration */}

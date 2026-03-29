@@ -27,16 +27,22 @@ export default function PaymentSuccessPage() {
       // Funding wallet
       addToWallet(amount)
     } else {
-      // Purchasing connects/premium
-      let purchaseType: 'basic-single' | 'basic-5' | 'premium-monthly' | 'premium-yearly' = 'basic-single'
+      // Purchasing connects/premium based on amount and connects
+      let purchaseType: 'basic-single' | 'basic-5' | 'basic-10' | 'basic-50' | 'premium-monthly' | 'premium-yearly' = 'basic-single'
       let transactionTitle = ''
       
-      if (plan === "basic" && connects === 1) {
+      if (connects === 1) {
         purchaseType = 'basic-single'
         transactionTitle = 'Connect Purchase (1 Connect)'
-      } else if (plan === "basic" && connects === 5) {
+      } else if (connects === 5) {
         purchaseType = 'basic-5'
         transactionTitle = 'Connect Purchase (5 Connects)'
+      } else if (connects === 10) {
+        purchaseType = 'basic-10'
+        transactionTitle = 'Connect Purchase (10 Connects)'
+      } else if (connects === 50) {
+        purchaseType = 'basic-50'
+        transactionTitle = 'Connect Purchase (50 Connects)'
       } else if (plan === "premium" && amount === 50000) {
         purchaseType = 'premium-monthly'
         transactionTitle = 'Premium Subscription (Monthly)'

@@ -77,13 +77,25 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
 
       {/* Image Gallery */}
       <div className="relative aspect-[4/3]">
-        <Image
-          src={property.images[currentImageIndex]}
-          alt={property.title}
-          fill
-          className="object-cover cursor-pointer"
-          onClick={() => setShowFullScreen(true)}
-        />
+        {property.images[currentImageIndex]?.startsWith('data:video') ? (
+          <video 
+            src={property.images[currentImageIndex]} 
+            className="w-full h-full object-cover cursor-pointer"
+            muted
+            autoPlay
+            loop
+            playsInline
+            onClick={() => setShowFullScreen(true)}
+          />
+        ) : (
+          <Image
+            src={property.images[currentImageIndex]}
+            alt={property.title}
+            fill
+            className="object-cover cursor-pointer"
+            onClick={() => setShowFullScreen(true)}
+          />
+        )}
         
         {/* Navigation arrows */}
         <button

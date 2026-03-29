@@ -32,14 +32,25 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
         onClick={handleViewDetails}
         className="flex gap-3 bg-card rounded-2xl p-3 border border-border cursor-pointer hover:border-[#703BF7]/30 transition-all duration-200"
       >
-        {/* Image */}
+        {/* Image/Video */}
         <div className="relative w-32 h-28 flex-shrink-0 rounded-xl overflow-hidden">
-          <Image
-            src={property.images[0]}
-            alt={property.title}
-            fill
-            className="object-cover"
-          />
+          {property.images[0]?.startsWith('data:video') ? (
+            <video 
+              src={property.images[0]} 
+              className="w-full h-full object-cover"
+              muted
+              autoPlay
+              loop
+              playsInline
+            />
+          ) : (
+            <Image
+              src={property.images[0]}
+              alt={property.title}
+              fill
+              className="object-cover"
+            />
+          )}
           {property.isAdminPost && (
             <div className="absolute top-2 left-2 w-6 h-6 rounded-full bg-[#703BF7] flex items-center justify-center">
               <CheckCircle2 className="w-4 h-4 text-white" />
@@ -98,14 +109,25 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
 
   return (
     <div className="bg-card rounded-3xl overflow-hidden border border-border hover:border-[#703BF7]/30 transition-all duration-200">
-      {/* Image */}
+      {/* Image/Video */}
       <div className="relative aspect-[4/3]">
-        <Image
-          src={property.images[0]}
-          alt={property.title}
-          fill
-          className="object-cover"
-        />
+        {property.images[0]?.startsWith('data:video') ? (
+          <video 
+            src={property.images[0]} 
+            className="w-full h-full object-cover"
+            muted
+            autoPlay
+            loop
+            playsInline
+          />
+        ) : (
+          <Image
+            src={property.images[0]}
+            alt={property.title}
+            fill
+            className="object-cover"
+          />
+        )}
         
         {/* Verified badge - Only for admin posts */}
         {property.isAdminPost && (

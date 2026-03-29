@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { AlertCircle, Zap, X } from 'lucide-react'
+import { AlertCircle, Zap } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
 
@@ -11,22 +11,23 @@ export function ConnectBalanceButton() {
   const { user } = useAppStore()
   const [showModal, setShowModal] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
-  const [selectedPlan, setSelectedPlan] = useState<string | null>('premium-monthly')
+  const [selectedPlan, setSelectedPlan] = useState<string | null>('basic-50')
 
   const connectBalance = user?.connectsRemaining || 0
   const hasNoConnects = connectBalance === 0
   const displayBalance = connectBalance === 999 ? 'Unlimited' : connectBalance
 
-  const handlePurchase = (type: 'basic-single' | 'basic-5' | 'premium-monthly' | 'premium-yearly', amount: number, connects: number) => {
+  const handlePurchase = (type: string, amount: number, connects: number) => {
     setShowModal(false)
-    router.push(`/payment?amount=${amount}&plan=${type.includes('premium') ? 'premium' : 'basic'}&connects=${connects}`)
+    router.push(`/payment?amount=${amount}&plan=basic&connects=${connects}`)
   }
 
+  // Plans ordered from highest to lowest (N40,000 at top, N2,000 at bottom)
   const plans = [
+    { id: 'basic-50', title: '50 Connects', subtitle: 'Best value package', price: 'N40,000', amount: 40000, connects: 50 },
+    { id: 'basic-10', title: '10 Connects', subtitle: 'Multiple reach outs', price: 'N10,000', amount: 10000, connects: 10 },
+    { id: 'basic-5', title: '5 Connects', subtitle: 'Small package', price: 'N5,000', amount: 5000, connects: 5 },
     { id: 'basic-single', title: '1 Connect', subtitle: 'Single reach out', price: 'N2,000', amount: 2000, connects: 1 },
-    { id: 'basic-5', title: '5 Connects', subtitle: 'Multiple reach outs', price: 'N5,000', amount: 5000, connects: 5 },
-    { id: 'premium-monthly', title: 'Unlimited (Monthly)', subtitle: 'Premium access', price: 'N50,000', amount: 50000, connects: 999 },
-    { id: 'premium-yearly', title: 'Unlimited (Yearly)', subtitle: 'Best value - Save 20%', price: 'N480,000', amount: 480000, connects: 999 },
   ]
 
   return (
@@ -62,19 +63,11 @@ export function ConnectBalanceButton() {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
           onClick={() => setShowModal(false)}
         >
-          {/* Modal Content - Light mode card matching reference */}
+          {/* Modal Content */}
           <div 
             className="bg-white dark:bg-[#1a1a24] rounded-2xl w-full max-w-md shadow-2xl relative"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close Button */}
-            <button
-              onClick={() => setShowModal(false)}
-              className="absolute top-4 right-4 w-8 h-8 rounded-full border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
             {/* Header */}
             <div className="pt-6 pb-4 px-6 text-center">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">Purchase Connects</h2>
@@ -84,13 +77,13 @@ export function ConnectBalanceButton() {
             </div>
 
             {/* Plans */}
-            <div className="px-4 pb-6 space-y-3">
+            <div className="px-4 pb-4 space-y-3">
               {plans.map((plan) => (
                 <button
                   key={plan.id}
                   onClick={() => {
                     setSelectedPlan(plan.id)
-                    handlePurchase(plan.id as any, plan.amount, plan.connects)
+                    handlePurchase(plan.id, plan.amount, plan.connects)
                   }}
                   className={cn(
                     'w-full rounded-xl border-2 p-4 text-left transition-all flex items-center justify-between',
@@ -106,6 +99,16 @@ export function ConnectBalanceButton() {
                   <p className="font-bold text-[#703BF7] text-lg">{plan.price}</p>
                 </button>
               ))}
+            </div>
+
+            {/* Cancel Button */}
+            <div className="px-4 pb-6">
+              <button
+                onClick={() => setShowModal(false)}
+                className="w-full py-3 rounded-xl border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>

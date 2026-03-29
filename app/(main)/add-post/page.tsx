@@ -181,27 +181,27 @@ export default function AddPostPage() {
   const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png'
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f]">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-[#0a0a0f] border-b border-gray-800/50 px-4 py-4">
+      <div className="sticky top-0 z-10 bg-background border-b border-border px-4 py-4">
         <div className="max-w-3xl mx-auto flex items-center gap-4">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2 flex-1 justify-center pr-8">
             <Image src={logoUrl} alt="SpaceButton" width={28} height={28} className="h-7 w-7" />
-            <h1 className="text-lg font-semibold text-white">Add Apartment Details</h1>
+            <h1 className="text-lg font-semibold text-foreground">Add Apartment Details</h1>
           </div>
         </div>
       </div>
 
       <div className="max-w-3xl mx-auto p-6 space-y-6">
         {/* Listing Type */}
-        <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
-          <h3 className="font-medium text-white mb-3">Listing Type</h3>
+        <div className="bg-card border border-border rounded-xl p-5">
+          <h3 className="font-medium text-foreground mb-3">Listing Type</h3>
           <div className="flex gap-3">
             {["Connect", "Agent"].map((type) => (
               <button
@@ -209,8 +209,8 @@ export default function AddPostPage() {
                 onClick={() => setListingType(type as "Connect" | "Agent")}
                 className={`px-6 py-2.5 rounded-full text-sm font-medium transition-colors ${
                   listingType === type
-                    ? "bg-[#703BF7] text-white"
-                    : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                 }`}
               >
                 {type}
@@ -221,8 +221,8 @@ export default function AddPostPage() {
 
         {/* I am section - Only visible for Connect listing type */}
         {listingType === "Connect" && (
-          <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
-            <h3 className="font-medium text-white mb-3">I am a</h3>
+          <div className="bg-card border border-border rounded-xl p-5">
+            <h3 className="font-medium text-foreground mb-3">I am a</h3>
             <div className="flex gap-3">
               {["Tenant", "Landlord"].map((role) => (
                 <button
@@ -230,8 +230,8 @@ export default function AddPostPage() {
                   onClick={() => setConnectRole(role as "Tenant" | "Landlord")}
                   className={`px-6 py-2.5 rounded-full text-sm font-medium transition-colors ${
                     connectRole === role
-                      ? "bg-[#703BF7] text-white"
-                      : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                      ? "bg-primary text-foreground"
+                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                   }`}
                 >
                   {role}
@@ -242,19 +242,19 @@ export default function AddPostPage() {
         )}
 
         {/* Basic Info */}
-        <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5 space-y-5">
+        <div className="bg-card border border-border rounded-xl p-5 space-y-5">
           <div>
-            <h3 className="font-medium text-white mb-3">Listing Title</h3>
+            <h3 className="font-medium text-foreground mb-3">Listing Title</h3>
             <Input
               value={listingTitle}
               onChange={(e) => setListingTitle(e.target.value.replace(/[^a-zA-Z\s]/g, ''))}
               placeholder="Two Bedroom Flat"
-              className="h-12 bg-[#1a1a24] border-gray-800 text-white rounded-xl placeholder:text-gray-500"
+              className="h-12 bg-secondary border-border text-foreground rounded-xl placeholder:text-muted-foreground"
             />
           </div>
 
           <div>
-            <h3 className="font-medium text-white mb-3">Listing Condition</h3>
+            <h3 className="font-medium text-foreground mb-3">Listing Condition</h3>
             <div className="flex flex-wrap gap-3">
               {listingConditions.map((condition) => (
                 <button
@@ -262,8 +262,8 @@ export default function AddPostPage() {
                   onClick={() => setSelectedCondition(condition)}
                   className={`px-6 py-2.5 rounded-full text-sm font-medium transition-colors ${
                     selectedCondition === condition
-                      ? "bg-[#703BF7] text-white"
-                      : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                      ? "bg-primary text-foreground"
+                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                   }`}
                 >
                   {condition}
@@ -273,7 +273,7 @@ export default function AddPostPage() {
           </div>
 
           <div>
-            <h3 className="font-medium text-white mb-3">Property Category</h3>
+            <h3 className="font-medium text-foreground mb-3">Property Category</h3>
             <div className="flex flex-wrap gap-3">
               {propertyCategories.map((category) => (
                 <button
@@ -281,8 +281,8 @@ export default function AddPostPage() {
                   onClick={() => setSelectedCategory(category)}
                   className={`px-6 py-2.5 rounded-full text-sm font-medium transition-colors ${
                     selectedCategory === category
-                      ? "bg-[#703BF7] text-white"
-                      : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                      ? "bg-primary text-foreground"
+                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                   }`}
                 >
                   {category}
@@ -293,13 +293,13 @@ export default function AddPostPage() {
         </div>
 
         {/* Location */}
-        <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
+        <div className="bg-card border border-border rounded-xl p-5">
           <LocationInput value={location} onChange={setLocation} />
         </div>
 
         {/* Photos & Videos */}
-        <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
-          <h3 className="font-medium text-white mb-3">Listing Photos & Videos</h3>
+        <div className="bg-card border border-border rounded-xl p-5">
+          <h3 className="font-medium text-foreground mb-3">Listing Photos & Videos</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {photos.map((photo, index) => (
               <div key={index} className="relative aspect-[4/3] rounded-xl overflow-hidden">
@@ -312,10 +312,10 @@ export default function AddPostPage() {
                   onClick={() => removePhoto(index)}
                   className="absolute top-2 right-2 w-6 h-6 bg-black/50 rounded-full flex items-center justify-center"
                 >
-                  <X className="w-4 h-4 text-white" />
+                  <X className="w-4 h-4 text-foreground" />
                 </button>
                 {photo.startsWith('data:video') && (
-                  <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/70 rounded text-xs text-white">
+                  <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/70 rounded text-xs text-foreground">
                     Video
                   </div>
                 )}
@@ -330,32 +330,32 @@ export default function AddPostPage() {
                 input.onchange = (e) => handlePhotoUpload(e as any)
                 input.click()
               }}
-              className="aspect-[4/3] rounded-xl border-2 border-dashed border-gray-700 flex flex-col items-center justify-center hover:bg-gray-800/50 transition-colors"
+              className="aspect-[4/3] rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center hover:bg-gray-800/50 transition-colors"
             >
-              <Plus className="w-8 h-8 text-gray-500" />
-              <span className="text-xs text-gray-500 mt-1">Photos/Videos</span>
+              <Plus className="w-8 h-8 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground mt-1">Photos/Videos</span>
             </button>
           </div>
         </div>
 
         {/* Pricing */}
-        <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5 space-y-5">
+        <div className="bg-card border border-border rounded-xl p-5 space-y-5">
           <div>
-            <h3 className="font-medium text-white mb-3">Rent Price</h3>
+            <h3 className="font-medium text-foreground mb-3">Rent Price</h3>
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <Input
                   value={rentPrice}
                   onChange={(e) => setRentPrice(e.target.value.replace(/[^0-9]/g, ''))}
                   placeholder="1500000"
-                  className="h-12 bg-[#1a1a24] border-gray-800 text-white rounded-xl pr-12 placeholder:text-gray-500"
+                  className="h-12 bg-secondary border-border text-foreground rounded-xl pr-12 placeholder:text-muted-foreground"
                 />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">NGN</span>
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground">NGN</span>
               </div>
               <div className="relative">
                 <button
                   onClick={() => setShowRentPeriodDropdown(!showRentPeriodDropdown)}
-                  className="h-12 px-4 rounded-xl bg-[#1a1a24] border border-gray-800 flex items-center gap-2 min-w-[120px] justify-between text-white"
+                  className="h-12 px-4 rounded-xl bg-[#1a1a24] border border-gray-800 flex items-center gap-2 min-w-[120px] justify-between text-foreground"
                 >
                   <span className="text-sm capitalize">{rentPeriod}</span>
                   <ChevronDown className={`w-4 h-4 transition-transform ${showRentPeriodDropdown ? 'rotate-180' : ''}`} />
@@ -370,7 +370,7 @@ export default function AddPostPage() {
                           setShowRentPeriodDropdown(false)
                         }}
                         className={`w-full px-4 py-3 text-left text-sm capitalize hover:bg-gray-800 transition-colors ${
-                          rentPeriod === period ? 'bg-[#703BF7]/20 text-[#703BF7]' : 'text-white'
+                          rentPeriod === period ? 'bg-primary/20 text-[#703BF7]' : 'text-foreground'
                         }`}
                       >
                         {period}
@@ -385,13 +385,13 @@ export default function AddPostPage() {
           {/* Reward - Only visible for Connect listing type with Tenant role */}
           {listingType === "Connect" && connectRole === "Tenant" && (
             <div>
-              <h3 className="font-medium text-white mb-3">Reward (5% of Rent)</h3>
+              <h3 className="font-medium text-foreground mb-3">Reward (5% of Rent)</h3>
               <div className="relative">
                 <Input
                   value={calculatedReward.toLocaleString()}
                   disabled
                   placeholder="0"
-                  className="h-12 bg-[#703BF7]/10 border-[#703BF7]/30 text-[#703BF7] rounded-xl pr-12 font-medium"
+                  className="h-12 bg-primary/10 border-[#703BF7]/30 text-[#703BF7] rounded-xl pr-12 font-medium"
                 />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#703BF7]">NGN</span>
               </div>
@@ -401,23 +401,23 @@ export default function AddPostPage() {
           {/* Total Package - Visible for Agent OR Connect with Landlord role */}
           {(listingType === "Agent" || (listingType === "Connect" && connectRole === "Landlord")) && (
             <div>
-              <h3 className="font-medium text-white mb-3">Total Package</h3>
+              <h3 className="font-medium text-foreground mb-3">Total Package</h3>
               <div className="relative">
                 <Input
                   value={totalPackage}
                   onChange={(e) => setTotalPackage(e.target.value.replace(/[^0-9,]/g, ''))}
                   placeholder="Enter total package amount"
-                  className="h-12 bg-[#1a1a24] border-gray-800 text-white rounded-xl pr-12 placeholder:text-gray-500"
+                  className="h-12 bg-secondary border-border text-foreground rounded-xl pr-12 placeholder:text-muted-foreground"
                 />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">NGN</span>
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground">NGN</span>
               </div>
             </div>
           )}
         </div>
 
         {/* Property Features */}
-        <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
-          <h3 className="font-medium text-white mb-4">Property Features</h3>
+        <div className="bg-card border border-border rounded-xl p-5">
+          <h3 className="font-medium text-foreground mb-4">Property Features</h3>
           <div className="space-y-3">
             {[
               { label: "Bedroom", value: bedrooms, setValue: setBedrooms },
@@ -433,14 +433,14 @@ export default function AddPostPage() {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => feature.setValue(Math.max(0, feature.value - 1))}
-                    className="w-8 h-8 rounded-lg bg-gray-800 text-gray-400 flex items-center justify-center hover:bg-gray-700 transition-colors"
+                    className="w-8 h-8 rounded-lg bg-gray-800 text-muted-foreground flex items-center justify-center hover:bg-gray-700 transition-colors"
                   >
                     -
                   </button>
-                  <span className="w-6 text-center text-white font-medium">{feature.value}</span>
+                  <span className="w-6 text-center text-foreground font-medium">{feature.value}</span>
                   <button
                     onClick={() => feature.setValue(feature.value + 1)}
-                    className="w-8 h-8 rounded-lg bg-[#703BF7] text-white flex items-center justify-center hover:bg-[#5f32d4] transition-colors"
+                    className="w-8 h-8 rounded-lg bg-primary text-foreground flex items-center justify-center hover:bg-primary/90 transition-colors"
                   >
                     +
                   </button>
@@ -452,27 +452,27 @@ export default function AddPostPage() {
 
         {/* Select Rent Due Date - Only visible for Connect with Tenant role */}
         {listingType === "Connect" && connectRole === "Tenant" && (
-          <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
-            <h3 className="font-medium text-white mb-3">Select Current Rent Due Date</h3>
+          <div className="bg-card border border-border rounded-xl p-5">
+            <h3 className="font-medium text-foreground mb-3">Select Current Rent Due Date</h3>
             <button
               onClick={() => setShowCalendar(!showCalendar)}
-              className="w-full flex items-center justify-between p-4 bg-[#1a1a24] border border-gray-800 rounded-xl text-white"
+              className="w-full flex items-center justify-between p-4 bg-[#1a1a24] border border-gray-800 rounded-xl text-foreground"
             >
-              <span className={selectedDate ? "text-white" : "text-gray-500"}>
+              <span className={selectedDate ? "text-foreground" : "text-muted-foreground"}>
                 {selectedDate ? selectedDate.toLocaleDateString() : "Select Date"}
               </span>
-              <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${showCalendar ? "rotate-180" : ""}`} />
+              <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform ${showCalendar ? "rotate-180" : ""}`} />
             </button>
             {showCalendar && (
               <div className="mt-3 p-4 bg-[#1a1a24] border border-gray-800 rounded-xl">
                 <div className="flex items-center justify-between mb-4">
-                  <button onClick={handlePrevMonth} className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400">
+                  <button onClick={handlePrevMonth} className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-muted-foreground">
                     <ChevronLeft className="w-5 h-5" />
                   </button>
-                  <span className="font-medium text-white">
+                  <span className="font-medium text-foreground">
                     {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                   </span>
-                  <button onClick={handleNextMonth} className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400">
+                  <button onClick={handleNextMonth} className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-muted-foreground">
                     <ChevronLeft className="w-5 h-5 rotate-180" />
                   </button>
                 </div>
@@ -495,7 +495,7 @@ export default function AddPostPage() {
                         onClick={() => !isDisabled && setSelectedDate(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day))}
                         className={`py-2 rounded-lg text-sm ${
                           isSelected
-                            ? "bg-[#703BF7] text-white"
+                            ? "bg-primary text-foreground"
                             : isDisabled
                             ? "text-gray-600 cursor-not-allowed"
                             : "text-gray-300 hover:bg-gray-800"
@@ -512,15 +512,15 @@ export default function AddPostPage() {
         )}
 
         {/* Landlord Presence */}
-        <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
-          <h3 className="font-medium text-white mb-3">Landlord Presence</h3>
+        <div className="bg-card border border-border rounded-xl p-5">
+          <h3 className="font-medium text-foreground mb-3">Landlord Presence</h3>
           <div className="space-y-3">
             <label className="flex items-center gap-3 p-3 bg-[#1a1a24] rounded-xl cursor-pointer">
               <input
                 type="checkbox"
                 checked={landlordPresence === "stays"}
                 onChange={() => setLandlordPresence("stays")}
-                className="w-5 h-5 rounded border-gray-700 bg-transparent accent-[#703BF7]"
+                className="w-5 h-5 rounded border-border bg-transparent accent-[#703BF7]"
               />
               <span className="text-sm text-gray-300">Landlord Stays in the Compound</span>
             </label>
@@ -529,7 +529,7 @@ export default function AddPostPage() {
                 type="checkbox"
                 checked={landlordPresence === "not-stays"}
                 onChange={() => setLandlordPresence("not-stays")}
-                className="w-5 h-5 rounded border-gray-700 bg-transparent accent-[#703BF7]"
+                className="w-5 h-5 rounded border-border bg-transparent accent-[#703BF7]"
               />
               <span className="text-sm text-gray-300">Landlord Does not stay in the Compound</span>
             </label>
@@ -537,8 +537,8 @@ export default function AddPostPage() {
         </div>
 
         {/* Environment / Facilities */}
-        <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
-          <h3 className="font-medium text-white mb-3">Environment / Facilities</h3>
+        <div className="bg-card border border-border rounded-xl p-5">
+          <h3 className="font-medium text-foreground mb-3">Environment / Facilities</h3>
           <div className="flex flex-wrap gap-2">
             {facilities.map((facility) => (
               <button
@@ -546,8 +546,8 @@ export default function AddPostPage() {
                 onClick={() => toggleFacility(facility)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                   selectedFacilities.includes(facility)
-                    ? "bg-[#703BF7] text-white"
-                    : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                    ? "bg-primary text-foreground"
+                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                 }`}
               >
                 {facility}
@@ -557,8 +557,8 @@ export default function AddPostPage() {
         </div>
 
         {/* Description */}
-        <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
-          <h3 className="font-medium text-white mb-3">Additional Description</h3>
+        <div className="bg-card border border-border rounded-xl p-5">
+          <h3 className="font-medium text-foreground mb-3">Additional Description</h3>
           <Input
             value={descriptions}
             onChange={(e) => {
@@ -567,7 +567,7 @@ export default function AddPostPage() {
               setDescriptions(alphabeticOnly)
             }}
             placeholder="Write other descriptions if available"
-            className="h-12 bg-[#1a1a24] border-gray-800 text-white rounded-xl placeholder:text-gray-500"
+            className="h-12 bg-secondary border-border text-foreground rounded-xl placeholder:text-muted-foreground"
           />
           {/* Disclaimer based on listing type */}
           {listingType === "Agent" && (
@@ -585,7 +585,7 @@ export default function AddPostPage() {
         {/* Submit Button */}
         <Button
           onClick={handleFinishClick}
-          className="w-full h-14 text-base font-semibold bg-[#703BF7] hover:bg-[#5f32d4] text-white rounded-xl"
+          className="w-full h-14 text-base font-semibold bg-primary hover:bg-primary/90 text-foreground rounded-xl"
         >
           Finish
         </Button>
@@ -594,12 +594,12 @@ export default function AddPostPage() {
       {/* Validation Error Modal */}
       {showValidationModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-sm rounded-2xl bg-[#12121a] border border-gray-800 p-6">
+          <div className="w-full max-w-sm rounded-2xl bg-card border border-border p-6">
             <h2 className="text-lg font-semibold mb-2 text-red-400">Incomplete Details</h2>
-            <p className="text-gray-400 mb-6">{validationMessage}</p>
+            <p className="text-muted-foreground mb-6">{validationMessage}</p>
             <Button
               onClick={() => setShowValidationModal(false)}
-              className="w-full h-12 rounded-xl bg-[#703BF7] hover:bg-[#5f32d4] text-white"
+              className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 text-foreground"
             >
               Okay
             </Button>
@@ -610,30 +610,30 @@ export default function AddPostPage() {
       {/* Under Review Modal */}
       {showReviewModal && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70">
-          <div className="w-full max-w-md rounded-t-3xl bg-[#12121a] border-t border-gray-800 p-6 pb-8">
+          <div className="w-full max-w-md rounded-t-3xl bg-card border-t border-border p-6 pb-8">
             <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-gray-700" />
             
             <div className="flex flex-col items-center text-center">
               <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-b from-[#703BF7]/30 to-[#703BF7]/60">
-                <div className="h-16 w-16 rounded-full bg-[#703BF7]" />
+                <div className="h-16 w-16 rounded-full bg-primary" />
               </div>
               
-              <h2 className="mb-1 text-2xl text-white">Your listing is now</h2>
-              <h3 className="mb-4 text-2xl font-bold text-white">Under Review</h3>
-              <p className="mb-6 text-gray-400">
+              <h2 className="mb-1 text-2xl text-foreground">Your listing is now</h2>
+              <h3 className="mb-4 text-2xl font-bold text-foreground">Under Review</h3>
+              <p className="mb-6 text-muted-foreground">
                 Your property will be visible on the home page shortly.
               </p>
 
               <div className="flex w-full gap-3">
                 <Button
                   variant="outline"
-                  className="flex-1 rounded-xl bg-gray-800 border-gray-700 text-white hover:bg-gray-700"
+                  className="flex-1 rounded-xl bg-secondary border-border text-foreground hover:bg-secondary/80"
                   onClick={() => setShowReviewModal(false)}
                 >
                   Edit Post
                 </Button>
                 <Button
-                  className="flex-1 rounded-xl bg-[#703BF7] hover:bg-[#5f32d4] text-white"
+                  className="flex-1 rounded-xl bg-primary hover:bg-primary/90 text-foreground"
                   onClick={() => {
                     const propertyType = listingType.toLowerCase() as 'connect' | 'agent'
                     const propertyCondition = selectedCondition.toLowerCase() as 'rent' | 'roommate' | 'flatmate'

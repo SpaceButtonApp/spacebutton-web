@@ -3,16 +3,10 @@ import { existsSync, mkdirSync } from 'fs';
 import path from 'path';
 
 const sourceDir = '/vercel/share/v0-project/spacebutton-mobile';
-const outputDir = '/vercel/share/v0-project/public';
 const zipName = 'spacebutton-mobile.zip';
 
-// Ensure output directory exists
-if (!existsSync(outputDir)) {
-  mkdirSync(outputDir, { recursive: true });
-}
-
-// Create ZIP file
-const outputPath = path.join(outputDir, zipName);
+// Create ZIP file in the project root
+const outputPath = path.join('/vercel/share/v0-project', zipName);
 
 try {
   // Remove existing zip if present

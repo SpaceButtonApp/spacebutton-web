@@ -14,6 +14,7 @@ export default function PayWithCardPage() {
   const plan = searchParams.get('plan') || 'basic'
   const connects = searchParams.get('connects') || '1'
   const type = searchParams.get('type') || ''
+  const returnUrl = searchParams.get('returnUrl') || '/home'
   
   const [cardNumber, setCardNumber] = useState('')
   const [expiry, setExpiry] = useState('')
@@ -35,7 +36,7 @@ export default function PayWithCardPage() {
   }
 
   const handlePayNow = () => {
-    router.push(`/payment/success?amount=${amount}&plan=${plan}&connects=${connects}&type=${type}`)
+    router.push(`/payment/success?amount=${amount}&plan=${plan}&connects=${connects}&type=${type}&returnUrl=${encodeURIComponent(returnUrl)}`)
   }
 
   return (

@@ -16,6 +16,7 @@ export default function TransferPage() {
   const plan = searchParams.get("plan") || "basic"
   const connects = searchParams.get("connects") || "1"
   const type = searchParams.get("type") || ""
+  const returnUrl = searchParams.get("returnUrl") || "/home"
 
   const bankDetails = {
     bankName: "Sterling Bank",
@@ -122,7 +123,7 @@ export default function TransferPage() {
         </p>
 
         <Button
-          onClick={() => router.push(`/payment/success?amount=${amount}&plan=${plan}&connects=${connects}&type=${type}`)}
+          onClick={() => router.push(`/payment/success?amount=${amount}&plan=${plan}&connects=${connects}&type=${type}&returnUrl=${encodeURIComponent(returnUrl)}`)}
           className="w-full h-14 text-base font-semibold mb-4"
         >
           I've sent the Money

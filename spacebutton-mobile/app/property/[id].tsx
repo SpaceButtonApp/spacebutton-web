@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/Button';
 import { Icon } from '@/components/Icons';
 import { formatPrice, safetyTips } from '@/lib/mock-data';
 import { BorderRadius, FontSize, FontWeight, Spacing } from '@/constants/theme';
+import { formatDistanceToNow } from 'date-fns';
 
 const { width } = Dimensions.get('window');
 
@@ -132,6 +133,16 @@ export default function PropertyDetailScreen() {
 
         {/* Content */}
         <View style={styles.content}>
+          {/* Date Posted - Just below photos */}
+          {property.createdAt && (
+            <View style={styles.datePostedRow}>
+              <Icon name="clock" size={14} color={colors.mutedForeground} />
+              <Text style={[styles.datePostedText, { color: colors.mutedForeground }]}>
+                Posted {formatDistanceToNow(new Date(property.createdAt), { addSuffix: true })}
+              </Text>
+            </View>
+          )}
+
           {/* Title & Price */}
           <View style={styles.titleSection}>
             <Text style={[styles.title, { color: colors.foreground }]}>
@@ -161,7 +172,7 @@ export default function PropertyDetailScreen() {
               <Icon name="users" size={14} color={colors.mutedForeground} />
               <Text style={[styles.tagText, { color: colors.mutedForeground }]}>
                 {property.type === 'connect' 
-                  ? (property.connectRole === 'Landlord' ? 'Landlord' : 'Tenant') 
+                  ? (property.connectRole === 'Landlord' ? 'Landlord' : 'Individual') 
                   : 'Agent'}
               </Text>
             </View>
@@ -260,7 +271,9 @@ export default function PropertyDetailScreen() {
                 {property.agent.name}
               </Text>
               <Text style={[styles.agentType, { color: colors.mutedForeground }]}>
-                {property.agent.type}
+                {property.type === 'connect' 
+                  ? (property.connectRole === 'Landlord' ? 'Landlord' : 'Individual')
+                  : property.agent.type}
               </Text>
             </View>
           </View>
@@ -376,6 +389,15 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: Spacing.lg,
+  },
+  datePostedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
+    marginBottom: Spacing.md,
+  },
+  datePostedText: {
+    fontSize: FontSize.sm,
   },
   titleSection: {
     marginBottom: Spacing.lg,

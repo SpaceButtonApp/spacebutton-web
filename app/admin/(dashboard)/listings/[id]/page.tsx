@@ -20,8 +20,10 @@ import {
   Users,
   Calendar,
   Home,
-  Fence
+  Fence,
+  Clock
 } from 'lucide-react'
+import { formatDistanceToNow } from 'date-fns'
 import { Button } from '@/components/ui/button'
 
 export default function AdminPropertyDetailsPage() {
@@ -316,6 +318,17 @@ export default function AdminPropertyDetailsPage() {
                     </div>
                     <span className="text-white">
                       {new Date(property.rentDueDate).toLocaleDateString()}
+                    </span>
+                  </div>
+                )}
+                {property.createdAt && (
+                  <div className="flex items-center justify-between p-3 bg-[#1a1a24] rounded-lg">
+                    <div className="flex items-center gap-2 text-gray-400">
+                      <Clock className="w-4 h-4" />
+                      <span>Time Posted</span>
+                    </div>
+                    <span className="text-white">
+                      {formatDistanceToNow(new Date(property.createdAt), { addSuffix: true })}
                     </span>
                   </div>
                 )}

@@ -108,7 +108,7 @@ export default function GetStartedPage() {
             Find Your Perfect Space
           </h1>
           <p className="text-gray-400 text-balance">
-            Find your dream apartment. Connect with vacating tenants, landlords, and verified agents.
+            Connect with vacating tenants, landlords, and verified agents.
           </p>
         </div>
 

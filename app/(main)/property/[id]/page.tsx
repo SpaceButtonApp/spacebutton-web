@@ -128,6 +128,14 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
 
       {/* Content */}
       <div className="px-4 py-6 space-y-6">
+        {/* Date Posted - Just below photos */}
+        {property.createdAt && (
+          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+            <Clock className="w-4 h-4" />
+            <span>Posted {formatDistanceToNow(new Date(property.createdAt), { addSuffix: true })}</span>
+          </div>
+        )}
+
         {/* Title & Price */}
         <div>
           <h1 className="text-2xl font-bold mb-2">{property.title}</h1>
@@ -151,7 +159,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
           <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-secondary text-sm">
             <Users className="w-4 h-4" />
             <span>{property.type === 'connect' 
-              ? (property.connectRole === 'Landlord' ? 'Landlord' : 'Tenant') 
+              ? (property.connectRole === 'Landlord' ? 'Landlord' : 'Individual') 
               : 'Agent'}</span>
           </div>
           <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-secondary text-sm">
@@ -248,31 +256,22 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
         )}
 
         {/* Posted by info - shows the actual poster */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Image
-              src={property.agent.avatar}
-              alt={property.agent.name}
-              width={48}
-              height={48}
-              className="rounded-full"
-            />
-            <div>
-              <p className="font-semibold">{property.agent.name}</p>
-              <p className="text-sm text-muted-foreground capitalize">
-                {property.type === 'connect' 
-                  ? (property.connectRole === 'Landlord' ? 'Landlord' : 'Tenant')
-                  : property.agent.type}
-              </p>
-            </div>
+        <div className="flex items-center gap-3">
+          <Image
+            src={property.agent.avatar}
+            alt={property.agent.name}
+            width={48}
+            height={48}
+            className="rounded-full"
+          />
+          <div>
+            <p className="font-semibold">{property.agent.name}</p>
+            <p className="text-sm text-muted-foreground capitalize">
+              {property.type === 'connect' 
+                ? (property.connectRole === 'Landlord' ? 'Landlord' : 'Individual')
+                : property.agent.type}
+            </p>
           </div>
-          {/* Post time */}
-          {property.createdAt && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Clock className="w-3.5 h-3.5" />
-              <span>{formatDistanceToNow(new Date(property.createdAt), { addSuffix: true })}</span>
-            </div>
-          )}
         </div>
 
         {/* CTA Button */}
@@ -304,9 +303,9 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
               <video
                 src={property.images[currentImageIndex]}
                 className="max-w-full max-h-full object-contain"
-                controls
                 autoPlay
                 loop
+                muted
                 playsInline
                 onClick={(e) => e.stopPropagation()}
               />

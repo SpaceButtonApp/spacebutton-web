@@ -22,15 +22,7 @@ export default function AdminUserChatPage({ params }: { params: Promise<{ userId
     content: string
     timestamp: Date
     isOwn: boolean
-  }>>([
-    {
-      id: '1',
-      senderId: userId,
-      content: 'Hello, I posted a property listing.',
-      timestamp: new Date(Date.now() - 3600000),
-      isOwn: false
-    }
-  ])
+  }>>([])
   
   // Find the user who posted the property
   const propertyOwner = registeredUsers.find(u => u.id === userId)
@@ -145,25 +137,37 @@ export default function AdminUserChatPage({ params }: { params: Promise<{ userId
 
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex ${msg.isOwn ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-[70%] rounded-2xl px-4 py-3 ${
-                  msg.isOwn
-                    ? 'bg-[#703BF7] text-white rounded-br-sm'
-                    : 'bg-[#1a1a24] text-white rounded-bl-sm'
-                }`}
-              >
-                <p className="text-sm leading-relaxed">{msg.content}</p>
-                <p className={`text-xs mt-1 ${msg.isOwn ? 'text-white/60' : 'text-gray-500'}`}>
-                  {formatTime(msg.timestamp)}
-                </p>
+          {messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-center py-12">
+              <div className="w-16 h-16 rounded-full bg-[#703BF7]/10 flex items-center justify-center mb-4">
+                <MessageCircle className="w-8 h-8 text-[#703BF7]" />
               </div>
+              <h3 className="text-lg font-semibold text-white mb-2">Start a Conversation</h3>
+              <p className="text-gray-400 text-sm max-w-xs">
+                Send a message to the property owner to start the conversation.
+              </p>
             </div>
-          ))}
+          ) : (
+            messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`flex ${msg.isOwn ? 'justify-end' : 'justify-start'}`}
+              >
+                <div
+                  className={`max-w-[70%] rounded-2xl px-4 py-3 ${
+                    msg.isOwn
+                      ? 'bg-[#703BF7] text-white rounded-br-sm'
+                      : 'bg-[#1a1a24] text-white rounded-bl-sm'
+                  }`}
+                >
+                  <p className="text-sm leading-relaxed">{msg.content}</p>
+                  <p className={`text-xs mt-1 ${msg.isOwn ? 'text-white/60' : 'text-gray-500'}`}>
+                    {formatTime(msg.timestamp)}
+                  </p>
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
         {/* Message Input */}

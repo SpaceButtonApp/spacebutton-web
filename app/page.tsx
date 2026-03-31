@@ -11,11 +11,11 @@ export default function WebAppEntry() {
   const user = useAppStore((state) => state.user)
 
   useEffect(() => {
-    // If user is logged in, go to home. Otherwise, go to login.
+    // If user is logged in, go to home. Otherwise, go to get-started page.
     if (user?.isLoggedIn) {
       router.replace('/home')
     } else {
-      router.replace('/login')
+      router.replace('/get-started')
     }
   }, [user, router])
 

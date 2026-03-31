@@ -92,16 +92,28 @@ export default function AdminPropertyDetailsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column - Images */}
           <div className="space-y-4">
-            {/* Main Image */}
+            {/* Main Image/Video */}
             <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-gray-800">
               {property.images.length > 0 && (
                 <>
-                  <Image
-                    src={property.images[currentImageIndex]}
-                    alt={property.title}
-                    fill
-                    className="object-cover"
-                  />
+                  {property.images[currentImageIndex]?.startsWith('data:video') ? (
+                    <video
+                      src={property.images[currentImageIndex]}
+                      className="w-full h-full object-cover"
+                      controls
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                    />
+                  ) : (
+                    <Image
+                      src={property.images[currentImageIndex]}
+                      alt={property.title}
+                      fill
+                      className="object-cover"
+                    />
+                  )}
                   
                   {/* Navigation Arrows */}
                   {property.images.length > 1 && (
@@ -152,12 +164,25 @@ export default function AdminPropertyDetailsPage() {
                         : 'opacity-60 hover:opacity-100'
                     } transition-all`}
                   >
-                    <Image
-                      src={image}
-                      alt={`${property.title} - ${index + 1}`}
-                      fill
-                      className="object-cover"
-                    />
+                    {image?.startsWith('data:video') ? (
+                      <>
+                        <video
+                          src={image}
+                          className="w-full h-full object-cover"
+                          muted
+                        />
+                        <div className="absolute bottom-1 left-1 px-1.5 py-0.5 bg-black/70 rounded text-xs text-white">
+                          Video
+                        </div>
+                      </>
+                    ) : (
+                      <Image
+                        src={image}
+                        alt={`${property.title} - ${index + 1}`}
+                        fill
+                        className="object-cover"
+                      />
+                    )}
                   </button>
                 ))}
               </div>

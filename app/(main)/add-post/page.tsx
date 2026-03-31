@@ -355,13 +355,13 @@ export default function AddPostPage() {
               <div className="relative">
                 <button
                   onClick={() => setShowRentPeriodDropdown(!showRentPeriodDropdown)}
-                  className="h-12 px-4 rounded-xl bg-[#1a1a24] border border-gray-800 flex items-center gap-2 min-w-[120px] justify-between text-foreground"
+                  className="h-12 px-4 rounded-xl bg-secondary border border-border flex items-center gap-2 min-w-[120px] justify-between text-foreground"
                 >
                   <span className="text-sm capitalize">{rentPeriod}</span>
                   <ChevronDown className={`w-4 h-4 transition-transform ${showRentPeriodDropdown ? 'rotate-180' : ''}`} />
                 </button>
                 {showRentPeriodDropdown && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-[#1a1a24] border border-gray-800 rounded-xl overflow-hidden z-10 shadow-lg">
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-secondary border border-border rounded-xl overflow-hidden z-10 shadow-lg">
                     {(['monthly', 'yearly'] as const).map((period) => (
                       <button
                         key={period}
@@ -369,8 +369,8 @@ export default function AddPostPage() {
                           setRentPeriod(period)
                           setShowRentPeriodDropdown(false)
                         }}
-                        className={`w-full px-4 py-3 text-left text-sm capitalize hover:bg-gray-800 transition-colors ${
-                          rentPeriod === period ? 'bg-primary/20 text-[#703BF7]' : 'text-foreground'
+                        className={`w-full px-4 py-3 text-left text-sm capitalize hover:bg-muted transition-colors ${
+                          rentPeriod === period ? 'bg-primary/20 text-primary' : 'text-foreground'
                         }`}
                       >
                         {period}
@@ -382,8 +382,8 @@ export default function AddPostPage() {
             </div>
           </div>
 
-          {/* Reward - Only visible for Connect listing type with Tenant role */}
-          {listingType === "Connect" && connectRole === "Tenant" && (
+          {/* Reward - Only visible for Connect listing type with Tenant role and Rent condition */}
+          {listingType === "Connect" && connectRole === "Tenant" && selectedCondition === "Rent" && (
             <div>
               <h3 className="font-medium text-foreground mb-3">Reward (5% of Rent)</h3>
               <div className="relative">
@@ -391,15 +391,15 @@ export default function AddPostPage() {
                   value={calculatedReward.toLocaleString()}
                   disabled
                   placeholder="0"
-                  className="h-12 bg-primary/10 border-[#703BF7]/30 text-[#703BF7] rounded-xl pr-12 font-medium"
+                  className="h-12 bg-primary/10 border-primary/30 text-primary rounded-xl pr-12 font-medium"
                 />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#703BF7]">NGN</span>
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-primary">NGN</span>
               </div>
             </div>
           )}
 
-          {/* Total Package - Visible for Agent OR Connect with Landlord role */}
-          {(listingType === "Agent" || (listingType === "Connect" && connectRole === "Landlord")) && (
+          {/* Total Package - Visible for Agent OR Connect with Landlord role OR Connect with Tenant and Roommate/Flatmate */}
+          {(listingType === "Agent" || (listingType === "Connect" && connectRole === "Landlord") || (listingType === "Connect" && connectRole === "Tenant" && (selectedCondition === "Roommate" || selectedCondition === "Flatmate"))) && (
             <div>
               <h3 className="font-medium text-foreground mb-3">Total Package</h3>
               <div className="relative">
@@ -427,20 +427,20 @@ export default function AddPostPage() {
             ].map((feature) => (
               <div
                 key={feature.label}
-                className="flex items-center justify-between p-4 bg-[#1a1a24] rounded-xl"
+                className="flex items-center justify-between p-4 bg-secondary rounded-xl"
               >
-                <span className="text-gray-300">{feature.label}</span>
+                <span className="text-muted-foreground">{feature.label}</span>
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => feature.setValue(Math.max(0, feature.value - 1))}
-                    className="w-8 h-8 rounded-lg bg-gray-800 text-muted-foreground flex items-center justify-center hover:bg-gray-700 transition-colors"
+                    className="w-8 h-8 rounded-lg bg-muted text-muted-foreground flex items-center justify-center hover:bg-muted/80 transition-colors"
                   >
                     -
                   </button>
                   <span className="w-6 text-center text-foreground font-medium">{feature.value}</span>
                   <button
                     onClick={() => feature.setValue(feature.value + 1)}
-                    className="w-8 h-8 rounded-lg bg-primary text-foreground flex items-center justify-center hover:bg-primary/90 transition-colors"
+                    className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center hover:bg-primary/90 transition-colors"
                   >
                     +
                   </button>
@@ -451,12 +451,12 @@ export default function AddPostPage() {
         </div>
 
         {/* Select Rent Due Date - Only visible for Connect with Tenant role */}
-        {listingType === "Connect" && connectRole === "Tenant" && (
+        {listingType === "Connect" && connectRole === "Tenant" && selectedCondition === "Rent" && (
           <div className="bg-card border border-border rounded-xl p-5">
             <h3 className="font-medium text-foreground mb-3">Select Current Rent Due Date</h3>
             <button
               onClick={() => setShowCalendar(!showCalendar)}
-              className="w-full flex items-center justify-between p-4 bg-[#1a1a24] border border-gray-800 rounded-xl text-foreground"
+              className="w-full flex items-center justify-between p-4 bg-secondary border border-border rounded-xl text-foreground"
             >
               <span className={selectedDate ? "text-foreground" : "text-muted-foreground"}>
                 {selectedDate ? selectedDate.toLocaleDateString() : "Select Date"}
@@ -464,21 +464,21 @@ export default function AddPostPage() {
               <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform ${showCalendar ? "rotate-180" : ""}`} />
             </button>
             {showCalendar && (
-              <div className="mt-3 p-4 bg-[#1a1a24] border border-gray-800 rounded-xl">
+              <div className="mt-3 p-4 bg-secondary border border-border rounded-xl">
                 <div className="flex items-center justify-between mb-4">
-                  <button onClick={handlePrevMonth} className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-muted-foreground">
+                  <button onClick={handlePrevMonth} className="p-2 hover:bg-muted rounded-lg transition-colors text-muted-foreground">
                     <ChevronLeft className="w-5 h-5" />
                   </button>
                   <span className="font-medium text-foreground">
                     {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                   </span>
-                  <button onClick={handleNextMonth} className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-muted-foreground">
+                  <button onClick={handleNextMonth} className="p-2 hover:bg-muted rounded-lg transition-colors text-muted-foreground">
                     <ChevronLeft className="w-5 h-5 rotate-180" />
                   </button>
                 </div>
                 <div className="grid grid-cols-7 gap-1 text-center text-sm">
                   {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                    <div key={day} className="py-2 text-[#703BF7] text-xs font-medium">{day}</div>
+                    <div key={day} className="py-2 text-primary text-xs font-medium">{day}</div>
                   ))}
                   {Array.from({ length: getFirstDayOfMonth(currentMonth) }).map((_, i) => (
                     <div key={`empty-${i}`} />
@@ -495,10 +495,10 @@ export default function AddPostPage() {
                         onClick={() => !isDisabled && setSelectedDate(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day))}
                         className={`py-2 rounded-lg text-sm ${
                           isSelected
-                            ? "bg-primary text-foreground"
+                            ? "bg-primary text-primary-foreground"
                             : isDisabled
-                            ? "text-gray-600 cursor-not-allowed"
-                            : "text-gray-300 hover:bg-gray-800"
+                            ? "text-muted-foreground/50 cursor-not-allowed"
+                            : "text-muted-foreground hover:bg-muted"
                         }`}
                       >
                         {day}
@@ -515,23 +515,23 @@ export default function AddPostPage() {
         <div className="bg-card border border-border rounded-xl p-5">
           <h3 className="font-medium text-foreground mb-3">Landlord Presence</h3>
           <div className="space-y-3">
-            <label className="flex items-center gap-3 p-3 bg-[#1a1a24] rounded-xl cursor-pointer">
+            <label className="flex items-center gap-3 p-3 bg-secondary rounded-xl cursor-pointer">
               <input
                 type="checkbox"
                 checked={landlordPresence === "stays"}
                 onChange={() => setLandlordPresence("stays")}
-                className="w-5 h-5 rounded border-border bg-transparent accent-[#703BF7]"
+                className="w-5 h-5 rounded border-border bg-transparent accent-primary"
               />
-              <span className="text-sm text-gray-300">Landlord Stays in the Compound</span>
+              <span className="text-sm text-muted-foreground">Landlord Stays in the Compound</span>
             </label>
-            <label className="flex items-center gap-3 p-3 bg-[#1a1a24] rounded-xl cursor-pointer">
+            <label className="flex items-center gap-3 p-3 bg-secondary rounded-xl cursor-pointer">
               <input
                 type="checkbox"
                 checked={landlordPresence === "not-stays"}
                 onChange={() => setLandlordPresence("not-stays")}
-                className="w-5 h-5 rounded border-border bg-transparent accent-[#703BF7]"
+                className="w-5 h-5 rounded border-border bg-transparent accent-primary"
               />
-              <span className="text-sm text-gray-300">Landlord Does not stay in the Compound</span>
+              <span className="text-sm text-muted-foreground">Landlord Does not stay in the Compound</span>
             </label>
           </div>
         </div>
@@ -575,7 +575,7 @@ export default function AddPostPage() {
               Agent must not collect inspection fee.
             </p>
           )}
-          {listingType === "Connect" && connectRole === "Tenant" && (
+          {listingType === "Connect" && connectRole === "Tenant" && selectedCondition === "Rent" && (
             <p className="mt-3 text-sm text-amber-500 bg-amber-500/10 p-3 rounded-lg">
               Individual must not request for more than 5% of the annual rent.
             </p>

@@ -14,6 +14,7 @@ export default function PaymentSuccessPage() {
   const plan = searchParams.get("plan") || "basic"
   const connects = parseInt(searchParams.get("connects") || "1")
   const type = searchParams.get("type") || ""
+  const returnUrl = searchParams.get("returnUrl") || "/home"
   
   const { purchasePremium, addToWallet, addTransaction } = useAppStore()
   const hasProcessed = useRef(false)
@@ -78,7 +79,7 @@ export default function PaymentSuccessPage() {
 
       <div className="px-4 pb-24">
         <Button
-          onClick={() => router.push("/home")}
+          onClick={() => router.push(decodeURIComponent(returnUrl))}
           className="w-full h-14 text-base font-semibold bg-success hover:bg-success/90"
         >
           Done

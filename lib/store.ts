@@ -107,6 +107,7 @@ interface AppState {
   
   // Conversations
   conversations: Conversation[]
+  addConversation: (conversation: Conversation) => void
   
   // Notifications
   notifications: Notification[]
@@ -234,6 +235,14 @@ export const useAppStore = create<AppState>()(
       
       // Conversations
       conversations: mockConversations,
+      addConversation: (conversation) => set((state) => {
+        // Check if conversation already exists
+        const exists = state.conversations.some(c => c.id === conversation.id || c.user.id === conversation.user.id)
+        if (exists) return state
+        return {
+          conversations: [conversation, ...state.conversations]
+        }
+      }),
       
       // Notifications
       notifications: mockNotifications,

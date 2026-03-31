@@ -16,7 +16,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const router = useRouter()
   const searchParams = useSearchParams()
   const propertyId = searchParams.get('propertyId')
-  const { properties, doneDealStates, toggleDoneDeal, user, addReview } = useAppStore()
+  const { properties, doneDealStates, toggleDoneDeal, user, addReview, addConversation, conversations } = useAppStore()
   
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState(mockMessages)
@@ -28,6 +28,23 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [feedback, setFeedback] = useState('')
   
   const agent = mockAgents.find((a) => a.id === id) || mockAgents[0]
+  
+  // Add this conversation to the messages list when chat is opened
+  useEffect(() => {
+    if (agent && propertyId) {
+      // Check if conversation already exists
+      const existingConversation = conversations.find(c => c.user.id === agent.id)
+      if (!existingConversation) {
+        addConversation({
+          id: `conv-${agent.id}-${Date.now()}`,
+          user: agent,
+          lastMessage: 'Started conversation',
+          timestamp: new Date(),
+          unread: 0
+        })
+      }
+    }
+  }, [agent, propertyId, conversations, addConversation])
   
   // Get property details from propertyId param or find first property by this agent
   const property = propertyId 

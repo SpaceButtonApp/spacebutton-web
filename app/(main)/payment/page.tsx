@@ -43,6 +43,7 @@ export default function PaymentPage() {
   const plan = searchParams.get("plan") || "basic"
   const connects = searchParams.get("connects") || "1"
   const type = searchParams.get("type") || ""
+  const returnUrl = searchParams.get("returnUrl") || "/home"
 
   // Filter out wallet payment method when funding wallet
   const paymentMethods = type === "wallet" 
@@ -58,7 +59,7 @@ export default function PaymentPage() {
   }
 
   const handleContinue = () => {
-    const params = `amount=${amount}&plan=${plan}&connects=${connects}&type=${type}`
+    const params = `amount=${amount}&plan=${plan}&connects=${connects}&type=${type}&returnUrl=${encodeURIComponent(returnUrl)}`
     if (selectedMethod === "transfer") {
       router.push(`/payment/transfer?${params}`)
     } else if (selectedMethod === "card") {

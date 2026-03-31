@@ -28,6 +28,7 @@ export interface Property {
   landlordPresence?: 'stays' | 'not-stays'
   balconies?: number
   isAdminPost?: boolean
+  createdAt?: string
 }
 
 export interface Agent {

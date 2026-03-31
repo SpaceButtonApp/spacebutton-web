@@ -12,7 +12,8 @@ export default function FundWalletPage() {
 
   const handleContinue = () => {
     if (amount) {
-      router.push(`/payment?amount=${amount}&type=wallet`)
+      const returnUrl = '/wallet'
+      router.push(`/payment?amount=${amount}&type=wallet&returnUrl=${encodeURIComponent(returnUrl)}`)
     }
   }
 

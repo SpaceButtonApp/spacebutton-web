@@ -41,7 +41,7 @@ export default function WelcomeScreen() {
             contentFit="contain"
           />
           <Text style={styles.title}>SpaceButton</Text>
-          <Text style={styles.subtitle}>Find your perfect space</Text>
+          <Text style={styles.subtitle}>Connect with vacating tenants, landlords, and verified agents.</Text>
         </View>
 
         {/* Features */}
@@ -145,6 +145,8 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: FontSize.base,
     color: '#a1a1aa',
+    textAlign: 'center',
+    paddingHorizontal: Spacing.lg,
   },
   features: {
     marginTop: Spacing['3xl'],

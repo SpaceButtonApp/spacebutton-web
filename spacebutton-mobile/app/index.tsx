@@ -68,7 +68,7 @@ export default function SplashScreen() {
           contentFit="contain"
         />
         <Text style={styles.title}>SpaceButton</Text>
-        <Text style={styles.subtitle}>Find your perfect space</Text>
+        <Text style={styles.subtitle}>Connect with vacating tenants, landlords, and verified agents.</Text>
       </Animated.View>
 
       <Animated.View style={[styles.footer, { opacity: fadeAnim }]}>
@@ -122,8 +122,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#a1a1aa',
+    textAlign: 'center',
+    paddingHorizontal: 24,
   },
   footer: {
     position: 'absolute',

@@ -42,50 +42,50 @@ export function LocationInput({ value, onChange }: LocationInputProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-3">
-        <MapPin className="w-5 h-5 text-[#703BF7]" />
-        <h3 className="font-medium text-white">Location</h3>
+        <MapPin className="w-5 h-5 text-primary" />
+        <h3 className="font-medium text-foreground">Location</h3>
       </div>
 
       {/* Country - Fixed Nigeria */}
       <div>
-        <label className="block text-sm text-gray-400 mb-2">Country</label>
+        <label className="block text-sm text-muted-foreground mb-2">Country</label>
         <Input
           value="Nigeria"
           disabled
-          className="h-12 bg-[#1a1a24] border-gray-800 text-white rounded-xl placeholder:text-gray-500 cursor-not-allowed opacity-70"
+          className="h-12 bg-secondary border-border text-foreground rounded-xl placeholder:text-muted-foreground cursor-not-allowed opacity-70"
         />
       </div>
 
       {/* State */}
       <div>
-        <label className="block text-sm text-gray-400 mb-2">State</label>
+        <label className="block text-sm text-muted-foreground mb-2">State</label>
         <Input
           value={value.state || value.city || ''}
           onChange={(e) => handleChange('state', e.target.value)}
           placeholder="Enter state"
-          className="h-12 bg-[#1a1a24] border-gray-800 text-white rounded-xl placeholder:text-gray-500"
+          className="h-12 bg-secondary border-border text-foreground rounded-xl placeholder:text-muted-foreground"
         />
       </div>
 
       {/* Local Government Area */}
       <div>
-        <label className="block text-sm text-gray-400 mb-2">Local Government Area (LGA)</label>
+        <label className="block text-sm text-muted-foreground mb-2">Local Government Area (LGA)</label>
         <Input
           value={value.lga || ''}
           onChange={(e) => handleChange('lga', e.target.value)}
           placeholder="Enter LGA"
-          className="h-12 bg-[#1a1a24] border-gray-800 text-white rounded-xl placeholder:text-gray-500"
+          className="h-12 bg-secondary border-border text-foreground rounded-xl placeholder:text-muted-foreground"
         />
       </div>
 
       {/* Nearest Bus Stop */}
       <div>
-        <label className="block text-sm text-gray-400 mb-2">Nearest Bus Stop</label>
+        <label className="block text-sm text-muted-foreground mb-2">Nearest Bus Stop</label>
         <Input
           value={value.nearestBusStop || ''}
           onChange={(e) => handleChange('nearestBusStop', e.target.value)}
           placeholder="Enter nearest bus stop"
-          className="h-12 bg-[#1a1a24] border-gray-800 text-white rounded-xl placeholder:text-gray-500"
+          className="h-12 bg-secondary border-border text-foreground rounded-xl placeholder:text-muted-foreground"
         />
       </div>
     </div>

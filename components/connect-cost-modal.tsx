@@ -42,9 +42,10 @@ export function ConnectCostModal({ isOpen, onClose, onConfirm, propertyTitle, ag
         router.push(`/chat/${agentId}${propertyId ? `?propertyId=${propertyId}` : ''}`)
       }
     } else {
-      // Go to payment with selected option
+      // Go to payment with selected option, include return URL
       const option = connectOptions[selectedOption]
-      router.push(`/payment?amount=${option.price}&plan=basic&connects=${option.connects}`)
+      const returnUrl = propertyId ? `/property/${propertyId}` : '/home'
+      router.push(`/payment?amount=${option.price}&plan=basic&connects=${option.connects}&returnUrl=${encodeURIComponent(returnUrl)}`)
     }
   }
 

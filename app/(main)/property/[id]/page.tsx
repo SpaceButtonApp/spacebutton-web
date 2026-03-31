@@ -5,8 +5,9 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { 
   Bookmark, ChevronLeft, ChevronRight, Bed, Bath, 
-  Sofa, MapPin, Calendar, AlertTriangle, Users, Building2, ArrowLeft, X
+  Sofa, MapPin, Calendar, AlertTriangle, Users, Building2, ArrowLeft, X, Clock
 } from 'lucide-react'
+import { formatDistanceToNow } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import { BottomNav } from '@/components/bottom-nav'
 import { BackButton } from '@/components/back-button'
@@ -246,19 +247,32 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
           </div>
         )}
 
-        {/* Agent info */}
-        <div className="flex items-center gap-3">
-          <Image
-            src={property.agent.avatar}
-            alt={property.agent.name}
-            width={48}
-            height={48}
-            className="rounded-full"
-          />
-          <div>
-            <p className="font-semibold">{property.agent.name}</p>
-            <p className="text-sm text-muted-foreground capitalize">{property.agent.type}</p>
+        {/* Posted by info - shows the actual poster */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Image
+              src={property.agent.avatar}
+              alt={property.agent.name}
+              width={48}
+              height={48}
+              className="rounded-full"
+            />
+            <div>
+              <p className="font-semibold">{property.agent.name}</p>
+              <p className="text-sm text-muted-foreground capitalize">
+                {property.type === 'connect' 
+                  ? (property.connectRole === 'Landlord' ? 'Landlord' : 'Tenant')
+                  : property.agent.type}
+              </p>
+            </div>
           </div>
+          {/* Post time */}
+          {property.createdAt && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Clock className="w-3.5 h-3.5" />
+              <span>{formatDistanceToNow(new Date(property.createdAt), { addSuffix: true })}</span>
+            </div>
+          )}
         </div>
 
         {/* CTA Button */}
@@ -273,7 +287,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
         </Button>
       </div>
 
-      {/* Fullscreen image modal */}
+      {/* Fullscreen image/video modal */}
       {showFullScreen && property.images && property.images.length > 0 && (
         <div 
           className="fixed inset-0 z-50 bg-black flex items-center justify-center"
@@ -285,14 +299,26 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
           >
             <X className="w-5 h-5 text-white" />
           </button>
-          <div className="relative w-full h-full">
-            <Image
-              src={property.images[currentImageIndex]}
-              alt={property.title}
-              fill
-              className="object-contain"
-              onClick={(e) => e.stopPropagation()}
-            />
+          <div className="relative w-full h-full flex items-center justify-center">
+            {property.images[currentImageIndex]?.startsWith('data:video') ? (
+              <video
+                src={property.images[currentImageIndex]}
+                className="max-w-full max-h-full object-contain"
+                controls
+                autoPlay
+                loop
+                playsInline
+                onClick={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <Image
+                src={property.images[currentImageIndex]}
+                alt={property.title}
+                fill
+                className="object-contain"
+                onClick={(e) => e.stopPropagation()}
+              />
+            )}
           </div>
           {property.images.length > 1 && (
             <>

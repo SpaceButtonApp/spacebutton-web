@@ -39,7 +39,7 @@ export default function PropertyDetailScreen() {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={[styles.header, { paddingTop: insets.top + Spacing.sm }]}>
-          <BackButton fallbackUrl="/home" />
+          <BackButton fallbackUrl="/(tabs)/home" />
         </View>
         <View style={styles.notFound}>
           <Text style={[styles.notFoundText, { color: colors.foreground }]}>
@@ -67,7 +67,7 @@ export default function PropertyDetailScreen() {
       {/* Header */}
       <View style={[styles.headerOverlay, { paddingTop: insets.top + Spacing.sm }]}>
         <BackButton
-          fallbackUrl="/home"
+          fallbackUrl="/(tabs)/home"
           style={{ backgroundColor: `${colors.background}CC` }}
         />
         <TouchableOpacity

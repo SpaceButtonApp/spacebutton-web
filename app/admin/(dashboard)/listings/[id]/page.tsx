@@ -61,8 +61,9 @@ export default function AdminPropertyDetailsPage() {
 
   const handleMessageOwner = () => {
     // Navigate to user chat with the property owner
-    // Using the property owner's ID to start a chat
-    router.push(`/admin/users/chat/${property.ownerId}?propertyId=${property.id}`)
+    // Using the property owner's ID or agent ID to start a chat
+    const ownerId = property.ownerId || property.agent?.id || '1'
+    router.push(`/admin/users/chat/${ownerId}?propertyId=${property.id}`)
   }
 
   const nextImage = () => {

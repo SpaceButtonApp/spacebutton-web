@@ -35,7 +35,7 @@ export default function WalletScreen() {
           },
         ]}
       >
-        <BackButton fallbackUrl="/settings" />
+        <BackButton fallbackUrl="/(tabs)/settings" />
         <Text style={[styles.title, { color: colors.foreground }]}>My Wallet</Text>
         <View style={{ width: 40 }} />
       </View>

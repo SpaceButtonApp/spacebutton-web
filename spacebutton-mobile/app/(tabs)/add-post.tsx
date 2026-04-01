@@ -71,8 +71,18 @@ export default function AddPostScreen() {
       verified: false,
       saved: false,
       photoCount: 1,
-      agent: mockAgents[0],
+      agent: {
+        id: user?.id || 'unknown',
+        name: user?.name || 'Anonymous User',
+        avatar: user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=user',
+        type: user?.type || 'individual',
+        listings: 1,
+        closed: 0,
+        rating: 5.0,
+        online: true,
+      },
       ownerId: user?.id || 'unknown',
+      createdAt: new Date().toISOString(),
       connectRole: 'Landlord',
     });
 
@@ -95,7 +105,7 @@ export default function AddPostScreen() {
           },
         ]}
       >
-        <BackButton fallbackUrl="/home" />
+        <BackButton fallbackUrl="/(tabs)/home" />
         <Text style={[styles.title, { color: colors.foreground }]}>Post Listing</Text>
         <View style={{ width: 40 }} />
       </View>

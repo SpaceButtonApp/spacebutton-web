@@ -51,7 +51,7 @@ export default function ForgotPasswordScreen() {
       </View>
 
       <View style={[styles.header, { paddingTop: insets.top + Spacing.lg }]}>
-        <BackButton variant="light" fallbackUrl="/login" />
+        <BackButton variant="light" fallbackUrl="/(auth)/login" />
       </View>
 
       <KeyboardAvoidingView
@@ -78,7 +78,7 @@ export default function ForgotPasswordScreen() {
                 </Text>
                 <Button
                   title="Back to Login"
-                  onPress={() => router.replace('/login')}
+                  onPress={() => router.replace('/(auth)/login')}
                   fullWidth
                   size="lg"
                   style={{ marginTop: Spacing.xl }}

@@ -15,10 +15,10 @@ import { Icon } from '@/components/Icons';
 import { BorderRadius, FontSize, FontWeight, Spacing } from '@/constants/theme';
 
 const navItems = [
-  { icon: 'home', href: '/home', label: 'Home' },
-  { icon: 'search', href: '/search', label: 'Search' },
-  { icon: 'message-circle', href: '/messages', label: 'Messages' },
-  { icon: 'settings', href: '/settings', label: 'Settings' },
+  { icon: 'home', href: '/(tabs)/home', label: 'Home' },
+  { icon: 'search', href: '/(tabs)/search', label: 'Search' },
+  { icon: 'message-circle', href: '/(tabs)/messages', label: 'Messages' },
+  { icon: 'settings', href: '/(tabs)/settings', label: 'Settings' },
 ];
 
 export function BottomNav() {
@@ -31,7 +31,9 @@ export function BottomNav() {
   const unreadMessages = conversations.filter(c => c.unread > 0).length;
 
   const isActive = (href: string) => {
-    return pathname.startsWith(href);
+    // Extract the page name from the href (e.g., '/(tabs)/home' -> 'home')
+    const pageName = href.split('/').pop();
+    return pathname.includes(pageName || '');
   };
 
   return (
@@ -79,7 +81,7 @@ export function BottomNav() {
           );
         })}
         <TouchableOpacity
-          onPress={() => router.push('/add-post' as any)}
+          onPress={() => router.push('/(tabs)/add-post' as any)}
           style={styles.navItem}
         >
           <LinearGradient

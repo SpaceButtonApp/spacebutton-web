@@ -53,7 +53,7 @@ export default function ProfileScreen() {
           },
         ]}
       >
-        <BackButton fallbackUrl="/home" />
+        <BackButton fallbackUrl="/(tabs)/home" />
         <Text style={[styles.title, { color: colors.foreground }]}>Profile</Text>
         <TouchableOpacity
           onPress={() => router.push('/profile/edit' as any)}

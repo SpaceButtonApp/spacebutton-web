@@ -75,7 +75,7 @@ export default function PremiumScreen() {
           },
         ]}
       >
-        <BackButton fallbackUrl="/settings" />
+        <BackButton fallbackUrl="/(tabs)/settings" />
         <Text style={[styles.title, { color: colors.foreground }]}>Premium</Text>
         <View style={{ width: 40 }} />
       </View>

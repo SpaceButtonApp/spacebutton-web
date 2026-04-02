@@ -56,7 +56,7 @@ export default function ProfileScreen() {
         <BackButton fallbackUrl="/(tabs)/home" />
         <Text style={[styles.title, { color: colors.foreground }]}>Profile</Text>
         <TouchableOpacity
-          onPress={() => router.push('/profile/edit' as any)}
+          onPress={() => router.push('/edit-profile' as any)}
           style={[styles.editButton, { backgroundColor: colors.secondary }]}
         >
           <Icon name="edit" size={20} color={colors.foreground} />

@@ -186,7 +186,18 @@ export const useAppStore = create<AppState>()(
           user: { ...state.user, connectsRemaining: state.user.connectsRemaining - 1 }
         });
         return true;
-      }
+      },
+
+      // Conversations
+      conversations: [],
+      addConversation: (conversation) => set((state) => {
+        // Check if conversation already exists
+        const exists = state.conversations.some(c => c.id === conversation.id || c.user.id === conversation.user.id);
+        if (exists) return state;
+        return {
+          conversations: [conversation, ...state.conversations]
+        };
+      }),
     }),
     {
       name: 'spacebutton-storage',
@@ -199,6 +210,7 @@ export const useAppStore = create<AppState>()(
         closedProperties: state.closedProperties,
         notifications: state.notifications,
         properties: state.properties,
+        conversations: state.conversations,
       }),
     }
   )

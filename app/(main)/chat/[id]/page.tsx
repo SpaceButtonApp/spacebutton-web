@@ -111,7 +111,13 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col relative">
+      {/* Background gradient effects */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
+        <div className="absolute top-0 -left-40 w-80 h-80 bg-primary/5 rounded-full blur-[150px]" />
+        <div className="absolute bottom-0 -right-40 w-80 h-80 bg-primary/3 rounded-full blur-[150px]" />
+      </div>
+      
       {/* Header */}
       <div className="bg-background px-4 py-3 border-b border-border flex items-center gap-3 sticky top-0 z-40">
         <BackButton fallbackUrl="/messages" />

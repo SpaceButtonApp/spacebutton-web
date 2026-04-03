@@ -23,7 +23,8 @@ const countryCodes = [
 export default function SignupPage() {
   const router = useRouter()
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    lastName: '',
     profileType: 'individual' as 'individual' | 'agent',
     email: '',
     phone: '',
@@ -48,7 +49,8 @@ export default function SignupPage() {
     e.preventDefault()
     const newErrors: Record<string, string> = {}
     
-    if (!formData.name) newErrors.name = 'Name is required'
+    if (!formData.firstName) newErrors.firstName = 'First name is required'
+    if (!formData.lastName) newErrors.lastName = 'Last name is required'
     if (!formData.email) newErrors.email = 'Email is required'
     if (!formData.phone) newErrors.phone = 'Phone number is required'
     if (formData.phone.length < 10) newErrors.phone = 'Please enter a valid phone number'
@@ -59,9 +61,10 @@ export default function SignupPage() {
       return
     }
 
-    // Store form data with full phone number and navigate to password page
+    // Store form data with full phone number and combined name, navigate to password page
     localStorage.setItem('signupData', JSON.stringify({
       ...formData,
+      name: `${formData.firstName} ${formData.lastName}`,
       phone: `${formData.countryCode}${formData.phone}`
     }))
     router.push('/signup/password')
@@ -108,21 +111,39 @@ export default function SignupPage() {
           {/* Form Card */}
           <div className="bg-[#12121a] border border-gray-800 rounded-2xl p-6">
             <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Full Name
-                </label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Enter your name"
-                    className="w-full pl-11 pr-4 py-3 bg-[#1a1a24] border border-gray-800 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#703BF7]/50 focus:border-[#703BF7] transition-all"
-                  />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    First Name
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                    <input
+                      type="text"
+                      value={formData.firstName}
+                      onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                      placeholder="First name"
+                      className="w-full pl-11 pr-4 py-3 bg-[#1a1a24] border border-gray-800 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#703BF7]/50 focus:border-[#703BF7] transition-all"
+                    />
+                  </div>
+                  {errors.firstName && <p className="mt-2 text-sm text-red-400">{errors.firstName}</p>}
                 </div>
-                {errors.name && <p className="mt-2 text-sm text-red-400">{errors.name}</p>}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Last Name
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                    <input
+                      type="text"
+                      value={formData.lastName}
+                      onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                      placeholder="Last name"
+                      className="w-full pl-11 pr-4 py-3 bg-[#1a1a24] border border-gray-800 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-[#703BF7]/50 focus:border-[#703BF7] transition-all"
+                    />
+                  </div>
+                  {errors.lastName && <p className="mt-2 text-sm text-red-400">{errors.lastName}</p>}
+                </div>
               </div>
 
               <div>

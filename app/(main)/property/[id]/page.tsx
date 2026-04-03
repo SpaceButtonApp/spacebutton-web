@@ -356,6 +356,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
         propertyTitle={property.title}
         agentId={property.agent.id}
         propertyId={property.id}
+        isFreeConnect={property.isFreeConnect}
       />
     </div>
   )

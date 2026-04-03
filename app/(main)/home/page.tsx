@@ -38,6 +38,7 @@ export default function HomePage() {
     const type = property.listingType || property.type
     if (currentTab === 'Connect') return type === 'connect'
     if (currentTab === 'Agent') return type === 'agent'
+    if (currentTab === 'Properties') return type === 'properties'
     return false
   })
 
@@ -113,7 +114,7 @@ export default function HomePage() {
 
       {/* Content */}
       <div className="px-4 py-6 relative">
-        {currentTab === 'Shortlet' || currentTab === 'Properties' ? (
+        {currentTab === 'Shortlet' ? (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="w-24 h-24 rounded-2xl bg-card border border-border flex items-center justify-center mb-4">
               <Clock className="w-12 h-12 text-primary" />

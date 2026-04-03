@@ -60,10 +60,10 @@ export default function AdminPropertyDetailsPage() {
   }
 
   const handleMessageOwner = () => {
-    // Navigate to user chat with the property owner
-    // Using the property owner's ID or agent ID to start a chat
-    const ownerId = property.ownerId || property.agent?.id || '1'
-    router.push(`/admin/users/chat/${ownerId}?propertyId=${property.id}`)
+    // Navigate to messages page with the property owner's chat
+    // Using the property agent's ID to start a chat (like user chat does)
+    const agentId = property.agent?.id || property.ownerId || '1'
+    router.push(`/chat/${agentId}?propertyId=${property.id}`)
   }
 
   const nextImage = () => {
@@ -358,6 +358,35 @@ export default function AdminPropertyDetailsPage() {
               <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
                 <h3 className="font-semibold text-white mb-3">Description</h3>
                 <p className="text-gray-400 leading-relaxed">{property.description}</p>
+              </div>
+            )}
+
+            {/* Posted By Info */}
+            {property.agent && (
+              <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
+                <h3 className="font-semibold text-white mb-4">Posted By</h3>
+                <div className="flex items-center gap-4">
+                  <div className="relative w-14 h-14 rounded-full overflow-hidden">
+                    <Image
+                      src={property.agent.avatar}
+                      alt={property.agent.name}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <div>
+                    <p className="text-white font-medium text-lg">{property.agent.name}</p>
+                    <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium mt-1 ${
+                      property.agent.type === 'agent' 
+                        ? 'bg-blue-500/20 text-blue-400' 
+                        : property.agent.type === 'admin'
+                        ? 'bg-purple-500/20 text-purple-400'
+                        : 'bg-green-500/20 text-green-400'
+                    }`}>
+                      {property.agent.type === 'admin' ? 'Admin' : property.agent.type === 'agent' ? 'Agent' : 'Individual'}
+                    </span>
+                  </div>
+                </div>
               </div>
             )}
 

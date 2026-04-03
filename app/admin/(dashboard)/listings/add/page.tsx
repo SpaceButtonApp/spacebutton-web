@@ -18,7 +18,7 @@ export default function AdminAddPostPage() {
   const router = useRouter()
   const { addProperty } = useAppStore()
   
-  const [listingType, setListingType] = useState<'Connect' | 'Agent'>('Connect')
+  const [listingType, setListingType] = useState<'Connect' | 'Agent' | 'Property'>('Connect')
   const [connectRole, setConnectRole] = useState<'Tenant' | 'Landlord'>('Landlord')
   const [listingTitle, setListingTitle] = useState('')
   const [selectedCondition, setSelectedCondition] = useState('Rent')
@@ -150,7 +150,7 @@ export default function AdminAddPostPage() {
   }
 
   const handlePublish = () => {
-    const propertyType = listingType.toLowerCase() as 'connect' | 'agent'
+    const propertyType = listingType.toLowerCase() as 'connect' | 'agent' | 'properties'
     const propertyCondition = selectedCondition.toLowerCase() as 'rent' | 'roommate' | 'flatmate'
     
     const newProperty = {
@@ -167,8 +167,9 @@ export default function AdminAddPostPage() {
       reception: sittingRooms,
       size: bedrooms * 400,
       category: selectedCategory.toLowerCase() as 'flat' | 'self-con' | 'duplex' | 'storey' | 'penthouse',
-      type: propertyType,
-      listingType: propertyType,
+      // For Property type, use 'properties' as the type
+      type: listingType === 'Property' ? 'properties' : propertyType,
+      listingType: listingType === 'Property' ? 'properties' : propertyType,
       condition: propertyCondition,
       rating: 5.0,
       reviews: 0,
@@ -189,12 +190,17 @@ export default function AdminAddPostPage() {
         rating: 5.0,
         reviews: 0,
         type: 'admin' as const,
+        listings: 0,
+        closed: 0,
+        online: true,
       },
       ownerId: 'admin',
       verified: true,
       isVerified: true,
       isAdminPost: true,
       isFeatured: true,
+      // Property type posts are free to connect
+      isFreeConnect: listingType === 'Property',
       saved: false,
       photoCount: photos.length,
       totalPackage: parseInt(totalPackage.replace(/,/g, '') || '0'),
@@ -225,11 +231,11 @@ export default function AdminAddPostPage() {
         {/* Listing Type */}
         <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
           <h3 className="font-medium text-white mb-3">Listing Type</h3>
-          <div className="flex gap-3">
-            {['Connect', 'Agent'].map((type) => (
+          <div className="flex flex-wrap gap-3">
+            {['Connect', 'Agent', 'Property'].map((type) => (
               <button
                 key={type}
-                onClick={() => setListingType(type as 'Connect' | 'Agent')}
+                onClick={() => setListingType(type as 'Connect' | 'Agent' | 'Property')}
                 className={`px-6 py-2.5 rounded-full text-sm font-medium transition-colors ${
                   listingType === type
                     ? 'bg-[#703BF7] text-white'
@@ -240,6 +246,9 @@ export default function AdminAddPostPage() {
               </button>
             ))}
           </div>
+          {listingType === 'Property' && (
+            <p className="mt-3 text-sm text-green-400">Property listings are free to connect - no connect required for users to chat.</p>
+          )}
         </div>
 
         {/* I am section - Only visible for Connect listing type */}

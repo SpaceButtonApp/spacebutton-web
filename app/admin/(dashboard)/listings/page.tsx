@@ -156,6 +156,7 @@ export default function ListingsPage() {
                 <thead>
                   <tr className="border-b border-gray-800/50">
                     <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">Property</th>
+                    <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">Posted By</th>
                     <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">Location</th>
                     <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">Type</th>
                     <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">Price</th>
@@ -191,6 +192,33 @@ export default function ListingsPage() {
                           </div>
                         </td>
                         <td className="px-5 py-4">
+                          <div className="flex items-center gap-2">
+                            {listing.agent?.avatar && (
+                              <div className="w-8 h-8 rounded-full bg-gray-800 overflow-hidden shrink-0">
+                                <Image 
+                                  src={listing.agent.avatar} 
+                                  alt={listing.agent.name || 'User'} 
+                                  width={32} 
+                                  height={32}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            )}
+                            <div>
+                              <p className="text-sm text-white">{listing.agent?.name || 'Unknown'}</p>
+                              <span className={`text-xs ${
+                                listing.agent?.type === 'agent' 
+                                  ? 'text-blue-400' 
+                                  : listing.agent?.type === 'admin'
+                                  ? 'text-purple-400'
+                                  : 'text-green-400'
+                              }`}>
+                                {listing.agent?.type === 'admin' ? 'Admin' : listing.agent?.type === 'agent' ? 'Agent' : 'Individual'}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-5 py-4">
                           <span className="flex items-center gap-1 text-sm text-gray-400">
                             <MapPin className="w-4 h-4" />
                             {listing.location}
@@ -200,9 +228,11 @@ export default function ListingsPage() {
                           <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${
                             listing.type === 'connect' 
                               ? 'bg-purple-500/20 text-purple-400' 
+                              : listing.type === 'properties'
+                              ? 'bg-green-500/20 text-green-400'
                               : 'bg-blue-500/20 text-blue-400'
                           }`}>
-                            {listing.type === 'connect' ? 'Connect' : 'Agent'}
+                            {listing.type === 'connect' ? 'Connect' : listing.type === 'properties' ? 'Property' : 'Agent'}
                           </span>
                         </td>
                         <td className="px-5 py-4 text-sm text-white font-medium">

@@ -1,8 +1,44 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 import type { Property, Conversation, Notification } from './mock-data';
 import { mockProperties, mockConversations, mockNotifications } from './mock-data';
+
+// Create a safe storage wrapper that works on both native and web
+const createSafeStorage = () => {
+  // Check if we're running on web and if window is available
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    return {
+      getItem: (name: string) => {
+        try {
+          const value = window.localStorage.getItem(name);
+          return Promise.resolve(value);
+        } catch {
+          return Promise.resolve(null);
+        }
+      },
+      setItem: (name: string, value: string) => {
+        try {
+          window.localStorage.setItem(name, value);
+          return Promise.resolve();
+        } catch {
+          return Promise.resolve();
+        }
+      },
+      removeItem: (name: string) => {
+        try {
+          window.localStorage.removeItem(name);
+          return Promise.resolve();
+        } catch {
+          return Promise.resolve();
+        }
+      },
+    };
+  }
+  // Use AsyncStorage for native
+  return AsyncStorage;
+};
 
 interface User {
   id: string;
@@ -201,7 +237,8 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'spacebutton-storage',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => createSafeStorage()),
+      skipHydration: Platform.OS === 'web', // Skip hydration on web to avoid useLayoutEffect warning
       partialize: (state) => ({
         user: state.user,
         theme: state.theme,

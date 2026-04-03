@@ -41,10 +41,10 @@ export default function GetStartedPage() {
   return (
     <div className="min-h-screen bg-[#0a0a0f] flex flex-col">
       {/* Background gradient effects */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-        <div className="absolute top-0 -left-40 w-80 h-80 bg-[#703BF7]/10 rounded-full blur-[150px]" />
-        <div className="absolute top-40 -right-40 w-80 h-80 bg-[#703BF7]/5 rounded-full blur-[150px]" />
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#703BF7]/3 rounded-full blur-[120px]" />
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 -left-40 w-80 h-80 bg-[#703BF7]/20 rounded-full blur-[120px]" />
+        <div className="absolute top-40 -right-40 w-80 h-80 bg-[#703BF7]/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#703BF7]/5 rounded-full blur-[100px]" />
       </div>
       
       {/* Content */}

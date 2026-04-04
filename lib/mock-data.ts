@@ -11,7 +11,7 @@ export interface Property {
   type: 'connect' | 'agent' | 'shortlet' | 'properties'
   listingType?: 'connect' | 'agent' | 'shortlet' | 'properties'
   condition: 'rent' | 'roommate' | 'flatmate'
-  category: 'flat' | 'self-con' | 'duplex' | 'storey' | 'penthouse'
+  category: 'flat' | 'self-con' | 'duplex' | 'storey' | 'penthouse' | 'land' | 'house'
   beds: number
   baths: number
   reception: number
@@ -31,6 +31,12 @@ export interface Property {
   isAdminPost?: boolean
   isFreeConnect?: boolean
   createdAt?: string
+  // Property-specific fields (for Properties listing type)
+  propertyType?: 'sale' | 'lease'
+  propertyCategory?: 'land' | 'house'
+  locationCategory?: 'open' | 'estate'
+  propertySize?: number
+  buildingYear?: number
 }
 
 export interface Agent {

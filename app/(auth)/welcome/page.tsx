@@ -104,7 +104,7 @@ export default function WelcomePage() {
         location: 'Nigeria',
         walletBalance: 0,
         isPremium: false,
-        connectsRemaining: 1,
+        connectsRemaining: 3,
       })
     }
   }, [user, setUser, addRegisteredUser])
@@ -112,7 +112,7 @@ export default function WelcomePage() {
   const features = [
     { icon: Home, label: 'Find your perfect space' },
     { icon: Users, label: 'Verified property listings' },
-    { icon: Zap, label: '1 Free Connect included' },
+    { icon: Zap, label: 'N6000 connect included' },
   ]
 
   return (

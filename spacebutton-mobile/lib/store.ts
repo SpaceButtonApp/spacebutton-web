@@ -1,8 +1,44 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 import type { Property, Conversation, Notification } from './mock-data';
 import { mockProperties, mockConversations, mockNotifications } from './mock-data';
+
+// Create a safe storage wrapper that works on both native and web
+const createSafeStorage = () => {
+  // Check if we're running on web and if window is available
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    return {
+      getItem: (name: string) => {
+        try {
+          const value = window.localStorage.getItem(name);
+          return Promise.resolve(value);
+        } catch {
+          return Promise.resolve(null);
+        }
+      },
+      setItem: (name: string, value: string) => {
+        try {
+          window.localStorage.setItem(name, value);
+          return Promise.resolve();
+        } catch {
+          return Promise.resolve();
+        }
+      },
+      removeItem: (name: string) => {
+        try {
+          window.localStorage.removeItem(name);
+          return Promise.resolve();
+        } catch {
+          return Promise.resolve();
+        }
+      },
+    };
+  }
+  // Use AsyncStorage for native
+  return AsyncStorage;
+};
 
 interface User {
   id: string;
@@ -186,11 +222,23 @@ export const useAppStore = create<AppState>()(
           user: { ...state.user, connectsRemaining: state.user.connectsRemaining - 1 }
         });
         return true;
-      }
+      },
+
+      // Conversations
+      conversations: [],
+      addConversation: (conversation) => set((state) => {
+        // Check if conversation already exists
+        const exists = state.conversations.some(c => c.id === conversation.id || c.user.id === conversation.user.id);
+        if (exists) return state;
+        return {
+          conversations: [conversation, ...state.conversations]
+        };
+      }),
     }),
     {
       name: 'spacebutton-storage',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => createSafeStorage()),
+      skipHydration: Platform.OS === 'web', // Skip hydration on web to avoid useLayoutEffect warning
       partialize: (state) => ({
         user: state.user,
         theme: state.theme,
@@ -199,6 +247,7 @@ export const useAppStore = create<AppState>()(
         closedProperties: state.closedProperties,
         notifications: state.notifications,
         properties: state.properties,
+        conversations: state.conversations,
       }),
     }
   )

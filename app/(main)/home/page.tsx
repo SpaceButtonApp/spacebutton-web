@@ -38,6 +38,7 @@ export default function HomePage() {
     const type = property.listingType || property.type
     if (currentTab === 'Connect') return type === 'connect'
     if (currentTab === 'Agent') return type === 'agent'
+    if (currentTab === 'Properties') return type === 'properties'
     return false
   })
 
@@ -113,7 +114,7 @@ export default function HomePage() {
 
       {/* Content */}
       <div className="px-4 py-6 relative">
-        {currentTab === 'Shortlet' || currentTab === 'Properties' ? (
+        {currentTab === 'Shortlet' ? (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="w-24 h-24 rounded-2xl bg-card border border-border flex items-center justify-center mb-4">
               <Clock className="w-12 h-12 text-primary" />
@@ -132,12 +133,26 @@ export default function HomePage() {
             {filteredProperties.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20">
                 <div className="w-24 h-24 rounded-2xl bg-card border border-border flex items-center justify-center mb-4">
-                  <Bookmark className="w-12 h-12 text-muted-foreground" />
+                  {currentTab === 'Properties' ? (
+                    <Clock className="w-12 h-12 text-primary" />
+                  ) : (
+                    <Bookmark className="w-12 h-12 text-muted-foreground" />
+                  )}
                 </div>
-                <h2 className="text-xl font-bold text-foreground mb-2">No Listings Yet</h2>
+                <h2 className="text-xl font-bold text-foreground mb-2">
+                  {currentTab === 'Properties' ? 'Coming Soon' : 'No Listings Yet'}
+                </h2>
                 <p className="text-muted-foreground text-center max-w-xs">
-                  Be the first to post a listing in this category.
+                  {currentTab === 'Properties' 
+                    ? "We're working on bringing you amazing Property options."
+                    : 'Be the first to post a listing in this category.'}
                 </p>
+                {currentTab === 'Properties' && (
+                  <div className="flex items-center gap-2 mt-4 text-primary">
+                    <Sparkles className="w-4 h-4" />
+                    <span className="text-sm">Stay tuned for updates</span>
+                  </div>
+                )}
               </div>
             ) : (
               filteredProperties.map((property) => (

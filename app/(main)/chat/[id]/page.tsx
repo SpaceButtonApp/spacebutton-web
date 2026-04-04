@@ -7,7 +7,7 @@ import { Video, Phone, MoreVertical, Send, X, CheckSquare, MessageSquare, Star }
 import { Input } from '@/components/ui/input'
 import { BackButton } from '@/components/back-button'
 import { Button } from '@/components/ui/button'
-import { mockAgents, mockMessages } from '@/lib/mock-data'
+import { mockAgents } from '@/lib/mock-data'
 import { useAppStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
 
@@ -19,7 +19,14 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const { properties, doneDealStates, toggleDoneDeal, user, addReview, addConversation, conversations } = useAppStore()
   
   const [message, setMessage] = useState('')
-  const [messages, setMessages] = useState(mockMessages)
+  const [messages, setMessages] = useState<Array<{
+    id: string
+    senderId: string
+    receiverId: string
+    content: string
+    timestamp: Date
+    isOwn: boolean
+  }>>([])
   const [showMenu, setShowMenu] = useState(false)
   const [showFeedback, setShowFeedback] = useState(false)
   const [showDoneDealInfo, setShowDoneDealInfo] = useState(true)
@@ -27,7 +34,13 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [rating, setRating] = useState(0)
   const [feedback, setFeedback] = useState('')
   
-  const agent = mockAgents.find((a) => a.id === id) || mockAgents[0]
+  // Get property details from propertyId param or find first property by this agent
+  const property = propertyId 
+    ? properties.find((p) => p.id === propertyId) 
+    : properties.find((p) => p.agent?.id === id) || properties[0]
+  
+  // Use the property agent if available, otherwise fallback to mockAgents
+  const agent = property?.agent || mockAgents.find((a) => a.id === id) || mockAgents[0]
   
   // Add this conversation to the messages list when chat is opened
   useEffect(() => {
@@ -45,11 +58,6 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       }
     }
   }, [agent, propertyId, conversations, addConversation])
-  
-  // Get property details from propertyId param or find first property by this agent
-  const property = propertyId 
-    ? properties.find((p) => p.id === propertyId) 
-    : properties.find((p) => p.agent?.id === id) || properties[0]
 
   // Create a unique chat ID for this conversation
   const chatId = `${id}-${propertyId || 'default'}`

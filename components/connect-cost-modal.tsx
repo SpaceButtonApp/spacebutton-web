@@ -13,6 +13,7 @@ interface ConnectCostModalProps {
   propertyTitle: string
   agentId?: string
   propertyId?: string
+  isFreeConnect?: boolean
 }
 
 const connectOptions = [
@@ -22,7 +23,7 @@ const connectOptions = [
   { connects: 1, price: 2000, label: "1 Connect" },
 ]
 
-export function ConnectCostModal({ isOpen, onClose, onConfirm, propertyTitle, agentId, propertyId }: ConnectCostModalProps) {
+export function ConnectCostModal({ isOpen, onClose, onConfirm, propertyTitle, agentId, propertyId, isFreeConnect }: ConnectCostModalProps) {
   const router = useRouter()
   const user = useAppStore((state) => state.user)
   const deductConnect = useAppStore((state) => state.deductConnect)
@@ -31,15 +32,27 @@ export function ConnectCostModal({ isOpen, onClose, onConfirm, propertyTitle, ag
 
   if (!isOpen) return null
 
-  const hasEnoughConnects = connectsRemaining > 0
+  // For free connect properties, user can chat without using connects
+  const hasEnoughConnects = isFreeConnect || connectsRemaining > 0
 
   const handlePrimaryAction = () => {
-    if (hasEnoughConnects) {
+    if (isFreeConnect) {
+      // Free connect - no deduction needed
+      onConfirm()
+      if (propertyId) {
+        router.push(`/chat/${agentId || 'new'}?propertyId=${propertyId}`)
+      } else if (agentId) {
+        router.push(`/chat/${agentId}`)
+      }
+    } else if (hasEnoughConnects) {
       // Deduct 1 connect when user clicks Chat
       deductConnect()
       onConfirm()
-      if (agentId) {
-        router.push(`/chat/${agentId}${propertyId ? `?propertyId=${propertyId}` : ''}`)
+      // Navigate to chat with property owner using propertyId to get the correct agent
+      if (propertyId) {
+        router.push(`/chat/${agentId || 'new'}?propertyId=${propertyId}`)
+      } else if (agentId) {
+        router.push(`/chat/${agentId}`)
       }
     } else {
       // Go to payment with selected option, include return URL
@@ -54,7 +67,22 @@ export function ConnectCostModal({ isOpen, onClose, onConfirm, propertyTitle, ag
       <div className="mx-4 w-full max-w-sm rounded-t-2xl sm:rounded-2xl bg-background p-6 shadow-lg">
         <h2 className="mb-2 text-2xl font-bold text-center">Connect with Owner</h2>
         
-        {hasEnoughConnects ? (
+        {isFreeConnect ? (
+          <>
+            <div className="mb-6 rounded-lg bg-success/10 border border-success/20 p-4 text-center">
+              <p className="text-success font-bold mb-2">FREE Connection!</p>
+              <p className="text-sm text-muted-foreground">
+                This is a verified SpaceButton property. You can chat for free!
+              </p>
+            </div>
+
+            <div className="mb-4 rounded-lg bg-primary/10 border border-primary/20 p-3">
+              <p className="text-sm text-primary font-medium">
+                Click on the chat button to start chat with SpaceButton admin.
+              </p>
+            </div>
+          </>
+        ) : hasEnoughConnects ? (
           <>
             <div className="mb-6 rounded-lg bg-muted p-4 text-center">
               <p className="text-foreground mb-2">

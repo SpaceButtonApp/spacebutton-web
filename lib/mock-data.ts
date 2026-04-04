@@ -9,8 +9,9 @@ export interface Property {
   images: string[]
   videoUrl?: string
   type: 'connect' | 'agent' | 'shortlet' | 'properties'
+  listingType?: 'connect' | 'agent' | 'shortlet' | 'properties'
   condition: 'rent' | 'roommate' | 'flatmate'
-  category: 'flat' | 'self-con' | 'duplex' | 'storey' | 'penthouse'
+  category: 'flat' | 'self-con' | 'duplex' | 'storey' | 'penthouse' | 'land' | 'house'
   beds: number
   baths: number
   reception: number
@@ -28,7 +29,14 @@ export interface Property {
   landlordPresence?: 'stays' | 'not-stays'
   balconies?: number
   isAdminPost?: boolean
+  isFreeConnect?: boolean
   createdAt?: string
+  // Property-specific fields (for Properties listing type)
+  propertyType?: 'sale' | 'lease'
+  propertyCategory?: 'land' | 'house'
+  locationCategory?: 'open' | 'estate'
+  propertySize?: number
+  buildingYear?: number
 }
 
 export interface Agent {
@@ -271,25 +279,12 @@ export const mockProperties: Property[] = [
 ]
 
 export const mockConversations: Conversation[] = [
+  // Keeping one mock conversation for notification indication purposes
   {
     id: '1',
     user: mockAgents[1],
-    lastMessage: "Hello, I'm interested in an apartment located in Castro, 3 bedrooms on sale.",
+    lastMessage: "Welcome to SpaceButton! Start chatting with property owners.",
     timestamp: new Date('2024-01-15T10:30:00'),
-    unread: 2,
-  },
-  {
-    id: '2',
-    user: mockAgents[2],
-    lastMessage: 'Can we schedule a viewing for tomorrow?',
-    timestamp: new Date('2024-01-14T15:45:00'),
-    unread: 0,
-  },
-  {
-    id: '3',
-    user: mockAgents[0],
-    lastMessage: 'The apartment is still available.',
-    timestamp: new Date('2024-01-13T09:20:00'),
     unread: 1,
   },
 ]

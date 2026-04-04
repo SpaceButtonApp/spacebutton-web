@@ -35,7 +35,7 @@ export default function NotificationsScreen() {
           },
         ]}
       >
-        <BackButton fallbackUrl="/settings" />
+        <BackButton fallbackUrl="/(tabs)/settings" />
         <Text style={[styles.title, { color: colors.foreground }]}>Notifications</Text>
         {unreadCount > 0 && (
           <TouchableOpacity onPress={markAllNotificationsRead}>

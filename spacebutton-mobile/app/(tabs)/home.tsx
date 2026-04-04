@@ -76,7 +76,7 @@ export default function HomeScreen() {
         {/* Top Row */}
         <View style={styles.headerRow}>
           <TouchableOpacity
-            onPress={() => router.push('/profile')}
+            onPress={() => router.push('/(tabs)/profile')}
             style={[styles.profileButton, { borderColor: `${colors.primary}50` }]}
           >
             <Image
@@ -97,7 +97,7 @@ export default function HomeScreen() {
 
           <View style={styles.headerActions}>
             <TouchableOpacity
-              onPress={() => router.push('/wallet')}
+              onPress={() => router.push('/(tabs)/wallet')}
               style={[styles.connectButton, { backgroundColor: colors.secondary }]}
             >
               <Text style={[styles.connectText, { color: colors.primary }]}>
@@ -105,7 +105,7 @@ export default function HomeScreen() {
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => router.push('/saved')}
+              onPress={() => router.push('/(tabs)/saved')}
               style={styles.savedButton}
             >
               <LinearGradient

@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { Camera, Grid3X3, Bookmark, MapPin, Users, Building2, CheckCircle2 } from 'lucide-react'
+import { Camera, Grid3X3, Bookmark, MapPin, Users, Building2, CheckCircle2, Home, DollarSign, Maximize } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { formatPrice, type Property } from '@/lib/mock-data'
 import { cn } from '@/lib/utils'
@@ -16,6 +16,9 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
   const router = useRouter()
   const { savedProperties, toggleSaveProperty } = useAppStore()
   const isSaved = savedProperties.includes(property.id)
+  
+  // Check if this is a Properties listing type
+  const isPropertyType = property.type === 'properties' || property.listingType === 'properties'
 
   const handleSave = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -85,20 +88,39 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
           </div>
 
           <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Users className="w-3 h-3" />
-              <span>{property.type === 'connect' 
-                ? (property.connectRole === 'Landlord' ? 'Landlord' : 'Tenant') 
-                : 'Agent'}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Users className="w-3 h-3" />
-              <span className="capitalize">{property.condition || 'rent'}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Building2 className="w-3 h-3" />
-              <span className="capitalize">{property.category}</span>
-            </div>
+            {isPropertyType ? (
+              <>
+                <div className="flex items-center gap-1">
+                  <Home className="w-3 h-3" />
+                  <span className="capitalize">{property.propertyCategory || property.category}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <DollarSign className="w-3 h-3" />
+                  <span className="capitalize">{property.propertyType || 'Sale'}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Grid3X3 className="w-3 h-3" />
+                  <span className="capitalize">{property.locationCategory || 'Estate'}</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center gap-1">
+                  <Users className="w-3 h-3" />
+                  <span>{property.type === 'connect' 
+                    ? (property.connectRole === 'Landlord' ? 'Landlord' : 'Tenant') 
+                    : 'Agent'}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Users className="w-3 h-3" />
+                  <span className="capitalize">{property.condition || 'rent'}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Building2 className="w-3 h-3" />
+                  <span className="capitalize">{property.category}</span>
+                </div>
+              </>
+            )}
           </div>
 
           <p className="text-[#703BF7] font-bold mt-2">{formatPrice(property.price, property.rentPeriod)}</p>
@@ -167,22 +189,44 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
           <span className="text-sm">{property.location}</span>
         </div>
 
-        <div className="flex items-center gap-4 mb-4 text-sm text-muted-foreground">
-          <div className="flex items-center gap-1">
-            <Users className="w-4 h-4" />
-            <span>{property.type === 'connect' 
-              ? (property.connectRole === 'Landlord' ? 'Landlord' : 'Tenant') 
-              : 'Agent'}</span>
+        {/* Different info display for Properties vs Connect/Agent */}
+        {isPropertyType ? (
+          <div className="flex items-center gap-4 mb-4 text-sm text-muted-foreground flex-wrap">
+            <div className="flex items-center gap-1">
+              <Home className="w-4 h-4" />
+              <span className="capitalize">{property.propertyCategory || property.category}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <DollarSign className="w-4 h-4" />
+              <span className="capitalize">{property.propertyType || 'Sale'}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Grid3X3 className="w-4 h-4" />
+              <span className="capitalize">{property.locationCategory || 'Estate'}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Maximize className="w-4 h-4" />
+              <span>{property.propertySize?.toLocaleString() || '0'} sqft</span>
+            </div>
           </div>
-          <div className="flex items-center gap-1">
-            <Users className="w-4 h-4" />
-            <span className="capitalize">{property.condition || 'rent'}</span>
+        ) : (
+          <div className="flex items-center gap-4 mb-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Users className="w-4 h-4" />
+              <span>{property.type === 'connect' 
+                ? (property.connectRole === 'Landlord' ? 'Landlord' : 'Tenant') 
+                : 'Agent'}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Users className="w-4 h-4" />
+              <span className="capitalize">{property.condition || 'rent'}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Building2 className="w-4 h-4" />
+              <span className="capitalize">{property.category}</span>
+            </div>
           </div>
-          <div className="flex items-center gap-1">
-            <Building2 className="w-4 h-4" />
-            <span className="capitalize">{property.category}</span>
-          </div>
-        </div>
+        )}
 
         <div className="flex items-center justify-between">
           <p className="text-[#703BF7] font-bold text-xl">{formatPrice(property.price, property.rentPeriod)}</p>

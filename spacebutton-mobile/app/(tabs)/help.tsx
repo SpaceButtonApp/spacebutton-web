@@ -83,7 +83,7 @@ export default function HelpScreen() {
           },
         ]}
       >
-        <BackButton fallbackUrl="/settings" />
+        <BackButton fallbackUrl="/(tabs)/settings" />
         <Text style={[styles.title, { color: colors.foreground }]}>Help & Support</Text>
         <View style={{ width: 40 }} />
       </View>

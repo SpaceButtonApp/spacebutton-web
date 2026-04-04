@@ -90,7 +90,7 @@ export default function SignupScreen() {
       connectsRemaining: 0,
     });
 
-    router.replace('/home');
+    router.replace('/(tabs)/home');
   };
 
   return (
@@ -110,7 +110,7 @@ export default function SignupScreen() {
       <View style={[styles.progressContainer, { paddingTop: insets.top + Spacing.lg }]}>
         <BackButton 
           variant="light" 
-          fallbackUrl="/welcome"
+          fallbackUrl="/(auth)/welcome"
           style={{ position: 'absolute', left: Spacing.lg, top: insets.top + Spacing.lg }}
         />
         <View style={styles.progressBar}>
@@ -306,7 +306,7 @@ export default function SignupScreen() {
 
             <View style={styles.loginRow}>
               <Text style={styles.loginText}>Already have an account? </Text>
-              <TouchableOpacity onPress={() => router.push('/login')}>
+              <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
                 <Text style={styles.loginLink}>Sign In</Text>
               </TouchableOpacity>
             </View>

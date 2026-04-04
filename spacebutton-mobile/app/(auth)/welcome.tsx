@@ -79,13 +79,13 @@ export default function WelcomeScreen() {
         <View style={[styles.buttons, { paddingBottom: insets.bottom + 20 }]}>
           <Button
             title="Create Account"
-            onPress={() => router.push('/signup')}
+            onPress={() => router.push('/(auth)/signup')}
             fullWidth
             size="lg"
           />
           <Button
             title="Sign In"
-            onPress={() => router.push('/login')}
+            onPress={() => router.push('/(auth)/login')}
             variant="outline"
             fullWidth
             size="lg"

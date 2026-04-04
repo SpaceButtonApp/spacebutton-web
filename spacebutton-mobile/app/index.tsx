@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,9 +9,13 @@ const LOGO_URL = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%2
 
 export default function SplashScreen() {
   const router = useRouter();
-  const { user } = useAppStore();
-  const fadeAnim = new Animated.Value(0);
-  const scaleAnim = new Animated.Value(0.8);
+  const user = useAppStore((state) => state.user);
+  const [isReady, setIsReady] = useState(false);
+  
+  // Use useRef to persist animation values
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+  const loaderAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     // Animate logo
@@ -28,17 +32,44 @@ export default function SplashScreen() {
       }),
     ]).start();
 
-    // Navigate after delay
+    // Animate loader bar
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(loaderAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(loaderAnim, {
+          toValue: 0,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+
+    // Set ready after a short delay to allow store hydration
+    const readyTimer = setTimeout(() => {
+      setIsReady(true);
+    }, 500);
+
+    return () => clearTimeout(readyTimer);
+  }, [fadeAnim, scaleAnim, loaderAnim]);
+
+  useEffect(() => {
+    // Navigate after delay once ready
+    if (!isReady) return;
+    
     const timer = setTimeout(() => {
       if (user?.isLoggedIn) {
-        router.replace('/home');
+        router.replace('/(tabs)/home');
       } else {
-        router.replace('/welcome');
+        router.replace('/(auth)/welcome');
       }
-    }, 2000);
+    }, 1500);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [isReady, user, router]);
 
   return (
     <View style={styles.container}>
@@ -73,7 +104,19 @@ export default function SplashScreen() {
 
       <Animated.View style={[styles.footer, { opacity: fadeAnim }]}>
         <View style={styles.loader}>
-          <View style={styles.loaderBar} />
+          <Animated.View 
+            style={[
+              styles.loaderBar,
+              {
+                transform: [{
+                  translateX: loaderAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [-60, 60],
+                  }),
+                }],
+              },
+            ]} 
+          />
         </View>
       </Animated.View>
     </View>

@@ -34,7 +34,7 @@ export default function SavedScreen() {
           },
         ]}
       >
-        <BackButton fallbackUrl="/home" />
+        <BackButton fallbackUrl="/(tabs)/home" />
         <Text style={[styles.title, { color: colors.foreground }]}>Saved</Text>
         <View style={{ width: 40 }} />
       </View>

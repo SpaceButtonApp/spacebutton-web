@@ -3,18 +3,39 @@
 import { useState, useEffect, use, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { ChevronLeft, MessageSquare, MicOff, Phone } from 'lucide-react'
+import { ChevronLeft, MessageSquare, MicOff, Phone, Video } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { mockConversations } from '@/lib/mock-data'
+import { mockAgents, mockConversations } from '@/lib/mock-data'
+import { useAppStore } from '@/lib/store'
 
 export default function VideoCallPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
   const [callTime, setCallTime] = useState(0)
   const [isMuted, setIsMuted] = useState(false)
+  const [isVideoOff, setIsVideoOff] = useState(false)
+  const { properties, conversations } = useAppStore()
 
-  const conversation = useMemo(() => mockConversations.find((c) => c.id === id), [id])
-  const callerName = conversation?.name || 'Unknown'
+  // Find the user/agent by ID - check store conversations, mock conversations, properties, and agents
+  const caller = useMemo(() => {
+    // First check store conversations
+    const storeConv = conversations.find((c) => c.user?.id === id)
+    if (storeConv?.user) return storeConv.user
+    
+    // Check mock conversations
+    const mockConv = mockConversations.find((c) => c.user?.id === id)
+    if (mockConv?.user) return mockConv.user
+    
+    // Check properties for agent
+    const property = properties.find((p) => p.agent?.id === id)
+    if (property?.agent) return property.agent
+    
+    // Finally check mock agents
+    return mockAgents.find((a) => a.id === id)
+  }, [id, conversations, properties])
+  
+  const callerName = caller?.name || 'Unknown'
+  const callerAvatar = caller?.avatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -33,10 +54,10 @@ export default function VideoCallPage({ params }: { params: Promise<{ id: string
     router.back()
   }
 
-  if (!conversation) {
+  if (!caller) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background">
-        <p className="text-muted-foreground">Conversation not found</p>
+        <p className="text-muted-foreground">User not found</p>
         <Button variant="outline" className="mt-4" onClick={() => router.back()}>
           Go Back
         </Button>
@@ -91,7 +112,10 @@ export default function VideoCallPage({ params }: { params: Promise<{ id: string
       {/* Controls */}
       <div className="relative z-10 px-4 pb-8">
         <div className="mx-auto mb-4 flex max-w-xs items-center justify-center gap-6 rounded-full bg-white/90 p-4">
-          <button className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+          <button 
+            onClick={() => router.push(`/chat/${id}`)}
+            className="flex h-14 w-14 items-center justify-center rounded-full bg-muted"
+          >
             <MessageSquare className="h-6 w-6" />
           </button>
           <button
@@ -102,8 +126,13 @@ export default function VideoCallPage({ params }: { params: Promise<{ id: string
           >
             <MicOff className="h-6 w-6" />
           </button>
-          <button className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
-            <Phone className="h-6 w-6" />
+          <button 
+            onClick={() => setIsVideoOff(!isVideoOff)}
+            className={`flex h-14 w-14 items-center justify-center rounded-full ${
+              isVideoOff ? 'bg-primary text-primary-foreground' : 'bg-muted'
+            }`}
+          >
+            <Video className="h-6 w-6" />
           </button>
         </div>
 

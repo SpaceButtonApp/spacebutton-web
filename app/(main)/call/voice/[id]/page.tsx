@@ -6,7 +6,8 @@ import Image from 'next/image'
 import { ChevronLeft, MessageSquare, Volume2, MicOff, Video, Phone, PhoneOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { BottomNav } from '@/components/bottom-nav'
-import { mockConversations } from '@/lib/mock-data'
+import { mockAgents, mockConversations } from '@/lib/mock-data'
+import { useAppStore } from '@/lib/store'
 
 type CallState = 'calling' | 'ringing' | 'ongoing'
 
@@ -20,8 +21,25 @@ export default function VoiceCallPage({ params }: { params: Promise<{ id: string
   const [callTime, setCallTime] = useState(0)
   const [isMuted, setIsMuted] = useState(false)
   const [isSpeakerOn, setIsSpeakerOn] = useState(false)
+  const { properties, conversations } = useAppStore()
 
-  const conversation = useMemo(() => mockConversations.find((c) => c.id === id), [id])
+  // Find the user/agent by ID - check store conversations, mock conversations, properties, and agents
+  const caller = useMemo(() => {
+    // First check store conversations
+    const storeConv = conversations.find((c) => c.user?.id === id)
+    if (storeConv?.user) return storeConv.user
+    
+    // Check mock conversations
+    const mockConv = mockConversations.find((c) => c.user?.id === id)
+    if (mockConv?.user) return mockConv.user
+    
+    // Check properties for agent
+    const property = properties.find((p) => p.agent?.id === id)
+    if (property?.agent) return property.agent
+    
+    // Finally check mock agents
+    return mockAgents.find((a) => a.id === id)
+  }, [id, conversations, properties])
 
   useEffect(() => {
     if (callState === 'calling') {
@@ -51,14 +69,14 @@ export default function VoiceCallPage({ params }: { params: Promise<{ id: string
     router.back()
   }
 
-  // Use safe values if conversation is not found
-  const callerName = conversation?.name || 'Unknown'
-  const callerAvatar = conversation?.avatar || DEFAULT_AVATAR
+  // Use safe values if caller is not found
+  const callerName = caller?.name || 'Unknown'
+  const callerAvatar = caller?.avatar || DEFAULT_AVATAR
 
-  if (!conversation) {
+  if (!caller) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background">
-        <p className="text-muted-foreground">Conversation not found</p>
+        <p className="text-muted-foreground">User not found</p>
         <Button variant="outline" className="mt-4" onClick={() => router.back()}>
           Go Back
         </Button>
@@ -147,8 +165,8 @@ export default function VoiceCallPage({ params }: { params: Promise<{ id: string
         <div className="relative mb-6 h-48 w-48">
           <div className="absolute inset-0 animate-pulse rounded-full bg-primary/20" />
           <Image
-            src={conversation.avatar}
-            alt={conversation.name}
+            src={callerAvatar}
+            alt={callerName}
             fill
             className="rounded-full border-4 border-white object-cover shadow-lg"
           />

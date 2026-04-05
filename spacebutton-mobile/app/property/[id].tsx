@@ -283,7 +283,7 @@ export default function PropertyDetailScreen() {
             title={user?.isPremium || (user?.connectsRemaining && user.connectsRemaining > 0) 
               ? 'Connect' 
               : 'Interested'}
-            onPress={() => router.push(`/chat/${property.agent.id}` as any)}
+            onPress={() => router.push(`/chat/${property.agent.id}?propertyId=${property.id}` as any)}
             fullWidth
             size="lg"
           />

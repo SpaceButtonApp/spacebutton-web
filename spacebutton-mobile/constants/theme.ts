@@ -4,6 +4,8 @@ export const Colors = {
     primaryForeground: '#ffffff',
     background: '#ffffff',
     foreground: '#0a0a0f',
+    text: '#0a0a0f', // Alias for foreground
+    textSecondary: '#737373', // Alias for mutedForeground
     card: '#f8f8f8',
     cardForeground: '#0a0a0f',
     border: '#e5e5e5',
@@ -23,6 +25,8 @@ export const Colors = {
     primaryForeground: '#ffffff',
     background: '#0a0a0f',
     foreground: '#ffffff',
+    text: '#ffffff', // Alias for foreground
+    textSecondary: '#a1a1aa', // Alias for mutedForeground
     card: '#12121a',
     cardForeground: '#ffffff',
     border: '#27272a',

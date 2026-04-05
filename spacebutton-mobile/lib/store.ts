@@ -225,11 +225,21 @@ export const useAppStore = create<AppState>()(
       },
 
       // Conversations
-      conversations: [],
+      conversations: mockConversations,
       addConversation: (conversation) => set((state) => {
-        // Check if conversation already exists
-        const exists = state.conversations.some(c => c.id === conversation.id || c.user.id === conversation.user.id);
-        if (exists) return state;
+        // Check if conversation already exists by user id
+        const existingIndex = state.conversations.findIndex(c => c.user.id === conversation.user.id);
+        if (existingIndex !== -1) {
+          // Update existing conversation with new message
+          const updatedConversations = [...state.conversations];
+          updatedConversations[existingIndex] = {
+            ...updatedConversations[existingIndex],
+            lastMessage: conversation.lastMessage,
+            timestamp: conversation.timestamp,
+          };
+          return { conversations: updatedConversations };
+        }
+        // Add new conversation
         return {
           conversations: [conversation, ...state.conversations]
         };

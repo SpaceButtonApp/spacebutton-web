@@ -34,6 +34,9 @@ export default function PropertyDetailScreen() {
 
   const property = properties.find((p) => p.id === id);
   const isSaved = savedProperties.includes(id || '');
+  
+  // Check if this is a Properties listing type
+  const isPropertyType = property?.type === 'properties' || property?.listingType === 'properties';
 
   if (!property) {
     return (
@@ -166,56 +169,113 @@ export default function PropertyDetailScreen() {
             </View>
           </View>
 
-          {/* Tags */}
-          <View style={styles.tagsRow}>
-            <View style={[styles.tag, { backgroundColor: colors.secondary }]}>
-              <Icon name="users" size={14} color={colors.mutedForeground} />
-              <Text style={[styles.tagText, { color: colors.mutedForeground }]}>
-                {property.type === 'connect' 
-                  ? (property.connectRole === 'Landlord' ? 'Landlord' : 'Individual') 
-                  : 'Agent'}
-              </Text>
+          {/* Tags - Different for Property type */}
+          {isPropertyType ? (
+            <View style={styles.tagsRow}>
+              <View style={[styles.tag, { backgroundColor: colors.secondary }]}>
+                <Icon name="building" size={14} color={colors.mutedForeground} />
+                <Text style={[styles.tagText, { color: colors.mutedForeground }]}>
+                  {property.propertyCategory || property.category}
+                </Text>
+              </View>
+              <View style={[styles.tag, { backgroundColor: colors.secondary }]}>
+                <Icon name="dollar-sign" size={14} color={colors.mutedForeground} />
+                <Text style={[styles.tagText, { color: colors.mutedForeground }]}>
+                  {property.propertyType || 'Sale'}
+                </Text>
+              </View>
+              <View style={[styles.tag, { backgroundColor: colors.secondary }]}>
+                <Icon name="grid" size={14} color={colors.mutedForeground} />
+                <Text style={[styles.tagText, { color: colors.mutedForeground }]}>
+                  {property.locationCategory || 'Estate'}
+                </Text>
+              </View>
+              {property.propertySize && (
+                <View style={[styles.tag, { backgroundColor: colors.secondary }]}>
+                  <Icon name="maximize" size={14} color={colors.mutedForeground} />
+                  <Text style={[styles.tagText, { color: colors.mutedForeground }]}>
+                    {property.propertySize.toLocaleString()} sqft
+                  </Text>
+                </View>
+              )}
             </View>
-            <View style={[styles.tag, { backgroundColor: colors.secondary }]}>
-              <Icon name="users" size={14} color={colors.mutedForeground} />
-              <Text style={[styles.tagText, { color: colors.mutedForeground }]}>
-                {property.condition}
-              </Text>
+          ) : (
+            <View style={styles.tagsRow}>
+              <View style={[styles.tag, { backgroundColor: colors.secondary }]}>
+                <Icon name="users" size={14} color={colors.mutedForeground} />
+                <Text style={[styles.tagText, { color: colors.mutedForeground }]}>
+                  {property.type === 'connect' 
+                    ? (property.connectRole === 'Landlord' ? 'Landlord' : 'Individual') 
+                    : 'Agent'}
+                </Text>
+              </View>
+              <View style={[styles.tag, { backgroundColor: colors.secondary }]}>
+                <Icon name="users" size={14} color={colors.mutedForeground} />
+                <Text style={[styles.tagText, { color: colors.mutedForeground }]}>
+                  {property.condition}
+                </Text>
+              </View>
+              <View style={[styles.tag, { backgroundColor: colors.secondary }]}>
+                <Icon name="building" size={14} color={colors.mutedForeground} />
+                <Text style={[styles.tagText, { color: colors.mutedForeground }]}>
+                  {property.category}
+                </Text>
+              </View>
             </View>
-            <View style={[styles.tag, { backgroundColor: colors.secondary }]}>
-              <Icon name="building" size={14} color={colors.mutedForeground} />
-              <Text style={[styles.tagText, { color: colors.mutedForeground }]}>
-                {property.category}
-              </Text>
-            </View>
-          </View>
+          )}
 
-          {/* Room Details */}
-          <View style={styles.roomDetails}>
-            <View style={[styles.roomItem, { backgroundColor: colors.secondary }]}>
-              <Icon name="bed" size={24} color={colors.mutedForeground} />
-              <Text style={[styles.roomValue, { color: colors.foreground }]}>
-                {property.beds} Beds
-              </Text>
+          {/* Room Details - Show for Connect/Agent or Property type with House category */}
+          {(!isPropertyType || (isPropertyType && (property.propertyCategory === 'house' || property.category === 'house'))) && property.beds > 0 && (
+            <View style={styles.roomDetails}>
+              <View style={[styles.roomItem, { backgroundColor: colors.secondary }]}>
+                <Icon name="bed" size={24} color={colors.mutedForeground} />
+                <Text style={[styles.roomValue, { color: colors.foreground }]}>
+                  {property.beds} Beds
+                </Text>
+              </View>
+              <View style={[styles.roomItem, { backgroundColor: colors.secondary }]}>
+                <Icon name="bath" size={24} color={colors.mutedForeground} />
+                <Text style={[styles.roomValue, { color: colors.foreground }]}>
+                  {property.baths} Bath
+                </Text>
+              </View>
+              <View style={[styles.roomItem, { backgroundColor: colors.secondary }]}>
+                <Icon name="sofa" size={24} color={colors.mutedForeground} />
+                <Text style={[styles.roomValue, { color: colors.foreground }]}>
+                  {property.reception} Reception
+                </Text>
+              </View>
             </View>
-            <View style={[styles.roomItem, { backgroundColor: colors.secondary }]}>
-              <Icon name="bath" size={24} color={colors.mutedForeground} />
-              <Text style={[styles.roomValue, { color: colors.foreground }]}>
-                {property.baths} Bath
-              </Text>
-            </View>
-            <View style={[styles.roomItem, { backgroundColor: colors.secondary }]}>
-              <Icon name="sofa" size={24} color={colors.mutedForeground} />
-              <Text style={[styles.roomValue, { color: colors.foreground }]}>
-                {property.reception} Reception
-              </Text>
-            </View>
-          </View>
+          )}
 
-          {/* Features */}
+          {/* Property Size for Property type */}
+          {isPropertyType && property.propertySize && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+                Property Size
+              </Text>
+              <Text style={[styles.description, { color: colors.mutedForeground }]}>
+                {property.propertySize.toLocaleString()} sqft
+              </Text>
+            </View>
+          )}
+
+          {/* Building Year for Property type */}
+          {isPropertyType && property.buildingYear && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+                Building Year
+              </Text>
+              <Text style={[styles.description, { color: colors.mutedForeground }]}>
+                {property.buildingYear}
+              </Text>
+            </View>
+          )}
+
+          {/* Features / Environment & Facilities */}
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-              Features
+              {isPropertyType ? 'Environment / Facilities' : 'Features'}
             </Text>
             {property.features.map((feature, index) => (
               <View key={index} style={styles.featureItem}>
@@ -230,7 +290,7 @@ export default function PropertyDetailScreen() {
           {/* Description */}
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-              Description
+              {isPropertyType ? 'Additional Description' : 'Description'}
             </Text>
             <Text style={[styles.description, { color: colors.mutedForeground }]}>
               {property.description}

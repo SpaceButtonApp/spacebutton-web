@@ -26,6 +26,9 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
   const { colors } = useTheme();
   const { savedProperties, toggleSaveProperty } = useAppStore();
   const isSaved = savedProperties.includes(property.id);
+  
+  // Check if this is a Properties listing type
+  const isPropertyType = property.type === 'properties' || property.listingType === 'properties';
 
   const handlePress = () => {
     router.push(`/property/${property.id}`);
@@ -67,20 +70,39 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
             </Text>
           </View>
           <View style={styles.tagsRow}>
-            <View style={[styles.tag, { backgroundColor: colors.secondary }]}>
-              <Icon name="users" size={12} color={colors.mutedForeground} />
-              <Text style={[styles.tagText, { color: colors.mutedForeground }]}>
-                {property.type === 'connect' 
-                  ? (property.connectRole === 'Landlord' ? 'Landlord' : 'Tenant') 
-                  : 'Agent'}
-              </Text>
-            </View>
-            <View style={[styles.tag, { backgroundColor: colors.secondary }]}>
-              <Icon name="building" size={12} color={colors.mutedForeground} />
-              <Text style={[styles.tagText, { color: colors.mutedForeground }]}>
-                {property.category}
-              </Text>
-            </View>
+            {isPropertyType ? (
+              <>
+                <View style={[styles.tag, { backgroundColor: colors.secondary }]}>
+                  <Icon name="building" size={12} color={colors.mutedForeground} />
+                  <Text style={[styles.tagText, { color: colors.mutedForeground }]}>
+                    {property.propertyCategory || property.category}
+                  </Text>
+                </View>
+                <View style={[styles.tag, { backgroundColor: colors.secondary }]}>
+                  <Icon name="dollar-sign" size={12} color={colors.mutedForeground} />
+                  <Text style={[styles.tagText, { color: colors.mutedForeground }]}>
+                    {property.propertyType || 'Sale'}
+                  </Text>
+                </View>
+              </>
+            ) : (
+              <>
+                <View style={[styles.tag, { backgroundColor: colors.secondary }]}>
+                  <Icon name="users" size={12} color={colors.mutedForeground} />
+                  <Text style={[styles.tagText, { color: colors.mutedForeground }]}>
+                    {property.type === 'connect' 
+                      ? (property.connectRole === 'Landlord' ? 'Landlord' : 'Tenant') 
+                      : 'Agent'}
+                  </Text>
+                </View>
+                <View style={[styles.tag, { backgroundColor: colors.secondary }]}>
+                  <Icon name="building" size={12} color={colors.mutedForeground} />
+                  <Text style={[styles.tagText, { color: colors.mutedForeground }]}>
+                    {property.category}
+                  </Text>
+                </View>
+              </>
+            )}
           </View>
           <Text style={[styles.price, { color: colors.primary }]}>
             {formatPrice(property.price, property.rentPeriod)}
@@ -134,28 +156,51 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
           <Icon name="map-pin" size={14} color={colors.primary} />
           <Text style={[styles.location, { color: colors.mutedForeground }]}>{property.location}</Text>
         </View>
-        <View style={styles.detailsRow}>
-          <View style={styles.detailItem}>
-            <Icon name="users" size={14} color={colors.mutedForeground} />
-            <Text style={[styles.detailText, { color: colors.mutedForeground }]}>
-              {property.type === 'connect' 
-                ? (property.connectRole === 'Landlord' ? 'Landlord' : 'Tenant') 
-                : 'Agent'}
-            </Text>
+        {isPropertyType ? (
+          <View style={styles.detailsRow}>
+            <View style={styles.detailItem}>
+              <Icon name="building" size={14} color={colors.mutedForeground} />
+              <Text style={[styles.detailText, { color: colors.mutedForeground }]}>
+                {property.propertyCategory || property.category}
+              </Text>
+            </View>
+            <View style={styles.detailItem}>
+              <Icon name="dollar-sign" size={14} color={colors.mutedForeground} />
+              <Text style={[styles.detailText, { color: colors.mutedForeground }]}>
+                {property.propertyType || 'Sale'}
+              </Text>
+            </View>
+            <View style={styles.detailItem}>
+              <Icon name="grid" size={14} color={colors.mutedForeground} />
+              <Text style={[styles.detailText, { color: colors.mutedForeground }]}>
+                {property.locationCategory || 'Estate'}
+              </Text>
+            </View>
           </View>
-          <View style={styles.detailItem}>
-            <Icon name="users" size={14} color={colors.mutedForeground} />
-            <Text style={[styles.detailText, { color: colors.mutedForeground }]}>
-              {property.condition}
-            </Text>
+        ) : (
+          <View style={styles.detailsRow}>
+            <View style={styles.detailItem}>
+              <Icon name="users" size={14} color={colors.mutedForeground} />
+              <Text style={[styles.detailText, { color: colors.mutedForeground }]}>
+                {property.type === 'connect' 
+                  ? (property.connectRole === 'Landlord' ? 'Landlord' : 'Tenant') 
+                  : 'Agent'}
+              </Text>
+            </View>
+            <View style={styles.detailItem}>
+              <Icon name="users" size={14} color={colors.mutedForeground} />
+              <Text style={[styles.detailText, { color: colors.mutedForeground }]}>
+                {property.condition}
+              </Text>
+            </View>
+            <View style={styles.detailItem}>
+              <Icon name="building" size={14} color={colors.mutedForeground} />
+              <Text style={[styles.detailText, { color: colors.mutedForeground }]}>
+                {property.category}
+              </Text>
+            </View>
           </View>
-          <View style={styles.detailItem}>
-            <Icon name="building" size={14} color={colors.mutedForeground} />
-            <Text style={[styles.detailText, { color: colors.mutedForeground }]}>
-              {property.category}
-            </Text>
-          </View>
-        </View>
+        )}
         <View style={styles.footer}>
           <Text style={[styles.priceText, { color: colors.primary }]}>
             {formatPrice(property.price, property.rentPeriod)}

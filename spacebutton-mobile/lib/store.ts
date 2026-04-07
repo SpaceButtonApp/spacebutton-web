@@ -2,12 +2,11 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
-import type { Property, Conversation, Notification } from './mock-data';
-import { mockProperties, mockConversations, mockNotifications } from './mock-data';
+import type { Property, Conversation, Notification, Agent } from './mock-data';
+import { mockProperties, mockConversations, mockNotifications, currentUser } from './mock-data';
 
 // Create a safe storage wrapper that works on both native and web
 const createSafeStorage = () => {
-  // Check if we're running on web and if window is available
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
     return {
       getItem: (name: string) => {
@@ -36,7 +35,6 @@ const createSafeStorage = () => {
       },
     };
   }
-  // Use AsyncStorage for native
   return AsyncStorage;
 };
 
@@ -65,6 +63,57 @@ interface Transaction {
   date: string;
 }
 
+interface DoneDealState {
+  [chatId: string]: {
+    user: boolean;
+    agent: boolean;
+    locked: boolean;
+  };
+}
+
+interface Review {
+  id: string;
+  fromUserId: string;
+  fromUserName: string;
+  fromUserAvatar: string;
+  toUserId: string;
+  rating: number;
+  feedback: string;
+  createdAt: string;
+}
+
+interface SupportMessage {
+  id: string;
+  text: string;
+  sender: 'user' | 'admin';
+  userId: string;
+  userName: string;
+  timestamp: string;
+}
+
+interface SupportChat {
+  id: string;
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  messages: SupportMessage[];
+  lastMessage: string;
+  lastMessageTime: string;
+  unread: number;
+}
+
+interface RegisteredUser {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  avatar?: string;
+  type: 'individual' | 'agent';
+  status: 'active' | 'suspended' | 'inactive';
+  listings: number;
+  joined: string;
+}
+
 interface AppState {
   // User
   user: User | null;
@@ -85,8 +134,17 @@ interface AppState {
   deleteProperty: (id: string) => void;
   closeProperty: (id: string) => void;
   
+  // Reviews
+  reviews: Review[];
+  addReview: (review: Omit<Review, 'id' | 'createdAt'>) => void;
+  
+  // Done Deal
+  doneDealStates: DoneDealState;
+  toggleDoneDeal: (chatId: string, propertyId: string, isAgent: boolean) => boolean;
+  
   // Conversations
   conversations: Conversation[];
+  addConversation: (conversation: Conversation) => void;
   
   // Notifications
   notifications: Notification[];
@@ -94,10 +152,25 @@ interface AppState {
   addNotification: (notification: Omit<Notification, 'id'> & { id?: string }) => void;
   markAllNotificationsRead: () => void;
   clearAllNotifications: () => void;
+  deleteNotification: (id: string) => void;
+  
+  // Support Chat
+  supportChats: SupportChat[];
+  addSupportMessage: (userId: string, userName: string, message: string, sender: 'user' | 'admin') => void;
+  getSupportChat: (userId: string) => SupportChat | undefined;
+  
+  // Registered Users
+  registeredUsers: RegisteredUser[];
+  addRegisteredUser: (user: Omit<RegisteredUser, 'id' | 'joined' | 'listings' | 'status'>) => void;
+  updateRegisteredUser: (id: string, updates: Partial<RegisteredUser>) => void;
+  deleteRegisteredUser: (id: string) => void;
   
   // UI State
   activeTab: 'connect' | 'agent' | 'shortlet' | 'properties';
   setActiveTab: (tab: 'connect' | 'agent' | 'shortlet' | 'properties') => void;
+  
+  // Premium
+  purchasePremium: (type: 'basic-single' | 'basic-5' | 'basic-10' | 'basic-50' | 'premium-monthly' | 'premium-yearly', amount: number) => void;
   
   // Wallet
   addToWallet: (amount: number) => void;
@@ -108,6 +181,7 @@ interface AppState {
   addTransaction: (transaction: Omit<Transaction, 'id' | 'date'>) => void;
   
   // Connects
+  connectsRemaining: number;
   deductConnect: () => boolean;
 }
 
@@ -151,8 +225,70 @@ export const useAppStore = create<AppState>()(
         closedProperties: [...state.closedProperties, id]
       })),
       
+      // Reviews
+      reviews: [],
+      addReview: (review) => set((state) => ({
+        reviews: [{
+          ...review,
+          id: Date.now().toString(),
+          createdAt: new Date().toISOString()
+        }, ...state.reviews]
+      })),
+      
+      // Done Deal
+      doneDealStates: {},
+      toggleDoneDeal: (chatId, propertyId, isAgent) => {
+        const state = get();
+        const currentState = state.doneDealStates[chatId] || { user: false, agent: false, locked: false };
+        
+        if (currentState.locked) return false;
+        
+        const newState = {
+          ...currentState,
+          [isAgent ? 'agent' : 'user']: !currentState[isAgent ? 'agent' : 'user']
+        };
+        
+        if (newState.user && newState.agent) {
+          newState.locked = true;
+          set((s) => ({
+            doneDealStates: { ...s.doneDealStates, [chatId]: newState },
+            closedProperties: [...s.closedProperties, propertyId],
+            notifications: [{
+              id: Date.now().toString(),
+              type: 'done_deal',
+              title: 'Congratulations! Done Deal',
+              message: 'Both parties have confirmed the deal. The property has been closed.',
+              read: false,
+              createdAt: new Date().toISOString(),
+              propertyId
+            }, ...s.notifications]
+          }));
+          return true;
+        }
+        
+        set((s) => ({
+          doneDealStates: { ...s.doneDealStates, [chatId]: newState }
+        }));
+        return false;
+      },
+      
       // Conversations
       conversations: mockConversations,
+      addConversation: (conversation) => set((state) => {
+        const existingIndex = state.conversations.findIndex(c => c.user.id === conversation.user.id);
+        if (existingIndex !== -1) {
+          const updatedConversations = [...state.conversations];
+          updatedConversations[existingIndex] = {
+            ...updatedConversations[existingIndex],
+            lastMessage: conversation.lastMessage,
+            timestamp: conversation.timestamp,
+          };
+          return { conversations: updatedConversations };
+        }
+        return {
+          conversations: [conversation, ...state.conversations]
+        };
+      }),
       
       // Notifications
       notifications: mockNotifications,
@@ -171,10 +307,121 @@ export const useAppStore = create<AppState>()(
         notifications: state.notifications.map((n) => ({ ...n, read: true }))
       })),
       clearAllNotifications: () => set({ notifications: [] }),
+      deleteNotification: (id) => set((state) => ({
+        notifications: state.notifications.filter((n) => n.id !== id)
+      })),
+      
+      // Support Chat
+      supportChats: [],
+      addSupportMessage: (userId, userName, message, sender) => set((state) => {
+        const existingChat = state.supportChats.find(c => c.userId === userId);
+        const newMessage: SupportMessage = {
+          id: Date.now().toString(),
+          text: message,
+          sender,
+          userId,
+          userName,
+          timestamp: new Date().toISOString()
+        };
+        
+        if (existingChat) {
+          return {
+            supportChats: state.supportChats.map(chat => 
+              chat.userId === userId 
+                ? {
+                    ...chat,
+                    messages: [...chat.messages, newMessage],
+                    lastMessage: message,
+                    lastMessageTime: 'Just now',
+                    unread: sender === 'user' ? chat.unread + 1 : 0
+                  }
+                : chat
+            )
+          };
+        } else {
+          const newChat: SupportChat = {
+            id: Date.now().toString(),
+            userId,
+            userName,
+            messages: [newMessage],
+            lastMessage: message,
+            lastMessageTime: 'Just now',
+            unread: sender === 'user' ? 1 : 0
+          };
+          return {
+            supportChats: [newChat, ...state.supportChats]
+          };
+        }
+      }),
+      getSupportChat: (userId) => get().supportChats.find(c => c.userId === userId),
+      
+      // Registered Users
+      registeredUsers: [],
+      addRegisteredUser: (user) => set((state) => ({
+        registeredUsers: [{
+          ...user,
+          id: Date.now().toString(),
+          joined: new Date().toISOString().split('T')[0],
+          listings: 0,
+          status: 'active'
+        }, ...state.registeredUsers]
+      })),
+      updateRegisteredUser: (id, updates) => set((state) => ({
+        registeredUsers: state.registeredUsers.map(u => 
+          u.id === id ? { ...u, ...updates } : u
+        )
+      })),
+      deleteRegisteredUser: (id) => set((state) => ({
+        registeredUsers: state.registeredUsers.filter(u => u.id !== id)
+      })),
       
       // UI State
       activeTab: 'connect',
       setActiveTab: (tab) => set({ activeTab: tab }),
+      
+      // Premium
+      purchasePremium: (type, amount) => set((state) => {
+        if (!state.user) return state;
+        
+        let connectsToAdd = 0;
+        let isPremium = state.user.isPremium;
+        let premiumType = state.user.premiumType;
+        
+        switch (type) {
+          case 'basic-single':
+            connectsToAdd = 1;
+            break;
+          case 'basic-5':
+            connectsToAdd = 5;
+            break;
+          case 'basic-10':
+            connectsToAdd = 10;
+            break;
+          case 'basic-50':
+            connectsToAdd = 50;
+            break;
+          case 'premium-monthly':
+          case 'premium-yearly':
+            isPremium = true;
+            premiumType = 'premium';
+            connectsToAdd = 999;
+            break;
+        }
+        
+        const newWalletBalance = amount > 0 
+          ? state.user.walletBalance - amount 
+          : state.user.walletBalance;
+        
+        return {
+          user: {
+            ...state.user,
+            walletBalance: newWalletBalance,
+            isPremium,
+            premiumType,
+            connectsRemaining: state.user.connectsRemaining + connectsToAdd
+          }
+        };
+      }),
       
       // Wallet
       addToWallet: (amount) => set((state) => {
@@ -215,6 +462,7 @@ export const useAppStore = create<AppState>()(
       }),
       
       // Connects
+      connectsRemaining: 0,
       deductConnect: () => {
         const state = get();
         if (!state.user || state.user.connectsRemaining <= 0) return false;
@@ -222,40 +470,23 @@ export const useAppStore = create<AppState>()(
           user: { ...state.user, connectsRemaining: state.user.connectsRemaining - 1 }
         });
         return true;
-      },
-
-      // Conversations
-      conversations: mockConversations,
-      addConversation: (conversation) => set((state) => {
-        // Check if conversation already exists by user id
-        const existingIndex = state.conversations.findIndex(c => c.user.id === conversation.user.id);
-        if (existingIndex !== -1) {
-          // Update existing conversation with new message
-          const updatedConversations = [...state.conversations];
-          updatedConversations[existingIndex] = {
-            ...updatedConversations[existingIndex],
-            lastMessage: conversation.lastMessage,
-            timestamp: conversation.timestamp,
-          };
-          return { conversations: updatedConversations };
-        }
-        // Add new conversation
-        return {
-          conversations: [conversation, ...state.conversations]
-        };
-      }),
+      }
     }),
     {
       name: 'spacebutton-storage',
       storage: createJSONStorage(() => createSafeStorage()),
-      skipHydration: Platform.OS === 'web', // Skip hydration on web to avoid useLayoutEffect warning
+      skipHydration: Platform.OS === 'web',
       partialize: (state) => ({
         user: state.user,
         theme: state.theme,
         savedProperties: state.savedProperties,
         transactions: state.transactions,
         closedProperties: state.closedProperties,
+        doneDealStates: state.doneDealStates,
+        reviews: state.reviews,
         notifications: state.notifications,
+        supportChats: state.supportChats,
+        registeredUsers: state.registeredUsers,
         properties: state.properties,
         conversations: state.conversations,
       }),

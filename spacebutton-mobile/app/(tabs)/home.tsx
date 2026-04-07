@@ -45,6 +45,7 @@ export default function HomeScreen() {
     const type = property.listingType || property.type;
     if (currentTab === 'Connect') return type === 'connect';
     if (currentTab === 'Agent') return type === 'agent';
+    if (currentTab === 'Properties') return type === 'properties';
     return false;
   });
 
@@ -163,7 +164,7 @@ export default function HomeScreen() {
           />
         }
       >
-        {currentTab === 'Shortlet' || currentTab === 'Properties' ? (
+        {currentTab === 'Shortlet' ? (
           <View style={styles.emptyState}>
             <View style={[styles.emptyIcon, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Icon name="clock" size={48} color={colors.primary} />
@@ -180,6 +181,32 @@ export default function HomeScreen() {
             </View>
           </View>
         ) : filteredProperties.length === 0 ? (
+          <View style={styles.emptyState}>
+            <View style={[styles.emptyIcon, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              {currentTab === 'Properties' ? (
+                <Icon name="clock" size={48} color={colors.primary} />
+              ) : (
+                <Icon name="bookmark" size={48} color={colors.mutedForeground} />
+              )}
+            </View>
+            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>
+              {currentTab === 'Properties' ? 'Coming Soon' : 'No Listings Yet'}
+            </Text>
+            <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>
+              {currentTab === 'Properties' 
+                ? "We're working on bringing you amazing Property options."
+                : 'Be the first to post a listing in this category.'}
+            </Text>
+            {currentTab === 'Properties' && (
+              <View style={styles.sparklesRow}>
+                <Icon name="sparkles" size={16} color={colors.primary} />
+                <Text style={[styles.sparklesText, { color: colors.primary }]}>
+                  Stay tuned for updates
+                </Text>
+              </View>
+            )}
+          </View>
+        ) : (
           <View style={styles.emptyState}>
             <View style={[styles.emptyIcon, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Icon name="bookmark" size={48} color={colors.mutedForeground} />

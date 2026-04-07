@@ -21,6 +21,7 @@ import { BorderRadius, FontSize, FontWeight, Spacing } from '@/constants/theme';
 const categories = ['flat', 'self-con', 'duplex', 'storey', 'penthouse'];
 const conditions = ['rent', 'roommate', 'flatmate'];
 const listingTypes = ['connect', 'agent'];
+const connectRoles = ['Tenant', 'Landlord'];
 
 export default function AddPostScreen() {
   const router = useRouter();
@@ -40,6 +41,8 @@ export default function AddPostScreen() {
     category: 'flat',
     condition: 'rent',
     listingType: 'connect',
+    connectRole: 'Tenant' as 'Tenant' | 'Landlord',
+    totalPackage: '',
   });
 
   const handleSubmit = async () => {
@@ -51,11 +54,17 @@ export default function AddPostScreen() {
     setLoading(true);
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
+    // Calculate reward for Connect/Tenant/Rent listings
+    const rentAmount = parseInt(formData.price, 10) || 0;
+    const calculatedReward = formData.listingType === 'connect' && formData.connectRole === 'Tenant' && formData.condition === 'rent'
+      ? Math.round(rentAmount * 0.05)
+      : undefined;
+
     addProperty({
       id: `property-${Date.now()}`,
       title: formData.title,
       location: formData.location,
-      price: parseInt(formData.price, 10),
+      price: rentAmount,
       images: [
         'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&h=600&fit=crop',
       ],
@@ -83,7 +92,9 @@ export default function AddPostScreen() {
       },
       ownerId: user?.id || 'unknown',
       createdAt: new Date().toISOString(),
-      connectRole: 'Landlord',
+      connectRole: formData.connectRole,
+      reward: calculatedReward,
+      totalPackage: formData.totalPackage ? parseInt(formData.totalPackage, 10) : undefined,
     });
 
     setLoading(false);
@@ -152,6 +163,37 @@ export default function AddPostScreen() {
           ))}
         </View>
 
+        {/* Connect Role - Only visible for Connect listing type */}
+        {formData.listingType === 'connect' && (
+          <>
+            <Text style={[styles.label, { color: colors.foreground }]}>I am a</Text>
+            <View style={styles.optionsRow}>
+              {connectRoles.map((role) => (
+                <TouchableOpacity
+                  key={role}
+                  onPress={() => setFormData({ ...formData, connectRole: role as 'Tenant' | 'Landlord' })}
+                  style={[
+                    styles.optionButton,
+                    {
+                      backgroundColor: formData.connectRole === role ? colors.primary : colors.secondary,
+                      borderColor: formData.connectRole === role ? colors.primary : colors.border,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.optionText,
+                      { color: formData.connectRole === role ? '#fff' : colors.mutedForeground },
+                    ]}
+                  >
+                    {role}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </>
+        )}
+
         <Input
           label="Title *"
           placeholder="e.g., Two Bedroom Flat"
@@ -168,12 +210,38 @@ export default function AddPostScreen() {
         />
 
         <Input
-          label="Price (NGN) *"
+          label="Rent Price (NGN) *"
           placeholder="e.g., 500000"
           keyboardType="numeric"
           value={formData.price}
           onChangeText={(text) => setFormData({ ...formData, price: text })}
         />
+
+        {/* Reward - Only visible for Connect/Tenant/Rent listings */}
+        {formData.listingType === 'connect' && formData.connectRole === 'Tenant' && formData.condition === 'rent' && (
+          <View style={styles.rewardContainer}>
+            <Text style={[styles.label, { color: colors.foreground }]}>Reward (5% of Rent)</Text>
+            <View style={[styles.rewardBox, { backgroundColor: colors.primary + '20', borderColor: colors.primary + '50' }]}>
+              <Text style={[styles.rewardText, { color: colors.primary }]}>
+                ₦{Math.round((parseInt(formData.price, 10) || 0) * 0.05).toLocaleString()} NGN
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* Total Package - Visible for Agent OR Connect/Landlord OR Connect/Tenant/Roommate/Flatmate */}
+        {(formData.listingType === 'agent' || 
+          (formData.listingType === 'connect' && formData.connectRole === 'Landlord') || 
+          (formData.listingType === 'connect' && formData.connectRole === 'Tenant' && (formData.condition === 'roommate' || formData.condition === 'flatmate'))
+        ) && (
+          <Input
+            label="Total Package (NGN)"
+            placeholder="e.g., 800000"
+            keyboardType="numeric"
+            value={formData.totalPackage}
+            onChangeText={(text) => setFormData({ ...formData, totalPackage: text })}
+          />
+        )}
 
         {/* Category */}
         <Text style={[styles.label, { color: colors.foreground }]}>Category</Text>
@@ -364,5 +432,18 @@ const styles = StyleSheet.create({
   roomLabel: {
     fontSize: FontSize.xs,
     marginBottom: Spacing.xs,
+  },
+  rewardContainer: {
+    marginBottom: Spacing.lg,
+  },
+  rewardBox: {
+    padding: Spacing.md,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  rewardText: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
   },
 });

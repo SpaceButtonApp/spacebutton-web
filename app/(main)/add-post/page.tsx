@@ -10,7 +10,9 @@ import Image from "next/image"
 import { useAppStore } from "@/lib/store"
 import { mockAgents } from "@/lib/mock-data"
 
-const listingConditions = ["Rent", "Roommate", "Flatmate"]
+const listingConditionsLandlord = ["Rent", "Roommate", "Flatmate"]
+const listingConditionsTenant = ["Vacating", "Roommate", "Flatmate"]
+const genderOptions = ["Male", "Female", "Both"]
 const propertyCategories = ["Flat", "Self Con", "Duplex", "Storey", "Penthouse"]
 const facilities = ["Parking Lot", "Pet Allowed", "Park", "Garden", "Estate", "Kid's Friendly", "Home theatre", "Other"]
 
@@ -20,7 +22,8 @@ export default function AddPostPage() {
   const [listingType, setListingType] = useState<"Connect" | "Agent">("Connect")
   const [connectRole, setConnectRole] = useState<"Tenant" | "Landlord">("Tenant")
   const [listingTitle, setListingTitle] = useState("")
-  const [selectedCondition, setSelectedCondition] = useState("Rent")
+  const [selectedCondition, setSelectedCondition] = useState("Vacating")
+  const [selectedGender, setSelectedGender] = useState<"Male" | "Female" | "Both">("Both")
   const [selectedCategory, setSelectedCategory] = useState("Flat")
   const [descriptions, setDescriptions] = useState("")
   const [location, setLocation] = useState({
@@ -116,8 +119,21 @@ export default function AddPostPage() {
       return false
     }
     
-    if (photos.length === 0) {
-      setValidationMessage("Please add at least one photo of the property")
+    if (photos.length < 3) {
+      setValidationMessage("Please add at least 3 photos/videos of the property")
+      setShowValidationModal(true)
+      return false
+    }
+    
+    if (photos.length > 5) {
+      setValidationMessage("Maximum 5 photos/videos allowed")
+      setShowValidationModal(true)
+      return false
+    }
+    
+    const hasVideo = photos.some(p => p.startsWith('data:video'))
+    if (!hasVideo) {
+      setValidationMessage("Please upload at least one video of the property")
       setShowValidationModal(true)
       return false
     }
@@ -256,7 +272,7 @@ export default function AddPostPage() {
           <div>
             <h3 className="font-medium text-foreground mb-3">Listing Condition</h3>
             <div className="flex flex-wrap gap-3">
-              {listingConditions.map((condition) => (
+              {(listingType === "Connect" && connectRole === "Tenant" ? listingConditionsTenant : listingConditionsLandlord).map((condition) => (
                 <button
                   key={condition}
                   onClick={() => setSelectedCondition(condition)}
@@ -299,7 +315,10 @@ export default function AddPostPage() {
 
         {/* Photos & Videos */}
         <div className="bg-card border border-border rounded-xl p-5">
-          <h3 className="font-medium text-foreground mb-3">Listing Photos & Videos</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-medium text-foreground">Listing Photos & Videos</h3>
+            <span className="text-xs text-muted-foreground">{photos.length}/5 (min 3, at least 1 video)</span>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {photos.map((photo, index) => (
               <div key={index} className="relative aspect-[4/3] rounded-xl overflow-hidden">
@@ -321,20 +340,22 @@ export default function AddPostPage() {
                 )}
               </div>
             ))}
-            <button 
-              onClick={() => {
-                const input = document.createElement('input')
-                input.type = 'file'
-                input.accept = 'image/*,video/*'
-                input.multiple = true
-                input.onchange = (e) => handlePhotoUpload(e as any)
-                input.click()
-              }}
-              className="aspect-[4/3] rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center hover:bg-gray-800/50 transition-colors"
-            >
-              <Plus className="w-8 h-8 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground mt-1">Photos/Videos</span>
-            </button>
+            {photos.length < 5 && (
+              <button 
+                onClick={() => {
+                  const input = document.createElement('input')
+                  input.type = 'file'
+                  input.accept = 'image/*,video/*'
+                  input.multiple = true
+                  input.onchange = (e) => handlePhotoUpload(e as any)
+                  input.click()
+                }}
+                className="aspect-[4/3] rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center hover:bg-gray-800/50 transition-colors"
+              >
+                <Plus className="w-8 h-8 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground mt-1">Photos/Videos</span>
+              </button>
+            )}
           </div>
         </div>
 

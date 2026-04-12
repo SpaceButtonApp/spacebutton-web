@@ -471,8 +471,8 @@ export default function AddPostPage() {
           </div>
         </div>
 
-        {/* Select Rent Due Date - Only visible for Connect with Tenant role */}
-        {listingType === "Connect" && connectRole === "Tenant" && selectedCondition === "Rent" && (
+        {/* Select Rent Due Date - Visible for Connect with Tenant role for all conditions */}
+        {listingType === "Connect" && connectRole === "Tenant" && (
           <div className="bg-card border border-border rounded-xl p-5">
             <h3 className="font-medium text-foreground mb-3">Select Current Rent Due Date</h3>
             <button
@@ -531,6 +531,26 @@ export default function AddPostPage() {
             )}
           </div>
         )}
+
+        {/* Gender Needed */}
+        <div className="bg-card border border-border rounded-xl p-5">
+          <h3 className="font-medium text-foreground mb-3">Gender Needed</h3>
+          <div className="flex flex-wrap gap-3">
+            {genderOptions.map((gender) => (
+              <button
+                key={gender}
+                onClick={() => setSelectedGender(gender as "Male" | "Female" | "Both")}
+                className={`px-6 py-2.5 rounded-full text-sm font-medium transition-colors ${
+                  selectedGender === gender
+                    ? "bg-primary text-foreground"
+                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                }`}
+              >
+                {gender}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Landlord Presence */}
         <div className="bg-card border border-border rounded-xl p-5">
@@ -703,6 +723,7 @@ export default function AddPostPage() {
                       connectRole: listingType === 'Connect' ? connectRole : undefined,
                       landlordPresence: landlordPresence,
                       balconies: balconies,
+                      genderNeeded: selectedGender.toLowerCase() as 'male' | 'female' | 'both',
                       createdAt: new Date().toISOString(),
                     }
                     addProperty(newProperty)

@@ -10,7 +10,9 @@ import { Input } from '@/components/ui/input'
 import { LocationInput } from '@/components/location-input'
 import Image from 'next/image'
 
-const listingConditions = ['Rent', 'Roommate', 'Flatmate']
+const listingConditionsLandlord = ['Rent', 'Roommate', 'Flatmate']
+const listingConditionsTenant = ['Vacating', 'Roommate', 'Flatmate']
+const genderOptions = ['Male', 'Female', 'Both']
 const propertyCategories = ['Flat', 'Self Con', 'Duplex', 'Storey', 'Penthouse']
 const facilities = ['Parking Lot', 'Gym', 'Security', 'Garden', 'Estate', "Kid's Friendly", 'Home theatre', 'Other']
 
@@ -27,6 +29,7 @@ export default function AdminAddPostPage() {
   const [connectRole, setConnectRole] = useState<'Tenant' | 'Landlord'>('Landlord')
   const [listingTitle, setListingTitle] = useState('')
   const [selectedCondition, setSelectedCondition] = useState('Rent')
+  const [selectedGender, setSelectedGender] = useState<'Male' | 'Female' | 'Both'>('Both')
   const [selectedCategory, setSelectedCategory] = useState('Flat')
   const [descriptions, setDescriptions] = useState('')
   const [location, setLocation] = useState({
@@ -107,8 +110,21 @@ export default function AdminAddPostPage() {
       return false
     }
     
-    if (photos.length === 0) {
-      setValidationMessage('Please add at least one photo of the property')
+    if (photos.length < 3) {
+      setValidationMessage('Please add at least 3 photos/videos of the property')
+      setShowValidationModal(true)
+      return false
+    }
+    
+    if (photos.length > 5) {
+      setValidationMessage('Maximum 5 photos/videos allowed')
+      setShowValidationModal(true)
+      return false
+    }
+    
+    const hasVideo = photos.some(p => p.startsWith('data:video'))
+    if (!hasVideo) {
+      setValidationMessage('Please upload at least one video of the property')
       setShowValidationModal(true)
       return false
     }
@@ -293,6 +309,7 @@ export default function AdminAddPostPage() {
         totalPackage: parseInt(totalPackage.replace(/,/g, '') || '0'),
         landlordPresence: landlordPresence,
         connectRole: listingType === 'Connect' ? connectRole : undefined,
+        genderNeeded: selectedGender.toLowerCase() as 'male' | 'female' | 'both',
       })
     }
     
@@ -377,7 +394,7 @@ export default function AdminAddPostPage() {
               <div>
                 <h3 className="font-medium text-white mb-3">Listing Condition</h3>
                 <div className="flex flex-wrap gap-3">
-                  {listingConditions.map((condition) => (
+                  {(listingType === 'Connect' && connectRole === 'Tenant' ? listingConditionsTenant : listingConditionsLandlord).map((condition) => (
                     <button
                       key={condition}
                       onClick={() => setSelectedCondition(condition)}
@@ -545,6 +562,26 @@ export default function AdminAddPostPage() {
                       </button>
                     </div>
                   </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Gender Needed */}
+            <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
+              <h3 className="font-medium text-white mb-3">Gender Needed</h3>
+              <div className="flex flex-wrap gap-3">
+                {genderOptions.map((gender) => (
+                  <button
+                    key={gender}
+                    onClick={() => setSelectedGender(gender as 'Male' | 'Female' | 'Both')}
+                    className={`px-6 py-2.5 rounded-full text-sm font-medium transition-colors ${
+                      selectedGender === gender
+                        ? 'bg-[#703BF7] text-white'
+                        : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                    }`}
+                  >
+                    {gender}
+                  </button>
                 ))}
               </div>
             </div>

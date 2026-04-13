@@ -10,8 +10,9 @@ export interface Property {
   videoUrl?: string
   type: 'connect' | 'agent' | 'shortlet' | 'properties'
   listingType?: 'connect' | 'agent' | 'shortlet' | 'properties'
-  condition: 'rent' | 'roommate' | 'flatmate'
+  condition: 'rent' | 'roommate' | 'flatmate' | 'vacating'
   category: 'flat' | 'self-con' | 'duplex' | 'storey' | 'penthouse' | 'land' | 'house'
+  genderNeeded?: 'male' | 'female' | 'both'
   beds: number
   baths: number
   reception: number

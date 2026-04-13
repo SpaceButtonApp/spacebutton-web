@@ -19,9 +19,11 @@ import { mockAgents } from '@/lib/mock-data';
 import { BorderRadius, FontSize, FontWeight, Spacing } from '@/constants/theme';
 
 const categories = ['flat', 'self-con', 'duplex', 'storey', 'penthouse'];
-const conditions = ['rent', 'roommate', 'flatmate'];
+const conditionsLandlord = ['Rent', 'Roommate', 'Flatmate'];
+const conditionsTenant = ['Vacating', 'Roommate', 'Flatmate'];
 const listingTypes = ['connect', 'agent'];
 const connectRoles = ['Tenant', 'Landlord'];
+const genderOptions = ['Male', 'Female', 'Both'];
 
 export default function AddPostScreen() {
   const router = useRouter();
@@ -39,10 +41,12 @@ export default function AddPostScreen() {
     baths: '1',
     reception: '1',
     category: 'flat',
-    condition: 'rent',
+    condition: 'Vacating',
     listingType: 'connect',
     connectRole: 'Tenant' as 'Tenant' | 'Landlord',
     totalPackage: '',
+    genderNeeded: 'Both' as 'Male' | 'Female' | 'Both',
+    rentDueDate: '',
   });
 
   const handleSubmit = async () => {
@@ -95,6 +99,8 @@ export default function AddPostScreen() {
       connectRole: formData.connectRole,
       reward: calculatedReward,
       totalPackage: formData.totalPackage ? parseInt(formData.totalPackage, 10) : undefined,
+      genderNeeded: formData.genderNeeded.toLowerCase() as 'male' | 'female' | 'both',
+      rentDueDate: formData.rentDueDate || undefined,
     });
 
     setLoading(false);
@@ -271,9 +277,9 @@ export default function AddPostScreen() {
         </ScrollView>
 
         {/* Condition */}
-        <Text style={[styles.label, { color: colors.foreground }]}>Condition</Text>
+        <Text style={[styles.label, { color: colors.foreground }]}>Listing Condition</Text>
         <View style={styles.optionsRow}>
-          {conditions.map((cond) => (
+          {(formData.listingType === 'connect' && formData.connectRole === 'Tenant' ? conditionsTenant : conditionsLandlord).map((cond) => (
             <TouchableOpacity
               key={cond}
               onPress={() => setFormData({ ...formData, condition: cond })}
@@ -291,7 +297,44 @@ export default function AddPostScreen() {
                   { color: formData.condition === cond ? '#fff' : colors.mutedForeground },
                 ]}
               >
-                {cond.charAt(0).toUpperCase() + cond.slice(1)}
+                {cond}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Rent Due Date - Visible for Connect with Tenant role for all conditions */}
+        {formData.listingType === 'connect' && formData.connectRole === 'Tenant' && (
+          <Input
+            label="Current Rent Due Date"
+            placeholder="e.g., 15th April 2024"
+            value={formData.rentDueDate}
+            onChangeText={(text) => setFormData({ ...formData, rentDueDate: text })}
+          />
+        )}
+
+        {/* Gender Needed */}
+        <Text style={[styles.label, { color: colors.foreground }]}>Gender Needed</Text>
+        <View style={styles.optionsRow}>
+          {genderOptions.map((gender) => (
+            <TouchableOpacity
+              key={gender}
+              onPress={() => setFormData({ ...formData, genderNeeded: gender as 'Male' | 'Female' | 'Both' })}
+              style={[
+                styles.optionButton,
+                {
+                  backgroundColor: formData.genderNeeded === gender ? colors.primary : colors.secondary,
+                  borderColor: formData.genderNeeded === gender ? colors.primary : colors.border,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.optionText,
+                  { color: formData.genderNeeded === gender ? '#fff' : colors.mutedForeground },
+                ]}
+              >
+                {gender}
               </Text>
             </TouchableOpacity>
           ))}

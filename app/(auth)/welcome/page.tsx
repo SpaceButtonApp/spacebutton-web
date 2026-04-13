@@ -112,7 +112,7 @@ export default function WelcomePage() {
   const features = [
     { icon: Home, label: 'Find your perfect space' },
     { icon: Users, label: 'Verified property listings' },
-    { icon: Zap, label: 'N6000 connect included' },
+    { icon: Zap, label: '₦6000 connect included' },
   ]
 
   return (

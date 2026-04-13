@@ -212,7 +212,9 @@ export default function PropertyDetailScreen() {
               <View style={[styles.tag, { backgroundColor: colors.secondary }]}>
                 <Icon name="users" size={14} color={colors.mutedForeground} />
                 <Text style={[styles.tagText, { color: colors.mutedForeground }]}>
-                  {property.condition}
+                  {property.condition === 'rent' && property.connectRole === 'Tenant' 
+                    ? 'Vacating' 
+                    : property.condition}
                 </Text>
               </View>
               <View style={[styles.tag, { backgroundColor: colors.secondary }]}>
@@ -268,6 +270,18 @@ export default function PropertyDetailScreen() {
               </Text>
               <Text style={[styles.description, { color: colors.mutedForeground }]}>
                 {property.buildingYear}
+              </Text>
+            </View>
+          )}
+
+          {/* Gender Needed - Only for Connect/Agent */}
+          {!isPropertyType && property.genderNeeded && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+                Gender Needed
+              </Text>
+              <Text style={[styles.description, { color: colors.mutedForeground, textTransform: 'capitalize' }]}>
+                {property.genderNeeded}
               </Text>
             </View>
           )}

@@ -188,7 +188,11 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
             </div>
             <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-secondary text-sm">
               <Users className="w-4 h-4" />
-              <span className="capitalize">{property.condition}</span>
+              <span className="capitalize">
+                {property.condition === 'rent' && property.connectRole === 'Tenant' 
+                  ? 'Vacating' 
+                  : property.condition}
+              </span>
             </div>
             <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-secondary text-sm">
               <Building2 className="w-4 h-4" />
@@ -238,6 +242,16 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
                 <span className="text-sm font-medium">{property.balconies} Balcony</span>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Gender Needed - Only for Connect/Agent */}
+        {!isPropertyType && property.genderNeeded && (
+          <div>
+            <h2 className="text-lg font-bold mb-3">Gender Needed</h2>
+            <p className="text-sm text-muted-foreground capitalize">
+              {property.genderNeeded}
+            </p>
           </div>
         )}
 

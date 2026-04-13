@@ -190,7 +190,9 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
             <View style={styles.detailItem}>
               <Icon name="users" size={14} color={colors.mutedForeground} />
               <Text style={[styles.detailText, { color: colors.mutedForeground }]}>
-                {property.condition}
+                {property.condition === 'rent' && property.connectRole === 'Tenant' 
+                  ? 'Vacating' 
+                  : property.condition}
               </Text>
             </View>
             <View style={styles.detailItem}>

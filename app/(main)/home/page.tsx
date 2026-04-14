@@ -44,12 +44,6 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Background gradient effects */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 -left-40 w-80 h-80 bg-primary/10 rounded-full blur-[120px]" />
-        <div className="absolute top-40 -right-40 w-80 h-80 bg-[#703BF7]/5 rounded-full blur-[120px]" />
-      </div>
-
       {/* Header */}
       <div className="bg-card/80 backdrop-blur-xl px-4 py-4 sticky top-0 z-40 border-b border-border">
         {/* Top Row */}
@@ -113,7 +107,7 @@ export default function HomePage() {
       </div>
 
       {/* Content */}
-      <div className="px-4 py-6 relative">
+      <div className="px-4 py-6">
         {currentTab === 'Shortlet' ? (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="w-24 h-24 rounded-2xl bg-card border border-border flex items-center justify-center mb-4">

@@ -99,14 +99,8 @@ export default function VerificationPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Animated Background */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[150px] animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-primary/5 rounded-full blur-[120px]" />
-      </div>
-
       {/* Header */}
-      <div className="relative px-4 pt-6 pb-4">
+      <div className="px-4 pt-6 pb-4">
         <button
           onClick={() => router.back()}
           className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors"
@@ -116,11 +110,10 @@ export default function VerificationPage() {
       </div>
 
       {/* Content */}
-      <div className="relative flex-1 px-6 py-4 flex flex-col items-center">
-        {/* Animated Icon */}
+      <div className="flex-1 px-6 py-4 flex flex-col items-center">
+        {/* Icon */}
         <div className="relative mb-8">
-          <div className="absolute inset-0 bg-primary/30 rounded-3xl blur-xl scale-150 animate-pulse" />
-          <div className="relative w-24 h-24 rounded-3xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/30">
+          <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/30">
             <Mail className="w-12 h-12 text-primary-foreground" />
           </div>
         </div>

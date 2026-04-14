@@ -73,14 +73,8 @@ export default function CreatePasswordPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Background gradient effects */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 -left-40 w-80 h-80 bg-primary/20 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-[120px]" />
-      </div>
-
       {/* Progress bar */}
-      <div className="relative px-4 pt-4 pb-2">
+      <div className="px-4 pt-4 pb-2">
         <div className="flex items-center justify-between mb-4">
           <BackButton fallbackUrl="/signup" />
           <div className="flex items-center gap-2">
@@ -91,7 +85,7 @@ export default function CreatePasswordPage() {
         </div>
       </div>
 
-      <div className="flex-1 px-4 py-4 overflow-auto relative">
+      <div className="flex-1 px-4 py-4 overflow-auto">
         <div className="max-w-md mx-auto">
           {/* Header */}
           <div className="text-center mb-6">

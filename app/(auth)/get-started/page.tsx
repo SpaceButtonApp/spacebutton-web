@@ -44,15 +44,8 @@ export default function GetStartedPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Background gradient effects */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 -left-40 w-80 h-80 bg-primary/20 rounded-full blur-[120px]" />
-        <div className="absolute top-40 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-primary/5 rounded-full blur-[100px]" />
-      </div>
-      
       {/* Content */}
-      <div className="relative flex-1 flex flex-col px-6 py-8">
+      <div className="flex-1 flex flex-col px-6 py-8">
         {/* Logo */}
         <div className="flex items-center gap-2 mb-16">
           <Image

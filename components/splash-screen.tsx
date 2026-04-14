@@ -47,47 +47,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
         phase === 'fadeOut' ? 'opacity-0' : 'opacity-100'
       }`}
     >
-      {/* Animated background gradients */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {/* Central glow */}
-        <div 
-          className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/20 blur-[100px] transition-all duration-700 ease-out ${
-            phase === 'initial' ? 'w-0 h-0 opacity-0' :
-            phase === 'pulse' ? 'w-[200px] h-[200px] opacity-100' :
-            phase === 'expand' ? 'w-[400px] h-[400px] opacity-80' :
-            'w-[600px] h-[600px] opacity-60'
-          }`}
-        />
-        
-        {/* Expanding ring effect */}
-        <div 
-          className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-primary/30 transition-all ease-out ${
-            phase === 'expand' || phase === 'reveal' || phase === 'hold' || phase === 'fadeOut'
-              ? 'w-[300px] h-[300px] opacity-0 duration-1000' 
-              : 'w-16 h-16 opacity-0 duration-0'
-          }`}
-        />
-        
-        {/* Secondary expanding ring */}
-        <div 
-          className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/20 transition-all ease-out ${
-            phase === 'expand' || phase === 'reveal' || phase === 'hold' || phase === 'fadeOut'
-              ? 'w-[400px] h-[400px] opacity-0 duration-1200' 
-              : 'w-16 h-16 opacity-0 duration-0'
-          }`}
-          style={{ transitionDelay: '100ms' }}
-        />
-        
-        {/* Floating particles */}
-        {(phase === 'reveal' || phase === 'hold') && (
-          <>
-            <div className="absolute top-1/3 left-1/4 w-2 h-2 rounded-full bg-primary/40 animate-float-1" />
-            <div className="absolute top-1/4 right-1/3 w-1.5 h-1.5 rounded-full bg-primary/30 animate-float-2" />
-            <div className="absolute bottom-1/3 left-1/3 w-1 h-1 rounded-full bg-primary/50 animate-float-3" />
-            <div className="absolute bottom-1/4 right-1/4 w-2 h-2 rounded-full bg-primary/20 animate-float-4" />
-          </>
-        )}
-      </div>
+
 
       {/* Main animation container */}
       <div className="relative flex items-center justify-center">
@@ -199,37 +159,6 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
           animation: bounce-dot 1.4s ease-in-out infinite;
         }
         
-        @keyframes float-1 {
-          0%, 100% { transform: translate(0, 0); }
-          50% { transform: translate(10px, -15px); }
-        }
-        .animate-float-1 {
-          animation: float-1 3s ease-in-out infinite;
-        }
-        
-        @keyframes float-2 {
-          0%, 100% { transform: translate(0, 0); }
-          50% { transform: translate(-15px, 10px); }
-        }
-        .animate-float-2 {
-          animation: float-2 4s ease-in-out infinite;
-        }
-        
-        @keyframes float-3 {
-          0%, 100% { transform: translate(0, 0); }
-          50% { transform: translate(8px, 12px); }
-        }
-        .animate-float-3 {
-          animation: float-3 3.5s ease-in-out infinite;
-        }
-        
-        @keyframes float-4 {
-          0%, 100% { transform: translate(0, 0); }
-          50% { transform: translate(-12px, -8px); }
-        }
-        .animate-float-4 {
-          animation: float-4 4.5s ease-in-out infinite;
-        }
       `}</style>
     </div>
   )

@@ -151,18 +151,12 @@ export default function HelpPage() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Background gradient effects */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 -left-40 w-80 h-80 bg-primary/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-[120px]" />
-      </div>
-
       <header className="sticky top-0 z-10 bg-card/80 backdrop-blur-xl px-4 py-4 flex items-center gap-4 border-b border-border">
         <BackButton fallbackUrl="/settings" />
         <h1 className="text-lg font-semibold text-foreground flex-1 text-center pr-10">Help & Support</h1>
       </header>
 
-      <div className="relative px-4 pt-6">
+      <div className="px-4 pt-6">
         {/* Tab Switcher */}
         <div className="bg-secondary rounded-full p-1 flex mb-6 border border-border">
           <button

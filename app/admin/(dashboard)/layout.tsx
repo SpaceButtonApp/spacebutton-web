@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTheme } from 'next-themes'
 import { AdminSidebar } from '@/components/admin/sidebar'
 
 export default function DashboardLayout({
@@ -12,6 +13,12 @@ export default function DashboardLayout({
   const router = useRouter()
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [loading, setLoading] = useState(true)
+  const { setTheme } = useTheme()
+
+  // Force dark mode for admin dashboard
+  useEffect(() => {
+    setTheme('dark')
+  }, [setTheme])
 
   useEffect(() => {
     const auth = localStorage.getItem('admin-auth')
@@ -25,8 +32,8 @@ export default function DashboardLayout({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
       </div>
     )
   }
@@ -36,7 +43,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f]">
+    <div className="min-h-screen bg-background">
       <AdminSidebar />
       <main className="pl-64 min-h-screen">
         {children}

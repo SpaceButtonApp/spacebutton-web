@@ -29,19 +29,13 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Background gradient effects */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 -left-40 w-80 h-80 bg-primary/20 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-[120px]" />
-      </div>
-
       {/* Header */}
-      <div className="relative px-4 pt-6 pb-4">
+      <div className="px-4 pt-6 pb-4">
         <BackButton fallbackUrl="/login" />
       </div>
 
       {/* Content */}
-      <div className="relative flex-1 px-6 py-4">
+      <div className="flex-1 px-6 py-4">
         {/* Icon */}
         <div className="flex justify-center mb-6">
           <div className="w-20 h-20 rounded-2xl bg-primary/20 flex items-center justify-center border border-primary/30">

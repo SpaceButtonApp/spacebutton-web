@@ -41,9 +41,9 @@ export function BackButton({ fallbackUrl = '/home', className, variant = 'defaul
       onClick={handleBack}
       className={cn(
         'w-10 h-10 flex items-center justify-center rounded-full transition-colors',
-        variant === 'default' && 'bg-[#1a1a24] border border-gray-800 hover:bg-gray-800 text-white',
-        variant === 'light' && 'bg-white/10 hover:bg-white/20 text-white',
-        variant === 'dark' && 'bg-black/10 hover:bg-black/20',
+        variant === 'default' && 'bg-secondary border border-border hover:bg-secondary/80 text-foreground',
+        variant === 'light' && 'bg-secondary/50 hover:bg-secondary text-foreground',
+        variant === 'dark' && 'bg-secondary hover:bg-secondary/80 text-foreground',
         className
       )}
     >

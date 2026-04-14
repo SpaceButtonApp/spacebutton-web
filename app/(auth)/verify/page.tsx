@@ -63,19 +63,19 @@ export default function VerificationCodePage() {
       {/* Header illustration */}
       <div className="relative h-32 bg-gradient-to-b from-secondary to-background overflow-hidden">
         <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 150" preserveAspectRatio="xMidYMid slice">
-          <rect x="20" y="80" width="30" height="70" fill="#e5e5e5" />
-          <rect x="60" y="60" width="25" height="90" fill="#d4d4d4" />
-          <rect x="95" y="70" width="35" height="80" fill="#e5e5e5" />
-          <rect x="140" y="50" width="40" height="100" fill="#d4d4d4" />
-          <rect x="190" y="65" width="30" height="85" fill="#e5e5e5" />
-          <rect x="230" y="75" width="35" height="75" fill="#d4d4d4" />
-          <rect x="275" y="55" width="40" height="95" fill="#e5e5e5" />
-          <rect x="325" y="70" width="30" height="80" fill="#d4d4d4" />
-          <rect x="365" y="85" width="25" height="65" fill="#e5e5e5" />
-          <circle cx="50" cy="130" r="8" fill="#703BF7" opacity="0.3" />
-          <rect x="46" y="138" width="8" height="12" fill="#703BF7" opacity="0.3" />
-          <circle cx="150" cy="125" r="8" fill="#10B981" opacity="0.4" />
-          <rect x="146" y="133" width="8" height="17" fill="#10B981" opacity="0.4" />
+          <rect x="20" y="80" width="30" height="70" className="fill-muted" />
+          <rect x="60" y="60" width="25" height="90" className="fill-muted-foreground/20" />
+          <rect x="95" y="70" width="35" height="80" className="fill-muted" />
+          <rect x="140" y="50" width="40" height="100" className="fill-muted-foreground/20" />
+          <rect x="190" y="65" width="30" height="85" className="fill-muted" />
+          <rect x="230" y="75" width="35" height="75" className="fill-muted-foreground/20" />
+          <rect x="275" y="55" width="40" height="95" className="fill-muted" />
+          <rect x="325" y="70" width="30" height="80" className="fill-muted-foreground/20" />
+          <rect x="365" y="85" width="25" height="65" className="fill-muted" />
+          <circle cx="50" cy="130" r="8" className="fill-primary/30" />
+          <rect x="46" y="138" width="8" height="12" className="fill-primary/30" />
+          <circle cx="150" cy="125" r="8" className="fill-success/40" />
+          <rect x="146" y="133" width="8" height="17" className="fill-success/40" />
         </svg>
       </div>
 
@@ -100,7 +100,7 @@ export default function VerificationCodePage() {
         </div>
 
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold mb-2">we have sent a code to</h1>
+          <h1 className="text-2xl font-bold mb-2 text-foreground">we have sent a code to</h1>
           <p className="text-foreground font-medium">{maskedEmail}</p>
           <p className="text-sm text-muted-foreground mt-1">Enter it below.</p>
         </div>
@@ -117,7 +117,7 @@ export default function VerificationCodePage() {
               value={code}
               onChange={(e) => handleCodeChange(index, e.target.value)}
               onKeyDown={(e) => handleKeyDown(index, e)}
-              className={`w-14 h-14 text-center text-xl font-bold rounded-lg border-2 transition-colors ${
+              className={`w-14 h-14 text-center text-xl font-bold rounded-lg border-2 transition-colors text-foreground ${
                 code
                   ? 'border-primary bg-primary/10'
                   : 'border-border bg-background'

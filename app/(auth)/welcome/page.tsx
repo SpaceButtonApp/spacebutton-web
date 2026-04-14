@@ -116,14 +116,7 @@ export default function WelcomePage() {
   ]
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] flex flex-col relative overflow-hidden">
-      {/* Background gradient effects */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 -left-40 w-80 h-80 bg-[#703BF7]/20 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 -right-40 w-80 h-80 bg-[#703BF7]/10 rounded-full blur-[120px]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#703BF7]/5 rounded-full blur-[100px]" />
-      </div>
-      
+    <div className="min-h-screen bg-background flex flex-col relative overflow-hidden">
       {/* Confetti */}
       <Confetti />
       
@@ -131,11 +124,11 @@ export default function WelcomePage() {
       <div className="relative flex-1 flex flex-col items-center justify-center px-6 py-12 z-10">
         {/* Success Icon */}
         <div className="relative mb-8">
-          <div className="w-28 h-28 rounded-full bg-gradient-to-br from-green-500/20 to-green-600/30 flex items-center justify-center shadow-2xl shadow-green-500/20 border border-green-500/30">
-            <CheckCircle className="w-14 h-14 text-green-400" />
+          <div className="w-28 h-28 rounded-full bg-gradient-to-br from-success/20 to-success/30 flex items-center justify-center shadow-2xl shadow-success/20 border border-success/30">
+            <CheckCircle className="w-14 h-14 text-success" />
           </div>
-          <div className="absolute -top-2 -right-2 w-10 h-10 rounded-full bg-[#703BF7] flex items-center justify-center shadow-lg shadow-[#703BF7]/30">
-            <Sparkles className="w-5 h-5 text-white" />
+          <div className="absolute -top-2 -right-2 w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
+            <Sparkles className="w-5 h-5 text-primary-foreground" />
           </div>
         </div>
 
@@ -148,12 +141,12 @@ export default function WelcomePage() {
             height={48}
             className="h-12 w-12"
           />
-          <span className="text-2xl font-bold text-white">SpaceButton</span>
+          <span className="text-2xl font-bold text-foreground">SpaceButton</span>
         </div>
 
         {/* Welcome Text */}
-        <h1 className="text-3xl font-bold text-white mb-3 text-center">Welcome aboard!</h1>
-        <p className="text-gray-400 text-center max-w-sm mb-8">
+        <h1 className="text-3xl font-bold text-foreground mb-3 text-center">Welcome aboard!</h1>
+        <p className="text-muted-foreground text-center max-w-sm mb-8">
           Your account is ready. Start exploring the best spaces tailored just for you.
         </p>
 
@@ -162,12 +155,12 @@ export default function WelcomePage() {
           {features.map((feature, index) => (
             <div
               key={index}
-              className="flex items-center gap-4 p-4 rounded-xl bg-[#12121a]/80 border border-gray-800/50 backdrop-blur-sm"
+              className="flex items-center gap-4 p-4 rounded-xl bg-card/80 border border-border/50 backdrop-blur-sm"
             >
-              <div className="w-10 h-10 rounded-lg bg-[#703BF7]/20 flex items-center justify-center">
-                <feature.icon className="w-5 h-5 text-[#703BF7]" />
+              <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                <feature.icon className="w-5 h-5 text-primary" />
               </div>
-              <span className="text-white font-medium">{feature.label}</span>
+              <span className="text-foreground font-medium">{feature.label}</span>
             </div>
           ))}
         </div>
@@ -175,7 +168,7 @@ export default function WelcomePage() {
         {/* CTA Button */}
         <Button
           onClick={() => router.push('/home')}
-          className="w-full max-w-sm h-14 rounded-xl bg-gradient-to-r from-[#703BF7] to-[#5f32d4] hover:from-[#8b5cf6] hover:to-[#703BF7] text-white font-semibold text-base shadow-lg shadow-[#703BF7]/25 transition-all"
+          className="w-full max-w-sm h-14 rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-primary-foreground font-semibold text-base shadow-lg shadow-primary/25 transition-all"
         >
           Start Exploring
         </Button>

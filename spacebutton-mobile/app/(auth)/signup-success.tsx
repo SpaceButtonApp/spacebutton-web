@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   Animated,
-  Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
@@ -14,67 +13,49 @@ import { Icon } from '@/components/Icons';
 import { useTheme } from '@/context/ThemeContext';
 import { FontSize, FontWeight, Spacing, BorderRadius } from '@/constants/theme';
 
-const { width, height } = Dimensions.get('window');
 const LOGO_URL = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png';
-
-// Confetti component
-function Confetti() {
-  const [ribbons] = useState(() => {
-    const colors = ['#703BF7', '#10B981', '#F59E0B', '#3B82F6', '#6366F1', '#EC4899'];
-    return Array.from({ length: 40 }, (_, i) => ({
-      id: i,
-      left: Math.random() * width,
-      delay: Math.random() * 2000,
-      duration: 3000 + Math.random() * 2000,
-      color: colors[Math.floor(Math.random() * colors.length)],
-      rotation: Math.random() * 360,
-    }));
-  });
-
-  return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      {ribbons.map((ribbon) => {
-        const anim = new Animated.Value(0);
-        
-        Animated.loop(
-          Animated.timing(anim, {
-            toValue: 1,
-            duration: ribbon.duration,
-            delay: ribbon.delay,
-            useNativeDriver: true,
-          })
-        ).start();
-
-        const translateY = anim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [-50, height + 50],
-        });
-
-        return (
-          <Animated.View
-            key={ribbon.id}
-            style={[
-              styles.ribbon,
-              {
-                left: ribbon.left,
-                backgroundColor: ribbon.color,
-                transform: [
-                  { translateY },
-                  { rotate: `${ribbon.rotation}deg` },
-                ],
-              },
-            ]}
-          />
-        );
-      })}
-    </View>
-  );
-}
 
 export default function SignupSuccessScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  
+  // Animation values using useRef
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
+  const iconBounce = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Animate content
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 4,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // Bounce animation for icon
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(iconBounce, {
+          toValue: -10,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(iconBounce, {
+          toValue: 0,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [fadeAnim, scaleAnim, iconBounce]);
 
   const features = [
     { icon: 'home' as const, label: 'Find your perfect space' },
@@ -84,27 +65,32 @@ export default function SignupSuccessScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Background gradient effects */}
-      <View style={styles.gradientOverlay}>
-        <View style={[styles.gradientCircle, styles.gradientLeft]} />
-        <View style={[styles.gradientCircle, styles.gradientRight]} />
-        <View style={[styles.gradientCircle, styles.gradientCenter]} />
-      </View>
-
-      {/* Confetti */}
-      <Confetti />
-
       {/* Content */}
-      <View style={[styles.content, { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 20 }]}>
+      <Animated.View 
+        style={[
+          styles.content, 
+          { 
+            paddingTop: insets.top + 40, 
+            paddingBottom: insets.bottom + 20,
+            opacity: fadeAnim,
+            transform: [{ scale: scaleAnim }],
+          }
+        ]}
+      >
         {/* Success Icon */}
-        <View style={styles.successIconContainer}>
+        <Animated.View 
+          style={[
+            styles.successIconContainer,
+            { transform: [{ translateY: iconBounce }] }
+          ]}
+        >
           <View style={styles.successIcon}>
             <Icon name="check-circle" size={56} color="#22c55e" />
           </View>
           <View style={styles.sparklesBadge}>
             <Icon name="sparkles" size={20} color="#fff" />
           </View>
-        </View>
+        </Animated.View>
 
         {/* Logo */}
         <View style={styles.logoRow}>
@@ -144,7 +130,7 @@ export default function SignupSuccessScreen() {
           fullWidth
           size="lg"
         />
-      </View>
+      </Animated.View>
     </View>
   );
 }
@@ -152,41 +138,6 @@ export default function SignupSuccessScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  gradientOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    overflow: 'hidden',
-  },
-  gradientCircle: {
-    position: 'absolute',
-    borderRadius: 200,
-  },
-  gradientLeft: {
-    top: -100,
-    left: -150,
-    width: 320,
-    height: 320,
-    backgroundColor: 'rgba(112, 59, 247, 0.2)',
-  },
-  gradientRight: {
-    bottom: 0,
-    right: -150,
-    width: 320,
-    height: 320,
-    backgroundColor: 'rgba(112, 59, 247, 0.1)',
-  },
-  gradientCenter: {
-    top: height / 2 - 300,
-    left: width / 2 - 300,
-    width: 600,
-    height: 600,
-    backgroundColor: 'rgba(112, 59, 247, 0.05)',
-  },
-  ribbon: {
-    position: 'absolute',
-    width: 8,
-    height: 24,
-    borderRadius: 2,
   },
   content: {
     flex: 1,

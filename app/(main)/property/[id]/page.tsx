@@ -180,12 +180,20 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
           </div>
         ) : (
           <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-secondary text-sm">
-              <Users className="w-4 h-4" />
-              <span>{property.type === 'connect' 
-                ? (property.connectRole === 'Landlord' ? 'Landlord' : 'Individual') 
-                : 'Agent'}</span>
-            </div>
+            {/* Show Tenant/Landlord for Connect type */}
+            {property.type === 'connect' && property.connectRole && (
+              <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-secondary text-sm">
+                <Users className="w-4 h-4" />
+                <span>{property.connectRole}</span>
+              </div>
+            )}
+            {/* Show Agent for agent type */}
+            {property.type === 'agent' && (
+              <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-secondary text-sm">
+                <Users className="w-4 h-4" />
+                <span>Agent</span>
+              </div>
+            )}
             <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-secondary text-sm">
               <Users className="w-4 h-4" />
               <span className="capitalize">

@@ -47,6 +47,7 @@ const iconMapping: Record<string, { lib: 'feather' | 'material' | 'ionicons'; na
   'alert-triangle': { lib: 'feather', name: 'alert-triangle' },
   grid: { lib: 'feather', name: 'grid' },
   sparkles: { lib: 'material', name: 'shimmer' },
+  zap: { lib: 'feather', name: 'zap' },
   phone: { lib: 'feather', name: 'phone' },
   video: { lib: 'feather', name: 'video' },
   'more-vertical': { lib: 'feather', name: 'more-vertical' },

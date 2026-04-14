@@ -98,30 +98,23 @@ export default function VerificationPage() {
   const isCodeComplete = codes.every(c => c !== '')
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] flex flex-col">
-      {/* Animated Background */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#703BF7]/10 rounded-full blur-[150px] animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-[#703BF7]/5 rounded-full blur-[120px]" />
-      </div>
-
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <div className="relative px-4 pt-6 pb-4">
+      <div className="px-4 pt-6 pb-4">
         <button
           onClick={() => router.back()}
-          className="w-10 h-10 rounded-full bg-gray-800/50 flex items-center justify-center hover:bg-gray-800 transition-colors"
+          className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors"
         >
-          <ArrowLeft className="w-5 h-5 text-gray-400" />
+          <ArrowLeft className="w-5 h-5 text-muted-foreground" />
         </button>
       </div>
 
       {/* Content */}
-      <div className="relative flex-1 px-6 py-4 flex flex-col items-center">
-        {/* Animated Icon */}
+      <div className="flex-1 px-6 py-4 flex flex-col items-center">
+        {/* Icon */}
         <div className="relative mb-8">
-          <div className="absolute inset-0 bg-[#703BF7]/30 rounded-3xl blur-xl scale-150 animate-pulse" />
-          <div className="relative w-24 h-24 rounded-3xl bg-gradient-to-br from-[#703BF7] to-[#5f32d4] flex items-center justify-center shadow-lg shadow-[#703BF7]/30">
-            <Mail className="w-12 h-12 text-white" />
+          <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/30">
+            <Mail className="w-12 h-12 text-primary-foreground" />
           </div>
         </div>
 
@@ -135,12 +128,12 @@ export default function VerificationPage() {
               height={32}
               className="h-8 w-8"
             />
-            <span className="text-lg font-bold text-white">SpaceButton</span>
+            <span className="text-lg font-bold text-foreground">SpaceButton</span>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-3">Check your inbox</h1>
-          <p className="text-gray-400 text-sm max-w-xs mx-auto">
+          <h1 className="text-3xl font-bold text-foreground mb-3">Check your inbox</h1>
+          <p className="text-muted-foreground text-sm max-w-xs mx-auto">
             We have sent a 6-digit verification code to{' '}
-            <span className="text-[#703BF7] font-medium">{maskedEmail}</span>
+            <span className="text-primary font-medium">{maskedEmail}</span>
           </p>
         </div>
 
@@ -158,14 +151,14 @@ export default function VerificationPage() {
                 onKeyDown={(e) => handleKeyDown(index, e)}
                 className={`
                   w-14 h-16 text-center text-2xl font-bold rounded-2xl
-                  bg-[#12121a] border-2 text-white
+                  bg-card border-2 text-foreground
                   focus:outline-none transition-all duration-200
-                  ${code ? 'border-[#703BF7] shadow-lg shadow-[#703BF7]/20' : 'border-gray-800 focus:border-[#703BF7]'}
+                  ${code ? 'border-primary shadow-lg shadow-primary/20' : 'border-border focus:border-primary'}
                 `}
               />
               {code && (
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#703BF7] rounded-full flex items-center justify-center">
-                  <CheckCircle2 className="w-3 h-3 text-white" />
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full flex items-center justify-center">
+                  <CheckCircle2 className="w-3 h-3 text-primary-foreground" />
                 </div>
               )}
             </div>
@@ -180,8 +173,8 @@ export default function VerificationPage() {
             w-full max-w-sm h-14 rounded-2xl font-semibold text-base
             transition-all duration-300 transform
             ${isCodeComplete 
-              ? 'bg-[#703BF7] hover:bg-[#5f32d4] text-white shadow-lg shadow-[#703BF7]/30 hover:scale-[1.02]' 
-              : 'bg-gray-800 text-gray-500 cursor-not-allowed'
+              ? 'bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/30 hover:scale-[1.02]' 
+              : 'bg-secondary text-muted-foreground cursor-not-allowed'
             }
           `}
         >
@@ -198,14 +191,14 @@ export default function VerificationPage() {
         {/* Resend Section */}
         <div className="text-center mt-8">
           {resendTimer > 0 ? (
-            <p className="text-gray-500 text-sm">
-              Resend code in <span className="text-[#703BF7] font-medium">{resendTimer}s</span>
+            <p className="text-muted-foreground text-sm">
+              Resend code in <span className="text-primary font-medium">{resendTimer}s</span>
             </p>
           ) : (
             <button
               onClick={handleResendOTP}
               disabled={isResending}
-              className="text-sm text-gray-400 hover:text-[#703BF7] transition-colors flex items-center gap-2 mx-auto"
+              className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-2 mx-auto"
             >
               {isResending ? (
                 <>
@@ -224,10 +217,10 @@ export default function VerificationPage() {
 
         {/* Help Text */}
         <div className="mt-auto pt-8 text-center">
-          <p className="text-gray-600 text-xs">
+          <p className="text-muted-foreground text-xs">
             Didn&apos;t receive the email? Check your spam folder
           </p>
-          <p className="text-gray-600 text-xs mt-2">
+          <p className="text-muted-foreground text-xs mt-2">
             For demo: Enter any 6-digit code (e.g., 123456)
           </p>
         </div>

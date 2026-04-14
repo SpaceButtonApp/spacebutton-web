@@ -78,25 +78,18 @@ export default function ForgotPasswordVerifyPage() {
     : 'your email'
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] flex flex-col">
-      {/* Background gradient effects */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 -left-40 w-80 h-80 bg-[#703BF7]/20 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 -right-40 w-80 h-80 bg-[#703BF7]/10 rounded-full blur-[120px]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[#703BF7]/5 rounded-full blur-[100px]" />
-      </div>
-
+    <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <div className="relative px-4 pt-6 pb-4">
-        <BackButton fallbackUrl="/forgot-password" variant="light" />
+      <div className="px-4 pt-6 pb-4">
+        <BackButton fallbackUrl="/forgot-password" />
       </div>
 
       {/* Content */}
-      <div className="relative flex-1 px-6 py-4">
+      <div className="flex-1 px-6 py-4">
         {/* Icon */}
         <div className="flex justify-center mb-6">
-          <div className="w-20 h-20 rounded-2xl bg-[#703BF7]/20 flex items-center justify-center border border-[#703BF7]/30">
-            <Mail className="w-10 h-10 text-[#703BF7]" />
+          <div className="w-20 h-20 rounded-2xl bg-primary/20 flex items-center justify-center border border-primary/30">
+            <Mail className="w-10 h-10 text-primary" />
           </div>
         </div>
 
@@ -110,12 +103,12 @@ export default function ForgotPasswordVerifyPage() {
               height={32}
               className="h-8 w-8"
             />
-            <span className="text-lg font-bold text-white">SpaceButton</span>
+            <span className="text-lg font-bold text-foreground">SpaceButton</span>
           </div>
-          <h1 className="text-2xl font-bold text-white mb-3">Enter Verification Code</h1>
-          <p className="text-gray-400 text-sm">
+          <h1 className="text-2xl font-bold text-foreground mb-3">Enter Verification Code</h1>
+          <p className="text-muted-foreground text-sm">
             We sent a 6-digit code to{' '}
-            <span className="text-white font-medium">{maskedEmail}</span>
+            <span className="text-foreground font-medium">{maskedEmail}</span>
           </p>
         </div>
 
@@ -131,7 +124,7 @@ export default function ForgotPasswordVerifyPage() {
               value={code}
               onChange={(e) => handleCodeChange(index, e.target.value)}
               onKeyDown={(e) => handleKeyDown(index, e)}
-              className="w-12 h-14 text-center text-xl font-bold bg-[#12121a] border-2 border-gray-800 rounded-xl text-white focus:border-[#703BF7] focus:outline-none focus:ring-2 focus:ring-[#703BF7]/20 transition-all"
+              className="w-12 h-14 text-center text-xl font-bold bg-card border-2 border-border rounded-xl text-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
             />
           ))}
         </div>
@@ -139,17 +132,17 @@ export default function ForgotPasswordVerifyPage() {
         <Button
           onClick={handleContinue}
           disabled={isLoading || codes.some(c => c === '')}
-          className="w-full h-14 rounded-xl bg-gradient-to-r from-[#703BF7] to-[#5f32d4] hover:from-[#8b5cf6] hover:to-[#703BF7] text-white font-semibold text-base disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-[#703BF7]/20"
+          className="w-full h-14 rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-primary-foreground font-semibold text-base disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/20"
         >
           {isLoading ? 'Verifying...' : 'Continue'}
         </Button>
 
         <div className="text-center mt-6">
-          <p className="text-gray-400 text-sm">
+          <p className="text-muted-foreground text-sm">
             Didn&apos;t receive the code?{' '}
             <button
               onClick={handleResendOTP}
-              className="text-[#703BF7] font-medium hover:text-[#8b5cf6] transition-colors"
+              className="text-primary font-medium hover:text-primary/80 transition-colors"
             >
               Resend
             </button>
@@ -157,7 +150,7 @@ export default function ForgotPasswordVerifyPage() {
         </div>
 
         {/* Demo Note */}
-        <p className="text-center text-gray-500 text-xs mt-6">
+        <p className="text-center text-muted-foreground text-xs mt-6">
           For demo: Enter any 6-digit code (e.g., 123456)
         </p>
       </div>

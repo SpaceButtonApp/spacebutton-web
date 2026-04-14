@@ -2,11 +2,11 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { FileText, Shield, ScrollText, Headphones, Mail } from "lucide-react"
+import { FileText, Shield, ScrollText, Headphones, Mail, ChevronDown, ChevronRight, HelpCircle } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
 import { BackButton } from "@/components/back-button"
 
-const faqItems = [
+const documentItems = [
   {
     id: 1,
     icon: FileText,
@@ -24,6 +24,49 @@ const faqItems = [
     icon: ScrollText,
     title: "Terms & Condition",
     href: "/terms",
+  },
+]
+
+const faqItems = [
+  {
+    id: 1,
+    question: "How do I post a property listing?",
+    answer: "Navigate to the home screen and tap the '+' button to create a new listing. Fill in the property details including location, price, amenities, and upload clear photos of your space. Your listing will be reviewed and published within 24 hours."
+  },
+  {
+    id: 2,
+    question: "What are Connects and how do they work?",
+    answer: "Connects are tokens that allow you to contact property owners or interested tenants. Each time you initiate contact with someone, one Connect is used. You can purchase more Connects or upgrade to Premium for unlimited connections."
+  },
+  {
+    id: 3,
+    question: "How do I upgrade to Premium?",
+    answer: "Go to Settings > Premium to view available subscription plans. Premium members enjoy unlimited connects, priority listing visibility, and verified badge on their profile."
+  },
+  {
+    id: 4,
+    question: "Is my personal information secure?",
+    answer: "Yes, we use industry-standard encryption to protect your data. Your personal contact information is never shared without your explicit consent. You can control your privacy settings in your profile."
+  },
+  {
+    id: 5,
+    question: "How do I save properties I'm interested in?",
+    answer: "Simply tap the heart icon on any property listing to save it to your favorites. You can access all your saved properties from the Favorites tab in your profile."
+  },
+  {
+    id: 6,
+    question: "What should I do if I encounter a suspicious listing?",
+    answer: "If you find a listing that seems fraudulent or suspicious, tap the three dots menu on the listing and select 'Report'. Our team will review it promptly. Never send money without verifying the property in person."
+  },
+  {
+    id: 7,
+    question: "How can I edit or delete my listing?",
+    answer: "Go to your profile and tap on 'My Listings'. Select the property you want to modify, then use the edit or delete options. Changes may take a few hours to reflect across the platform."
+  },
+  {
+    id: 8,
+    question: "What payment methods are accepted?",
+    answer: "We accept bank transfers, debit/credit cards, and mobile payment options. All transactions are processed securely through our payment partners."
   },
 ]
 
@@ -92,7 +135,8 @@ const contactItems = [
 
 export default function HelpPage() {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<"faq" | "contact">("faq")
+  const [activeTab, setActiveTab] = useState<"faq" | "contact" | "docs">("faq")
+  const [expandedFaq, setExpandedFaq] = useState<number | null>(null)
 
   const handleContactClick = (item: typeof contactItems[0]) => {
     if (item.action === 'chat') {
@@ -107,45 +151,77 @@ export default function HelpPage() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Background gradient effects */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 -left-40 w-80 h-80 bg-primary/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-[120px]" />
-      </div>
-
       <header className="sticky top-0 z-10 bg-card/80 backdrop-blur-xl px-4 py-4 flex items-center gap-4 border-b border-border">
         <BackButton fallbackUrl="/settings" />
         <h1 className="text-lg font-semibold text-foreground flex-1 text-center pr-10">Help & Support</h1>
       </header>
 
-      <div className="relative px-4 pt-6">
+      <div className="px-4 pt-6">
         {/* Tab Switcher */}
         <div className="bg-secondary rounded-full p-1 flex mb-6 border border-border">
           <button
             onClick={() => setActiveTab("faq")}
-            className={`flex-1 py-3 rounded-full text-sm font-medium transition-colors ${
+            className={`flex-1 py-2.5 rounded-full text-sm font-medium transition-colors ${
               activeTab === "faq" 
                 ? "bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-lg" 
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            FAQ
+            FAQs
+          </button>
+          <button
+            onClick={() => setActiveTab("docs")}
+            className={`flex-1 py-2.5 rounded-full text-sm font-medium transition-colors ${
+              activeTab === "docs" 
+                ? "bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-lg" 
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Documents
           </button>
           <button
             onClick={() => setActiveTab("contact")}
-            className={`flex-1 py-3 rounded-full text-sm font-medium transition-colors ${
+            className={`flex-1 py-2.5 rounded-full text-sm font-medium transition-colors ${
               activeTab === "contact" 
                 ? "bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-lg" 
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            Contact Us
+            Contact
           </button>
         </div>
 
         {activeTab === "faq" ? (
           <div className="space-y-3">
+            <div className="flex items-center gap-2 mb-4">
+              <HelpCircle className="w-5 h-5 text-primary" />
+              <h2 className="text-base font-semibold text-foreground">Frequently Asked Questions</h2>
+            </div>
             {faqItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setExpandedFaq(expandedFaq === item.id ? null : item.id)}
+                className="w-full text-left p-4 rounded-xl bg-card border border-border hover:border-primary/30 transition-all"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-medium text-foreground text-sm">{item.question}</span>
+                  {expandedFaq === item.id ? (
+                    <ChevronDown className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                  ) : (
+                    <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                  )}
+                </div>
+                {expandedFaq === item.id && (
+                  <p className="mt-3 text-sm text-muted-foreground leading-relaxed border-t border-border pt-3">
+                    {item.answer}
+                  </p>
+                )}
+              </button>
+            ))}
+          </div>
+        ) : activeTab === "docs" ? (
+          <div className="space-y-3">
+            {documentItems.map((item) => (
               <button
                 key={item.id}
                 onClick={() => router.push(item.href)}

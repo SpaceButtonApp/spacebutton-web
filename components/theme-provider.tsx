@@ -10,10 +10,10 @@ export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
   return (
     <NextThemesProvider 
       attribute="class"
-      defaultTheme="dark"
+      defaultTheme="system"
       enableSystem
       storageKey="spacebutton-theme"
-      themes={['light', 'dark']}
+      themes={['light', 'dark', 'system']}
       {...props}
     >
       {children}

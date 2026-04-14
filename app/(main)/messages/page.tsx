@@ -13,19 +13,13 @@ export default function MessagesPage() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Background gradient effects */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 -left-40 w-80 h-80 bg-primary/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 -right-40 w-80 h-80 bg-primary/5 rounded-full blur-[120px]" />
-      </div>
-
       {/* Header */}
-      <div className="relative bg-background/80 backdrop-blur-xl px-4 py-4 sticky top-0 z-40 border-b border-border">
+      <div className="bg-background/80 backdrop-blur-xl px-4 py-4 sticky top-0 z-40 border-b border-border">
         <h1 className="text-xl font-bold text-center text-foreground">Messages</h1>
       </div>
 
       {/* Conversations List */}
-      <div className="relative px-4 py-4">
+      <div className="px-4 py-4">
         {conversations.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="w-24 h-24 rounded-2xl bg-secondary border border-border flex items-center justify-center mb-4">

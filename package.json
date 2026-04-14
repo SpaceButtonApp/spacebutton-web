@@ -48,6 +48,7 @@
     "cmdk": "1.1.1",
     "date-fns": "4.1.0",
     "embla-carousel-react": "8.6.0",
+    "expo": "^55.0.15",
     "expo-image": "^55.0.6",
     "expo-linear-gradient": "^55.0.9",
     "expo-router": "^55.0.8",

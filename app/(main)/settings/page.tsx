@@ -37,20 +37,14 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Background gradient effects */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 -left-40 w-80 h-80 bg-primary/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 -right-40 w-80 h-80 bg-blue-600/10 rounded-full blur-[120px]" />
-      </div>
-
       {/* Header with Theme Toggle */}
-      <div className="relative flex items-center justify-between px-4 pt-4 pb-2">
+      <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <h1 className="text-lg font-bold text-foreground">Settings</h1>
         <ThemeToggle />
       </div>
 
       {/* Profile Header */}
-      <div className="relative px-6 pt-4 pb-6 flex flex-col items-center">
+      <div className="px-6 pt-4 pb-6 flex flex-col items-center">
         <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-primary/30 mb-4 shadow-lg shadow-primary/20">
           <Image
             src={user?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'}
@@ -65,7 +59,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Menu Items */}
-      <div className="relative px-4 space-y-3">
+      <div className="px-4 space-y-3">
         {menuItems.map((item) => (
           <button
             key={item.label}

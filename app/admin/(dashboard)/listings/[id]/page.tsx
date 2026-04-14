@@ -302,6 +302,15 @@ export default function AdminPropertyDetailsPage() {
                     <span className="text-white">{property.connectRole}</span>
                   </div>
                 )}
+                {property.genderNeeded && (
+                  <div className="flex items-center justify-between p-3 bg-[#1a1a24] rounded-lg">
+                    <div className="flex items-center gap-2 text-gray-400">
+                      <Users className="w-4 h-4" />
+                      <span>Gender Needed</span>
+                    </div>
+                    <span className="text-white capitalize">{property.genderNeeded}</span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between p-3 bg-[#1a1a24] rounded-lg">
                   <div className="flex items-center gap-2 text-gray-400">
                     <Home className="w-4 h-4" />

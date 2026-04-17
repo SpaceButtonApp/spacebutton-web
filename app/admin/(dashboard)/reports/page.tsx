@@ -7,7 +7,7 @@ import { useState, useMemo } from 'react'
 import { Input } from '@/components/ui/input'
 
 export default function ReportsPage() {
-  const { reports, registeredUsers, updateRegisteredUser } = useAppStore()
+  const { reports, registeredUsers, updateReport } = useAppStore()
   const [searchQuery, setSearchQuery] = useState('')
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'reviewed' | 'resolved'>('all')
   const [selectedReport, setSelectedReport] = useState<any>(null)
@@ -25,10 +25,10 @@ export default function ReportsPage() {
   }, [reports, searchQuery, filterStatus])
 
   const handleUpdateReportStatus = (reportId: string, newStatus: 'pending' | 'reviewed' | 'resolved') => {
-    const updatedReports = reports.map(r =>
-      r.id === reportId ? { ...r, status: newStatus } : r
-    )
-    // In a real app, this would update in the store
+    updateReport(reportId, { status: newStatus })
+    if (selectedReport?.id === reportId) {
+      setSelectedReport({ ...selectedReport, status: newStatus })
+    }
   }
 
   const stats = [
@@ -156,11 +156,11 @@ export default function ReportsPage() {
                 </thead>
                 <tbody>
                   {filteredReports.map((report) => {
-                    const reportedUser = registeredUsers.find(u => u.id === report.reportedUserId)
+                    const reportedUser = registeredUsers.find(u => u.name === report.reportedUserName)
                     return (
                       <tr key={report.id} className="border-b border-gray-800/30 hover:bg-gray-800/20">
                         <td className="px-5 py-4 text-sm font-mono text-purple-400">{report.id}</td>
-                        <td className="px-5 py-4 text-sm font-mono text-blue-400">{reportedUser?.userId || 'N/A'}</td>
+                        <td className="px-5 py-4 text-sm font-mono text-blue-400">{reportedUser?.userId || `SB26${String(registeredUsers.length + 1).padStart(8, '0')}`}</td>
                         <td className="px-5 py-4 text-sm text-white">{report.reportedUserName}</td>
                         <td className="px-5 py-4">
                           <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${reasonColors[report.reason] || 'bg-gray-500/20 text-gray-400'}`}>
@@ -284,7 +284,9 @@ export default function ReportsPage() {
                   <select
                     value={selectedReport.status}
                     onChange={(e) => {
-                      setSelectedReport({ ...selectedReport, status: e.target.value })
+                      const newStatus = e.target.value as 'pending' | 'reviewed' | 'resolved'
+                      handleUpdateReportStatus(selectedReport.id, newStatus)
+                      setSelectedReport({ ...selectedReport, status: newStatus })
                     }}
                     className={`w-full px-3 py-2 rounded-lg text-sm font-medium border-0 cursor-pointer ${
                       selectedReport.status === 'pending'

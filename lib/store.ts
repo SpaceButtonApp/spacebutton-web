@@ -146,6 +146,7 @@ interface AppState {
   // Reports
   reports: Report[]
   addReport: (report: Omit<Report, 'id'>) => void
+  updateReport: (id: string, updates: Partial<Report>) => void
   
   // UI State
   activeTab: 'connect' | 'agent' | 'shortlet' | 'properties'
@@ -387,6 +388,10 @@ export const useAppStore = create<AppState>()(
           registeredUsers: updatedUsers
         }
       }),
+      
+      updateReport: (id, updates) => set((state) => ({
+        reports: state.reports.map(r => r.id === id ? { ...r, ...updates } : r)
+      })),
       
       // UI State
       activeTab: 'connect',

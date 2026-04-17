@@ -231,7 +231,10 @@ export default function ReportsPage() {
                     </div>
                     <div>
                       <p className="font-semibold text-white">{selectedReport.reportedUserName}</p>
-                      <p className="text-sm font-mono text-gray-400">{registeredUsers.find(u => u.id === selectedReport.reportedUserId)?.userId || 'N/A'}</p>
+                      <p className="text-sm font-mono text-blue-400">{(() => {
+                        const user = registeredUsers.find(u => u.name === selectedReport.reportedUserName)
+                        return user?.userId || `SB26${String(registeredUsers.length + 1).padStart(8, '0')}`
+                      })()}</p>
                     </div>
                   </div>
                 </div>
@@ -245,7 +248,10 @@ export default function ReportsPage() {
                     </div>
                     <div>
                       <p className="font-semibold text-white">{selectedReport.reporterName}</p>
-                      <p className="text-sm font-mono text-gray-400">{registeredUsers.find(u => u.id === selectedReport.reporterId)?.userId || 'N/A'}</p>
+                      <p className="text-sm font-mono text-blue-400">{(() => {
+                        const user = registeredUsers.find(u => u.name === selectedReport.reporterName)
+                        return user?.userId || `SB26${String(registeredUsers.length + 1).padStart(8, '0')}`
+                      })()}</p>
                     </div>
                   </div>
                 </div>

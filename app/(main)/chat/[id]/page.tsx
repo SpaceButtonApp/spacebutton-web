@@ -3,7 +3,7 @@
 import { useState, use, useEffect } from 'react'
 import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Video, Phone, MoreVertical, Send, X, CheckSquare, MessageSquare, Star } from 'lucide-react'
+import { Video, Phone, MoreVertical, Send, X, CheckSquare, MessageSquare, Star, Flag, AlertTriangle, Search, Eye, ShieldOff } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { BackButton } from '@/components/back-button'
 import { Button } from '@/components/ui/button'
@@ -16,7 +16,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const router = useRouter()
   const searchParams = useSearchParams()
   const propertyId = searchParams.get('propertyId')
-  const { properties, doneDealStates, toggleDoneDeal, user, addReview, addConversation, conversations } = useAppStore()
+  const { properties, doneDealStates, toggleDoneDeal, user, addReview, addConversation, conversations, addReport, registeredUsers } = useAppStore()
   
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState<Array<{
@@ -33,6 +33,10 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [showCongrats, setShowCongrats] = useState(false)
   const [rating, setRating] = useState(0)
   const [feedback, setFeedback] = useState('')
+  const [showProfileCard, setShowProfileCard] = useState(false)
+  const [showReportModal, setShowReportModal] = useState(false)
+  const [selectedReportReason, setSelectedReportReason] = useState('')
+  const [reportDetails, setReportDetails] = useState('')
   
   // Get property details from propertyId param or find first property by this agent
   const property = propertyId 
@@ -196,8 +200,15 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       )}
 
       {/* Menu Popup */}
-      {showMenu && !showFeedback && (
+      {showMenu && !showFeedback && !showReportModal && (
         <div className="mx-4 mt-2 bg-background rounded-xl border border-border shadow-lg overflow-hidden z-50">
+          <button
+            onClick={() => { setShowProfileCard(true); setShowMenu(false); }}
+            className="w-full text-left px-4 py-3 hover:bg-secondary transition-colors border-b border-border flex items-center gap-3"
+          >
+            <Eye className="w-5 h-5 text-muted-foreground" />
+            <span className="font-medium">View Profile</span>
+          </button>
           <button
             onClick={() => setShowDoneDealInfo(true)}
             className="w-full text-left px-4 py-3 hover:bg-secondary transition-colors border-b border-border"
@@ -208,7 +219,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             onClick={handleDoneDeal}
             disabled={doneDealState.locked}
             className={cn(
-              "w-full flex items-center justify-between px-4 py-4 transition-colors",
+              "w-full flex items-center justify-between px-4 py-4 transition-colors border-b border-border",
               doneDealState.locked 
                 ? "bg-success/10 cursor-not-allowed" 
                 : "hover:bg-secondary"
@@ -241,17 +252,217 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               )}
             </div>
           </button>
-          <div className="border-t border-border" />
           <button
             onClick={() => setShowFeedback(true)}
-            className="w-full flex items-center justify-between px-4 py-4 hover:bg-secondary transition-colors"
+            className="w-full flex items-center justify-between px-4 py-4 hover:bg-secondary transition-colors border-b border-border"
           >
             <div className="flex items-center gap-3">
               <MessageSquare className="w-5 h-5 text-muted-foreground" />
-              <span className="font-medium">FeedBack</span>
+              <span className="font-medium">Feedback</span>
             </div>
-            <MessageSquare className="w-5 h-5 text-muted-foreground" />
           </button>
+          <button
+            onClick={() => { setShowReportModal(true); setShowMenu(false); }}
+            className="w-full flex items-center gap-3 px-4 py-4 hover:bg-secondary transition-colors text-destructive"
+          >
+            <Flag className="w-5 h-5" />
+            <span className="font-medium">Report User</span>
+          </button>
+        </div>
+      )}
+
+      {/* Profile Card Modal */}
+      {showProfileCard && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center">
+          <div className="w-full max-w-md rounded-t-3xl bg-background p-6 pb-8 max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-lg">User Profile</h3>
+              <button onClick={() => setShowProfileCard(false)}>
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {/* Profile Picture */}
+              <div className="flex flex-col items-center">
+                <Image
+                  src={agent.avatar}
+                  alt={agent.name}
+                  width={120}
+                  height={120}
+                  className="rounded-full mb-4 border-4 border-primary"
+                />
+                <h2 className="text-2xl font-bold">{agent.name}</h2>
+                <p className="text-muted-foreground capitalize mt-1">
+                  {agent.type === 'agent' ? 'Agent' : 'Individual'}
+                </p>
+              </div>
+
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-primary">{agent.listings || 0}</p>
+                  <p className="text-xs text-muted-foreground">Listings</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-primary">{agent.closedDeals || 0}</p>
+                  <p className="text-xs text-muted-foreground">Closed</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-primary flex items-center justify-center gap-1">
+                    {agent.rating || 0}
+                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  </p>
+                  <p className="text-xs text-muted-foreground">Rating</p>
+                </div>
+              </div>
+
+              {/* Current Property */}
+              {property && (
+                <div className="bg-secondary rounded-xl p-4">
+                  <p className="text-xs text-muted-foreground mb-2">Current Property</p>
+                  <div className="flex gap-3">
+                    <Image
+                      src={property.images?.[0] || '/placeholder.png'}
+                      alt={property.title}
+                      width={80}
+                      height={80}
+                      className="rounded-lg object-cover"
+                    />
+                    <div className="flex-1">
+                      <p className="font-semibold text-sm line-clamp-1">{property.title}</p>
+                      <p className="text-xs text-muted-foreground">{property.location}</p>
+                      <p className="text-primary font-bold text-sm mt-1">₦{property.price.toLocaleString()}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* About */}
+              {agent.bio && (
+                <div>
+                  <p className="text-sm font-medium mb-2">About</p>
+                  <p className="text-sm text-muted-foreground">{agent.bio}</p>
+                </div>
+              )}
+
+              <button
+                onClick={() => setShowProfileCard(false)}
+                className="w-full h-12 bg-primary text-primary-foreground rounded-xl font-medium"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-background p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <Flag className="w-6 h-6 text-destructive" />
+                </div>
+                <h3 className="font-bold text-lg">Flag This User</h3>
+              </div>
+              <button onClick={() => setShowReportModal(false)}>
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-sm text-muted-foreground mb-4">
+              Help us maintain a safe community by reporting concerning behavior. Your report will be reviewed promptly.
+            </p>
+
+            {/* Report Reasons */}
+            <div className="space-y-3 mb-6">
+              {[
+                { id: 'scam', label: 'Scam or Fraud', desc: 'Suspicious financial activity or deceptive practices', icon: '⚠️' },
+                { id: 'harassment', label: 'Harassment or Abuse', desc: 'Threatening, bullying, or inappropriate behavior', icon: '🚨' },
+                { id: 'fake', label: 'Fake or Misleading Content', desc: 'False information or counterfeit items', icon: '🔍' },
+                { id: 'other', label: 'Other Reason', desc: 'Something else that violates our guidelines', icon: '✋' }
+              ].map((reason) => (
+                <button
+                  key={reason.id}
+                  onClick={() => setSelectedReportReason(reason.id)}
+                  className={cn(
+                    "w-full text-left p-4 rounded-xl border-2 transition-all",
+                    selectedReportReason === reason.id
+                      ? 'border-destructive bg-destructive/5'
+                      : 'border-border hover:border-destructive/30'
+                  )}
+                >
+                  <div className="flex items-start gap-3">
+                    <span className="text-xl">{reason.icon}</span>
+                    <div>
+                      <p className="font-medium">{reason.label}</p>
+                      <p className="text-xs text-muted-foreground">{reason.desc}</p>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* Details Box for Other Reason */}
+            {selectedReportReason === 'other' && (
+              <div className="mb-6">
+                <label className="text-sm font-medium block mb-2">Please specify your reason</label>
+                <textarea
+                  placeholder="Describe the issue in detail..."
+                  value={reportDetails}
+                  onChange={(e) => setReportDetails(e.target.value)}
+                  className="w-full p-3 rounded-xl border border-border bg-background resize-none text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  rows={4}
+                  maxLength={200}
+                />
+                <p className="text-xs text-muted-foreground mt-2 text-right">{reportDetails.length}/200</p>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  if (selectedReportReason) {
+                    const reportedUser = registeredUsers.find(u => u.id === agent.id)
+                    addReport({
+                      reportedUserId: agent.id,
+                      reportedUserName: agent.name,
+                      reason: selectedReportReason as 'scam' | 'harassment' | 'fake' | 'other',
+                      details: reportDetails,
+                      reportedAt: new Date().toISOString(),
+                      status: 'pending'
+                    });
+                    setShowReportModal(false);
+                    setSelectedReportReason('');
+                    setReportDetails('');
+                  }
+                }}
+                disabled={!selectedReportReason}
+                className={cn(
+                  "w-full h-12 rounded-xl font-medium transition-colors",
+                  selectedReportReason
+                    ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                    : 'bg-secondary text-muted-foreground cursor-not-allowed'
+                )}
+              >
+                Submit Report
+              </button>
+              <button
+                onClick={() => {
+                  setShowReportModal(false);
+                  setSelectedReportReason('');
+                  setReportDetails('');
+                }}
+                className="w-full h-12 rounded-xl border border-border font-medium hover:bg-secondary transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

@@ -32,6 +32,7 @@ export interface Property {
   isAdminPost?: boolean
   isFreeConnect?: boolean
   createdAt?: string
+  views?: number
   // Property-specific fields (for Properties listing type)
   propertyType?: 'sale' | 'lease'
   propertyCategory?: 'land' | 'house'
@@ -63,6 +64,8 @@ export interface Message {
 export interface Conversation {
   id: string
   user: Agent
+  property: Property
+  propertyId: string
   lastMessage: string
   timestamp: Date
   unread: number
@@ -284,6 +287,8 @@ export const mockConversations: Conversation[] = [
   {
     id: '1',
     user: mockAgents[1],
+    property: mockProperties[0],
+    propertyId: mockProperties[0].id,
     lastMessage: "Welcome to SpaceButton! Start chatting with property owners.",
     timestamp: new Date('2024-01-15T10:30:00'),
     unread: 1,

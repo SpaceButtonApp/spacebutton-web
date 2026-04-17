@@ -9,7 +9,8 @@ import {
   TrendingUp, 
   ArrowUpRight, 
   ArrowDownRight,
-  Eye
+  Eye,
+  Flag
 } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -17,7 +18,7 @@ import { useRouter } from 'next/navigation'
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { properties, closedProperties, reviews, transactions, registeredUsers } = useAppStore()
+  const { properties, closedProperties, reviews, transactions, registeredUsers, reports } = useAppStore()
 
   // Calculate stats from real data
   const totalUsers = registeredUsers.length
@@ -237,7 +238,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Link href="/admin/users" className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5 hover:border-purple-500/50 transition-all group">
             <Users className="w-8 h-8 text-purple-400 mb-3 group-hover:scale-110 transition-transform" />
             <h4 className="font-semibold text-white mb-1">Manage Users</h4>
@@ -247,6 +248,11 @@ export default function DashboardPage() {
             <Building2 className="w-8 h-8 text-blue-400 mb-3 group-hover:scale-110 transition-transform" />
             <h4 className="font-semibold text-white mb-1">Manage Listings</h4>
             <p className="text-sm text-gray-400">Review and approve property listings</p>
+          </Link>
+          <Link href="/admin/reports" className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5 hover:border-red-500/50 transition-all group">
+            <Flag className="w-8 h-8 text-red-400 mb-3 group-hover:scale-110 transition-transform" />
+            <h4 className="font-semibold text-white mb-1">User Reports</h4>
+            <p className="text-sm text-gray-400">{reports.length} pending reports</p>
           </Link>
           <Link href="/admin/transactions" className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5 hover:border-green-500/50 transition-all group">
             <CreditCard className="w-8 h-8 text-green-400 mb-3 group-hover:scale-110 transition-transform" />

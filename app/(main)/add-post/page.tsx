@@ -600,15 +600,12 @@ export default function AddPostPage() {
         {/* Description */}
         <div className="bg-card border border-border rounded-xl p-5">
           <h3 className="font-medium text-foreground mb-3">Additional Description</h3>
-          <Input
+          <textarea
             value={descriptions}
-            onChange={(e) => {
-              const value = e.target.value
-              const alphabeticOnly = value.replace(/[^a-zA-Z\s]/g, '')
-              setDescriptions(alphabeticOnly)
-            }}
-            placeholder="Write other descriptions if available"
-            className="h-12 bg-secondary border-border text-foreground rounded-xl placeholder:text-muted-foreground"
+            onChange={(e) => setDescriptions(e.target.value)}
+            placeholder="Write other descriptions if available (text and numbers allowed)"
+            className="w-full px-4 py-3 bg-secondary border border-border text-foreground rounded-xl placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+            rows={4}
           />
           {/* Disclaimer based on listing type */}
           {listingType === "Agent" && (

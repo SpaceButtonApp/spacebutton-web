@@ -48,20 +48,24 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   
   // Add this conversation to the messages list when chat is opened
   useEffect(() => {
-    if (agent && propertyId) {
+    if (agent && property && propertyId) {
       // Check if conversation already exists
-      const existingConversation = conversations.find(c => c.user.id === agent.id)
+      const existingConversation = conversations.find(
+        c => c.user.id === agent.id && c.propertyId === propertyId
+      )
       if (!existingConversation) {
         addConversation({
-          id: `conv-${agent.id}-${Date.now()}`,
+          id: `conv-${agent.id}-${propertyId}-${Date.now()}`,
           user: agent,
+          property: property,
+          propertyId: propertyId,
           lastMessage: 'Started conversation',
           timestamp: new Date(),
           unread: 0
         })
       }
     }
-  }, [agent, propertyId, conversations, addConversation])
+  }, [agent, property, propertyId, conversations, addConversation])
 
   // Create a unique chat ID for this conversation
   const chatId = `${id}-${propertyId || 'default'}`

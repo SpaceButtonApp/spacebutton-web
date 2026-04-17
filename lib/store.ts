@@ -96,6 +96,7 @@ interface AppState {
   updateProperty: (id: string, updates: Partial<Property>) => void
   deleteProperty: (id: string) => void
   closeProperty: (id: string) => void
+  incrementPropertyViews: (id: string) => void
   
   // Reviews
   reviews: Review[]
@@ -180,6 +181,11 @@ export const useAppStore = create<AppState>()(
       })),
       closeProperty: (id) => set((state) => ({
         closedProperties: [...state.closedProperties, id]
+      })),
+      incrementPropertyViews: (id) => set((state) => ({
+        properties: state.properties.map((p) =>
+          p.id === id ? { ...p, views: (p.views || 0) + 1 } : p
+        )
       })),
       
       // Reviews

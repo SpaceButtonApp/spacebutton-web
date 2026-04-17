@@ -1,35 +1,22 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect } from 'react'
 import { useAppStore } from '@/lib/store'
-import { SplashScreen } from '@/components/splash-screen'
 
-// Web app shows splash screen first, then redirects to login/home
+// Web app entry point - redirects to get-started or home
 export default function WebAppEntry() {
   const router = useRouter()
   const user = useAppStore((state) => state.user)
-  const [showSplash, setShowSplash] = useState(true)
-
-  const handleSplashComplete = useCallback(() => {
-    setShowSplash(false)
-  }, [])
 
   useEffect(() => {
-    // Only redirect after splash screen completes
-    if (!showSplash) {
-      if (user?.isLoggedIn) {
-        router.replace('/home')
-      } else {
-        router.replace('/get-started')
-      }
+    // Redirect to appropriate page based on login status
+    if (user?.isLoggedIn) {
+      router.replace('/home')
+    } else {
+      router.replace('/get-started')
     }
-  }, [user, router, showSplash])
-
-  // Show splash screen first
-  if (showSplash) {
-    return <SplashScreen onComplete={handleSplashComplete} />
-  }
+  }, [user, router])
 
   // Show loading state while redirecting
   return (

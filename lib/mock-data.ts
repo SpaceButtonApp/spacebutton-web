@@ -32,6 +32,7 @@ export interface Property {
   isAdminPost?: boolean
   isFreeConnect?: boolean
   createdAt?: string
+  views?: number
   // Property-specific fields (for Properties listing type)
   propertyType?: 'sale' | 'lease'
   propertyCategory?: 'land' | 'house'
@@ -63,6 +64,8 @@ export interface Message {
 export interface Conversation {
   id: string
   user: Agent
+  property: Property
+  propertyId: string
   lastMessage: string
   timestamp: Date
   unread: number

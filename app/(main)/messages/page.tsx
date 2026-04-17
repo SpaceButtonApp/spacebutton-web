@@ -35,32 +35,30 @@ export default function MessagesPage() {
             {conversations.map((conversation) => (
               <button
                 key={conversation.id}
-                onClick={() => router.push(`/chat/${conversation.user.id}`)}
-                className="w-full flex items-center gap-3 p-3 rounded-xl bg-secondary border border-border hover:border-primary/30 transition-all duration-200"
+                onClick={() => router.push(`/chat/${conversation.user.id}?propertyId=${conversation.propertyId}`)}
+                className="w-full flex gap-3 p-3 rounded-xl bg-secondary border border-border hover:border-primary/30 transition-all duration-200"
               >
-                {/* Avatar */}
-                <div className="relative">
+                {/* Property Image */}
+                <div className="relative flex-shrink-0">
                   <Image
-                    src={conversation.user.avatar}
-                    alt={conversation.user.name}
-                    width={56}
-                    height={56}
-                    className="rounded-full"
+                    src={conversation.property.images?.[0] || '/placeholder.png'}
+                    alt={conversation.property.title}
+                    width={64}
+                    height={64}
+                    className="rounded-lg object-cover w-16 h-16"
                   />
-                  {conversation.user.online && (
-                    <div className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-success border-2 border-background" />
-                  )}
                 </div>
 
                 {/* Content */}
                 <div className="flex-1 min-w-0 text-left">
                   <div className="flex items-center justify-between gap-2">
-                    <h3 className="font-semibold text-foreground truncate">{conversation.user.name}</h3>
+                    <h3 className="font-semibold text-foreground truncate">{conversation.property.title}</h3>
                     <span className="text-xs text-muted-foreground flex-shrink-0">
                       {formatDistanceToNow(conversation.timestamp, { addSuffix: true })}
                     </span>
                   </div>
-                  <p className="text-sm text-muted-foreground truncate mt-1">
+                  <p className="text-xs text-muted-foreground mb-1">with {conversation.user.name}</p>
+                  <p className="text-sm text-muted-foreground truncate">
                     {conversation.lastMessage}
                   </p>
                 </div>

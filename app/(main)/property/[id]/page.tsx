@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, use } from 'react'
+import { useState, use, useEffect } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { 
   Bookmark, ChevronLeft, ChevronRight, Bed, Bath, 
   Sofa, MapPin, Calendar, AlertTriangle, Users, Building2, ArrowLeft, X, Clock,
-  Home, DollarSign, Grid3X3, Maximize
+  Home, DollarSign, Grid3X3, Maximize, Eye
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { Button } from '@/components/ui/button'
@@ -21,13 +21,20 @@ import { cn } from '@/lib/utils'
 export default function PropertyDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
-  const { savedProperties, toggleSaveProperty, user, connectsRemaining, deductConnect, properties } = useAppStore()
+  const { savedProperties, toggleSaveProperty, user, connectsRemaining, deductConnect, properties, incrementPropertyViews } = useAppStore()
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [showFullScreen, setShowFullScreen] = useState(false)
   const [showConnectModal, setShowConnectModal] = useState(false)
   
   const property = properties.find((p) => p.id === id)
   const isSaved = savedProperties.includes(id)
+  
+  // Track view on component mount
+  useEffect(() => {
+    if (property?.id) {
+      incrementPropertyViews(property.id)
+    }
+  }, [property?.id, incrementPropertyViews])
   
   // Check if this is a Properties listing type
   const isPropertyType = property?.type === 'properties' || property?.listingType === 'properties'
@@ -131,204 +138,233 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
       </div>
 
       {/* Content */}
-      <div className="px-4 py-6 space-y-6">
-        {/* Date Posted - Just below photos */}
-        {property.createdAt && (
-          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-            <Clock className="w-4 h-4" />
-            <span>Posted {formatDistanceToNow(new Date(property.createdAt), { addSuffix: true })}</span>
+      <div className="px-4 py-6 space-y-4">
+        {/* Title, Price & Location Card */}
+        <div className="bg-secondary rounded-2xl p-6 border border-border">
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <h1 className="text-2xl font-bold flex-1">{property.title}</h1>
+            <div className="flex flex-col items-end gap-2 flex-shrink-0">
+              {property.views !== undefined && (
+                <div className="flex items-center gap-1 text-xs bg-primary/10 text-primary px-2 py-1 rounded-lg">
+                  <Eye className="w-3 h-3" />
+                  <span className="font-medium">{property.views}</span>
+                </div>
+              )}
+              {property.createdAt && (
+                <span className="text-xs text-muted-foreground">
+                  {formatDistanceToNow(new Date(property.createdAt), { addSuffix: true })}
+                </span>
+              )}
+            </div>
           </div>
-        )}
-
-        {/* Title & Price */}
-        <div>
-          <h1 className="text-2xl font-bold mb-2">{property.title}</h1>
-          <div className="flex items-baseline gap-2 flex-wrap">
-            <span className="text-2xl font-bold text-primary">{formatPrice(property.price, property.rentPeriod)}</span>
-            {property.bonus && (
-              <span className="text-sm text-success">{property.bonus}</span>
-            )}
+          <div className="mb-4">
+            <div className="flex items-baseline gap-2 flex-wrap mb-2">
+              <span className="text-3xl font-bold text-primary">{formatPrice(property.price, property.rentPeriod)}</span>
+              {property.bonus && (
+                <span className="text-sm text-success">{property.bonus}</span>
+              )}
+            </div>
             {property.totalPackage && !isPropertyType && (
-              <span className="text-sm text-primary font-medium">Total Package: ₦{property.totalPackage.toLocaleString()}</span>
+              <div className="text-sm text-primary font-medium bg-primary/10 w-fit px-3 py-1 rounded-lg">
+                Total Package: ₦{property.totalPackage.toLocaleString()}
+              </div>
             )}
           </div>
-          <div className="flex items-center gap-1 mt-2 text-muted-foreground">
+          <div className="flex items-center gap-2 text-muted-foreground">
             <MapPin className="w-4 h-4 text-primary" />
             <span className="text-sm">{property.location}</span>
           </div>
         </div>
 
-        {/* Tags - Different for Property type */}
-        {isPropertyType ? (
+        {/* Tags Card */}
+        <div className="bg-secondary rounded-2xl p-6 border border-border">
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">Details</h3>
           <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-secondary text-sm">
-              <Home className="w-4 h-4" />
-              <span className="capitalize">{property.propertyCategory || property.category}</span>
-            </div>
-            <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-secondary text-sm">
-              <DollarSign className="w-4 h-4" />
-              <span className="capitalize">{property.propertyType || 'Sale'}</span>
-            </div>
-            <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-secondary text-sm">
-              <Grid3X3 className="w-4 h-4" />
-              <span className="capitalize">{property.locationCategory || 'Estate'}</span>
-            </div>
-            <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-secondary text-sm">
-              <Maximize className="w-4 h-4" />
-              <span>{property.propertySize?.toLocaleString() || '0'} sqft</span>
-            </div>
-          </div>
-        ) : (
-          <div className="flex items-center gap-3 flex-wrap">
-            {/* Show Tenant/Landlord for Connect type */}
-            {property.type === 'connect' && property.connectRole && (
-              <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-secondary text-sm">
-                <Users className="w-4 h-4" />
-                <span>{property.connectRole}</span>
-              </div>
+            {isPropertyType ? (
+              <>
+                <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-background border border-border">
+                  <Home className="w-4 h-4 text-primary" />
+                  <span className="text-sm capitalize">{property.propertyCategory || property.category}</span>
+                </div>
+                <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-background border border-border">
+                  <DollarSign className="w-4 h-4 text-primary" />
+                  <span className="text-sm capitalize">{property.propertyType || 'Sale'}</span>
+                </div>
+                <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-background border border-border">
+                  <Grid3X3 className="w-4 h-4 text-primary" />
+                  <span className="text-sm capitalize">{property.locationCategory || 'Estate'}</span>
+                </div>
+                <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-background border border-border">
+                  <Maximize className="w-4 h-4 text-primary" />
+                  <span className="text-sm">{property.propertySize?.toLocaleString() || '0'} sqft</span>
+                </div>
+              </>
+            ) : (
+              <>
+                {property.type === 'connect' && property.connectRole && (
+                  <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-background border border-border">
+                    <Users className="w-4 h-4 text-primary" />
+                    <span className="text-sm">{property.connectRole}</span>
+                  </div>
+                )}
+                {property.type === 'agent' && (
+                  <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-background border border-border">
+                    <Users className="w-4 h-4 text-primary" />
+                    <span className="text-sm">Agent</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-background border border-border">
+                  <Users className="w-4 h-4 text-primary" />
+                  <span className="text-sm capitalize">
+                    {property.condition === 'rent' && property.connectRole === 'Tenant' 
+                      ? 'Vacating' 
+                      : property.condition}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-background border border-border">
+                  <Building2 className="w-4 h-4 text-primary" />
+                  <span className="text-sm capitalize">{property.category}</span>
+                </div>
+              </>
             )}
-            {/* Show Agent for agent type */}
-            {property.type === 'agent' && (
-              <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-secondary text-sm">
-                <Users className="w-4 h-4" />
-                <span>Agent</span>
-              </div>
-            )}
-            <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-secondary text-sm">
-              <Users className="w-4 h-4" />
-              <span className="capitalize">
-                {property.condition === 'rent' && property.connectRole === 'Tenant' 
-                  ? 'Vacating' 
-                  : property.condition}
-              </span>
-            </div>
-            <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-secondary text-sm">
-              <Building2 className="w-4 h-4" />
-              <span className="capitalize">{property.category}</span>
-            </div>
           </div>
-        )}
+        </div>
 
-        {/* Property Size for Property type */}
-        {isPropertyType && property.propertySize && (
-          <div>
-            <h2 className="text-lg font-bold mb-3">Property Size</h2>
-            <p className="text-sm text-muted-foreground">
-              {property.propertySize.toLocaleString()} sqft
-            </p>
-          </div>
-        )}
-
-        {/* Building Year for Property type (House only) */}
-        {isPropertyType && property.buildingYear && (
-          <div>
-            <h2 className="text-lg font-bold mb-3">Building Year</h2>
-            <p className="text-sm text-muted-foreground">
-              {property.buildingYear}
-            </p>
-          </div>
-        )}
-
-        {/* Room details - Show for Connect/Agent or Property type with House category */}
+        {/* Room details Card - Show for Connect/Agent or Property type with House category */}
         {(!isPropertyType || (isPropertyType && (property.propertyCategory === 'house' || property.category === 'house'))) && property.beds > 0 && (
-          <div className="flex items-center justify-start gap-4 flex-wrap">
-            <div className="flex flex-col items-center gap-2 px-5 py-4 rounded-xl bg-secondary">
-              <Bed className="w-6 h-6 text-muted-foreground" />
-              <span className="text-sm font-medium">{property.beds} Beds</span>
+          <div className="bg-secondary rounded-2xl p-6 border border-border">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">Specifications</h3>
+            <div className="flex items-center justify-start gap-4 flex-wrap">
+              <div className="flex flex-col items-center gap-2 px-4 py-3 rounded-xl bg-background border border-border">
+                <Bed className="w-6 h-6 text-primary" />
+                <span className="text-sm font-medium">{property.beds}</span>
+                <span className="text-xs text-muted-foreground">Beds</span>
+              </div>
+              <div className="flex flex-col items-center gap-2 px-4 py-3 rounded-xl bg-background border border-border">
+                <Bath className="w-6 h-6 text-primary" />
+                <span className="text-sm font-medium">{property.baths}</span>
+                <span className="text-xs text-muted-foreground">Bath</span>
+              </div>
+              <div className="flex flex-col items-center gap-2 px-4 py-3 rounded-xl bg-background border border-border">
+                <Sofa className="w-6 h-6 text-primary" />
+                <span className="text-sm font-medium">{property.reception}</span>
+                <span className="text-xs text-muted-foreground">Reception</span>
+              </div>
+              {property.balconies && property.balconies > 0 && (
+                <div className="flex flex-col items-center gap-2 px-4 py-3 rounded-xl bg-background border border-border">
+                  <Building2 className="w-6 h-6 text-primary" />
+                  <span className="text-sm font-medium">{property.balconies}</span>
+                  <span className="text-xs text-muted-foreground">Balcony</span>
+                </div>
+              )}
             </div>
-            <div className="flex flex-col items-center gap-2 px-5 py-4 rounded-xl bg-secondary">
-              <Bath className="w-6 h-6 text-muted-foreground" />
-              <span className="text-sm font-medium">{property.baths} Bath</span>
-            </div>
-            <div className="flex flex-col items-center gap-2 px-5 py-4 rounded-xl bg-secondary">
-              <Sofa className="w-6 h-6 text-muted-foreground" />
-              <span className="text-sm font-medium">{property.reception} reception</span>
-            </div>
-            {property.balconies && property.balconies > 0 && (
-              <div className="flex flex-col items-center gap-2 px-5 py-4 rounded-xl bg-secondary">
-                <Building2 className="w-6 h-6 text-muted-foreground" />
-                <span className="text-sm font-medium">{property.balconies} Balcony</span>
+          </div>
+        )}
+
+        {/* Additional Info Card */}
+        {(
+          (isPropertyType && property.propertySize) ||
+          (isPropertyType && property.buildingYear) ||
+          (!isPropertyType && property.genderNeeded) ||
+          (!isPropertyType && property.landlordPresence) ||
+          (isPropertyType && property.locationCategory) ||
+          (!isPropertyType && property.rentDueDate)
+        ) && (
+          <div className="bg-secondary rounded-2xl p-6 border border-border space-y-4">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Information</h3>
+            {isPropertyType && property.propertySize && (
+              <div className="flex items-center justify-between p-3 bg-background rounded-lg border border-border">
+                <div className="flex items-center gap-2 text-gray-400">
+                  <Maximize className="w-4 h-4" />
+                  <span>Property Size</span>
+                </div>
+                <span className="font-medium">{property.propertySize.toLocaleString()} sqft</span>
               </div>
             )}
-          </div>
-        )}
-
-        {/* Gender Needed - Only for Connect/Agent */}
-        {!isPropertyType && property.genderNeeded && (
-          <div>
-            <h2 className="text-lg font-bold mb-3">Gender Needed</h2>
-            <p className="text-sm text-muted-foreground capitalize">
-              {property.genderNeeded}
-            </p>
-          </div>
-        )}
-
-        {/* Landlord Presence - Only for Connect/Agent */}
-        {!isPropertyType && property.landlordPresence && (
-          <div>
-            <h2 className="text-lg font-bold mb-3">Landlord Presence</h2>
-            <p className="text-sm text-muted-foreground">
-              {property.landlordPresence === 'stays' 
-                ? 'Landlord stays in the compound' 
-                : 'Landlord does not stay in the compound'}
-            </p>
-          </div>
-        )}
-
-        {/* Location Category for Property type */}
-        {isPropertyType && property.locationCategory && (
-          <div>
-            <h2 className="text-lg font-bold mb-3">Location Category</h2>
-            <p className="text-sm text-muted-foreground capitalize">
-              {property.locationCategory}
-            </p>
+            {isPropertyType && property.buildingYear && (
+              <div className="flex items-center justify-between p-3 bg-background rounded-lg border border-border">
+                <div className="flex items-center gap-2 text-gray-400">
+                  <Calendar className="w-4 h-4" />
+                  <span>Building Year</span>
+                </div>
+                <span className="font-medium">{property.buildingYear}</span>
+              </div>
+            )}
+            {!isPropertyType && property.genderNeeded && (
+              <div className="flex items-center justify-between p-3 bg-background rounded-lg border border-border">
+                <div className="flex items-center gap-2 text-gray-400">
+                  <Users className="w-4 h-4" />
+                  <span>Gender Needed</span>
+                </div>
+                <span className="font-medium capitalize">{property.genderNeeded}</span>
+              </div>
+            )}
+            {!isPropertyType && property.landlordPresence && (
+              <div className="flex items-center justify-between p-3 bg-background rounded-lg border border-border">
+                <div className="flex items-center gap-2 text-gray-400">
+                  <Home className="w-4 h-4" />
+                  <span>Landlord Presence</span>
+                </div>
+                <span className="font-medium">
+                  {property.landlordPresence === 'stays' ? 'In Compound' : 'Not In Compound'}
+                </span>
+              </div>
+            )}
+            {isPropertyType && property.locationCategory && (
+              <div className="flex items-center justify-between p-3 bg-background rounded-lg border border-border">
+                <div className="flex items-center gap-2 text-gray-400">
+                  <MapPin className="w-4 h-4" />
+                  <span>Location Category</span>
+                </div>
+                <span className="font-medium capitalize">{property.locationCategory}</span>
+              </div>
+            )}
+            {!isPropertyType && property.rentDueDate && (
+              <div className="flex items-center justify-between p-3 bg-background rounded-lg border border-border">
+                <div className="flex items-center gap-2 text-gray-400">
+                  <Calendar className="w-4 h-4" />
+                  <span>Rent Due Date</span>
+                </div>
+                <span className="font-medium">{new Date(property.rentDueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })}</span>
+              </div>
+            )}
           </div>
         )}
 
         {/* Features / Environment / Facilities */}
         {property.features && property.features.length > 0 && (
-          <div>
-            <h2 className="text-lg font-bold mb-3">{isPropertyType ? 'Environment / Facilities' : 'Features'}</h2>
-            <ul className="space-y-2">
+          <div className="bg-secondary rounded-2xl p-6 border border-border">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">{isPropertyType ? 'Environment / Facilities' : 'Features'}</h3>
+            <ul className="grid grid-cols-2 gap-2">
               {property.features.map((feature, index) => (
-                <li key={index} className="flex items-center gap-2 text-sm">
-                  <div className="w-2 h-2 rounded-full bg-primary" />
-                  <span>{feature}</span>
+                <li key={index} className="flex items-center gap-2 text-sm p-2 bg-background rounded-lg border border-border">
+                  <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />
+                  <span className="line-clamp-2">{feature}</span>
                 </li>
               ))}
             </ul>
           </div>
         )}
 
-        {/* Description */}
-        <div>
-          <h2 className="text-lg font-bold mb-3">{isPropertyType ? 'Additional Description' : 'Description'}</h2>
+        {/* Description Card */}
+        <div className="bg-secondary rounded-2xl p-6 border border-border">
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">{isPropertyType ? 'Additional Description' : 'Description'}</h3>
           <p className="text-sm text-muted-foreground leading-relaxed">
             {property.description}
           </p>
         </div>
 
-        {/* Rent due date - Only for Connect/Agent */}
-        {!isPropertyType && property.rentDueDate && (
-          <div>
-            <h2 className="text-lg font-bold mb-3">Current rent due date</h2>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Calendar className="w-4 h-4" />
-              <span>{new Date(property.rentDueDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
-            </div>
-          </div>
-        )}
-
-        {/* Safety Tips - Hidden for admin posts */}
+        {/* Safety Tips Card - Hidden for admin posts */}
         {!property.isAdminPost && (
-          <div>
-            <h2 className="text-lg font-bold mb-3 flex items-center gap-2 text-destructive">
-              Safety Tips <AlertTriangle className="w-5 h-5 text-destructive" />
-            </h2>
+          <div className="bg-destructive/5 rounded-2xl p-6 border border-destructive/20">
+            <h3 className="text-sm font-semibold text-destructive uppercase tracking-wide flex items-center gap-2 mb-4">
+              <AlertTriangle className="w-4 h-4" />
+              Safety Tips
+            </h3>
             <ol className="space-y-3">
               {safetyTips.map((tip, index) => (
-                <li key={index} className="flex gap-2 text-sm text-destructive/80">
-                  <span className="font-semibold text-destructive">{index + 1}.</span>
+                <li key={index} className="flex gap-3 text-sm text-destructive/80">
+                  <span className="font-semibold text-destructive flex-shrink-0">{index + 1}.</span>
                   <span>{tip}</span>
                 </li>
               ))}
@@ -336,17 +372,18 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
           </div>
         )}
 
-        {/* Posted by info - Only visible for admin posts */}
+        {/* Posted by info Card - Only visible for admin posts */}
         {property.isAdminPost && (
-          <div className="flex items-center gap-3">
+          <div className="bg-secondary rounded-2xl p-6 border border-border flex items-center gap-4">
             <Image
               src={property.agent.avatar}
               alt={property.agent.name}
-              width={48}
-              height={48}
+              width={56}
+              height={56}
               className="rounded-full"
             />
             <div>
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-1">Posted by</h3>
               <p className="font-semibold">{property.agent.name}</p>
               <p className="text-sm text-muted-foreground capitalize">
                 {property.type === 'connect' 

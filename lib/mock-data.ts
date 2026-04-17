@@ -287,6 +287,8 @@ export const mockConversations: Conversation[] = [
   {
     id: '1',
     user: mockAgents[1],
+    property: mockProperties[0],
+    propertyId: mockProperties[0].id,
     lastMessage: "Welcome to SpaceButton! Start chatting with property owners.",
     timestamp: new Date('2024-01-15T10:30:00'),
     unread: 1,

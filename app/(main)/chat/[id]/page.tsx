@@ -16,7 +16,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const router = useRouter()
   const searchParams = useSearchParams()
   const propertyId = searchParams.get('propertyId')
-  const { properties, doneDealStates, toggleDoneDeal, user, addReview, addConversation, conversations } = useAppStore()
+  const { properties, doneDealStates, toggleDoneDeal, user, addReview, addConversation, conversations, addReport, registeredUsers } = useAppStore()
   
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState<Array<{
@@ -427,6 +427,15 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               <button
                 onClick={() => {
                   if (selectedReportReason) {
+                    const reportedUser = registeredUsers.find(u => u.id === agent.id)
+                    addReport({
+                      reportedUserId: agent.id,
+                      reportedUserName: agent.name,
+                      reason: selectedReportReason as 'scam' | 'harassment' | 'fake' | 'other',
+                      details: reportDetails,
+                      reportedAt: new Date().toISOString(),
+                      status: 'pending'
+                    });
                     setShowReportModal(false);
                     setSelectedReportReason('');
                     setReportDetails('');

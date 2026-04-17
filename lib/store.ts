@@ -69,8 +69,19 @@ interface SupportChat {
   unread: number
 }
 
+interface Report {
+  id: string
+  reportedUserId: string
+  reportedUserName: string
+  reason: 'scam' | 'harassment' | 'fake' | 'other'
+  details: string
+  reportedAt: string
+  status: 'pending' | 'reviewed' | 'resolved'
+}
+
 interface RegisteredUser {
   id: string
+  userId: string // Format: SB2600000001
   name: string
   email: string
   phone: string
@@ -79,6 +90,7 @@ interface RegisteredUser {
   status: 'active' | 'suspended' | 'inactive'
   listings: number
   joined: string
+  offenseCount: number
 }
 
 interface AppState {
@@ -125,9 +137,13 @@ interface AppState {
   
   // Registered Users
   registeredUsers: RegisteredUser[]
-  addRegisteredUser: (user: Omit<RegisteredUser, 'id' | 'joined' | 'listings' | 'status'>) => void
+  addRegisteredUser: (user: Omit<RegisteredUser, 'id' | 'userId' | 'joined' | 'listings' | 'status' | 'offenseCount'>) => void
   updateRegisteredUser: (id: string, updates: Partial<RegisteredUser>) => void
   deleteRegisteredUser: (id: string) => void
+  
+  // Reports
+  reports: Report[]
+  addReport: (report: Omit<Report, 'id'>) => void
   
   // UI State
   activeTab: 'connect' | 'agent' | 'shortlet' | 'properties'
@@ -327,15 +343,21 @@ export const useAppStore = create<AppState>()(
       
       // Registered Users
       registeredUsers: [],
-      addRegisteredUser: (user) => set((state) => ({
-        registeredUsers: [{
-          ...user,
-          id: Date.now().toString(),
-          joined: new Date().toISOString().split('T')[0],
-          listings: 0,
-          status: 'active'
-        }, ...state.registeredUsers]
-      })),
+      addRegisteredUser: (user) => set((state) => {
+        const userNumber = state.registeredUsers.length + 1
+        const userId = `SB26${String(userNumber).padStart(8, '0')}`
+        return {
+          registeredUsers: [{
+            ...user,
+            id: Date.now().toString(),
+            userId,
+            joined: new Date().toISOString().split('T')[0],
+            listings: 0,
+            status: 'active',
+            offenseCount: 0
+          }, ...state.registeredUsers]
+        }
+      }),
       updateRegisteredUser: (id, updates) => set((state) => ({
         registeredUsers: state.registeredUsers.map(u => 
           u.id === id ? { ...u, ...updates } : u
@@ -344,6 +366,25 @@ export const useAppStore = create<AppState>()(
       deleteRegisteredUser: (id) => set((state) => ({
         registeredUsers: state.registeredUsers.filter(u => u.id !== id)
       })),
+      
+      // Reports
+      reports: [],
+      addReport: (report) => set((state) => {
+        const newReport = {
+          ...report,
+          id: `RPT${Date.now()}`
+        }
+        // Increment offense count for the reported user
+        const updatedUsers = state.registeredUsers.map(u =>
+          u.id === report.reportedUserId 
+            ? { ...u, offenseCount: (u.offenseCount || 0) + 1 }
+            : u
+        )
+        return {
+          reports: [newReport, ...state.reports],
+          registeredUsers: updatedUsers
+        }
+      }),
       
       // UI State
       activeTab: 'connect',
@@ -457,6 +498,7 @@ export const useAppStore = create<AppState>()(
         registeredUsers: state.registeredUsers,
         properties: state.properties,
         conversations: state.conversations,
+        reports: state.reports,
       }),
     }
   )

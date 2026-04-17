@@ -29,7 +29,8 @@ export default function UsersPage() {
 
   const filteredUsers = registeredUsers.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchQuery.toLowerCase())
+                         user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         user.userId.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesStatus = statusFilter === 'all' || user.status === statusFilter
     const matchesType = typeFilter === 'all' || user.type === typeFilter
     return matchesSearch && matchesStatus && matchesType
@@ -37,17 +38,18 @@ export default function UsersPage() {
 
   // Export users to Excel/CSV
   const handleExport = () => {
-    const headers = ['ID', 'Name', 'Email', 'Phone', 'Status', 'Type', 'Listings', 'Joined']
+    const headers = ['User ID', 'Name', 'Email', 'Phone', 'Status', 'Type', 'Listings', 'Offenses', 'Joined']
     const csvContent = [
       headers.join(','),
       ...registeredUsers.map(user => [
-        user.id,
+        user.userId,
         user.name,
         user.email,
         user.phone,
         user.status,
         user.type,
         user.listings,
+        user.offenseCount || 0,
         user.joined
       ].join(','))
     ].join('\n')
@@ -134,7 +136,7 @@ export default function UsersPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
             <input
               type="text"
-              placeholder="Search users..."
+              placeholder="Search by name, email, or User ID (e.g., SB2600000001)..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 bg-[#12121a] border border-gray-800 rounded-xl text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500"
@@ -187,9 +189,11 @@ export default function UsersPage() {
                   <thead>
                     <tr className="border-b border-gray-800/50">
                       <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">User</th>
+                      <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">User ID</th>
                       <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">Contact</th>
                       <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">Type</th>
                       <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">Listings</th>
+                      <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">Offenses</th>
                       <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">Status</th>
                       <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">Joined</th>
                       <th className="text-right text-xs font-medium text-gray-400 uppercase px-5 py-4">Actions</th>
@@ -203,12 +207,10 @@ export default function UsersPage() {
                             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-medium">
                               {user.name.charAt(0)}
                             </div>
-                            <div>
-                              <p className="text-sm font-medium text-white">{user.name}</p>
-                              <p className="text-xs text-gray-500">ID: {user.id}</p>
-                            </div>
+                            <p className="text-sm font-medium text-white">{user.name}</p>
                           </div>
                         </td>
+                        <td className="px-5 py-4 font-mono text-sm text-blue-400">{user.userId}</td>
                         <td className="px-5 py-4">
                           <p className="text-sm text-white">{user.email}</p>
                           <p className="text-xs text-gray-500">{user.phone}</p>
@@ -223,6 +225,18 @@ export default function UsersPage() {
                           </span>
                         </td>
                         <td className="px-5 py-4 text-sm text-white">{user.listings}</td>
+                        <td className="px-5 py-4">
+                          {user.offenseCount > 0 ? (
+                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+                              user.offenseCount >= 3 ? 'bg-red-500/20 text-red-400' : 'bg-yellow-500/20 text-yellow-400'
+                            }`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${user.offenseCount >= 3 ? 'bg-red-400' : 'bg-yellow-400'}`} />
+                              {user.offenseCount} {user.offenseCount === 1 ? 'offense' : 'offenses'}
+                            </span>
+                          ) : (
+                            <span className="text-sm text-gray-500">-</span>
+                          )}
+                        </td>
                         <td className="px-5 py-4">
                           <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${
                             user.status === 'active' ? 'text-green-400' :

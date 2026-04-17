@@ -2,7 +2,7 @@
 
 import { AdminHeader } from '@/components/admin/header'
 import { useAppStore } from '@/lib/store'
-import { Flag, Search, AlertCircle, CheckCircle } from 'lucide-react'
+import { Flag, Search, AlertCircle, CheckCircle, X } from 'lucide-react'
 import { useState, useMemo } from 'react'
 import { Input } from '@/components/ui/input'
 
@@ -10,6 +10,7 @@ export default function ReportsPage() {
   const { reports, registeredUsers, updateRegisteredUser } = useAppStore()
   const [searchQuery, setSearchQuery] = useState('')
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'reviewed' | 'resolved'>('all')
+  const [selectedReport, setSelectedReport] = useState<any>(null)
 
   const filteredReports = useMemo(() => {
     return reports.filter((report) => {
@@ -191,9 +192,10 @@ export default function ReportsPage() {
                         </td>
                         <td className="px-5 py-4 text-right">
                           <button
+                            onClick={() => setSelectedReport(report)}
                             className="px-3 py-1 rounded-lg text-xs font-medium bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 transition-colors"
                           >
-                            View User
+                            View Details
                           </button>
                         </td>
                       </tr>
@@ -204,6 +206,104 @@ export default function ReportsPage() {
             )}
           </div>
         </div>
+
+        {/* Reporter Details Modal */}
+        {selectedReport && (
+          <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+            <div className="w-full max-w-md bg-[#12121a] border border-gray-800 rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-lg font-bold text-white">Report Details</h2>
+                <button
+                  onClick={() => setSelectedReport(null)}
+                  className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Reported User */}
+                <div className="bg-gray-800/30 rounded-xl p-4">
+                  <p className="text-xs text-gray-400 uppercase tracking-wide mb-3">Reported User</p>
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-red-500 to-pink-500 flex items-center justify-center text-white font-medium flex-shrink-0">
+                      {selectedReport.reportedUserName.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-white">{selectedReport.reportedUserName}</p>
+                      <p className="text-sm font-mono text-gray-400">{registeredUsers.find(u => u.id === selectedReport.reportedUserId)?.userId || 'N/A'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Reporter */}
+                <div className="bg-gray-800/30 rounded-xl p-4">
+                  <p className="text-xs text-gray-400 uppercase tracking-wide mb-3">Reported By</p>
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-medium flex-shrink-0">
+                      {selectedReport.reporterName.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-white">{selectedReport.reporterName}</p>
+                      <p className="text-sm font-mono text-gray-400">{registeredUsers.find(u => u.id === selectedReport.reporterId)?.userId || 'N/A'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Offense Info */}
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">Offense Type</p>
+                    <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${reasonColors[selectedReport.reason] || 'bg-gray-500/20 text-gray-400'}`}>
+                      {reasonLabels[selectedReport.reason]}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">Details</p>
+                    <p className="text-gray-300 text-sm bg-gray-800/50 rounded-lg p-3">
+                      {selectedReport.details || 'No additional details provided'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">Reported On</p>
+                    <p className="text-sm text-gray-300">
+                      {new Date(selectedReport.reportedAt).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Status Update */}
+                <div>
+                  <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">Status</p>
+                  <select
+                    value={selectedReport.status}
+                    onChange={(e) => {
+                      setSelectedReport({ ...selectedReport, status: e.target.value })
+                    }}
+                    className={`w-full px-3 py-2 rounded-lg text-sm font-medium border-0 cursor-pointer ${
+                      selectedReport.status === 'pending'
+                        ? 'bg-yellow-500/20 text-yellow-400'
+                        : selectedReport.status === 'reviewed'
+                          ? 'bg-blue-500/20 text-blue-400'
+                          : 'bg-green-500/20 text-green-400'
+                    }`}
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="reviewed">Reviewed</option>
+                    <option value="resolved">Resolved</option>
+                  </select>
+                </div>
+
+                <button
+                  onClick={() => setSelectedReport(null)}
+                  className="w-full py-3 rounded-lg bg-purple-500 hover:bg-purple-600 text-white font-medium transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

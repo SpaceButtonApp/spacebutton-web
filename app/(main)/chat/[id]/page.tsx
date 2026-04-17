@@ -426,11 +426,12 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             <div className="space-y-3">
               <button
                 onClick={() => {
-                  if (selectedReportReason) {
-                    const reportedUser = registeredUsers.find(u => u.id === agent.id)
+                  if (selectedReportReason && user) {
                     addReport({
                       reportedUserId: agent.id,
                       reportedUserName: agent.name,
+                      reporterId: user.id,
+                      reporterName: user.name,
                       reason: selectedReportReason as 'scam' | 'harassment' | 'fake' | 'other',
                       details: reportDetails,
                       reportedAt: new Date().toISOString(),

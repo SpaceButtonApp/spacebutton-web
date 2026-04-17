@@ -13,14 +13,17 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  Bell
+  Bell,
+  Flag
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
+import { useAppStore } from '@/lib/store'
 
 const menuItems = [
   { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
   { label: 'Users', href: '/admin/users', icon: Users },
+  { label: 'User Reports', href: '/admin/reports', icon: Flag },
   { label: 'Listings', href: '/admin/listings', icon: Building2 },
   { label: 'Messages', href: '/admin/messages', icon: MessageSquare },
   { label: 'Transactions', href: '/admin/transactions', icon: CreditCard },
@@ -34,6 +37,8 @@ export function AdminSidebar() {
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
+  const { reports } = useAppStore()
+  const pendingReportsCount = reports.filter(r => r.status === 'pending').length
 
   const handleLogout = () => {
     localStorage.removeItem('admin-auth')
@@ -66,12 +71,13 @@ export function AdminSidebar() {
           <ul className="space-y-1">
             {menuItems.map((item) => {
               const isActive = pathname === item.href
+              const hasPendingReports = item.label === 'User Reports' && pendingReportsCount > 0
               return (
                 <li key={item.href}>
                   <Link
                     href={item.href}
                     className={cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
+                      "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 relative",
                       isActive 
                         ? "bg-primary/20 text-primary" 
                         : "text-muted-foreground hover:bg-secondary hover:text-foreground"
@@ -79,7 +85,12 @@ export function AdminSidebar() {
                   >
                     <item.icon className={cn("w-5 h-5 shrink-0", isActive && "text-primary")} />
                     {!collapsed && <span className="font-medium">{item.label}</span>}
-                    {isActive && !collapsed && (
+                    {hasPendingReports && !collapsed && (
+                      <span className="ml-auto bg-destructive text-destructive-foreground text-xs font-bold px-2 py-0.5 rounded-full">
+                        {pendingReportsCount}
+                      </span>
+                    )}
+                    {isActive && !collapsed && !hasPendingReports && (
                       <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
                     )}
                   </Link>

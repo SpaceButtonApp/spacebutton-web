@@ -6,10 +6,6 @@ import { useAppStore } from '@/lib/store'
 import { 
   Search, 
   Star, 
-  MoreVertical, 
-  Flag, 
-  Trash2, 
-  CheckCircle,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react'
@@ -19,7 +15,6 @@ export default function ReviewsPage() {
   const { reviews } = useAppStore()
   const [searchQuery, setSearchQuery] = useState('')
   const [ratingFilter, setRatingFilter] = useState<'all' | '5' | '4' | '3' | '2' | '1'>('all')
-  const [showActionMenu, setShowActionMenu] = useState<string | null>(null)
 
   // Mock reviews for display (combine with real reviews)
   const mockReviews = [
@@ -131,27 +126,7 @@ export default function ReviewsPage() {
                     <p className="text-gray-300 text-sm">{review.feedback}</p>
                   </div>
                 </div>
-                <div className="relative">
-                  <button 
-                    onClick={() => setShowActionMenu(showActionMenu === review.id ? null : review.id)}
-                    className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-white"
-                  >
-                    <MoreVertical className="w-4 h-4" />
-                  </button>
-                  {showActionMenu === review.id && (
-                    <div className="absolute right-0 top-full mt-1 w-40 bg-[#1a1a24] border border-gray-800 rounded-lg shadow-xl z-10 overflow-hidden">
-                      <button className="w-full px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-gray-800 flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4" /> Approve
-                      </button>
-                      <button className="w-full px-4 py-2.5 text-left text-sm text-yellow-400 hover:bg-gray-800 flex items-center gap-2">
-                        <Flag className="w-4 h-4" /> Flag
-                      </button>
-                      <button className="w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-gray-800 flex items-center gap-2">
-                        <Trash2 className="w-4 h-4" /> Delete
-                      </button>
-                    </div>
-                  )}
-                </div>
+
               </div>
             </div>
           )) : (

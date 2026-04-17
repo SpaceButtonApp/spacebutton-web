@@ -73,6 +73,8 @@ interface Report {
   id: string
   reportedUserId: string
   reportedUserName: string
+  reporterId: string
+  reporterName: string
   reason: 'scam' | 'harassment' | 'fake' | 'other'
   details: string
   reportedAt: string

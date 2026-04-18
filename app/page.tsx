@@ -165,7 +165,8 @@ export default function LandingPage() {
               <div className="space-y-4 sm:space-y-6">
                 <div>
                   <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight text-foreground">
-                    Find Your Dream Space
+                    Find Your Dream Space<br />
+                    <span className="text-primary">with SpaceButton</span>
                   </h1>
                   <p className="text-sm sm:text-base md:text-lg text-muted-foreground mt-3 sm:mt-4 md:mt-6 leading-relaxed">
                     Your journey to finding the perfect Space begins here. Your Next Home is Already Waiting. No inspection fees. No stress. Just real connections. We match people leaving great spaces with people ready to move in — find a roommate, rent a full apartment, or connect with verified agents and landlords who won&apos;t charge you just to look around. Find your space or list yours today.

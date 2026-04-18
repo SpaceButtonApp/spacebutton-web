@@ -216,7 +216,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               <div className="flex-1 text-left">
                 <p className="font-semibold text-sm line-clamp-1">{property.title}</p>
                 <p className="text-muted-foreground text-xs mb-1">{property.location}</p>
-                <p className="text-primary font-bold text-sm">₦{property.price.toLocaleString()}{property.rentPeriod ? `/${property.rentPeriod === 'monthly' ? 'month' : 'year'}` : ''}</p>
+                <p className="text-primary font-bold text-sm">₦{property.price ? property.price.toLocaleString() : 'N/A'}{property.rentPeriod ? `/${property.rentPeriod === 'monthly' ? 'month' : 'year'}` : ''}</p>
               </div>
             </div>
           </button>
@@ -356,7 +356,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                     <div className="flex-1">
                       <p className="font-semibold text-sm line-clamp-1">{property.title}</p>
                       <p className="text-xs text-muted-foreground">{property.location}</p>
-                      <p className="text-primary font-bold text-sm mt-1">₦{property.price.toLocaleString()}</p>
+                      <p className="text-primary font-bold text-sm mt-1">₦{property.price ? property.price.toLocaleString() : 'N/A'}</p>
                     </div>
                   </div>
                 </div>

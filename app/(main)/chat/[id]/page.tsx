@@ -3,7 +3,7 @@
 import { useState, use, useEffect } from 'react'
 import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Video, Phone, MoreVertical, Send, X, CheckSquare, MessageSquare, Star, Flag } from 'lucide-react'
+import { Video, Phone, MoreVertical, Send, X, Check, CheckSquare, MessageSquare, Star, Flag } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { BackButton } from '@/components/back-button'
 import { Button } from '@/components/ui/button'
@@ -200,18 +200,6 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           >
             <Video className="w-5 h-5" />
           </button>
-                  <button
-                    onClick={handleDoneDeal}
-                    disabled={doneDealState.locked}
-                    className={cn(
-                      "w-full h-12 rounded-xl text-sm font-medium transition-colors",
-                      doneDealState.locked
-                        ? "bg-muted text-muted-foreground cursor-not-allowed opacity-50"
-                        : "bg-success hover:bg-success/90 text-success-foreground"
-                    )}
-                  >
-                    {doneDealState.locked ? 'Deal Closed' : 'Done Deal'}
-                  </button>
           <button 
             onClick={() => setShowMenu(!showMenu)}
             className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary hover:bg-secondary/80 transition-colors"
@@ -276,9 +264,24 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             )}
           >
             <div className="flex items-center gap-3">
-              <CheckSquare className={cn("w-5 h-5", doneDealState.locked ? "text-success" : "text-muted-foreground")} />
+              {/* Checkbox */}
+              <div className={cn(
+                "w-6 h-6 rounded border-2 flex items-center justify-center transition-colors",
+                doneDealState.locked 
+                  ? "bg-success border-success" 
+                  : doneDealState.userConfirmed 
+                    ? "bg-primary border-primary" 
+                    : "border-muted-foreground"
+              )}>
+                {(doneDealState.userConfirmed || doneDealState.locked) && (
+                  <Check className="w-4 h-4 text-white" />
+                )}
+              </div>
               <div>
                 <span className="font-medium">Done Deal</span>
+                {doneDealState.userConfirmed && !doneDealState.locked && (
+                  <p className="text-xs text-primary">Waiting for other user...</p>
+                )}
                 {doneDealState.locked && (
                   <p className="text-xs text-success">Deal completed!</p>
                 )}
@@ -515,48 +518,35 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       {showDoneDealInfo && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center">
           <div className="w-full max-w-md rounded-t-3xl bg-background p-6 pb-8">
-            <div className="mx-auto mb-6 h-1 w-12 rounded-full bg-muted" />
+            <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-muted" />
             
-            <div className="space-y-6">
-              <div>
-                <p className="font-semibold text-lg mb-2">How to use Done Deal</p>
-                <p className="text-muted-foreground text-sm">
-                  Use this feature after a successful transaction between both parties.
-                </p>
-              </div>
+            <div className="space-y-4">
+              <p className="font-semibold text-lg">How to use Done Deal</p>
               
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-secondary p-4 rounded-2xl text-center space-y-2">
-                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center mx-auto">
-                    <CheckSquare className="w-5 h-5 text-primary" />
-                  </div>
-                  <p className="font-medium text-sm">Both Agree</p>
-                  <p className="text-xs text-muted-foreground">Click Done Deal button</p>
-                </div>
-                
-                <div className="bg-secondary p-4 rounded-2xl text-center space-y-2">
-                  <div className="w-10 h-10 rounded-full bg-success/20 flex items-center justify-center mx-auto">
-                    <CheckSquare className="w-5 h-5 text-success" />
-                  </div>
-                  <p className="font-medium text-sm">Get Confirmation</p>
-                  <p className="text-xs text-muted-foreground">See congratulations message</p>
-                </div>
-                
-                <div className="bg-secondary p-4 rounded-2xl text-center space-y-2">
-                  <div className="w-10 h-10 rounded-full bg-destructive/20 flex items-center justify-center mx-auto">
-                    <X className="w-5 h-5 text-destructive" />
-                  </div>
-                  <p className="font-medium text-sm">Property Closes</p>
-                  <p className="text-xs text-muted-foreground">Listing becomes unavailable</p>
-                </div>
-                
-                <div className="bg-secondary p-4 rounded-2xl text-center space-y-2">
-                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center mx-auto">
-                    <CheckSquare className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                  <p className="font-medium text-sm">Locked Deal</p>
-                  <p className="text-xs text-muted-foreground">Button cannot be pressed again</p>
-                </div>
+              <p className="text-muted-foreground text-sm">
+                Use this feature after a successful transaction between both parties.
+              </p>
+              
+              <div className="space-y-3 bg-secondary p-4 rounded-xl">
+                <p className="font-medium text-sm">Steps:</p>
+                <ol className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex gap-2">
+                    <span className="font-medium text-foreground">1.</span>
+                    <span>Click the 3-dot menu at the top right</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="font-medium text-foreground">2.</span>
+                    <span>Select &quot;Done Deal&quot; after successful transaction</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="font-medium text-foreground">3.</span>
+                    <span>Wait for the other party to also confirm</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="font-medium text-foreground">4.</span>
+                    <span>Once both parties confirm, the deal is complete!</span>
+                  </li>
+                </ol>
               </div>
             </div>
 

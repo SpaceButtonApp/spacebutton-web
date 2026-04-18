@@ -195,6 +195,12 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
         <div className="flex items-center gap-2">
           <button 
+            onClick={handleVoiceCall}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary hover:bg-secondary/80 transition-colors"
+          >
+            <Phone className="w-5 h-5" />
+          </button>
+          <button 
             onClick={handleVideoCall}
             className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary hover:bg-secondary/80 transition-colors"
           >
@@ -269,17 +275,17 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                 "w-6 h-6 rounded border-2 flex items-center justify-center transition-colors",
                 doneDealState.locked 
                   ? "bg-success border-success" 
-                  : doneDealState.userConfirmed 
+                  : (isAgent ? doneDealState.agent : doneDealState.user)
                     ? "bg-primary border-primary" 
                     : "border-muted-foreground"
               )}>
-                {(doneDealState.userConfirmed || doneDealState.locked) && (
+                {((isAgent ? doneDealState.agent : doneDealState.user) || doneDealState.locked) && (
                   <Check className="w-4 h-4 text-white" />
                 )}
               </div>
               <div>
                 <span className="font-medium">Done Deal</span>
-                {doneDealState.userConfirmed && !doneDealState.locked && (
+                {(isAgent ? doneDealState.agent : doneDealState.user) && !doneDealState.locked && (
                   <p className="text-xs text-primary">Waiting for other user...</p>
                 )}
                 {doneDealState.locked && (

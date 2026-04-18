@@ -72,13 +72,15 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   // Add this conversation to the messages list when chat is opened
   useEffect(() => {
     if (agent && property && propertyId && properties.length > 0) {
+      // Check if this exact conversation already exists (same property + same user)
       const existingConversation = conversations?.find(
         c => c && c.propertyId === propertyId && c.user && c.user.id === agent.id
       )
       
+      // Only add if not already in list
       if (!existingConversation) {
         try {
-          addConversation({
+          const newConversation = {
             id: `conv-${propertyId}-${agent.id}-${Date.now()}`,
             user: agent,
             property: property,
@@ -86,13 +88,13 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             lastMessage: 'Started conversation',
             timestamp: new Date(),
             unread: 0
-          })
+          }
+          addConversation(newConversation)
         } catch (error) {
           console.error('[v0] Error adding conversation:', error)
-        }
       }
     }
-  }, [agent, property, propertyId, conversations, addConversation, properties])
+  }, [propertyId])
 
   // Create a unique chat ID for this conversation
   const chatId = `${id}-${propertyId || 'default'}`
@@ -197,12 +199,18 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           >
             <Video className="w-5 h-5" />
           </button>
-          <button 
-            onClick={handleVoiceCall}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary hover:bg-secondary/80 transition-colors"
-          >
-            <Phone className="w-5 h-5" />
-          </button>
+                  <button
+                    onClick={handleDoneDeal}
+                    disabled={doneDealState.locked}
+                    className={cn(
+                      "w-full h-12 rounded-xl text-sm font-medium transition-colors",
+                      doneDealState.locked
+                        ? "bg-muted text-muted-foreground cursor-not-allowed opacity-50"
+                        : "bg-success hover:bg-success/90 text-success-foreground"
+                    )}
+                  >
+                    {doneDealState.locked ? 'Deal Closed' : 'Done Deal'}
+                  </button>
           <button 
             onClick={() => setShowMenu(!showMenu)}
             className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary hover:bg-secondary/80 transition-colors"
@@ -506,27 +514,48 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       {showDoneDealInfo && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center">
           <div className="w-full max-w-md rounded-t-3xl bg-background p-6 pb-8">
-            <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-muted" />
+            <div className="mx-auto mb-6 h-1 w-12 rounded-full bg-muted" />
             
-            <div className="space-y-4">
-              <p className="font-semibold text-lg">How to use Done Deal</p>
+            <div className="space-y-6">
+              <div>
+                <p className="font-semibold text-lg mb-2">How to use Done Deal</p>
+                <p className="text-muted-foreground text-sm">
+                  Use this feature after a successful transaction between both parties.
+                </p>
+              </div>
               
-              <p className="text-muted-foreground text-sm">
-                Use this feature after a successful transaction between both parties.
-              </p>
-              
-              <div className="space-y-3 bg-secondary p-4 rounded-xl">
-                <p className="font-medium text-sm">Steps:</p>
-                <ol className="space-y-2 text-sm text-muted-foreground">
-                  <li className="flex gap-2">
-                    <span className="font-medium text-foreground">1.</span>
-                    <span>Click the 3-dot menu at the top right</span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="font-medium text-foreground">2.</span>
-                    <span>Select Done Deal after transaction</span>
-                  </li>
-                </ol>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-secondary p-4 rounded-2xl text-center space-y-2">
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center mx-auto">
+                    <CheckSquare className="w-5 h-5 text-primary" />
+                  </div>
+                  <p className="font-medium text-sm">Both Agree</p>
+                  <p className="text-xs text-muted-foreground">Click Done Deal button</p>
+                </div>
+                
+                <div className="bg-secondary p-4 rounded-2xl text-center space-y-2">
+                  <div className="w-10 h-10 rounded-full bg-success/20 flex items-center justify-center mx-auto">
+                    <CheckSquare className="w-5 h-5 text-success" />
+                  </div>
+                  <p className="font-medium text-sm">Get Confirmation</p>
+                  <p className="text-xs text-muted-foreground">See congratulations message</p>
+                </div>
+                
+                <div className="bg-secondary p-4 rounded-2xl text-center space-y-2">
+                  <div className="w-10 h-10 rounded-full bg-destructive/20 flex items-center justify-center mx-auto">
+                    <X className="w-5 h-5 text-destructive" />
+                  </div>
+                  <p className="font-medium text-sm">Property Closes</p>
+                  <p className="text-xs text-muted-foreground">Listing becomes unavailable</p>
+                </div>
+                
+                <div className="bg-secondary p-4 rounded-2xl text-center space-y-2">
+                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center mx-auto">
+                    <CheckSquare className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                  <p className="font-medium text-sm">Locked Deal</p>
+                  <p className="text-xs text-muted-foreground">Button cannot be pressed again</p>
+                </div>
               </div>
             </div>
 

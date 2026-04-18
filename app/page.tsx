@@ -6,7 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight, Sun, Moon, Monitor, ChevronLeft, ChevronRight, MapPin, Home, DollarSign, Grid3X3, Star, Users, Search, Heart, Zap, Shield, TrendingUp, Clock } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
-import { cn, formatPrice } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 
 type Theme = 'light' | 'dark' | 'system'
 
@@ -294,7 +294,7 @@ export default function LandingPage() {
                       {property.bedrooms && <span>{property.bedrooms} Bed</span>}
                       {property.bathrooms && <span>{property.bathrooms} Bath</span>}
                     </div>
-                    <p className="text-primary font-bold text-base sm:text-lg md:text-xl">{formatPrice(property.price, property.rentPeriod)}</p>
+                    <p className="text-primary font-bold text-base sm:text-lg md:text-xl">${property.price?.toLocaleString() || 'N/A'}{property.rentPeriod ? `/${property.rentPeriod}` : ''}</p>
                     <button
                       onClick={(e) => {
                         e.stopPropagation()

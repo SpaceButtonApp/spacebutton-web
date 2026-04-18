@@ -46,16 +46,36 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   // Use the property agent if available, otherwise fallback to mockAgents
   const agent = property?.agent || mockAgents.find((a) => a.id === id) || mockAgents[0]
   
+  // Show fallback UI if property or agent not found
+  if (!property || !agent) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-foreground mb-2">Chat not found</h1>
+          <p className="text-muted-foreground mb-6">This property or agent no longer exists.</p>
+          <button
+            onClick={() => router.push('/messages')}
+            className="px-6 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
+          >
+            Back to Messages
+          </button>
+        </div>
+      </div>
+    )
+  }
+  
   // Add this conversation to the messages list when chat is opened
   useEffect(() => {
     if (agent && property && propertyId) {
-      // Check if conversation already exists
+      // Check if conversation for this property already exists (regardless of user)
+      // Each property can have multiple chats with different users
       const existingConversation = conversations.find(
-        c => c.user.id === agent.id && c.propertyId === propertyId
+        c => c.propertyId === propertyId && c.user.id === agent.id
       )
+      
       if (!existingConversation) {
         addConversation({
-          id: `conv-${agent.id}-${propertyId}-${Date.now()}`,
+          id: `conv-${propertyId}-${agent.id}-${Date.now()}`,
           user: agent,
           property: property,
           propertyId: propertyId,

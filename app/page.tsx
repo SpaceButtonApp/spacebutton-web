@@ -45,7 +45,7 @@ export default function LandingPage() {
   if (!mounted) return null
 
   const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png'
-  const heroImage = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/landing%20page.png-Fvd0I98VIhY6V1kmJvVe8GEAUYVqjp.jpeg'
+  const heroImage = 'https://images.unsplash.com/photo-1570129477492-45a003537e1f?w=800&h=600&fit=crop&q=80'
 
   const availableProperties = properties.slice(0, 3)
   const testimonials = [
@@ -198,10 +198,17 @@ export default function LandingPage() {
                     <p className="text-lg sm:text-2xl font-bold text-foreground">100k+</p>
                     <p className="text-xs sm:text-sm text-muted-foreground">Listed Homes</p>
                   </div>
-                  <div>
-                    <p className="text-lg sm:text-2xl font-bold text-foreground">16+</p>
-                    <p className="text-xs sm:text-sm text-muted-foreground">Years of Experience</p>
-                  </div>
+                <div>
+                  <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-foreground">
+                    Find Your Dream{' '}
+                    <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                      Space
+                    </span>
+                  </h1>
+                  <p className="text-base md:text-lg text-muted-foreground mt-4 md:mt-6 leading-relaxed">
+                    Your journey to finding the perfect Space begins here. Your Next Home is Already Waiting. No inspection fees. No stress. Just real connections. We match people leaving great spaces with people ready to move in — find a roommate, rent a full apartment, or connect with verified agents and landlords who won&apos;t charge you just to look around. Find your space or list yours today.
+                  </p>
+                </div>
                 </div>
               </div>
 
@@ -290,11 +297,15 @@ export default function LandingPage() {
                       {property.location}
                     </div>
                     <div className="flex items-center gap-3 mb-3 md:mb-4 text-xs text-muted-foreground flex-wrap">
-                      <span className="capitalize">{property.category}</span>
+                      <div className="flex items-center gap-1">
+                        <Home className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <span className="capitalize">{property.propertyCategory || property.category}</span>
+                      </div>
                       {property.bedrooms && <span>{property.bedrooms} Bed</span>}
                       {property.bathrooms && <span>{property.bathrooms} Bath</span>}
+                      {property.propertySize && <span>{property.propertySize?.toLocaleString()} sqft</span>}
                     </div>
-                    <p className="text-primary font-bold text-base sm:text-lg md:text-xl">${property.price?.toLocaleString() || 'N/A'}{property.rentPeriod ? `/${property.rentPeriod}` : ''}</p>
+                    <p className="text-primary font-bold text-base sm:text-lg md:text-xl">₦{property.price?.toLocaleString() || 'N/A'}{property.rentPeriod ? `/${property.rentPeriod}` : ''}</p>
                     <button
                       onClick={(e) => {
                         e.stopPropagation()

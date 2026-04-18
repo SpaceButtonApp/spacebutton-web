@@ -464,28 +464,32 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             <div className="space-y-3">
               <button
                 onClick={() => {
-                  if (selectedReportReason && user) {
-                    // Require details if "other" is selected
-                    if (selectedReportReason === 'other' && !reportDetails.trim()) {
-                      return
-                    }
-                    try {
-                      addReport({
-                        reportedUserId: agent.id,
-                        reportedUserName: agent.name,
-                        reporterId: user.id,
-                        reporterName: user.name,
-                        reason: selectedReportReason as 'scam' | 'harassment' | 'fake' | 'other',
-                        details: reportDetails,
-                        reportedAt: new Date().toISOString(),
-                        status: 'pending'
-                      })
-                      setShowReportModal(false)
-                      setSelectedReportReason('')
-                      setReportDetails('')
-                    } catch (error) {
-                      console.error('[v0] Error submitting report:', error)
-                    }
+                  if (!selectedReportReason) {
+                    return
+                  }
+                  // Require details if "other" is selected
+                  if (selectedReportReason === 'other' && !reportDetails.trim()) {
+                    return
+                  }
+                  try {
+                    addReport({
+                      reportedUserId: agent.id,
+                      reportedUserName: agent.name,
+                      reporterId: user?.id || 'anonymous',
+                      reporterName: user?.name || 'Anonymous User',
+                      reason: selectedReportReason as 'scam' | 'harassment' | 'fake' | 'other',
+                      details: reportDetails,
+                      reportedAt: new Date().toISOString(),
+                      status: 'pending'
+                    })
+                    // Show success feedback
+                    alert('Report submitted successfully. Our team will review it shortly.')
+                    setShowReportModal(false)
+                    setSelectedReportReason('')
+                    setReportDetails('')
+                  } catch (error) {
+                    console.error('[v0] Error submitting report:', error)
+                    alert('Failed to submit report. Please try again.')
                   }
                 }}
                 disabled={!selectedReportReason || (selectedReportReason === 'other' && !reportDetails.trim())}

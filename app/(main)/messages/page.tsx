@@ -32,7 +32,7 @@ export default function MessagesPage() {
           </div>
         ) : (
           <div className="space-y-3">
-            {conversations.map((conversation) => (
+            {conversations.filter(c => c.property && c.user).map((conversation) => (
               <button
                 key={conversation.id}
                 onClick={() => router.push(`/chat/${conversation.user.id}?propertyId=${conversation.propertyId}`)}
@@ -41,23 +41,26 @@ export default function MessagesPage() {
                 {/* Property Image */}
                 <div className="relative flex-shrink-0">
                   <Image
-                    src={conversation.property.images?.[0] || '/placeholder.png'}
-                    alt={conversation.property.title}
+                    src={conversation.property?.images?.[0] || 'https://images.unsplash.com/photo-1582683905568-bc3180db4ee8?w=200&h=200&fit=crop'}
+                    alt={conversation.property?.title || 'Property'}
                     width={64}
                     height={64}
                     className="rounded-lg object-cover w-16 h-16"
+                    onError={(e) => {
+                      e.currentTarget.src = 'https://images.unsplash.com/photo-1582683905568-bc3180db4ee8?w=200&h=200&fit=crop'
+                    }}
                   />
                 </div>
 
                 {/* Content */}
                 <div className="flex-1 min-w-0 text-left">
                   <div className="flex items-center justify-between gap-2">
-                    <h3 className="font-semibold text-foreground truncate">{conversation.property.title}</h3>
+                    <h3 className="font-semibold text-foreground truncate">{conversation.property?.title || 'Property'}</h3>
                     <span className="text-xs text-muted-foreground flex-shrink-0">
-                      {formatDistanceToNow(conversation.timestamp, { addSuffix: true })}
+                      {formatDistanceToNow(new Date(conversation.timestamp), { addSuffix: true })}
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground mb-1">with {conversation.user.name}</p>
+                  <p className="text-xs text-muted-foreground mb-1">with {conversation.user?.name || 'Unknown'}</p>
                   <p className="text-sm text-muted-foreground truncate">
                     {conversation.lastMessage}
                   </p>

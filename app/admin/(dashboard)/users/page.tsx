@@ -19,13 +19,23 @@ import { useRouter } from 'next/navigation'
 
 export default function UsersPage() {
   const router = useRouter()
-  const { registeredUsers, updateRegisteredUser, deleteRegisteredUser, addSupportMessage, supportChats } = useAppStore()
+  const { registeredUsers, updateRegisteredUser, deleteRegisteredUser, addSupportMessage, supportChats, properties, reports } = useAppStore()
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'suspended' | 'inactive'>('all')
   const [typeFilter, setTypeFilter] = useState<'all' | 'individual' | 'agent'>('all')
   const [showActionMenu, setShowActionMenu] = useState<string | null>(null)
   const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null)
   const [showSuspendModal, setShowSuspendModal] = useState<string | null>(null)
+
+  // Helper function to get user's actual listings count
+  const getUserListingsCount = (userId: string) => {
+    return properties.filter(p => p.agent?.id === userId).length
+  }
+
+  // Helper function to get user's actual offense count
+  const getUserOffenseCount = (userId: string) => {
+    return reports.filter(r => r.reportedUserId === userId).length
+  }
 
   const filteredUsers = registeredUsers.filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -48,8 +58,8 @@ export default function UsersPage() {
         user.phone,
         user.status,
         user.type,
-        user.listings,
-        user.offenseCount || 0,
+        getUserListingsCount(user.id),
+        getUserOffenseCount(user.id),
         user.joined
       ].join(','))
     ].join('\n')
@@ -224,18 +234,21 @@ export default function UsersPage() {
                             {user.type === 'agent' ? 'Agent' : 'Individual'}
                           </span>
                         </td>
-                        <td className="px-5 py-4 text-sm text-white">{user.listings}</td>
+                        <td className="px-5 py-4 text-sm text-white">{getUserListingsCount(user.id)}</td>
                         <td className="px-5 py-4">
-                          {user.offenseCount > 0 ? (
-                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-                              user.offenseCount >= 3 ? 'bg-red-500/20 text-red-400' : 'bg-yellow-500/20 text-yellow-400'
-                            }`}>
-                              <span className={`w-1.5 h-1.5 rounded-full ${user.offenseCount >= 3 ? 'bg-red-400' : 'bg-yellow-400'}`} />
-                              {user.offenseCount} {user.offenseCount === 1 ? 'offense' : 'offenses'}
-                            </span>
-                          ) : (
-                            <span className="text-sm text-gray-500">-</span>
-                          )}
+                          {(() => {
+                            const offenseCount = getUserOffenseCount(user.id)
+                            return offenseCount > 0 ? (
+                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
+                                offenseCount >= 3 ? 'bg-red-500/20 text-red-400' : 'bg-yellow-500/20 text-yellow-400'
+                              }`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${offenseCount >= 3 ? 'bg-red-400' : 'bg-yellow-400'}`} />
+                                {offenseCount} {offenseCount === 1 ? 'offense' : 'offenses'}
+                              </span>
+                            ) : (
+                              <span className="text-sm text-gray-500">-</span>
+                            )
+                          })()}
                         </td>
                         <td className="px-5 py-4">
                           <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${

@@ -73,6 +73,8 @@ interface Report {
   id: string
   reportedUserId: string
   reportedUserName: string
+  reporterId: string
+  reporterName: string
   reason: 'scam' | 'harassment' | 'fake' | 'other'
   details: string
   reportedAt: string
@@ -144,6 +146,7 @@ interface AppState {
   // Reports
   reports: Report[]
   addReport: (report: Omit<Report, 'id'>) => void
+  updateReport: (id: string, updates: Partial<Report>) => void
   
   // UI State
   activeTab: 'connect' | 'agent' | 'shortlet' | 'properties'
@@ -258,8 +261,11 @@ export const useAppStore = create<AppState>()(
       // Conversations
       conversations: mockConversations,
       addConversation: (conversation) => set((state) => {
-        // Check if conversation already exists by user id
-        const existingIndex = state.conversations.findIndex(c => c.user.id === conversation.user.id)
+        // Check if conversation already exists by user id AND propertyId
+        // This allows same user to have multiple conversations for different properties
+        const existingIndex = state.conversations.findIndex(
+          c => c.user.id === conversation.user.id && c.propertyId === conversation.propertyId
+        )
         if (existingIndex !== -1) {
           // Update existing conversation with new message
           const updatedConversations = [...state.conversations]
@@ -385,6 +391,10 @@ export const useAppStore = create<AppState>()(
           registeredUsers: updatedUsers
         }
       }),
+      
+      updateReport: (id, updates) => set((state) => ({
+        reports: state.reports.map(r => r.id === id ? { ...r, ...updates } : r)
+      })),
       
       // UI State
       activeTab: 'connect',

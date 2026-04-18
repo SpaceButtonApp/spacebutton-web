@@ -92,9 +92,10 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           addConversation(newConversation)
         } catch (error) {
           console.error('[v0] Error adding conversation:', error)
+        }
       }
     }
-  }, [propertyId])
+  }, [propertyId, agent, property, properties.length, conversations, addConversation])
 
   // Create a unique chat ID for this conversation
   const chatId = `${id}-${propertyId || 'default'}`

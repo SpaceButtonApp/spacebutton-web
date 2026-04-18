@@ -261,8 +261,11 @@ export const useAppStore = create<AppState>()(
       // Conversations
       conversations: mockConversations,
       addConversation: (conversation) => set((state) => {
-        // Check if conversation already exists by user id
-        const existingIndex = state.conversations.findIndex(c => c.user.id === conversation.user.id)
+        // Check if conversation already exists by user id AND propertyId
+        // This allows same user to have multiple conversations for different properties
+        const existingIndex = state.conversations.findIndex(
+          c => c.user.id === conversation.user.id && c.propertyId === conversation.propertyId
+        )
         if (existingIndex !== -1) {
           // Update existing conversation with new message
           const updatedConversations = [...state.conversations]

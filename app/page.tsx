@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -16,6 +16,12 @@ export default function LandingPage() {
   const [theme, setTheme] = useState<Theme>('system')
   const [isDark, setIsDark] = useState(false)
   const [mounted, setMounted] = useState(false)
+  
+  // Typewriter effect state
+  const [typewriterText, setTypewriterText] = useState('')
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [showCursor, setShowCursor] = useState(true)
+  const fullText = 'with SpaceButton'
 
   useEffect(() => {
     setMounted(true)
@@ -25,6 +31,62 @@ export default function LandingPage() {
     } else {
       setTheme('system')
     }
+  }, [])
+
+  // Typewriter effect
+  useEffect(() => {
+    if (!mounted) return
+    
+    let timeout: NodeJS.Timeout
+    
+    if (!isDeleting && typewriterText.length < fullText.length) {
+      // Typing
+      timeout = setTimeout(() => {
+        setTypewriterText(fullText.slice(0, typewriterText.length + 1))
+      }, 80 + Math.random() * 40) // 80-120ms for natural feel
+    } else if (!isDeleting && typewriterText.length === fullText.length) {
+      // Wait 10 seconds before deleting
+      timeout = setTimeout(() => {
+        setIsDeleting(true)
+      }, 10000)
+    } else if (isDeleting && typewriterText.length > 0) {
+      // Deleting
+      timeout = setTimeout(() => {
+        setTypewriterText(typewriterText.slice(0, -1))
+      }, 40 + Math.random() * 20) // 40-60ms for faster delete
+    } else if (isDeleting && typewriterText.length === 0) {
+      // Restart typing
+      setIsDeleting(false)
+    }
+    
+    return () => clearTimeout(timeout)
+  }, [typewriterText, isDeleting, mounted])
+
+  // Cursor blink effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setShowCursor(prev => !prev)
+    }, 530)
+    return () => clearInterval(interval)
+  }, [])
+
+  // Scroll reveal effect using Intersection Observer
+  const revealRef = useCallback((node: HTMLElement | null) => {
+    if (!node) return
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('animate-reveal')
+            observer.unobserve(entry.target)
+          }
+        })
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+    )
+    
+    observer.observe(node)
   }, [])
 
   useEffect(() => {
@@ -166,7 +228,10 @@ export default function LandingPage() {
                 <div>
                   <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight text-foreground">
                     Find Your Dream Space<br />
-                    <span className="text-primary">with SpaceButton</span>
+                    <span className="text-primary">
+                      {typewriterText}
+                      <span className={cn("inline-block w-[3px] h-[1em] bg-primary ml-1 align-middle", showCursor ? "opacity-100" : "opacity-0")} />
+                    </span>
                   </h1>
                   <p className="text-sm sm:text-base md:text-lg text-muted-foreground mt-3 sm:mt-4 md:mt-6 leading-relaxed">
                     Your journey to finding the perfect Space begins here. Your Next Home is Already Waiting. No inspection fees. No stress. Just real connections. We match people leaving great spaces with people ready to move in — find a roommate, rent a full apartment, or connect with verified agents and landlords who won&apos;t charge you just to look around. Find your space or list yours today.
@@ -222,7 +287,7 @@ export default function LandingPage() {
         {/* Search Section */}
         <section className="py-6 sm:py-8 md:py-12 bg-card/50 border-y border-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="space-y-4">
+            <div ref={revealRef} className="reveal-item space-y-4">
               <h2 className="text-lg sm:text-xl font-bold text-foreground">Search for Available Space</h2>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                 <div className="flex items-center gap-2 bg-background rounded-full px-3 sm:px-4 py-2 sm:py-3 border border-border">
@@ -251,7 +316,7 @@ export default function LandingPage() {
         {/* Featured Properties */}
         <section className="py-8 sm:py-12 md:py-16">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-start md:items-center justify-between mb-6 sm:mb-8 md:mb-12 flex-col md:flex-row gap-4">
+            <div ref={revealRef} className="reveal-item flex items-start md:items-center justify-between mb-6 sm:mb-8 md:mb-12 flex-col md:flex-row gap-4">
               <div>
                 <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-1 sm:mb-2">Featured Properties</h2>
                 <p className="text-muted-foreground text-xs sm:text-sm md:text-base">Explore our handpicked selection of featured properties. Each listing offers a glimpse into exceptional homes and investments available through SpaceButton. Click View Details to uncover more information.</p>
@@ -264,12 +329,13 @@ export default function LandingPage() {
               </button>
             </div>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              {availableProperties.map((property) => (
+            <div ref={revealRef} className="reveal-item reveal-stagger grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              {availableProperties.map((property, index) => (
                 <button
                   key={property.id}
                   onClick={() => router.push(`/property/${property.id}`)}
-                  className="group rounded-2xl overflow-hidden bg-card border border-border hover:border-primary/50 transition-all hover:shadow-xl text-left"
+                  className="reveal-item group rounded-2xl overflow-hidden bg-card border border-border hover:border-primary/50 transition-all hover:shadow-xl text-left"
+                  style={{ transitionDelay: `${index * 100}ms` }}
                 >
                   <div className="relative aspect-[4/3] bg-muted overflow-hidden">
                     <Image
@@ -318,14 +384,14 @@ export default function LandingPage() {
         {/* Testimonials */}
         <section className="py-8 sm:py-12 md:py-16 bg-card/50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-8 sm:mb-12">
+            <div ref={revealRef} className="reveal-item text-center mb-8 sm:mb-12">
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-2 sm:mb-4">What Our Users Say</h2>
               <p className="text-muted-foreground text-xs sm:text-sm md:text-base max-w-2xl mx-auto">Read the success stories and heartfelt testimonials from our valued users. Discover why they chose SpaceButton for their space needs.</p>
             </div>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            <div ref={revealRef} className="reveal-item reveal-stagger grid sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {testimonials.map((testimonial, i) => (
-                <div key={i} className="p-4 md:p-6 bg-background rounded-xl border border-border hover:border-primary/50 transition-all">
+                <div key={i} className="reveal-item p-4 md:p-6 bg-background rounded-xl border border-border hover:border-primary/50 transition-all" style={{ transitionDelay: `${i * 100}ms` }}>
                   <div className="flex items-center gap-1 mb-3 md:mb-4">
                     {Array.from({ length: testimonial.rating }).map((_, j) => (
                       <Star key={j} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
@@ -345,14 +411,14 @@ export default function LandingPage() {
         {/* FAQs */}
         <section className="py-8 sm:py-12 md:py-16">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-8 sm:mb-12">
+            <div ref={revealRef} className="reveal-item text-center mb-8 sm:mb-12">
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-2 sm:mb-4">Frequently Asked Questions</h2>
               <p className="text-muted-foreground text-xs sm:text-sm md:text-base">Find answers to common questions about SpaceButton, how our service works, and more. If you can't find what you're looking for, please contact our support team.</p>
             </div>
 
-            <div className="space-y-3 sm:space-y-4">
+            <div ref={revealRef} className="reveal-item reveal-stagger space-y-3 sm:space-y-4">
               {faqs.map((faq, i) => (
-                <div key={i} className="p-4 md:p-6 bg-card rounded-lg border border-border hover:border-primary/50 transition-all cursor-pointer">
+                <div key={i} className="reveal-item p-4 md:p-6 bg-card rounded-lg border border-border hover:border-primary/50 transition-all cursor-pointer" style={{ transitionDelay: `${i * 100}ms` }}>
                   <div className="flex items-start justify-between gap-3 sm:gap-4">
                     <div>
                       <h3 className="font-semibold text-foreground text-sm sm:text-base">{faq.q}</h3>
@@ -368,7 +434,7 @@ export default function LandingPage() {
 
         {/* CTA Section */}
         <section className="py-8 sm:py-12 md:py-16 bg-primary/10">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div ref={revealRef} className="reveal-item max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-3 sm:mb-4 md:mb-6">
               Discover Vacant Spaces Today using SpaceButton
             </h2>

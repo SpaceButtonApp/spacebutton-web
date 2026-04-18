@@ -2,7 +2,8 @@
 
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { Camera, Grid3X3, Bookmark, MapPin, Users, Building2, CheckCircle2, Home, DollarSign, Maximize } from 'lucide-react'
+import { Camera, Grid3X3, Bookmark, MapPin, Users, Building2, CheckCircle2, Home, DollarSign, Maximize, Play } from 'lucide-react'
+import { useState, useRef } from 'react'
 import { useAppStore } from '@/lib/store'
 import { formatPrice, type Property } from '@/lib/mock-data'
 import { cn } from '@/lib/utils'
@@ -29,6 +30,17 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
     router.push(`/property/${property.id}`)
   }
 
+  const [isPlaying, setIsPlaying] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  const handlePlayVideo = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (videoRef.current) {
+      videoRef.current.play()
+      setIsPlaying(true)
+    }
+  }
+
   if (variant === 'compact' || variant === 'horizontal') {
     return (
       <div 
@@ -38,14 +50,24 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
         {/* Image/Video */}
         <div className="relative w-32 h-28 flex-shrink-0 rounded-xl overflow-hidden">
           {property.images[0]?.startsWith('data:video') ? (
-            <video 
-              src={property.images[0]} 
-              className="w-full h-full object-cover"
-              muted
-              autoPlay
-              loop
-              playsInline
-            />
+            <>
+              <video 
+                ref={videoRef}
+                src={property.images[0]} 
+                className="w-full h-full object-cover"
+                muted
+                loop
+                playsInline
+                poster={property.images[1] || ''}
+              />
+              {!isPlaying && (
+                <div className="video-play-overlay" onClick={handlePlayVideo}>
+                  <div className="video-play-button">
+                    <Play className="w-6 h-6 text-foreground ml-1" fill="currentColor" />
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             <Image
               src={property.images[0]}
@@ -133,19 +155,40 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
     )
   }
 
+  const [isPlayingFull, setIsPlayingFull] = useState(false)
+  const videoRefFull = useRef<HTMLVideoElement>(null)
+
+  const handlePlayVideoFull = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (videoRefFull.current) {
+      videoRefFull.current.play()
+      setIsPlayingFull(true)
+    }
+  }
+
   return (
     <div className="bg-card rounded-3xl overflow-hidden border border-border hover:border-[#703BF7]/30 transition-all duration-200">
       {/* Image/Video */}
       <div className="relative aspect-[4/3]">
         {property.images[0]?.startsWith('data:video') ? (
-          <video 
-            src={property.images[0]} 
-            className="w-full h-full object-cover"
-            muted
-            autoPlay
-            loop
-            playsInline
-          />
+          <>
+            <video 
+              ref={videoRefFull}
+              src={property.images[0]} 
+              className="w-full h-full object-cover"
+              muted
+              loop
+              playsInline
+              poster={property.images[1] || ''}
+            />
+            {!isPlayingFull && (
+              <div className="video-play-overlay" onClick={handlePlayVideoFull}>
+                <div className="video-play-button">
+                  <Play className="w-6 h-6 text-foreground ml-1" fill="currentColor" />
+                </div>
+              </div>
+            )}
+          </>
         ) : (
           <Image
             src={property.images[0]}

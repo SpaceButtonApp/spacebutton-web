@@ -447,11 +447,28 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               ))}
             </div>
 
+            {/* Other reason text input */}
+            {selectedReportReason === 'other' && (
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-2">Please specify your reason</label>
+                <textarea
+                  value={reportDetails}
+                  onChange={(e) => setReportDetails(e.target.value)}
+                  placeholder="Describe why you are reporting this user..."
+                  className="w-full h-24 px-3 py-2 rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-destructive/50"
+                />
+              </div>
+            )}
+
             {/* Action Buttons */}
             <div className="space-y-3">
               <button
                 onClick={() => {
                   if (selectedReportReason && user) {
+                    // Require details if "other" is selected
+                    if (selectedReportReason === 'other' && !reportDetails.trim()) {
+                      return
+                    }
                     try {
                       addReport({
                         reportedUserId: agent.id,
@@ -471,10 +488,10 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                     }
                   }
                 }}
-                disabled={!selectedReportReason}
+                disabled={!selectedReportReason || (selectedReportReason === 'other' && !reportDetails.trim())}
                 className={cn(
                   "w-full h-12 rounded-lg font-medium transition-colors",
-                  selectedReportReason
+                  selectedReportReason && !(selectedReportReason === 'other' && !reportDetails.trim())
                     ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
                     : 'bg-secondary text-muted-foreground cursor-not-allowed'
                 )}

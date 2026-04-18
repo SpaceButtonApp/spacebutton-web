@@ -46,13 +46,13 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   // Use the property agent if available, otherwise fallback to mockAgents
   const agent = property?.agent || mockAgents.find((a) => a.id === id) || mockAgents[0]
   
-  // Show fallback UI if property or agent not found
-  if (!property || !agent) {
+  // Show fallback UI if property not found (agent always exists due to fallback)
+  if (!property) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-foreground mb-2">Chat not found</h1>
-          <p className="text-muted-foreground mb-6">This property or agent no longer exists.</p>
+          <p className="text-muted-foreground mb-6">Could not find property {propertyId}</p>
           <button
             onClick={() => router.push('/messages')}
             className="px-6 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
@@ -158,11 +158,14 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         >
           <div className="relative">
             <Image
-              src={agent.avatar}
+              src={agent.avatar || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop'}
               alt={agent.name}
               width={44}
               height={44}
-              className="rounded-full"
+              className="rounded-full object-cover"
+              onError={(e) => {
+                e.currentTarget.src = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop'
+              }}
             />
             {agent.online && (
               <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-success border-2 border-background" />
@@ -206,11 +209,14 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             <div className="flex gap-3 p-3">
               <div className="relative flex-shrink-0">
                 <Image
-                  src={property.images[0]}
+                  src={property.images?.[0] || 'https://images.unsplash.com/photo-1570129477492-45a003537e1f?w=200&h=200&fit=crop'}
                   alt={property.title || 'Property'}
                   width={80}
                   height={80}
                   className="rounded-lg object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = 'https://images.unsplash.com/photo-1570129477492-45a003537e1f?w=200&h=200&fit=crop'
+                  }}
                 />
               </div>
               <div className="flex-1 text-left">
@@ -310,11 +316,14 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               {/* Profile Picture */}
               <div className="flex flex-col items-center">
                 <Image
-                  src={agent.avatar}
+                  src={agent.avatar || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop'}
                   alt={agent.name}
                   width={120}
                   height={120}
-                  className="rounded-full mb-4 border-4 border-primary"
+                  className="rounded-full mb-4 border-4 border-primary object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop'
+                  }}
                 />
                 <h2 className="text-2xl font-bold">{agent.name}</h2>
                 <p className="text-muted-foreground capitalize mt-1">

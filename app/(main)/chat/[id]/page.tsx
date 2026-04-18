@@ -3,7 +3,7 @@
 import { useState, use, useEffect } from 'react'
 import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Video, Phone, MoreVertical, Send, X, CheckSquare, MessageSquare, Star, Flag, AlertTriangle, Search, Eye, ShieldOff } from 'lucide-react'
+import { Video, Phone, MoreVertical, Send, X, CheckSquare, MessageSquare, Star, Flag } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { BackButton } from '@/components/back-button'
 import { Button } from '@/components/ui/button'
@@ -11,12 +11,15 @@ import { mockAgents } from '@/lib/mock-data'
 import { useAppStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
 
+const DEFAULT_AVATAR = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect fill="%23e5e7eb" width="100" height="100"/%3E%3Ccircle cx="50" cy="35" r="15" fill="%239ca3af"/%3E%3Cpath d="M 20 80 Q 50 60 80 80" fill="%239ca3af"/%3E%3C/svg%3E'
+const DEFAULT_PROPERTY = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect fill="%23f3f4f6" width="100" height="100"/%3E%3Cpath d="M 50 20 L 80 45 L 75 45 L 75 75 L 25 75 L 25 45 L 20 45 Z" fill="%239ca3af"/%3E%3C/svg%3E'
+
 export default function ChatPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
   const searchParams = useSearchParams()
   const propertyId = searchParams.get('propertyId')
-  const { properties, doneDealStates, toggleDoneDeal, user, addReview, addConversation, conversations, addReport, registeredUsers } = useAppStore()
+  const { properties, doneDealStates, toggleDoneDeal, user, addReview, addConversation, conversations, addReport } = useAppStore()
   
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState<Array<{
@@ -38,21 +41,23 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [selectedReportReason, setSelectedReportReason] = useState('')
   const [reportDetails, setReportDetails] = useState('')
   
-  // Get property details from propertyId param or find first property by this agent
-  const property = propertyId 
-    ? properties.find((p) => p.id === propertyId) 
-    : properties.find((p) => p.agent?.id === id) || properties[0]
+  // Get property details - safely with fallbacks
+  const property = propertyId && properties.length > 0
+    ? properties.find((p) => p && p.id === propertyId)
+    : properties.length > 0 
+      ? properties.find((p) => p && p.agent && p.agent.id === id) || properties[0]
+      : null
   
-  // Use the property agent if available, otherwise fallback to mockAgents
-  const agent = property?.agent || mockAgents.find((a) => a.id === id) || mockAgents[0]
+  // Get agent - always has a fallback
+  const agent = property?.agent || mockAgents.find((a) => a && a.id === id) || mockAgents[0]
   
-  // Show fallback UI if property not found (agent always exists due to fallback)
+  // Show fallback if property not found
   if (!property) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-foreground mb-2">Chat not found</h1>
-          <p className="text-muted-foreground mb-6">Could not find property {propertyId}</p>
+          <h1 className="text-2xl font-bold text-foreground mb-2">Chat not available</h1>
+          <p className="text-muted-foreground mb-6">The property or conversation could not be found.</p>
           <button
             onClick={() => router.push('/messages')}
             className="px-6 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
@@ -66,30 +71,32 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   
   // Add this conversation to the messages list when chat is opened
   useEffect(() => {
-    if (agent && property && propertyId) {
-      // Check if conversation for this property already exists (regardless of user)
-      // Each property can have multiple chats with different users
-      const existingConversation = conversations.find(
-        c => c.propertyId === propertyId && c.user.id === agent.id
+    if (agent && property && propertyId && properties.length > 0) {
+      const existingConversation = conversations?.find(
+        c => c && c.propertyId === propertyId && c.user && c.user.id === agent.id
       )
       
       if (!existingConversation) {
-        addConversation({
-          id: `conv-${propertyId}-${agent.id}-${Date.now()}`,
-          user: agent,
-          property: property,
-          propertyId: propertyId,
-          lastMessage: 'Started conversation',
-          timestamp: new Date(),
-          unread: 0
-        })
+        try {
+          addConversation({
+            id: `conv-${propertyId}-${agent.id}-${Date.now()}`,
+            user: agent,
+            property: property,
+            propertyId: propertyId,
+            lastMessage: 'Started conversation',
+            timestamp: new Date(),
+            unread: 0
+          })
+        } catch (error) {
+          console.error('[v0] Error adding conversation:', error)
+        }
       }
     }
-  }, [agent, property, propertyId, conversations, addConversation])
+  }, [agent, property, propertyId, conversations, addConversation, properties])
 
   // Create a unique chat ID for this conversation
   const chatId = `${id}-${propertyId || 'default'}`
-  const doneDealState = doneDealStates[chatId] || { user: false, agent: false, locked: false }
+  const doneDealState = doneDealStates ? doneDealStates[chatId] || { user: false, agent: false, locked: false } : { user: false, agent: false, locked: false }
   
   // Check if current user is the agent (property owner) or the interested user
   const isAgent = property?.ownerId === user?.id
@@ -121,24 +128,31 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const handleDoneDeal = () => {
     if (doneDealState.locked) return
     
-    const bothAgreed = toggleDoneDeal(chatId, propertyId || property?.id || '', isAgent)
-    if (bothAgreed) {
-      setShowCongrats(true)
-      setShowMenu(false)
+    try {
+      const bothAgreed = toggleDoneDeal(chatId, propertyId || property?.id || '', isAgent)
+      if (bothAgreed) {
+        setShowCongrats(true)
+        setShowMenu(false)
+      }
+    } catch (error) {
+      console.error('[v0] Error toggling done deal:', error)
     }
   }
 
   const handleSubmitFeedback = () => {
     if (rating > 0 && feedback.trim() && user) {
-      // Add review for the agent/property owner
-      addReview({
-        fromUserId: user.id,
-        fromUserName: user.name,
-        fromUserAvatar: user.avatar,
-        toUserId: agent.id,
-        rating,
-        feedback: feedback.trim()
-      })
+      try {
+        addReview({
+          fromUserId: user.id,
+          fromUserName: user.name,
+          fromUserAvatar: user.avatar,
+          toUserId: agent.id,
+          rating,
+          feedback: feedback.trim()
+        })
+      } catch (error) {
+        console.error('[v0] Error submitting feedback:', error)
+      }
     }
     setShowFeedback(false)
     setShowMenu(false)
@@ -158,71 +172,69 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         >
           <div className="relative">
             <Image
-              src={agent.avatar || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop'}
-              alt={agent.name}
+              src={agent?.avatar || DEFAULT_AVATAR}
+              alt={agent?.name || 'User'}
               width={44}
               height={44}
               className="rounded-full object-cover"
-              onError={(e) => {
-                e.currentTarget.src = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop'
-              }}
+              unoptimized
+              onError={() => {}}
             />
-            {agent.online && (
+            {agent?.online && (
               <div className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-success border-2 border-background" />
             )}
           </div>
           <div className="text-left">
-            <h2 className="font-semibold">{agent.name}</h2>
-            <p className="text-xs text-success">{agent.online ? 'Online' : 'Offline'}</p>
+            <h2 className="font-semibold">{agent?.name || 'User'}</h2>
+            <p className="text-xs text-success">{agent?.online ? 'Online' : 'Offline'}</p>
           </div>
         </button>
 
         <div className="flex items-center gap-2">
           <button 
             onClick={handleVideoCall}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary hover:bg-secondary/80 transition-colors"
           >
             <Video className="w-5 h-5" />
           </button>
           <button 
             onClick={handleVoiceCall}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary hover:bg-secondary/80 transition-colors"
           >
             <Phone className="w-5 h-5" />
           </button>
           <button 
             onClick={() => setShowMenu(!showMenu)}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary hover:bg-secondary/80 transition-colors"
           >
             <MoreVertical className="w-5 h-5" />
           </button>
         </div>
       </div>
 
-      {/* Apartment Banner */}
-      {property && property.images && property.images[0] && (
+      {/* Property Banner */}
+      {property && (
         <div className="px-4 py-2">
           <button
             onClick={() => router.push(`/property/${property.id}`)}
             className="w-full bg-secondary rounded-xl overflow-hidden border border-border hover:bg-secondary/80 transition-colors"
           >
             <div className="flex gap-3 p-3">
-              <div className="relative flex-shrink-0">
+              <div className="relative flex-shrink-0 w-20 h-20">
                 <Image
-                  src={property.images?.[0] || 'https://images.unsplash.com/photo-1570129477492-45a003537e1f?w=200&h=200&fit=crop'}
-                  alt={property.title || 'Property'}
+                  src={property?.images?.[0] || DEFAULT_PROPERTY}
+                  alt={property?.title || 'Property'}
                   width={80}
                   height={80}
-                  className="rounded-lg object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = 'https://images.unsplash.com/photo-1570129477492-45a003537e1f?w=200&h=200&fit=crop'
-                  }}
+                  className="rounded-lg object-cover w-full h-full"
+                  unoptimized
+                  onError={() => {}}
                 />
               </div>
-              <div className="flex-1 text-left">
-                <p className="font-semibold text-sm line-clamp-1">{property.title}</p>
-                <p className="text-muted-foreground text-xs mb-1">{property.location}</p>
-                <p className="text-primary font-bold text-sm">₦{property.price ? property.price.toLocaleString() : 'N/A'}{property.rentPeriod ? `/${property.rentPeriod === 'monthly' ? 'month' : 'year'}` : ''}</p>
+              <div className="flex-1 text-left min-w-0">
+                <p className="font-semibold text-sm line-clamp-1">{property?.title || 'Property'}</p>
+                <p className="text-muted-foreground text-xs mb-1">{property?.location || 'Location'}</p>
+                <p className="text-primary font-bold text-sm">₦{property?.price ? property.price.toLocaleString() : 'N/A'}{property?.rentPeriod ? `/${property.rentPeriod === 'monthly' ? 'month' : 'year'}` : ''}</p>
               </div>
             </div>
           </button>
@@ -236,7 +248,6 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             onClick={() => { setShowProfileCard(true); setShowMenu(false); }}
             className="w-full text-left px-4 py-3 hover:bg-secondary transition-colors border-b border-border flex items-center gap-3"
           >
-            <Eye className="w-5 h-5 text-muted-foreground" />
             <span className="font-medium">View Profile</span>
           </button>
           <button
@@ -262,34 +273,15 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                 {doneDealState.locked && (
                   <p className="text-xs text-success">Deal completed!</p>
                 )}
-                {!doneDealState.locked && (doneDealState.user || doneDealState.agent) && (
-                  <p className="text-xs text-muted-foreground">
-                    Waiting for {doneDealState.user ? 'other party' : 'you'} to confirm
-                  </p>
-                )}
               </div>
-            </div>
-            <div className={cn(
-              'w-6 h-6 rounded border-2 flex items-center justify-center transition-colors',
-              doneDealState.locked 
-                ? 'bg-success border-success' 
-                : (isAgent ? doneDealState.agent : doneDealState.user) 
-                  ? 'bg-primary border-primary' 
-                  : 'border-muted-foreground'
-            )}>
-              {(doneDealState.locked || (isAgent ? doneDealState.agent : doneDealState.user)) && (
-                <CheckSquare className={cn("w-4 h-4", doneDealState.locked ? "text-success-foreground" : "text-primary-foreground")} />
-              )}
             </div>
           </button>
           <button
             onClick={() => setShowFeedback(true)}
-            className="w-full flex items-center justify-between px-4 py-4 hover:bg-secondary transition-colors border-b border-border"
+            className="w-full flex items-center gap-3 px-4 py-4 hover:bg-secondary transition-colors border-b border-border"
           >
-            <div className="flex items-center gap-3">
-              <MessageSquare className="w-5 h-5 text-muted-foreground" />
-              <span className="font-medium">Feedback</span>
-            </div>
+            <MessageSquare className="w-5 h-5 text-muted-foreground" />
+            <span className="font-medium">Feedback</span>
           </button>
           <button
             onClick={() => { setShowReportModal(true); setShowMenu(false); }}
@@ -316,34 +308,33 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               {/* Profile Picture */}
               <div className="flex flex-col items-center">
                 <Image
-                  src={agent.avatar || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop'}
-                  alt={agent.name}
+                  src={agent?.avatar || DEFAULT_AVATAR}
+                  alt={agent?.name || 'User'}
                   width={120}
                   height={120}
                   className="rounded-full mb-4 border-4 border-primary object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop'
-                  }}
+                  unoptimized
+                  onError={() => {}}
                 />
-                <h2 className="text-2xl font-bold">{agent.name}</h2>
+                <h2 className="text-2xl font-bold">{agent?.name || 'User'}</h2>
                 <p className="text-muted-foreground capitalize mt-1">
-                  {agent.type === 'agent' ? 'Agent' : 'Individual'}
+                  {agent?.type === 'agent' ? 'Agent' : 'Individual'}
                 </p>
               </div>
 
               {/* Stats */}
               <div className="grid grid-cols-3 gap-4">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-primary">{agent.listings || 0}</p>
+                  <p className="text-2xl font-bold text-primary">{agent?.listings || 0}</p>
                   <p className="text-xs text-muted-foreground">Listings</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-primary">{agent.closedDeals || 0}</p>
+                  <p className="text-2xl font-bold text-primary">{agent?.closedDeals || 0}</p>
                   <p className="text-xs text-muted-foreground">Closed</p>
                 </div>
                 <div className="text-center">
                   <p className="text-2xl font-bold text-primary flex items-center justify-center gap-1">
-                    {agent.rating || 0}
+                    {agent?.rating || 0}
                     <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                   </p>
                   <p className="text-xs text-muted-foreground">Rating</p>
@@ -355,24 +346,28 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                 <div className="bg-secondary rounded-xl p-4">
                   <p className="text-xs text-muted-foreground mb-2">Current Property</p>
                   <div className="flex gap-3">
-                    <Image
-                      src={property.images?.[0] || '/placeholder.png'}
-                      alt={property.title}
-                      width={80}
-                      height={80}
-                      className="rounded-lg object-cover"
-                    />
-                    <div className="flex-1">
-                      <p className="font-semibold text-sm line-clamp-1">{property.title}</p>
-                      <p className="text-xs text-muted-foreground">{property.location}</p>
-                      <p className="text-primary font-bold text-sm mt-1">₦{property.price ? property.price.toLocaleString() : 'N/A'}</p>
+                    <div className="relative w-20 h-20 flex-shrink-0">
+                      <Image
+                        src={property?.images?.[0] || DEFAULT_PROPERTY}
+                        alt={property?.title || 'Property'}
+                        width={80}
+                        height={80}
+                        className="rounded-lg object-cover w-full h-full"
+                        unoptimized
+                        onError={() => {}}
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm line-clamp-1">{property?.title || 'Property'}</p>
+                      <p className="text-xs text-muted-foreground">{property?.location || 'Location'}</p>
+                      <p className="text-primary font-bold text-sm mt-1">₦{property?.price ? property.price.toLocaleString() : 'N/A'}</p>
                     </div>
                   </div>
                 </div>
               )}
 
               {/* About */}
-              {agent.bio && (
+              {agent?.bio && (
                 <div>
                   <p className="text-sm font-medium mb-2">About</p>
                   <p className="text-sm text-muted-foreground">{agent.bio}</p>
@@ -381,7 +376,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
               <button
                 onClick={() => setShowProfileCard(false)}
-                className="w-full h-12 bg-primary text-primary-foreground rounded-xl font-medium"
+                className="w-full h-12 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 transition-colors"
               >
                 Close
               </button>
@@ -407,77 +402,60 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             </div>
 
             <p className="text-sm text-muted-foreground mb-4">
-              Help us maintain a safe community by reporting concerning behavior. Your report will be reviewed promptly.
+              Help us maintain a safe community by reporting concerning behavior.
             </p>
 
             {/* Report Reasons */}
             <div className="space-y-3 mb-6">
               {[
-                { id: 'scam', label: 'Scam or Fraud', desc: 'Suspicious financial activity or deceptive practices', icon: '⚠️' },
-                { id: 'harassment', label: 'Harassment or Abuse', desc: 'Threatening, bullying, or inappropriate behavior', icon: '🚨' },
-                { id: 'fake', label: 'Fake or Misleading Content', desc: 'False information or counterfeit items', icon: '🔍' },
-                { id: 'other', label: 'Other Reason', desc: 'Something else that violates our guidelines', icon: '✋' }
+                { id: 'scam', label: 'Scam or Fraud', desc: 'Suspicious activity' },
+                { id: 'harassment', label: 'Harassment', desc: 'Inappropriate behavior' },
+                { id: 'fake', label: 'Fake Content', desc: 'False information' },
+                { id: 'other', label: 'Other', desc: 'Something else' }
               ].map((reason) => (
                 <button
                   key={reason.id}
                   onClick={() => setSelectedReportReason(reason.id)}
                   className={cn(
-                    "w-full text-left p-4 rounded-xl border-2 transition-all",
+                    "w-full text-left p-3 rounded-lg border-2 transition-all",
                     selectedReportReason === reason.id
                       ? 'border-destructive bg-destructive/5'
                       : 'border-border hover:border-destructive/30'
                   )}
                 >
-                  <div className="flex items-start gap-3">
-                    <span className="text-xl">{reason.icon}</span>
-                    <div>
-                      <p className="font-medium">{reason.label}</p>
-                      <p className="text-xs text-muted-foreground">{reason.desc}</p>
-                    </div>
-                  </div>
+                  <p className="font-medium text-sm">{reason.label}</p>
+                  <p className="text-xs text-muted-foreground">{reason.desc}</p>
                 </button>
               ))}
             </div>
-
-            {/* Details Box for Other Reason */}
-            {selectedReportReason === 'other' && (
-              <div className="mb-6">
-                <label className="text-sm font-medium block mb-2">Please specify your reason</label>
-                <textarea
-                  placeholder="Describe the issue in detail..."
-                  value={reportDetails}
-                  onChange={(e) => setReportDetails(e.target.value)}
-                  className="w-full p-3 rounded-xl border border-border bg-background resize-none text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  rows={4}
-                  maxLength={200}
-                />
-                <p className="text-xs text-muted-foreground mt-2 text-right">{reportDetails.length}/200</p>
-              </div>
-            )}
 
             {/* Action Buttons */}
             <div className="space-y-3">
               <button
                 onClick={() => {
                   if (selectedReportReason && user) {
-                    addReport({
-                      reportedUserId: agent.id,
-                      reportedUserName: agent.name,
-                      reporterId: user.id,
-                      reporterName: user.name,
-                      reason: selectedReportReason as 'scam' | 'harassment' | 'fake' | 'other',
-                      details: reportDetails,
-                      reportedAt: new Date().toISOString(),
-                      status: 'pending'
-                    });
-                    setShowReportModal(false);
-                    setSelectedReportReason('');
-                    setReportDetails('');
+                    try {
+                      addReport({
+                        reportedUserId: agent.id,
+                        reportedUserName: agent.name,
+                        reporterId: user.id,
+                        reporterName: user.name,
+                        reason: selectedReportReason as 'scam' | 'harassment' | 'fake' | 'other',
+                        details: reportDetails,
+                        reportedAt: new Date().toISOString(),
+                        status: 'pending'
+                      })
+                      setShowReportModal(false)
+                      setSelectedReportReason('')
+                      setReportDetails('')
+                    } catch (error) {
+                      console.error('[v0] Error submitting report:', error)
+                    }
                   }
                 }}
                 disabled={!selectedReportReason}
                 className={cn(
-                  "w-full h-12 rounded-xl font-medium transition-colors",
+                  "w-full h-12 rounded-lg font-medium transition-colors",
                   selectedReportReason
                     ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
                     : 'bg-secondary text-muted-foreground cursor-not-allowed'
@@ -487,11 +465,11 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               </button>
               <button
                 onClick={() => {
-                  setShowReportModal(false);
-                  setSelectedReportReason('');
-                  setReportDetails('');
+                  setShowReportModal(false)
+                  setSelectedReportReason('')
+                  setReportDetails('')
                 }}
-                className="w-full h-12 rounded-xl border border-border font-medium hover:bg-secondary transition-colors"
+                className="w-full h-12 rounded-lg border border-border font-medium hover:bg-secondary transition-colors"
               >
                 Cancel
               </button>
@@ -509,7 +487,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             </div>
             <h2 className="text-2xl font-bold mb-2">Congratulations!</h2>
             <p className="text-muted-foreground mb-6">
-              Both parties have confirmed the deal. The property listing has been closed automatically.
+              Both parties have confirmed the deal.
             </p>
             <Button
               onClick={() => {
@@ -531,30 +509,22 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-muted" />
             
             <div className="space-y-4">
-              <p className="font-semibold text-lg">How to use the Done Deal feature</p>
+              <p className="font-semibold text-lg">How to use Done Deal</p>
               
               <p className="text-muted-foreground text-sm">
-                It's important for both parties to use the done deal button after successful transaction between both parties.
+                Use this feature after a successful transaction between both parties.
               </p>
               
               <div className="space-y-3 bg-secondary p-4 rounded-xl">
-                <p className="font-medium text-sm">How to use the done deal button:</p>
+                <p className="font-medium text-sm">Steps:</p>
                 <ol className="space-y-2 text-sm text-muted-foreground">
                   <li className="flex gap-2">
-                    <span className="font-medium text-foreground min-w-fit">1.</span>
-                    <span>Click on the 3 dot sign on the top right corner</span>
+                    <span className="font-medium text-foreground">1.</span>
+                    <span>Click the 3-dot menu at the top right</span>
                   </li>
                   <li className="flex gap-2">
-                    <span className="font-medium text-foreground min-w-fit">2.</span>
-                    <span>You will see a pop-up menu with Done Deal and Feedback options</span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="font-medium text-foreground min-w-fit">3.</span>
-                    <span>Click on the Done Deal box after successful transaction</span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="font-medium text-foreground min-w-fit">4.</span>
-                    <span>Click on Feedback to tell us about your experience and rate the user</span>
+                    <span className="font-medium text-foreground">2.</span>
+                    <span>Select Done Deal after transaction</span>
                   </li>
                 </ol>
               </div>
@@ -609,7 +579,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
           <Button
             onClick={handleSubmitFeedback}
-            className="w-full mt-4 h-12 rounded-xl bg-primary text-primary-foreground"
+            className="w-full mt-4 h-12 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
           >
             Submit Feedback
           </Button>
@@ -618,19 +588,25 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
       {/* Messages */}
       <div className="flex-1 px-4 py-4 overflow-auto space-y-3">
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={cn(
-              'max-w-[80%] p-4 rounded-2xl',
-              msg.isOwn 
-                ? 'ml-auto bg-foreground text-background rounded-br-sm' 
-                : 'mr-auto bg-secondary text-foreground rounded-bl-sm border border-border'
-            )}
-          >
-            <p className="text-sm leading-relaxed">{msg.content}</p>
+        {messages && messages.length > 0 ? (
+          messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={cn(
+                'max-w-[80%] p-4 rounded-2xl',
+                msg.isOwn 
+                  ? 'ml-auto bg-foreground text-background rounded-br-sm' 
+                  : 'mr-auto bg-secondary text-foreground rounded-bl-sm border border-border'
+              )}
+            >
+              <p className="text-sm leading-relaxed">{msg.content}</p>
+            </div>
+          ))
+        ) : (
+          <div className="flex items-center justify-center h-full text-muted-foreground">
+            <p className="text-sm">No messages yet. Start the conversation!</p>
           </div>
-        ))}
+        )}
       </div>
 
       {/* Message Input */}
@@ -646,7 +622,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           />
           <button
             onClick={handleSend}
-            className="w-12 h-12 rounded-full bg-foreground flex items-center justify-center"
+            className="w-12 h-12 rounded-full bg-foreground flex items-center justify-center hover:bg-foreground/90 transition-colors"
           >
             <Send className="w-5 h-5 text-background" />
           </button>

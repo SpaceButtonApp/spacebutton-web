@@ -59,7 +59,7 @@ export default function LandingPage() {
       name: 'Tunde A.',
       role: 'Individual',
       rating: 5,
-      text: 'Efficient and Reliable. Got a Maxi flat apartment in 3 days. Without going through agents, it's way easier. Highly Recommended.'
+      text: "Efficient and Reliable. Got a Maxi flat apartment in 3 days. Without going through agents, it's way easier. Highly Recommended."
     },
     {
       name: 'Adrina M.',

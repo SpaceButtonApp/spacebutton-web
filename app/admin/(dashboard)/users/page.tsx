@@ -29,7 +29,7 @@ export default function UsersPage() {
 
   // Helper function to get user's actual listings count
   const getUserListingsCount = (userId: string) => {
-    return properties.filter(p => p.agent?.id === userId).length
+    return properties.filter(p => p.agent?.id === userId || p.ownerId === userId).length
   }
 
   // Helper function to get user's actual offense count

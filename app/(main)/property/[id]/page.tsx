@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, use, useEffect } from 'react'
+import { useState, use, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { 
   Bookmark, ChevronLeft, ChevronRight, Bed, Bath, 
   Sofa, MapPin, Calendar, AlertTriangle, Users, Building2, ArrowLeft, X, Clock,
-  Home, DollarSign, Grid3X3, Maximize, Eye
+  Home, DollarSign, Grid3X3, Maximize, Eye, Play
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { Button } from '@/components/ui/button'
@@ -25,6 +25,16 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [showFullScreen, setShowFullScreen] = useState(false)
   const [showConnectModal, setShowConnectModal] = useState(false)
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  const handlePlayVideo = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (videoRef.current) {
+      videoRef.current.play()
+      setIsVideoPlaying(true)
+    }
+  }
   
   const property = properties.find((p) => p.id === id)
   const isSaved = savedProperties.includes(id)
@@ -90,15 +100,25 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
       {/* Image Gallery */}
       <div className="relative aspect-[4/3]">
         {property.images[currentImageIndex]?.startsWith('data:video') ? (
-          <video 
-            src={property.images[currentImageIndex]} 
-            className="w-full h-full object-cover cursor-pointer"
-            muted
-            autoPlay
-            loop
-            playsInline
-            onClick={() => setShowFullScreen(true)}
-          />
+          <>
+            <video 
+              ref={videoRef}
+              src={property.images[currentImageIndex]} 
+              className="w-full h-full object-cover cursor-pointer"
+              muted
+              loop
+              playsInline
+              poster={property.images.find(img => !img.startsWith('data:video')) || ''}
+              onClick={() => setShowFullScreen(true)}
+            />
+            {!isVideoPlaying && (
+              <div className="video-play-overlay" onClick={handlePlayVideo}>
+                <div className="video-play-button">
+                  <Play className="w-6 h-6 text-foreground ml-1" fill="currentColor" />
+                </div>
+              </div>
+            )}
+          </>
         ) : (
           <Image
             src={property.images[currentImageIndex]}
@@ -423,10 +443,11 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
               <video
                 src={property.images[currentImageIndex]}
                 className="max-w-full max-h-full object-contain"
-                autoPlay
+                controls
                 loop
                 muted
                 playsInline
+                poster={property.images.find(img => !img.startsWith('data:video')) || ''}
                 onClick={(e) => e.stopPropagation()}
               />
             ) : (

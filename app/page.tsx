@@ -16,6 +16,12 @@ export default function LandingPage() {
   const [theme, setTheme] = useState<Theme>('system')
   const [isDark, setIsDark] = useState(false)
   const [mounted, setMounted] = useState(false)
+  
+  // Typewriter effect state
+  const [typewriterText, setTypewriterText] = useState('')
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [showCursor, setShowCursor] = useState(true)
+  const fullText = 'with SpaceButton'
 
   useEffect(() => {
     setMounted(true)
@@ -26,6 +32,45 @@ export default function LandingPage() {
       setTheme('system')
     }
   }, [])
+
+  // Typewriter effect
+  useEffect(() => {
+    if (!mounted) return
+    
+    let timeout: NodeJS.Timeout
+    
+    if (!isDeleting && typewriterText.length < fullText.length) {
+      // Typing
+      timeout = setTimeout(() => {
+        setTypewriterText(fullText.slice(0, typewriterText.length + 1))
+      }, 80 + Math.random() * 40) // 80-120ms for natural feel
+    } else if (!isDeleting && typewriterText.length === fullText.length) {
+      // Wait 10 seconds before deleting
+      timeout = setTimeout(() => {
+        setIsDeleting(true)
+      }, 10000)
+    } else if (isDeleting && typewriterText.length > 0) {
+      // Deleting
+      timeout = setTimeout(() => {
+        setTypewriterText(typewriterText.slice(0, -1))
+      }, 40 + Math.random() * 20) // 40-60ms for faster delete
+    } else if (isDeleting && typewriterText.length === 0) {
+      // Restart typing
+      setIsDeleting(false)
+    }
+    
+    return () => clearTimeout(timeout)
+  }, [typewriterText, isDeleting, mounted])
+
+  // Cursor blink effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setShowCursor(prev => !prev)
+    }, 530)
+    return () => clearInterval(interval)
+  }, [])
+
+
 
   useEffect(() => {
     if (!mounted) return
@@ -166,7 +211,10 @@ export default function LandingPage() {
                 <div>
                   <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight text-foreground">
                     Find Your Dream Space<br />
-                    <span className="text-primary">with SpaceButton</span>
+                    <span className="text-primary">
+                      {typewriterText}
+                      <span className={cn("inline-block w-[3px] h-[1em] bg-primary ml-1 align-middle", showCursor ? "opacity-100" : "opacity-0")} />
+                    </span>
                   </h1>
                   <p className="text-sm sm:text-base md:text-lg text-muted-foreground mt-3 sm:mt-4 md:mt-6 leading-relaxed">
                     Your journey to finding the perfect Space begins here. Your Next Home is Already Waiting. No inspection fees. No stress. Just real connections. We match people leaving great spaces with people ready to move in — find a roommate, rent a full apartment, or connect with verified agents and landlords who won&apos;t charge you just to look around. Find your space or list yours today.

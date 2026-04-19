@@ -30,7 +30,15 @@ export function BottomNav() {
           return (
             <button
               key={item.href}
-              onClick={() => router.push(item.href)}
+              onClick={() => {
+                if (isActive && item.href === '/home') {
+                  // If already on home page, reload and scroll to top
+                  window.scrollTo({ top: 0, behavior: 'smooth' })
+                  router.refresh()
+                } else {
+                  router.push(item.href)
+                }
+              }}
               className={cn(
                 'flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-200 min-w-[60px] relative',
                 isActive 

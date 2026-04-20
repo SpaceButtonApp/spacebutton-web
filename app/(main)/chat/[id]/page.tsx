@@ -19,7 +19,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const router = useRouter()
   const searchParams = useSearchParams()
   const propertyId = searchParams.get('propertyId')
-  const { properties, doneDealStates, toggleDoneDeal, user, addReview, addConversation, conversations, addReport } = useAppStore()
+  const { properties, doneDealStates, toggleDoneDeal, user, addReview, addConversation, conversations, addReport, closedProperties, reviews } = useAppStore()
   
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState<Array<{
@@ -50,6 +50,18 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   
   // Get agent - always has a fallback
   const agent = property?.agent || mockAgents.find((a) => a && a.id === id) || mockAgents[0]
+  
+  // Calculate agent stats dynamically (same logic as profile page)
+  const agentListings = properties.filter((p) => 
+    (p.ownerId === agent?.id || p.agent?.id === agent?.id) && !closedProperties.includes(p.id)
+  ).length
+  const agentClosedDeals = properties.filter((p) => 
+    (p.ownerId === agent?.id || p.agent?.id === agent?.id) && closedProperties.includes(p.id)
+  ).length
+  const agentReviews = reviews.filter((r) => r.toUserId === agent?.id)
+  const agentRating = agentReviews.length > 0 
+    ? (agentReviews.reduce((sum, r) => sum + r.rating, 0) / agentReviews.length).toFixed(1)
+    : '0.0'
   
   // Show fallback if property not found
   if (!property) {
@@ -343,16 +355,16 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               {/* Stats */}
               <div className="grid grid-cols-3 gap-4">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-primary">{agent?.listings || 0}</p>
+                  <p className="text-2xl font-bold text-primary">{agentListings}</p>
                   <p className="text-xs text-muted-foreground">Listings</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-primary">{agent?.closedDeals || 0}</p>
+                  <p className="text-2xl font-bold text-primary">{agentClosedDeals}</p>
                   <p className="text-xs text-muted-foreground">Closed</p>
                 </div>
                 <div className="text-center">
                   <p className="text-2xl font-bold text-primary flex items-center justify-center gap-1">
-                    {agent?.rating || 0}
+                    {agentRating}
                     <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                   </p>
                   <p className="text-xs text-muted-foreground">Rating</p>

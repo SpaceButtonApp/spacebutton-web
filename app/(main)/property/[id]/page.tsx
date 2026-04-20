@@ -4,7 +4,7 @@ import { useState, use, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { 
-  Bookmark, ChevronLeft, ChevronRight, Bed, Bath, 
+  Bookmark, ChevronLeft, ChevronRight, ChevronDown, Bed, Bath, 
   Sofa, MapPin, Calendar, AlertTriangle, Users, Building2, ArrowLeft, X, Clock,
   Home, DollarSign, Grid3X3, Maximize, Eye, Play
 } from 'lucide-react'
@@ -26,6 +26,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
   const [showFullScreen, setShowFullScreen] = useState(false)
   const [showConnectModal, setShowConnectModal] = useState(false)
   const [isVideoPlaying, setIsVideoPlaying] = useState(false)
+  const [safetyTipsExpanded, setSafetyTipsExpanded] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
 
   const handlePlayVideo = (e: React.MouseEvent) => {
@@ -376,19 +377,39 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
 
         {/* Safety Tips Card - Hidden for admin posts */}
         {!property.isAdminPost && (
-          <div className="bg-destructive/5 rounded-2xl p-6 border border-destructive/20">
-            <h3 className="text-sm font-semibold text-destructive uppercase tracking-wide flex items-center gap-2 mb-4">
-              <AlertTriangle className="w-4 h-4" />
-              Safety Tips
-            </h3>
-            <ol className="space-y-3">
-              {safetyTips.map((tip, index) => (
-                <li key={index} className="flex gap-3 text-sm text-destructive/80">
-                  <span className="font-semibold text-destructive flex-shrink-0">{index + 1}.</span>
-                  <span>{tip}</span>
-                </li>
-              ))}
-            </ol>
+          <div className="bg-destructive/5 rounded-2xl border border-destructive/20 overflow-hidden">
+            <button
+              onClick={() => setSafetyTipsExpanded(!safetyTipsExpanded)}
+              className="w-full px-6 py-4 flex items-center justify-between hover:bg-destructive/10 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-destructive" />
+                <span className="text-sm font-semibold text-destructive uppercase tracking-wide">Safety Tips</span>
+              </div>
+              <ChevronDown 
+                className={cn(
+                  "w-5 h-5 text-destructive transition-transform duration-300",
+                  safetyTipsExpanded && "rotate-180"
+                )} 
+              />
+            </button>
+            <div 
+              className={cn(
+                "grid transition-all duration-300 ease-in-out",
+                safetyTipsExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+              )}
+            >
+              <div className="overflow-hidden">
+                <ol className="space-y-3 px-6 pb-6 pt-2">
+                  {safetyTips.map((tip, index) => (
+                    <li key={index} className="flex gap-3 text-sm text-destructive/80">
+                      <span className="font-semibold text-destructive flex-shrink-0">{index + 1}.</span>
+                      <span>{tip}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </div>
           </div>
         )}
 

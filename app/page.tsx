@@ -316,7 +316,7 @@ export default function LandingPage() {
               {availableProperties.map((property) => (
                 <button
                   key={property.id}
-                  onClick={() => router.push(`/property/${property.id}`)}
+                  onClick={() => router.push('/get-started')}
                   className="group rounded-2xl overflow-hidden bg-card border border-border hover:border-primary/50 transition-all hover:shadow-xl text-left"
                 >
                   <div className="relative aspect-[4/3] bg-muted overflow-hidden">
@@ -350,7 +350,7 @@ export default function LandingPage() {
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
-                        router.push(`/property/${property.id}`)
+                        router.push('/get-started')
                       }}
                       className="w-full mt-3 md:mt-4 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg py-2 font-semibold transition-colors text-sm"
                     >

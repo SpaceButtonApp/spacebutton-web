@@ -25,7 +25,11 @@ export default function TransactionsPage() {
   const totalTransactions = transactions.length
 
   const filteredTransactions = transactions.filter(t => {
-    const matchesSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase())
+    const transactionId = `TXN-${t.id.padStart(6, '0')}`.toLowerCase()
+    const searchLower = searchQuery.toLowerCase()
+    const matchesSearch = t.title.toLowerCase().includes(searchLower) || 
+                          transactionId.includes(searchLower) ||
+                          t.id.toLowerCase().includes(searchLower)
     const matchesType = typeFilter === 'all' || t.type === typeFilter
     return matchesSearch && matchesType
   })

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { 
   Bookmark, ChevronLeft, ChevronRight, ChevronDown, Bed, Bath, 
   Sofa, MapPin, Calendar, AlertTriangle, Users, Building2, ArrowLeft, X, Clock,
-  Home, DollarSign, Grid3X3, Maximize, Eye, Play
+  Home, DollarSign, Grid3X3, Maximize, Eye, Play, MessageSquare
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { Button } from '@/components/ui/button'
@@ -21,7 +21,7 @@ import { cn } from '@/lib/utils'
 export default function PropertyDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
-  const { savedProperties, toggleSaveProperty, user, connectsRemaining, deductConnect, properties, incrementPropertyViews } = useAppStore()
+  const { savedProperties, toggleSaveProperty, user, connectsRemaining, deductConnect, properties, incrementPropertyViews, conversations } = useAppStore()
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [showFullScreen, setShowFullScreen] = useState(false)
   const [showConnectModal, setShowConnectModal] = useState(false)
@@ -39,6 +39,9 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
   
   const property = properties.find((p) => p.id === id)
   const isSaved = savedProperties.includes(id)
+  
+  // Count conversations for this property
+  const propertyConversations = conversations.filter((c) => c.propertyId === id).length
   
   // Track view on component mount
   useEffect(() => {
@@ -165,12 +168,18 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
           <div className="flex items-start justify-between gap-3 mb-3">
             <h1 className="text-2xl font-bold flex-1">{property.title}</h1>
             <div className="flex flex-col items-end gap-2 flex-shrink-0">
-              {property.views !== undefined && (
-                <div className="flex items-center gap-1 text-xs bg-primary/10 text-primary px-2 py-1 rounded-lg">
-                  <Eye className="w-3 h-3" />
-                  <span className="font-medium">{property.views}</span>
+              <div className="flex items-center gap-2">
+                {property.views !== undefined && (
+                  <div className="flex items-center gap-1 text-xs bg-primary/10 text-primary px-2 py-1 rounded-lg">
+                    <Eye className="w-3 h-3" />
+                    <span className="font-medium">{property.views}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-1 text-xs bg-success/10 text-success px-2 py-1 rounded-lg" title="Active conversations">
+                  <MessageSquare className="w-3 h-3" />
+                  <span className="font-medium">{propertyConversations}</span>
                 </div>
-              )}
+              </div>
               {property.createdAt && (
                 <span className="text-xs text-muted-foreground">
                   {formatDistanceToNow(new Date(property.createdAt), { addSuffix: true })}

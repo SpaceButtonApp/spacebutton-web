@@ -19,7 +19,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const router = useRouter()
   const searchParams = useSearchParams()
   const propertyId = searchParams.get('propertyId')
-  const { properties, doneDealStates, toggleDoneDeal, user, addReview, addConversation, conversations, addReport, closedProperties, reviews } = useAppStore()
+  const { properties, doneDealStates, toggleDoneDeal, user, addReview, addConversation, conversations, addReport, closedProperties, reviews, registeredUsers } = useAppStore()
   
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState<Array<{
@@ -49,7 +49,18 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       : null
   
   // Get agent - always has a fallback
-  const agent = property?.agent || mockAgents.find((a) => a && a.id === id) || mockAgents[0]
+  const baseAgent = property?.agent || mockAgents.find((a) => a && a.id === id) || mockAgents[0]
+  
+  // Try to get actual registered user data for the agent (for accurate profile picture/name)
+  const registeredAgent = registeredUsers.find((u) => u.userId === baseAgent?.id || u.id === baseAgent?.id)
+  
+  // Merge agent data with registered user data if available (registered user data takes priority)
+  const agent = {
+    ...baseAgent,
+    name: registeredAgent?.name || baseAgent?.name,
+    avatar: registeredAgent?.avatar || baseAgent?.avatar,
+    type: registeredAgent?.type || baseAgent?.type,
+  }
   
   // Calculate agent stats dynamically (same logic as profile page)
   const agentListings = properties.filter((p) => 

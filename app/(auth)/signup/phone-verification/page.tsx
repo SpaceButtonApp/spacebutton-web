@@ -3,10 +3,10 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { Mail, ArrowLeft, CheckCircle2, RefreshCw } from 'lucide-react'
+import { Phone, ArrowLeft, CheckCircle2, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-export default function VerificationPage() {
+export default function PhoneVerificationPage() {
   const router = useRouter()
   const [codes, setCodes] = useState<string[]>(['', '', '', '', '', ''])
   const [isLoading, setIsLoading] = useState(false)
@@ -16,13 +16,13 @@ export default function VerificationPage() {
 
   const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png'
 
-  const [email, setEmail] = useState('')
+  const [phoneNumber, setPhoneNumber] = useState('')
   
   useEffect(() => {
     const signupData = localStorage.getItem('signupData')
     if (signupData) {
       const data = JSON.parse(signupData)
-      setEmail(data.email || '')
+      setPhoneNumber(data.phoneNumber || data.phone || '')
     }
     inputRefs.current[0]?.focus()
   }, [])
@@ -75,7 +75,7 @@ export default function VerificationPage() {
 
     setIsLoading(true)
     setTimeout(() => {
-      router.push('/signup/phone-verification')
+      router.push('/welcome')
     }, 1000)
   }
 
@@ -91,9 +91,9 @@ export default function VerificationPage() {
     }, 1500)
   }
 
-  const maskedEmail = email
-    ? email.substring(0, 3) + '*'.repeat(Math.max(0, email.indexOf('@') - 3)) + email.substring(email.indexOf('@'))
-    : 'your email'
+  const maskedPhone = phoneNumber
+    ? phoneNumber.slice(0, 4) + '*'.repeat(Math.max(0, phoneNumber.length - 6)) + phoneNumber.slice(-2)
+    : 'your phone number'
 
   const isCodeComplete = codes.every(c => c !== '')
 
@@ -113,8 +113,8 @@ export default function VerificationPage() {
       <div className="flex-1 px-6 py-4 flex flex-col items-center">
         {/* Icon */}
         <div className="relative mb-8">
-          <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/30">
-            <Mail className="w-12 h-12 text-primary-foreground" />
+          <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-success to-success/80 flex items-center justify-center shadow-lg shadow-success/30">
+            <Phone className="w-12 h-12 text-success-foreground" />
           </div>
         </div>
 
@@ -130,10 +130,10 @@ export default function VerificationPage() {
             />
             <span className="text-lg font-bold text-foreground">SpaceButton</span>
           </div>
-          <h1 className="text-3xl font-bold text-foreground mb-3">Check your inbox</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-3">Verify your phone</h1>
           <p className="text-muted-foreground text-sm max-w-xs mx-auto">
             We have sent a 6-digit verification code to{' '}
-            <span className="text-primary font-medium">{maskedEmail}</span>
+            <span className="text-success font-medium">{maskedPhone}</span>
           </p>
         </div>
 
@@ -153,12 +153,12 @@ export default function VerificationPage() {
                   w-14 h-16 text-center text-2xl font-bold rounded-2xl
                   bg-card border-2 text-foreground
                   focus:outline-none transition-all duration-200
-                  ${code ? 'border-primary shadow-lg shadow-primary/20' : 'border-border focus:border-primary'}
+                  ${code ? 'border-success shadow-lg shadow-success/20' : 'border-border focus:border-success'}
                 `}
               />
               {code && (
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary rounded-full flex items-center justify-center">
-                  <CheckCircle2 className="w-3 h-3 text-primary-foreground" />
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-success rounded-full flex items-center justify-center">
+                  <CheckCircle2 className="w-3 h-3 text-success-foreground" />
                 </div>
               )}
             </div>
@@ -173,7 +173,7 @@ export default function VerificationPage() {
             w-full max-w-sm h-14 rounded-2xl font-semibold text-base
             transition-all duration-300 transform
             ${isCodeComplete 
-              ? 'bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/30 hover:scale-[1.02]' 
+              ? 'bg-success hover:bg-success/90 text-success-foreground shadow-lg shadow-success/30 hover:scale-[1.02]' 
               : 'bg-secondary text-muted-foreground cursor-not-allowed'
             }
           `}
@@ -184,7 +184,7 @@ export default function VerificationPage() {
               <span>Verifying...</span>
             </div>
           ) : (
-            'Verify Code'
+            'Verify Phone Number'
           )}
         </Button>
 
@@ -192,13 +192,13 @@ export default function VerificationPage() {
         <div className="text-center mt-8">
           {resendTimer > 0 ? (
             <p className="text-muted-foreground text-sm">
-              Resend code in <span className="text-primary font-medium">{resendTimer}s</span>
+              Resend code in <span className="text-success font-medium">{resendTimer}s</span>
             </p>
           ) : (
             <button
               onClick={handleResendOTP}
               disabled={isResending}
-              className="text-sm text-muted-foreground hover:text-primary transition-colors flex items-center gap-2 mx-auto"
+              className="text-sm text-muted-foreground hover:text-success transition-colors flex items-center gap-2 mx-auto"
             >
               {isResending ? (
                 <>
@@ -218,7 +218,7 @@ export default function VerificationPage() {
         {/* Help Text */}
         <div className="mt-auto pt-8 text-center">
           <p className="text-muted-foreground text-xs">
-            Didn&apos;t receive the email? Check your spam folder
+            Didn&apos;t receive the SMS? Check your phone signal
           </p>
           <p className="text-muted-foreground text-xs mt-2">
             For demo: Enter any 6-digit code (e.g., 123456)

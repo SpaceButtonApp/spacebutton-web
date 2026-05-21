@@ -90,7 +90,6 @@ export default function LandingPage() {
   if (!mounted) return null
 
   const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png'
-  const heroImage = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/vecteezy_stunning-two-story-modern-house-with-stone-exterior-and-balcony_58065933%201-YXBtdIUcHDW8in0Zo0jgTvIzM6PLot.png'
 
   const availableProperties = properties.slice(0, 3)
   const testimonials = [
@@ -203,65 +202,54 @@ export default function LandingPage() {
         </nav>
 
         {/* Hero Section */}
-        <section className="relative py-8 sm:py-12 md:py-16 overflow-hidden">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid md:grid-cols-2 gap-6 md:gap-12 items-center">
-              {/* Left Content */}
-              <div className="space-y-4 sm:space-y-6">
-                <div>
-                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight text-foreground">
-                    Find Your Dream Space<br />
-                    <span className="text-primary">
-                      {typewriterText}
-                      <span className={cn("inline-block w-[3px] h-[1em] bg-primary ml-1 align-middle", showCursor ? "opacity-100" : "opacity-0")} />
-                    </span>
-                  </h1>
-                  <p className="text-sm sm:text-base md:text-lg text-muted-foreground mt-3 sm:mt-4 md:mt-6 leading-relaxed">
-                    Your journey to finding the perfect Space begins here. Your Next Home is Already Waiting. No inspection fees. No stress. Just real connections. We match people leaving great spaces with people ready to move in — find a roommate, rent a full apartment, or connect with verified agents and landlords who won&apos;t charge you just to look around. Find your space or list yours today.
-                  </p>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-                  <button
-                    onClick={() => router.push('/get-started')}
-                    className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-all hover:shadow-lg text-sm sm:text-base"
-                  >
-                    Learn More
-                  </button>
-                  <button
-                    onClick={() => router.push('/get-started')}
-                    className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-secondary text-foreground rounded-lg font-semibold hover:bg-secondary/80 transition-all text-sm sm:text-base"
-                  >
-                    Browse Home
-                  </button>
-                </div>
-
-                {/* Stats */}
-                <div className="grid grid-cols-3 gap-3 sm:gap-6 pt-3 sm:pt-6 md:pt-8">
-                  <div>
-                    <p className="text-lg sm:text-2xl font-bold text-foreground">20k+</p>
-                    <p className="text-xs sm:text-sm text-muted-foreground">Happy Users</p>
-                  </div>
-                  <div>
-                    <p className="text-lg sm:text-2xl font-bold text-foreground">100k+</p>
-                    <p className="text-xs sm:text-sm text-muted-foreground">Listed Homes</p>
-                  </div>
-                  <div>
-                    <p className="text-lg sm:text-2xl font-bold text-foreground">16+</p>
-                    <p className="text-xs sm:text-sm text-muted-foreground">Years Experience</p>
-                  </div>
-                </div>
+        <section className="relative py-12 sm:py-16 md:py-24 overflow-hidden">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            {/* Centered Content */}
+            <div className="space-y-6 sm:space-y-8">
+              <div>
+                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight text-foreground">
+                  Find Your Dream Space<br />
+                  <span className="text-primary">
+                    {typewriterText}
+                    <span className={cn("inline-block w-[3px] h-[1em] bg-primary ml-1 align-middle", showCursor ? "opacity-100" : "opacity-0")} />
+                  </span>
+                </h1>
+                <p className="text-base sm:text-lg md:text-xl text-muted-foreground mt-4 sm:mt-6 leading-relaxed max-w-2xl mx-auto">
+                  Your journey to finding the perfect Space begins here. No inspection fees. No stress. Just real connections.
+                </p>
               </div>
 
-              {/* Right Image */}
-              <div className="relative h-48 sm:h-72 md:h-96 lg:h-full min-h-[300px] md:min-h-[400px]">
-                <Image
-                  src={heroImage}
-                  alt="Modern house exterior"
-                  fill
-                  className="object-cover rounded-2xl"
-                  priority
-                />
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+                <button
+                  onClick={() => router.push('/get-started')}
+                  className="flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-primary text-primary-foreground rounded-xl font-semibold hover:bg-primary/90 transition-all hover:shadow-lg hover:scale-105 text-sm sm:text-base"
+                >
+                  Learn More
+                </button>
+                <button
+                  onClick={() => router.push('/get-started')}
+                  className="flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-secondary text-foreground rounded-xl font-semibold hover:bg-secondary/80 transition-all hover:scale-105 text-sm sm:text-base border border-border"
+                >
+                  Browse Home
+                </button>
+              </div>
+
+              {/* Stats */}
+              <div className="flex flex-wrap justify-center gap-6 sm:gap-12 pt-6 sm:pt-10">
+                <div className="text-center">
+                  <p className="text-2xl sm:text-4xl font-bold text-primary">20k+</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-1">Happy Users</p>
+                </div>
+                <div className="w-px h-12 bg-border hidden sm:block" />
+                <div className="text-center">
+                  <p className="text-2xl sm:text-4xl font-bold text-primary">100k+</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-1">Listed Homes</p>
+                </div>
+                <div className="w-px h-12 bg-border hidden sm:block" />
+                <div className="text-center">
+                  <p className="text-2xl sm:text-4xl font-bold text-primary">16+</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-1">Years Experience</p>
+                </div>
               </div>
             </div>
           </div>

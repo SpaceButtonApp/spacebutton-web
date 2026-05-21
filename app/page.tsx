@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowRight, Sun, Moon, Monitor, ChevronRight, ChevronDown, MapPin, Home, DollarSign, Grid3X3, Star, Search, Heart, Zap, Shield, TrendingUp, Clock, CheckCircle, Users, Building, MessageCircle, Sparkles, Play } from 'lucide-react'
+import { ArrowRight, Sun, Moon, Monitor, ChevronRight, ChevronDown, MapPin, Home, DollarSign, Grid3X3, Star, Search, Heart, Zap, Shield, TrendingUp, Clock, CheckCircle, Users, Building, MessageCircle, Sparkles, Play, Smartphone, Bell, User } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
 
@@ -595,6 +595,130 @@ export default function LandingPage() {
                   >
                     Browse Properties
                   </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Mobile App Download Section */}
+        <section className="py-16 sm:py-20 bg-card/50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              {/* Left Content */}
+              <div className="space-y-6">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-primary text-sm font-medium">
+                  <Smartphone className="w-4 h-4" />
+                  Coming Soon on Mobile
+                </div>
+                <h2 className="text-3xl sm:text-4xl font-bold text-foreground">
+                  Take SpaceButton Everywhere You Go
+                </h2>
+                <p className="text-lg text-muted-foreground">
+                  Download our mobile app to browse properties, chat with landlords, and manage your listings on the go. Get instant notifications when new spaces match your preferences.
+                </p>
+                
+                <div className="space-y-4">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Bell className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-foreground">Instant Notifications</h4>
+                      <p className="text-sm text-muted-foreground">Get notified immediately when a new property matches your search criteria.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <MessageCircle className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-foreground">Chat on the Go</h4>
+                      <p className="text-sm text-muted-foreground">Communicate with landlords and agents directly from your phone.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <MapPin className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-foreground">Location-Based Search</h4>
+                      <p className="text-sm text-muted-foreground">Find properties near you with GPS-powered location search.</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* App Store Buttons */}
+                <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                  <button className="flex items-center gap-3 px-6 py-3 bg-foreground text-background rounded-xl hover:opacity-90 transition-all">
+                    <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                    </svg>
+                    <div className="text-left">
+                      <p className="text-xs opacity-80">Download on the</p>
+                      <p className="text-base font-semibold">App Store</p>
+                    </div>
+                  </button>
+                  <button className="flex items-center gap-3 px-6 py-3 bg-foreground text-background rounded-xl hover:opacity-90 transition-all">
+                    <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.198l2.807 1.626a1 1 0 010 1.73l-2.808 1.626L15.206 12l2.492-2.491zM5.864 2.658L16.802 8.99l-2.303 2.303-8.635-8.635z"/>
+                    </svg>
+                    <div className="text-left">
+                      <p className="text-xs opacity-80">Get it on</p>
+                      <p className="text-base font-semibold">Google Play</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Right Side - Phone Mockup */}
+              <div className="relative flex justify-center lg:justify-end">
+                <div className="relative">
+                  {/* Phone Frame */}
+                  <div className="relative w-64 sm:w-72 h-[500px] sm:h-[560px] bg-gradient-to-br from-primary to-primary/80 rounded-[3rem] p-3 shadow-2xl">
+                    <div className="absolute top-6 left-1/2 -translate-x-1/2 w-20 h-6 bg-foreground rounded-full" />
+                    <div className="w-full h-full bg-background rounded-[2.5rem] overflow-hidden">
+                      {/* App Screen Content */}
+                      <div className="p-4 h-full flex flex-col">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-2">
+                            <Image src={logoUrl} alt="SpaceButton" width={24} height={24} className="w-6 h-6" />
+                            <span className="font-bold text-sm">SpaceButton</span>
+                          </div>
+                          <Bell className="w-5 h-5 text-muted-foreground" />
+                        </div>
+                        <div className="bg-secondary rounded-xl p-3 mb-4">
+                          <div className="flex items-center gap-2">
+                            <Search className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-sm text-muted-foreground">Search properties...</span>
+                          </div>
+                        </div>
+                        <p className="text-xs font-semibold mb-2">Featured Properties</p>
+                        <div className="space-y-3 flex-1">
+                          <div className="bg-secondary rounded-xl p-2">
+                            <div className="w-full h-20 bg-primary/20 rounded-lg mb-2" />
+                            <p className="text-xs font-medium">Modern 2BR Apartment</p>
+                            <p className="text-xs text-primary font-bold">N450,000/yr</p>
+                          </div>
+                          <div className="bg-secondary rounded-xl p-2">
+                            <div className="w-full h-20 bg-primary/20 rounded-lg mb-2" />
+                            <p className="text-xs font-medium">Cozy Studio in Lekki</p>
+                            <p className="text-xs text-primary font-bold">N250,000/yr</p>
+                          </div>
+                        </div>
+                        {/* Bottom Nav */}
+                        <div className="flex justify-around pt-3 border-t border-border mt-auto">
+                          <Home className="w-5 h-5 text-primary" />
+                          <Search className="w-5 h-5 text-muted-foreground" />
+                          <Heart className="w-5 h-5 text-muted-foreground" />
+                          <User className="w-5 h-5 text-muted-foreground" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Decorative elements */}
+                  <div className="absolute -top-4 -right-4 w-20 h-20 bg-primary/20 rounded-full blur-2xl" />
+                  <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-primary/20 rounded-full blur-2xl" />
                 </div>
               </div>
             </div>

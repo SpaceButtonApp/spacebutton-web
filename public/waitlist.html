@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SpaceButton - Join the Waitlist</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: '#7C3AED',
+            'primary-dark': '#6D28D9',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .gradient-bg {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);
+    }
+    .card-gradient {
+      background: linear-gradient(180deg, rgba(124, 58, 237, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%);
+    }
+    .glow {
+      box-shadow: 0 0 40px rgba(124, 58, 237, 0.3);
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    .float-animation {
+      animation: float 3s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="gradient-bg min-h-screen text-white">
+  
+  <!-- Header -->
+  <header class="py-6 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
+          <i class="fas fa-home text-white text-lg"></i>
+        </div>
+        <span class="text-xl font-bold">SpaceButton</span>
+      </div>
+      <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
+        <i class="fas fa-moon" id="theme-icon"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <main class="px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
+    <div class="max-w-4xl mx-auto text-center">
+      <!-- Main Headline -->
+      <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight mb-6">
+        Find Your Dream Space<br>
+        <span class="text-primary">with SpaceButton</span>
+      </h1>
+      
+      <!-- Subheadline -->
+      <p class="text-lg sm:text-xl text-gray-400 mb-10 max-w-2xl mx-auto">
+        Your journey to finding the perfect Space begins here. Be the first to experience a new way to find your next home.
+      </p>
+
+      <!-- Email Form -->
+      <div class="max-w-md mx-auto mb-8">
+        <form id="waitlist-form" class="flex flex-col sm:flex-row gap-3">
+          <input 
+            type="email" 
+            id="email-input"
+            placeholder="Enter your email address" 
+            class="flex-1 px-5 py-4 rounded-xl bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/50 transition-all"
+            required
+          >
+          <button 
+            type="submit"
+            id="submit-btn"
+            class="px-8 py-4 bg-primary hover:bg-primary-dark text-white font-semibold rounded-xl transition-all hover:scale-105 hover:shadow-lg hover:shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+          >
+            Join Waitlist
+          </button>
+        </form>
+        <p id="form-message" class="mt-4 text-sm hidden"></p>
+      </div>
+
+      <!-- Social Proof -->
+      <div class="flex items-center justify-center gap-2 mb-16">
+        <div class="flex -space-x-2">
+          <div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 border-2 border-gray-900"></div>
+          <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-cyan-400 border-2 border-gray-900"></div>
+          <div class="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-emerald-400 border-2 border-gray-900"></div>
+          <div class="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-red-400 border-2 border-gray-900"></div>
+        </div>
+        <p class="text-gray-400 text-sm">Join <span class="text-white font-semibold">1,200+</span> people on the waitlist</p>
+      </div>
+    </div>
+
+    <!-- Benefit Cards -->
+    <div class="max-w-5xl mx-auto grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+      <div class="card-gradient p-6 rounded-2xl border border-white/10 hover:border-primary/50 transition-all hover:scale-105">
+        <div class="w-14 h-14 bg-primary/20 rounded-xl flex items-center justify-center mb-4 float-animation">
+          <span class="text-3xl">🏠</span>
+        </div>
+        <h3 class="text-lg font-semibold mb-2">Find Perfect Spaces</h3>
+        <p class="text-gray-400 text-sm">Browse thousands of verified listings from trusted landlords and agents. No inspection fees, ever.</p>
+      </div>
+      
+      <div class="card-gradient p-6 rounded-2xl border border-white/10 hover:border-primary/50 transition-all hover:scale-105">
+        <div class="w-14 h-14 bg-primary/20 rounded-xl flex items-center justify-center mb-4 float-animation" style="animation-delay: 0.5s;">
+          <span class="text-3xl">🤝</span>
+        </div>
+        <h3 class="text-lg font-semibold mb-2">Real Connections</h3>
+        <p class="text-gray-400 text-sm">Connect directly with property owners and roommates. No middlemen, just genuine interactions.</p>
+      </div>
+      
+      <div class="card-gradient p-6 rounded-2xl border border-white/10 hover:border-primary/50 transition-all hover:scale-105 sm:col-span-2 lg:col-span-1">
+        <div class="w-14 h-14 bg-primary/20 rounded-xl flex items-center justify-center mb-4 float-animation" style="animation-delay: 1s;">
+          <span class="text-3xl">✨</span>
+        </div>
+        <h3 class="text-lg font-semibold mb-2">Verified & Secure</h3>
+        <p class="text-gray-400 text-sm">All listings and users are verified. Safe, secure, and stress-free apartment hunting experience.</p>
+      </div>
+    </div>
+
+    <!-- Incentive Box -->
+    <div class="max-w-2xl mx-auto">
+      <div class="relative overflow-hidden rounded-2xl p-8 glow" style="background: linear-gradient(135deg, rgba(124, 58, 237, 0.3) 0%, rgba(124, 58, 237, 0.1) 100%); border: 1px solid rgba(124, 58, 237, 0.3);">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-3xl"></div>
+        <div class="relative z-10 text-center">
+          <div class="inline-flex items-center gap-2 px-4 py-2 bg-primary/20 rounded-full text-primary text-sm font-medium mb-4">
+            <i class="fas fa-gift"></i>
+            <span>Early Bird Offer</span>
+          </div>
+          <h3 class="text-2xl sm:text-3xl font-bold mb-3">First 500 Users Get Free Connects</h3>
+          <p class="text-gray-400 mb-6">Be among the first 500 to join and enjoy premium features absolutely free. Connect with unlimited property owners and agents.</p>
+          <div class="flex items-center justify-center gap-4 text-sm">
+            <div class="flex items-center gap-2">
+              <i class="fas fa-check-circle text-green-400"></i>
+              <span>Free Premium Access</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <i class="fas fa-check-circle text-green-400"></i>
+              <span>Unlimited Connects</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="py-10 px-4 sm:px-6 lg:px-8 border-t border-white/10">
+    <div class="max-w-6xl mx-auto">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+            <i class="fas fa-home text-white text-sm"></i>
+          </div>
+          <span class="font-semibold">SpaceButton</span>
+        </div>
+        
+        <div class="flex items-center gap-2 text-gray-400 text-sm">
+          <i class="fas fa-envelope"></i>
+          <a href="mailto:contact@spacebutton.net" class="hover:text-primary transition-colors">contact@spacebutton.net</a>
+        </div>
+        
+        <div class="flex items-center gap-4">
+          <a href="#" class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center hover:bg-primary transition-colors">
+            <i class="fab fa-twitter"></i>
+          </a>
+          <a href="#" class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center hover:bg-primary transition-colors">
+            <i class="fab fa-instagram"></i>
+          </a>
+          <a href="#" class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center hover:bg-primary transition-colors">
+            <i class="fab fa-linkedin-in"></i>
+          </a>
+          <a href="#" class="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center hover:bg-primary transition-colors">
+            <i class="fab fa-facebook-f"></i>
+          </a>
+        </div>
+      </div>
+      
+      <p class="text-center text-gray-500 text-sm mt-8">© 2024 SpaceButton. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    // Waitlist form handling
+    const form = document.getElementById('waitlist-form');
+    const emailInput = document.getElementById('email-input');
+    const submitBtn = document.getElementById('submit-btn');
+    const formMessage = document.getElementById('form-message');
+
+    // Email validation regex
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    // Get waitlist from localStorage
+    function getWaitlist() {
+      const waitlist = localStorage.getItem('spacebutton-waitlist');
+      return waitlist ? JSON.parse(waitlist) : [];
+    }
+
+    // Save email to waitlist
+    function saveToWaitlist(email) {
+      const waitlist = getWaitlist();
+      waitlist.push({ email, timestamp: new Date().toISOString() });
+      localStorage.setItem('spacebutton-waitlist', JSON.stringify(waitlist));
+    }
+
+    // Check if email is already on waitlist
+    function isAlreadyOnWaitlist(email) {
+      const waitlist = getWaitlist();
+      return waitlist.some(entry => entry.email.toLowerCase() === email.toLowerCase());
+    }
+
+    // Show message
+    function showMessage(message, type) {
+      formMessage.textContent = message;
+      formMessage.className = `mt-4 text-sm ${type === 'success' ? 'text-green-400' : type === 'error' ? 'text-red-400' : 'text-yellow-400'}`;
+      formMessage.classList.remove('hidden');
+    }
+
+    // Form submit handler
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const email = emailInput.value.trim();
+
+      // Validate email format
+      if (!emailRegex.test(email)) {
+        showMessage('Please enter a valid email address.', 'error');
+        return;
+      }
+
+      // Check if already on waitlist
+      if (isAlreadyOnWaitlist(email)) {
+        showMessage("You're already on the waitlist! We'll notify you soon.", 'warning');
+        return;
+      }
+
+      // Disable button to prevent double-submit
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Joining...';
+
+      // Simulate API call delay
+      setTimeout(() => {
+        // Save to localStorage
+        saveToWaitlist(email);
+
+        // Show success message
+        showMessage(`You're on the list! We'll notify you at ${email}.`, 'success');
+
+        // Clear input
+        emailInput.value = '';
+
+        // Re-enable button after 2 seconds
+        setTimeout(() => {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Join Waitlist';
+        }, 2000);
+      }, 500);
+    });
+
+    // Dark mode toggle (for future light mode support)
+    function toggleDarkMode() {
+      // Currently dark-only, but structure is in place for toggle
+      const icon = document.getElementById('theme-icon');
+      if (icon.classList.contains('fa-moon')) {
+        icon.classList.remove('fa-moon');
+        icon.classList.add('fa-sun');
+      } else {
+        icon.classList.remove('fa-sun');
+        icon.classList.add('fa-moon');
+      }
+    }
+  </script>
+</body>
+</html>

@@ -123,6 +123,7 @@ interface AppState {
   // Conversations
   conversations: Conversation[]
   addConversation: (conversation: Conversation) => void
+  removeConversation: (propertyId: string) => void
   
   // Notifications
   notifications: Notification[]
@@ -281,6 +282,9 @@ export const useAppStore = create<AppState>()(
           conversations: [conversation, ...state.conversations]
         }
       }),
+      removeConversation: (propertyId) => set((state) => ({
+        conversations: state.conversations.filter(c => c.propertyId !== propertyId)
+      })),
       
       // Notifications
       notifications: mockNotifications,

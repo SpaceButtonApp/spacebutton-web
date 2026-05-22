@@ -12,6 +12,7 @@ import { mockAgents } from "@/lib/mock-data"
 
 const listingConditionsLandlord = ["Rent", "Roommate", "Flatmate"]
 const listingConditionsTenant = ["Vacating", "Roommate", "Flatmate"]
+const listingConditionsAgent = ["Vacating", "Rent", "Roommate", "Flatmate"]
 const genderOptions = ["Male", "Female", "Both"]
 const propertyCategories = ["Flat", "Self Con", "Duplex", "Storey", "Penthouse"]
 const facilities = ["Parking Lot", "Pet Allowed", "Park", "Garden", "Estate", "Kid's Friendly", "Home theatre", "Other"]
@@ -19,10 +20,18 @@ const facilities = ["Parking Lot", "Pet Allowed", "Park", "Garden", "Estate", "K
 export default function AddPostPage() {
   const router = useRouter()
   const { addProperty, user } = useAppStore()
-  const [listingType, setListingType] = useState<"Connect" | "Agent">("Connect")
+  const isAgent = user?.type === 'agent'
+  const [listingType, setListingType] = useState<"Connect" | "Agent">(isAgent ? "Agent" : "Connect")
   const [connectRole, setConnectRole] = useState<"Tenant" | "Landlord">("Tenant")
   const [listingTitle, setListingTitle] = useState("")
-  const [selectedCondition, setSelectedCondition] = useState("Vacating")
+  
+  // Auto-select first condition based on type
+  const getDefaultCondition = () => {
+    if (isAgent) return listingConditionsAgent[0]
+    return connectRole === "Tenant" ? listingConditionsTenant[0] : listingConditionsLandlord[0]
+  }
+  
+  const [selectedCondition, setSelectedCondition] = useState(getDefaultCondition())
   const [selectedGender, setSelectedGender] = useState<"Male" | "Female" | "Both">("Both")
   const [selectedCategory, setSelectedCategory] = useState("Flat")
   const [descriptions, setDescriptions] = useState("")
@@ -103,6 +112,12 @@ export default function AddPostPage() {
       return false
     }
     
+    if (!selectedCondition) {
+      setValidationMessage("Please select a listing condition")
+      setShowValidationModal(true)
+      return false
+    }
+    
     if (!location.state.trim()) {
       setValidationMessage("Please enter the state")
       setShowValidationModal(true)
@@ -162,10 +177,12 @@ export default function AddPostPage() {
       return false
     }
     
-    if (listingType === "Connect" && connectRole === "Tenant" && !selectedDate) {
-      setValidationMessage("Please select the current rent due date")
-      setShowValidationModal(true)
-      return false
+    if ((listingType === "Connect" && connectRole === "Tenant") || (listingType === "Agent" && selectedCondition === "Vacating")) {
+      if (!selectedDate) {
+        setValidationMessage("Please select the current rent due date")
+        setShowValidationModal(true)
+        return false
+      }
     }
     
     if ((listingType === "Agent" || (listingType === "Connect" && connectRole === "Landlord")) && 
@@ -215,38 +232,37 @@ export default function AddPostPage() {
       </div>
 
       <div className="max-w-3xl mx-auto p-6 space-y-6">
-        {/* Listing Type */}
-        <div className="bg-card border border-border rounded-xl p-5">
-          <h3 className="font-medium text-foreground mb-3">Listing Type</h3>
-          <div className="flex gap-3">
-            {["Connect", "Agent"].map((type) => (
-              <button
-                key={type}
-                onClick={() => setListingType(type as "Connect" | "Agent")}
-                className={`px-6 py-2.5 rounded-full text-sm font-medium transition-colors ${
-                  listingType === type
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                }`}
-              >
-                {type}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* I am section - Only visible for Connect listing type */}
-        {listingType === "Connect" && (
+        {/* Listing Type - Only shown for agents */}
+        {isAgent && (
           <div className="bg-card border border-border rounded-xl p-5">
-            <h3 className="font-medium text-foreground mb-3">I am a</h3>
+            <h3 className="font-medium text-foreground mb-3">Listing Type</h3>
+            <div className="flex gap-3">
+              <button
+                className="px-6 py-2.5 rounded-full text-sm font-medium bg-primary text-primary-foreground"
+              >
+                Agent
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* I am section - Only visible for individuals (Connect listing type) */}
+        {!isAgent && (
+          <div className="bg-card border border-border rounded-xl p-5">
+            <h3 className="font-medium text-foreground mb-3">I am</h3>
             <div className="flex gap-3">
               {["Tenant", "Landlord"].map((role) => (
                 <button
                   key={role}
-                  onClick={() => setConnectRole(role as "Tenant" | "Landlord")}
+                  onClick={() => {
+                    setConnectRole(role as "Tenant" | "Landlord")
+                    // Auto-select first condition for new role
+                    const newCondition = role === "Tenant" ? listingConditionsTenant[0] : listingConditionsLandlord[0]
+                    setSelectedCondition(newCondition)
+                  }}
                   className={`px-6 py-2.5 rounded-full text-sm font-medium transition-colors ${
                     connectRole === role
-                      ? "bg-primary text-foreground"
+                      ? "bg-primary text-primary-foreground"
                       : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                   }`}
                 >
@@ -272,7 +288,12 @@ export default function AddPostPage() {
           <div>
             <h3 className="font-medium text-foreground mb-3">Listing Condition</h3>
             <div className="flex flex-wrap gap-3">
-              {(listingType === "Connect" && connectRole === "Tenant" ? listingConditionsTenant : listingConditionsLandlord).map((condition) => (
+              {(isAgent 
+                ? listingConditionsAgent 
+                : (listingType === "Connect" && connectRole === "Tenant" 
+                  ? listingConditionsTenant 
+                  : listingConditionsLandlord)
+              ).map((condition) => (
                 <button
                   key={condition}
                   onClick={() => setSelectedCondition(condition)}
@@ -315,6 +336,11 @@ export default function AddPostPage() {
 
         {/* Photos & Videos */}
         <div className="bg-card border border-border rounded-xl p-5">
+          <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 mb-4">
+            <p className="text-sm text-destructive font-medium">
+              !! Don&apos;t upload content with watermarks (from any app) or added Text. Only raw content is accepted.
+            </p>
+          </div>
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-medium text-foreground">Listing Photos & Videos</h3>
             <span className="text-xs text-muted-foreground">{photos.length}/5 (min 3, at least 1 video)</span>
@@ -403,8 +429,9 @@ export default function AddPostPage() {
             </div>
           </div>
 
-          {/* Reward - Only visible for Connect listing type with Tenant role and Rent condition */}
-          {listingType === "Connect" && connectRole === "Tenant" && selectedCondition === "Rent" && (
+          {/* Reward - Visible for Connect Tenant with Rent/Vacating OR Agent with Vacating */}
+          {((listingType === "Connect" && connectRole === "Tenant" && (selectedCondition === "Rent" || selectedCondition === "Vacating")) || 
+            (isAgent && selectedCondition === "Vacating")) && (
             <div>
               <h3 className="font-medium text-foreground mb-3">Reward (5% of Rent)</h3>
               <div className="relative">
@@ -471,8 +498,8 @@ export default function AddPostPage() {
           </div>
         </div>
 
-        {/* Select Rent Due Date - Visible for Connect with Tenant role for all conditions */}
-        {listingType === "Connect" && connectRole === "Tenant" && (
+        {/* Select Rent Due Date - Visible for Connect Tenant OR Agent with Vacating */}
+        {((listingType === "Connect" && connectRole === "Tenant") || (isAgent && selectedCondition === "Vacating")) && (
           <div className="bg-card border border-border rounded-xl p-5">
             <h3 className="font-medium text-foreground mb-3">Select Current Rent Due Date</h3>
             <button

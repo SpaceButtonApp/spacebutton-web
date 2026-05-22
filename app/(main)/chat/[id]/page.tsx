@@ -19,7 +19,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const router = useRouter()
   const searchParams = useSearchParams()
   const propertyId = searchParams.get('propertyId')
-  const { properties, doneDealStates, toggleDoneDeal, user, addReview, addConversation, conversations, addReport, closedProperties, reviews, registeredUsers } = useAppStore()
+  const { properties, doneDealStates, toggleDoneDeal, user, addReview, addConversation, conversations, addReport, closedProperties, reviews, registeredUsers, closeProperty, removeConversation } = useAppStore()
   
   const [message, setMessage] = useState('')
   const [messages, setMessages] = useState<Array<{
@@ -73,6 +73,9 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const agentRating = agentReviews.length > 0 
     ? (agentReviews.reduce((sum, r) => sum + r.rating, 0) / agentReviews.length).toFixed(1)
     : '0.0'
+  
+  // Check if user has already submitted feedback for this agent
+  const hasSubmittedFeedback = reviews.some((r) => r.fromUserId === user?.id && r.toUserId === agent?.id)
   
   // Show fallback if property not found
   if (!property) {
@@ -157,6 +160,11 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     try {
       const bothAgreed = toggleDoneDeal(chatId, propertyId || property?.id || '', isAgent)
       if (bothAgreed) {
+        // Close the property and remove the conversation
+        if (propertyId) {
+          closeProperty(propertyId)
+          removeConversation(propertyId)
+        }
         setShowCongrats(true)
         setShowMenu(false)
       }
@@ -317,13 +325,21 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               </div>
             </div>
           </button>
-          <button
-            onClick={() => setShowFeedback(true)}
-            className="w-full flex items-center gap-3 px-4 py-4 hover:bg-secondary transition-colors border-b border-border"
-          >
-            <MessageSquare className="w-5 h-5 text-muted-foreground" />
-            <span className="font-medium">Feedback</span>
-          </button>
+          {!hasSubmittedFeedback && (
+            <button
+              onClick={() => setShowFeedback(true)}
+              className="w-full flex items-center gap-3 px-4 py-4 hover:bg-secondary transition-colors border-b border-border"
+            >
+              <MessageSquare className="w-5 h-5 text-muted-foreground" />
+              <span className="font-medium">Feedback</span>
+            </button>
+          )}
+          {hasSubmittedFeedback && (
+            <div className="w-full flex items-center gap-3 px-4 py-4 bg-secondary/50 border-b border-border cursor-not-allowed">
+              <MessageSquare className="w-5 h-5 text-muted-foreground" />
+              <span className="font-medium text-muted-foreground">Feedback Submitted</span>
+            </div>
+          )}
           <button
             onClick={() => { setShowReportModal(true); setShowMenu(false); }}
             className="w-full flex items-center gap-3 px-4 py-4 hover:bg-secondary transition-colors text-destructive"
@@ -414,6 +430,49 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                   <p className="text-sm text-muted-foreground">{agent.bio}</p>
                 </div>
               )}
+
+              {/* Reviews */}
+              <div>
+                <p className="text-sm font-medium mb-3">Reviews ({agentReviews.length})</p>
+                {agentReviews.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No reviews yet.</p>
+                ) : (
+                  <div className="space-y-3 max-h-48 overflow-y-auto">
+                    {agentReviews.map((review) => (
+                      <div key={review.id} className="p-3 bg-secondary rounded-xl">
+                        <div className="flex items-start gap-2">
+                          <Image
+                            src={review.fromUserAvatar}
+                            alt={review.fromUserName}
+                            width={32}
+                            height={32}
+                            className="rounded-full"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm font-medium truncate">{review.fromUserName}</p>
+                              <div className="flex items-center gap-0.5">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Star 
+                                    key={star}
+                                    className={cn(
+                                      'w-3 h-3',
+                                      star <= review.rating 
+                                        ? 'fill-yellow-400 text-yellow-400' 
+                                        : 'text-muted-foreground'
+                                    )} 
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{review.feedback}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               <button
                 onClick={() => setShowProfileCard(false)}
@@ -549,16 +608,16 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             </div>
             <h2 className="text-2xl font-bold mb-2">Congratulations!</h2>
             <p className="text-muted-foreground mb-6">
-              Both parties have confirmed the deal.
+              Both parties have confirmed the deal. The property has been closed and this chat has been archived.
             </p>
             <Button
               onClick={() => {
                 setShowCongrats(false)
-                router.push('/home')
+                router.push('/messages')
               }}
               className="w-full rounded-xl bg-success hover:bg-success/90 text-success-foreground"
             >
-              Done
+              Back to Messages
             </Button>
           </div>
         </div>

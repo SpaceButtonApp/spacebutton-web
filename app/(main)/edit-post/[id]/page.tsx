@@ -10,19 +10,23 @@ import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useAppStore } from '@/lib/store'
 
-const conditions = ['Rent', 'Roommate', 'Flatmate']
+const listingConditionsLandlord = ["Rent", "Roommate", "Flatmate"]
+const listingConditionsTenant = ["Vacating", "Roommate", "Flatmate"]
+const listingConditionsAgent = ["Vacating", "Rent", "Roommate", "Flatmate"]
 const categories = ['Flat', 'Self Con', 'Duplex', 'Storey', 'Penthouse']
 const facilities = ['Parking Lot', 'Pet Allowed', 'Park', 'Garden', 'Estate', "Kid's Friendly", 'Home theatre', 'Other']
 
 export default function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
-  const { properties, updateProperty } = useAppStore()
+  const { properties, updateProperty, user } = useAppStore()
   const property = properties.find((p) => p.id === id)
+  const isAgent = user?.type === 'agent'
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
 
   const [title, setTitle] = useState(property?.title || '')
-  const [selectedCondition, setSelectedCondition] = useState(property?.condition || 'rent')
+  const [connectRole, setConnectRole] = useState<"Tenant" | "Landlord">(property?.connectRole === "Tenant" ? "Tenant" : "Landlord")
+  const [selectedCondition, setSelectedCondition] = useState(property?.condition || '')
   const [selectedCategory, setSelectedCategory] = useState(property?.category || 'flat')
   const [descriptions, setDescriptions] = useState('')
   const [location, setLocation] = useState(property?.location || '')
@@ -133,18 +137,49 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
           </div>
         </div>
 
+        {/* I am section - Only visible for individuals */}
+        {!isAgent && (
+          <div className="bg-card border border-border rounded-xl p-4">
+            <Label className="mb-3 block font-semibold">I am</Label>
+            <div className="flex gap-3">
+              {["Tenant", "Landlord"].map((role) => (
+                <button
+                  key={role}
+                  onClick={() => {
+                    setConnectRole(role as "Tenant" | "Landlord")
+                    const newCondition = role === "Tenant" ? listingConditionsTenant[0] : listingConditionsLandlord[0]
+                    setSelectedCondition(newCondition)
+                  }}
+                  className={`px-6 py-2.5 rounded-full text-sm font-medium transition-colors ${
+                    connectRole === role
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                  }`}
+                >
+                  {role}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Listing Condition */}
         <div>
           <Label className="mb-2 block font-semibold">Listing Condition</Label>
           <div className="flex flex-wrap gap-2">
-            {conditions.map((condition) => (
+            {(isAgent 
+              ? listingConditionsAgent 
+              : (connectRole === "Tenant" 
+                ? listingConditionsTenant 
+                : listingConditionsLandlord)
+            ).map((condition) => (
               <button
                 key={condition}
-                onClick={() => setSelectedCondition(condition.toLowerCase() as 'rent' | 'roommate' | 'flatmate')}
+                onClick={() => setSelectedCondition(condition)}
                 className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                  selectedCondition === condition.toLowerCase()
+                  selectedCondition === condition
                     ? 'bg-primary text-primary-foreground'
-                    : 'bg-secondary'
+                    : 'bg-secondary hover:bg-secondary/80'
                 }`}
               >
                 {condition}

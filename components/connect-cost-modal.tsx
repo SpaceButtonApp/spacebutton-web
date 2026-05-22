@@ -37,26 +37,20 @@ export function ConnectCostModal({ isOpen, onClose, onConfirm, propertyTitle, ag
   const hasEnoughConnects = isFreeConnect || connectsRemaining > 0
 
   const handlePrimaryAction = () => {
-    if (isFreeConnect) {
-      // Free connect - no deduction needed
-      onChatStart?.()
-      if (propertyId && agentId) {
-        onConfirm()
-        router.push(`/chat/${agentId}?propertyId=${propertyId}`)
-      } else if (agentId) {
-        onConfirm()
-        router.push(`/chat/${agentId}`)
+    if (isFreeConnect || hasEnoughConnects) {
+      // Deduct 1 connect if not free
+      if (!isFreeConnect) {
+        deductConnect()
       }
-    } else if (hasEnoughConnects) {
-      // Deduct 1 connect when user clicks Chat
-      deductConnect()
+      
+      // Call callbacks and close modal
       onChatStart?.()
-      if (propertyId && agentId) {
-        onConfirm()
-        router.push(`/chat/${agentId}?propertyId=${propertyId}`)
-      } else if (agentId) {
-        onConfirm()
-        router.push(`/chat/${agentId}`)
+      onConfirm()
+      
+      // Navigate to chat - always use agentId as the route
+      if (agentId) {
+        const chatUrl = propertyId ? `/chat/${agentId}?propertyId=${propertyId}` : `/chat/${agentId}`
+        router.push(chatUrl)
       }
     } else {
       // Go to payment with selected option, include return URL

@@ -449,7 +449,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
         {/* CTA Button */}
         {hasExistingConversation ? (
           <Button
-            onClick={() => router.push(`/chat/${userConversation!.id}`)}
+            onClick={() => router.push(`/chat/${property.agent?.id}?propertyId=${id}`)}
             className="w-full h-14 rounded-xl bg-success text-success-foreground font-semibold text-base hover:bg-success/90"
           >
             Open Conversation

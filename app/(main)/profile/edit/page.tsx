@@ -20,6 +20,9 @@ export default function EditProfilePage() {
     phone: user?.phone || '',
     location: user?.location || '',
     email: user?.email || '',
+    bio: user?.bio || '',
+    state: user?.state || '',
+    city: user?.city || '',
   })
 
   const handleSave = () => {
@@ -139,15 +142,15 @@ export default function EditProfilePage() {
           </div>
         </div>
 
-        {/* Editable Fields - Only Name is editable */}
+        {/* Display Fields - Name is non-editable */}
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Name</label>
+            <label className="text-sm font-medium text-muted-foreground">Name</label>
             <Input
               type="text"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="h-14 rounded-xl border-border bg-background px-4"
+              disabled
+              className="h-14 rounded-xl border-border bg-muted px-4 cursor-not-allowed opacity-60"
             />
           </div>
 
@@ -162,16 +165,6 @@ export default function EditProfilePage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">Location</label>
-            <Input
-              type="text"
-              value={formData.location}
-              disabled
-              className="h-14 rounded-xl border-border bg-muted px-4 cursor-not-allowed opacity-60"
-            />
-          </div>
-
-          <div className="space-y-2">
             <label className="text-sm font-medium text-muted-foreground">Email</label>
             <Input
               type="email"
@@ -179,6 +172,40 @@ export default function EditProfilePage() {
               disabled
               className="h-14 rounded-xl border-border bg-muted px-4 cursor-not-allowed opacity-60"
             />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Bio</label>
+            <textarea
+              value={formData.bio}
+              onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+              placeholder="Tell people about yourself…"
+              className="w-full p-4 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all resize-none h-24"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">State</label>
+              <Input
+                type="text"
+                value={formData.state}
+                onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                placeholder="Enter state"
+                className="h-12 rounded-xl border-border bg-background px-4"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">City</label>
+              <Input
+                type="text"
+                value={formData.city}
+                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                placeholder="Enter city"
+                className="h-12 rounded-xl border-border bg-background px-4"
+              />
+            </div>
           </div>
         </div>
 

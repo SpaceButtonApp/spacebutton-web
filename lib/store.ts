@@ -20,6 +20,10 @@ interface User {
   isPremium: boolean
   premiumType?: 'basic' | 'premium'
   connectsRemaining: number
+  gender?: 'Male' | 'Female' | 'Other'
+  bio?: string
+  state?: string
+  city?: string
 }
 
 interface Transaction {

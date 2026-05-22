@@ -108,6 +108,41 @@ export default function HomePage() {
 
       {/* Content */}
       <div className="px-4 py-6">
+        {/* For You Section - Show at the top for all tabs except Shortlet */}
+        {currentTab !== 'Shortlet' && properties.length > 0 && (
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="w-5 h-5 text-primary" />
+              <h3 className="text-lg font-bold text-foreground">For you</h3>
+            </div>
+            <div className="flex gap-3 overflow-x-auto pb-2 snap-x">
+              {properties.slice(0, 6).map((property) => (
+                <div 
+                  key={property.id}
+                  onClick={() => router.push(`/property/${property.id}`)}
+                  className="flex-shrink-0 w-40 rounded-xl overflow-hidden bg-card border border-border cursor-pointer hover:border-primary transition-colors snap-start group"
+                >
+                  <div className="relative w-full h-32 bg-secondary overflow-hidden">
+                    <Image
+                      src={property.images?.[0] || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=400&h=300&fit=crop'}
+                      alt={property.title}
+                      width={160}
+                      height={128}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                      unoptimized
+                    />
+                  </div>
+                  <div className="p-3">
+                    <p className="text-sm font-semibold text-foreground line-clamp-1">{property.title}</p>
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{property.location}</p>
+                    <p className="text-primary font-bold text-sm mt-2">₦{property.price.toLocaleString()}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {currentTab === 'Shortlet' ? (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="w-24 h-24 rounded-2xl bg-card border border-border flex items-center justify-center mb-4">

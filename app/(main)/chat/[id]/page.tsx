@@ -423,11 +423,25 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                 </div>
               )}
 
+              {/* Gender */}
+              {agent?.gender && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Gender: <span className="text-foreground font-medium">{agent.gender}</span></p>
+                </div>
+              )}
+
               {/* About */}
               {agent?.bio && (
                 <div>
                   <p className="text-sm font-medium mb-2">About</p>
                   <p className="text-sm text-muted-foreground">{agent.bio}</p>
+                </div>
+              )}
+
+              {/* Location */}
+              {(agent?.state || agent?.city) && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Location: <span className="text-foreground font-medium">{[agent?.city, agent?.state].filter(Boolean).join(', ')}</span></p>
                 </div>
               )}
 

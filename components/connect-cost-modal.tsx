@@ -40,21 +40,22 @@ export function ConnectCostModal({ isOpen, onClose, onConfirm, propertyTitle, ag
     if (isFreeConnect) {
       // Free connect - no deduction needed
       onChatStart?.()
-      onConfirm()
-      if (propertyId) {
-        router.push(`/chat/${agentId || 'new'}?propertyId=${propertyId}`)
+      if (propertyId && agentId) {
+        onConfirm()
+        router.push(`/chat/${agentId}?propertyId=${propertyId}`)
       } else if (agentId) {
+        onConfirm()
         router.push(`/chat/${agentId}`)
       }
     } else if (hasEnoughConnects) {
       // Deduct 1 connect when user clicks Chat
       deductConnect()
       onChatStart?.()
-      onConfirm()
-      // Navigate to chat with property owner using propertyId to get the correct agent
-      if (propertyId) {
-        router.push(`/chat/${agentId || 'new'}?propertyId=${propertyId}`)
+      if (propertyId && agentId) {
+        onConfirm()
+        router.push(`/chat/${agentId}?propertyId=${propertyId}`)
       } else if (agentId) {
+        onConfirm()
         router.push(`/chat/${agentId}`)
       }
     } else {

@@ -43,6 +43,10 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
   // Count conversations for this property
   const propertyConversations = conversations.filter((c) => c.propertyId === id).length
   
+  // Check if user has already opened a conversation for this property
+  const userConversation = conversations.find((c) => c.propertyId === id && c.userId === user?.id)
+  const hasExistingConversation = !!userConversation
+  
   // Track view on component mount
   useEffect(() => {
     if (property?.id) {
@@ -445,15 +449,24 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
         )}
 
         {/* CTA Button */}
-        <Button
-          onClick={handleInterested}
-          className="w-full h-14 rounded-xl bg-primary text-primary-foreground font-semibold text-base"
-        >
-          {property.isFreeConnect ? 'Connect' : (user?.isPremium || (user?.connectsRemaining && user.connectsRemaining > 0) 
-            ? 'Connect' 
-            : 'Interested')
-          }
-        </Button>
+        {hasExistingConversation ? (
+          <Button
+            onClick={() => router.push(`/chat/${userConversation!.id}`)}
+            className="w-full h-14 rounded-xl bg-success text-success-foreground font-semibold text-base hover:bg-success/90"
+          >
+            Open Conversation
+          </Button>
+        ) : (
+          <Button
+            onClick={handleInterested}
+            className="w-full h-14 rounded-xl bg-primary text-primary-foreground font-semibold text-base"
+          >
+            {property.isFreeConnect ? 'Connect' : (user?.isPremium || (user?.connectsRemaining && user.connectsRemaining > 0) 
+              ? 'Connect' 
+              : 'Interested')
+            }
+          </Button>
+        )}
       </div>
 
       {/* Fullscreen image/video modal */}

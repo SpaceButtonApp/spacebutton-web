@@ -24,7 +24,14 @@ export default function AddPostPage() {
   const [listingType, setListingType] = useState<"Connect" | "Agent">(isAgent ? "Agent" : "Connect")
   const [connectRole, setConnectRole] = useState<"Tenant" | "Landlord">("Tenant")
   const [listingTitle, setListingTitle] = useState("")
-  const [selectedCondition, setSelectedCondition] = useState("")
+  
+  // Auto-select first condition based on type
+  const getDefaultCondition = () => {
+    if (isAgent) return listingConditionsAgent[0]
+    return connectRole === "Tenant" ? listingConditionsTenant[0] : listingConditionsLandlord[0]
+  }
+  
+  const [selectedCondition, setSelectedCondition] = useState(getDefaultCondition())
   const [selectedGender, setSelectedGender] = useState<"Male" | "Female" | "Both">("Both")
   const [selectedCategory, setSelectedCategory] = useState("Flat")
   const [descriptions, setDescriptions] = useState("")
@@ -242,15 +249,20 @@ export default function AddPostPage() {
         {/* I am section - Only visible for individuals (Connect listing type) */}
         {!isAgent && (
           <div className="bg-card border border-border rounded-xl p-5">
-            <h3 className="font-medium text-foreground mb-3">I am a</h3>
+            <h3 className="font-medium text-foreground mb-3">I am</h3>
             <div className="flex gap-3">
               {["Tenant", "Landlord"].map((role) => (
                 <button
                   key={role}
-                  onClick={() => setConnectRole(role as "Tenant" | "Landlord")}
+                  onClick={() => {
+                    setConnectRole(role as "Tenant" | "Landlord")
+                    // Auto-select first condition for new role
+                    const newCondition = role === "Tenant" ? listingConditionsTenant[0] : listingConditionsLandlord[0]
+                    setSelectedCondition(newCondition)
+                  }}
                   className={`px-6 py-2.5 rounded-full text-sm font-medium transition-colors ${
                     connectRole === role
-                      ? "bg-primary text-foreground"
+                      ? "bg-primary text-primary-foreground"
                       : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                   }`}
                 >

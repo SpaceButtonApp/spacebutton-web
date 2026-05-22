@@ -60,6 +60,10 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     name: registeredAgent?.name || baseAgent?.name,
     avatar: registeredAgent?.avatar || baseAgent?.avatar,
     type: registeredAgent?.type || baseAgent?.type,
+    gender: registeredAgent?.gender || baseAgent?.gender,
+    bio: registeredAgent?.bio || baseAgent?.bio,
+    state: registeredAgent?.state || baseAgent?.state,
+    city: registeredAgent?.city || baseAgent?.city,
   }
   
   // Calculate agent stats dynamically (same logic as profile page)

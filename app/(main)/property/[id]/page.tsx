@@ -21,7 +21,7 @@ import { cn } from '@/lib/utils'
 export default function PropertyDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
-  const { savedProperties, toggleSaveProperty, user, connectsRemaining, deductConnect, properties, incrementPropertyViews, conversations } = useAppStore()
+  const { savedProperties, toggleSaveProperty, user, connectsRemaining, deductConnect, properties, incrementPropertyViews, conversations, addConversation } = useAppStore()
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [showFullScreen, setShowFullScreen] = useState(false)
   const [showConnectModal, setShowConnectModal] = useState(false)
@@ -538,9 +538,22 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
         onClose={() => setShowConnectModal(false)}
         onConfirm={handleConnectConfirm}
         propertyTitle={property.title}
-        agentId={property.agent.id}
-        propertyId={property.id}
+        agentId={property.agent?.id}
+        propertyId={id}
         isFreeConnect={property.isFreeConnect}
+        onChatStart={() => {
+          // Add conversation when user starts chat
+          if (property.agent?.id && user?.id && !hasExistingConversation) {
+            addConversation({
+              id: `conv-${Date.now()}`,
+              propertyId: id,
+              userId: user.id,
+              agentId: property.agent.id,
+              messages: [],
+              createdAt: new Date().toISOString()
+            })
+          }
+        }}
       />
     </div>
   )

@@ -14,6 +14,7 @@ interface ConnectCostModalProps {
   agentId?: string
   propertyId?: string
   isFreeConnect?: boolean
+  onChatStart?: () => void
 }
 
 const connectOptions = [
@@ -23,7 +24,7 @@ const connectOptions = [
   { connects: 1, price: 2000, label: "1 Connect" },
 ]
 
-export function ConnectCostModal({ isOpen, onClose, onConfirm, propertyTitle, agentId, propertyId, isFreeConnect }: ConnectCostModalProps) {
+export function ConnectCostModal({ isOpen, onClose, onConfirm, propertyTitle, agentId, propertyId, isFreeConnect, onChatStart }: ConnectCostModalProps) {
   const router = useRouter()
   const user = useAppStore((state) => state.user)
   const deductConnect = useAppStore((state) => state.deductConnect)
@@ -38,6 +39,7 @@ export function ConnectCostModal({ isOpen, onClose, onConfirm, propertyTitle, ag
   const handlePrimaryAction = () => {
     if (isFreeConnect) {
       // Free connect - no deduction needed
+      onChatStart?.()
       onConfirm()
       if (propertyId) {
         router.push(`/chat/${agentId || 'new'}?propertyId=${propertyId}`)
@@ -47,6 +49,7 @@ export function ConnectCostModal({ isOpen, onClose, onConfirm, propertyTitle, ag
     } else if (hasEnoughConnects) {
       // Deduct 1 connect when user clicks Chat
       deductConnect()
+      onChatStart?.()
       onConfirm()
       // Navigate to chat with property owner using propertyId to get the correct agent
       if (propertyId) {

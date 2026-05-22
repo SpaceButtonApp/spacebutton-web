@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { Star, Edit } from 'lucide-react'
+import { Star, Edit, Trash2, X } from 'lucide-react'
 import { BottomNav } from '@/components/bottom-nav'
 import { BackButton } from '@/components/back-button'
 import { PropertyCard } from '@/components/property-card'
@@ -16,9 +16,11 @@ type Tab = typeof tabs[number]
 
 export default function ProfilePage() {
   const router = useRouter()
-  const { user, properties, closedProperties, closeProperty, reviews } = useAppStore()
+  const { user, properties, closedProperties, closeProperty, reviews, deleteProperty } = useAppStore()
   const [activeTab, setActiveTab] = useState<Tab>('Listings')
   const [showMenu, setShowMenu] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [propertyToDelete, setPropertyToDelete] = useState<string | null>(null)
 
   // Filter user's own listings (where ownerId matches current user)
   const userProperties = properties.filter((p) => 
@@ -196,12 +198,65 @@ export default function ProfilePage() {
                   <div className="absolute top-2 left-2 px-2 py-1 bg-success text-success-foreground rounded text-xs font-medium">
                     Closed
                   </div>
+                  <button
+                    onClick={() => {
+                      setPropertyToDelete(property.id)
+                      setShowDeleteModal(true)
+                    }}
+                    className="absolute top-2 right-2 w-8 h-8 bg-destructive text-destructive-foreground rounded-full flex items-center justify-center hover:bg-destructive/90 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               ))
             )}
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-background p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <Trash2 className="w-6 h-6 text-destructive" />
+                </div>
+                <h3 className="font-bold text-lg">Delete Property</h3>
+              </div>
+              <button onClick={() => { setShowDeleteModal(false); setPropertyToDelete(null); }}>
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-muted-foreground mb-6">
+              Are you sure you want to delete this property? This action cannot be undone.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowDeleteModal(false); setPropertyToDelete(null); }}
+                className="flex-1 h-12 bg-secondary text-foreground rounded-xl font-medium hover:bg-secondary/80 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (propertyToDelete) {
+                    deleteProperty(propertyToDelete)
+                  }
+                  setShowDeleteModal(false)
+                  setPropertyToDelete(null)
+                }}
+                className="flex-1 h-12 bg-destructive text-destructive-foreground rounded-xl font-medium hover:bg-destructive/90 transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <BottomNav />
     </div>

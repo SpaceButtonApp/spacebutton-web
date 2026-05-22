@@ -132,6 +132,10 @@ export default function LandingPage() {
     {
       q: 'Is my personal information safe?',
       a: 'Absolutely. We use industry-standard encryption and never share your personal details without consent. All users go through verification to ensure a safe community.'
+    },
+    {
+      q: 'What is the Done Deal button and why is it required?',
+      a: 'The Done Deal button is how both parties confirm that a property transaction has been completed. When you tap Done Deal, the other party is notified. Once BOTH parties tap Done Deal, the chat is locked, the listing is marked as closed, and you can leave feedback for each other. It protects both parties by creating a mutual confirmation record of the agreement.'
     }
   ]
 

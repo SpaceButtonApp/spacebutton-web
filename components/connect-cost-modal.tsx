@@ -141,7 +141,7 @@ export function ConnectCostModal({ isOpen, onClose, onConfirm, propertyTitle, ag
             onClick={handlePrimaryAction}
             className="w-full rounded-xl h-12"
           >
-            {hasEnoughConnects ? 'Chat' : 'Buy Connects'}
+            {isFreeConnect || hasEnoughConnects ? 'Chat' : 'Buy Connects'}
           </Button>
           <Button
             variant="outline"

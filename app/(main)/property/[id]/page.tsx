@@ -82,10 +82,8 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
   }
 
   const handleConnectConfirm = () => {
-    if (connectsRemaining > 0) {
-      deductConnect()
-      setShowConnectModal(false)
-    }
+    // Just close the modal - deduct already happens in ConnectCostModal
+    setShowConnectModal(false)
   }
 
   return (

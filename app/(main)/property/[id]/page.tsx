@@ -21,7 +21,7 @@ import { cn } from '@/lib/utils'
 export default function PropertyDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
-  const { savedProperties, toggleSaveProperty, user, connectsRemaining, deductConnect, properties, incrementPropertyViews, conversations, addConversation } = useAppStore()
+  const { savedProperties, toggleSaveProperty, user, connectsRemaining, deductConnect, properties, incrementPropertyViews, conversations } = useAppStore()
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [showFullScreen, setShowFullScreen] = useState(false)
   const [showConnectModal, setShowConnectModal] = useState(false)
@@ -82,8 +82,10 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
   }
 
   const handleConnectConfirm = () => {
-    // Just close the modal - deduct already happens in ConnectCostModal
-    setShowConnectModal(false)
+    if (connectsRemaining > 0) {
+      deductConnect()
+      setShowConnectModal(false)
+    }
   }
 
   return (
@@ -449,7 +451,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
         {/* CTA Button */}
         {hasExistingConversation ? (
           <Button
-            onClick={() => router.push(`/chat/${property.agent?.id}?propertyId=${id}`)}
+            onClick={() => router.push(`/chat/${userConversation!.id}`)}
             className="w-full h-14 rounded-xl bg-success text-success-foreground font-semibold text-base hover:bg-success/90"
           >
             Open Conversation
@@ -536,22 +538,9 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
         onClose={() => setShowConnectModal(false)}
         onConfirm={handleConnectConfirm}
         propertyTitle={property.title}
-        agentId={property.agent?.id}
-        propertyId={id}
+        agentId={property.agent.id}
+        propertyId={property.id}
         isFreeConnect={property.isFreeConnect}
-        onChatStart={() => {
-          // Add conversation when user starts chat
-          if (property.agent?.id && user?.id && !hasExistingConversation) {
-            addConversation({
-              id: `conv-${Date.now()}`,
-              propertyId: id,
-              userId: user.id,
-              agentId: property.agent.id,
-              messages: [],
-              createdAt: new Date().toISOString()
-            })
-          }
-        }}
       />
     </div>
   )

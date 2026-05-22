@@ -14,7 +14,6 @@ interface ConnectCostModalProps {
   agentId?: string
   propertyId?: string
   isFreeConnect?: boolean
-  onChatStart?: () => void
 }
 
 const connectOptions = [
@@ -24,7 +23,7 @@ const connectOptions = [
   { connects: 1, price: 2000, label: "1 Connect" },
 ]
 
-export function ConnectCostModal({ isOpen, onClose, onConfirm, propertyTitle, agentId, propertyId, isFreeConnect, onChatStart }: ConnectCostModalProps) {
+export function ConnectCostModal({ isOpen, onClose, onConfirm, propertyTitle, agentId, propertyId, isFreeConnect }: ConnectCostModalProps) {
   const router = useRouter()
   const user = useAppStore((state) => state.user)
   const deductConnect = useAppStore((state) => state.deductConnect)
@@ -37,20 +36,23 @@ export function ConnectCostModal({ isOpen, onClose, onConfirm, propertyTitle, ag
   const hasEnoughConnects = isFreeConnect || connectsRemaining > 0
 
   const handlePrimaryAction = () => {
-    if (isFreeConnect || hasEnoughConnects) {
-      // Deduct 1 connect if not free
-      if (!isFreeConnect) {
-        deductConnect()
-      }
-      
-      // Call callbacks and close modal
-      onChatStart?.()
+    if (isFreeConnect) {
+      // Free connect - no deduction needed
       onConfirm()
-      
-      // Navigate to chat - always use agentId as the route
-      if (agentId) {
-        const chatUrl = propertyId ? `/chat/${agentId}?propertyId=${propertyId}` : `/chat/${agentId}`
-        router.push(chatUrl)
+      if (propertyId) {
+        router.push(`/chat/${agentId || 'new'}?propertyId=${propertyId}`)
+      } else if (agentId) {
+        router.push(`/chat/${agentId}`)
+      }
+    } else if (hasEnoughConnects) {
+      // Deduct 1 connect when user clicks Chat
+      deductConnect()
+      onConfirm()
+      // Navigate to chat with property owner using propertyId to get the correct agent
+      if (propertyId) {
+        router.push(`/chat/${agentId || 'new'}?propertyId=${propertyId}`)
+      } else if (agentId) {
+        router.push(`/chat/${agentId}`)
       }
     } else {
       // Go to payment with selected option, include return URL
@@ -136,7 +138,7 @@ export function ConnectCostModal({ isOpen, onClose, onConfirm, propertyTitle, ag
             onClick={handlePrimaryAction}
             className="w-full rounded-xl h-12"
           >
-            {isFreeConnect || hasEnoughConnects ? 'Chat' : 'Buy Connects'}
+            {hasEnoughConnects ? 'Chat' : 'Buy Connects'}
           </Button>
           <Button
             variant="outline"

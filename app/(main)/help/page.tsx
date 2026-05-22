@@ -68,11 +68,6 @@ const faqItems = [
     question: "What payment methods are accepted?",
     answer: "We accept bank transfers, debit/credit cards, and mobile payment options. All transactions are processed securely through our payment partners."
   },
-  {
-    id: 9,
-    question: "What is the Done Deal button and why is it required?",
-    answer: "The Done Deal button is how both parties confirm that a property transaction has been completed. When you tap Done Deal, the other party is notified. Once BOTH parties tap Done Deal, the chat is locked, the listing is marked as closed, and you can leave feedback for each other. It protects both parties by creating a mutual confirmation record of the agreement."
-  },
 ]
 
 const contactItems = [

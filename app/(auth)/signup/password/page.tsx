@@ -60,15 +60,16 @@ export default function CreatePasswordPage() {
       return
     }
 
-    // Get signup data from localStorage and keep it for verification
+    // Get signup data and create user directly
     const signupData = localStorage.getItem('signupData')
     if (signupData) {
       const data = JSON.parse(signupData)
-      // Store password in signup data for final user creation after verification
+      // Store complete signup data for final user creation
       localStorage.setItem('signupData', JSON.stringify({ ...data, password: formData.password }))
     }
     
-    router.push(`/verify?email=${encodeURIComponent(formData.email)}`)
+    // Skip phone verification - go to email verification which then goes to welcome
+    router.push('/verify')
   }
 
   return (

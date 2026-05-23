@@ -675,54 +675,30 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              {/* Right Side - Phone Mockup */}
-              <div className="relative flex justify-center lg:justify-end">
-                <div className="relative">
-                  {/* Phone Frame */}
-                  <div className="relative w-64 sm:w-72 h-[500px] sm:h-[560px] bg-gradient-to-br from-primary to-primary/80 rounded-[3rem] p-3 shadow-2xl">
-                    <div className="absolute top-6 left-1/2 -translate-x-1/2 w-20 h-6 bg-foreground rounded-full" />
-                    <div className="w-full h-full bg-background rounded-[2.5rem] overflow-hidden">
-                      {/* App Screen Content */}
-                      <div className="p-4 h-full flex flex-col">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center gap-2">
-                            <Image src={logoUrl} alt="SpaceButton" width={24} height={24} className="w-6 h-6" />
-                            <span className="font-bold text-sm">SpaceButton</span>
-                          </div>
-                          <Bell className="w-5 h-5 text-muted-foreground" />
-                        </div>
-                        <div className="bg-secondary rounded-xl p-3 mb-4">
-                          <div className="flex items-center gap-2">
-                            <Search className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-sm text-muted-foreground">Search properties...</span>
-                          </div>
-                        </div>
-                        <p className="text-xs font-semibold mb-2">Featured Properties</p>
-                        <div className="space-y-3 flex-1">
-                          <div className="bg-secondary rounded-xl p-2">
-                            <div className="w-full h-20 bg-primary/20 rounded-lg mb-2" />
-                            <p className="text-xs font-medium">Modern 2BR Apartment</p>
-                            <p className="text-xs text-primary font-bold">N450,000/yr</p>
-                          </div>
-                          <div className="bg-secondary rounded-xl p-2">
-                            <div className="w-full h-20 bg-primary/20 rounded-lg mb-2" />
-                            <p className="text-xs font-medium">Cozy Studio in Lekki</p>
-                            <p className="text-xs text-primary font-bold">N250,000/yr</p>
-                          </div>
-                        </div>
-                        {/* Bottom Nav */}
-                        <div className="flex justify-around pt-3 border-t border-border mt-auto">
-                          <Home className="w-5 h-5 text-primary" />
-                          <Search className="w-5 h-5 text-muted-foreground" />
-                          <Heart className="w-5 h-5 text-muted-foreground" />
-                          <User className="w-5 h-5 text-muted-foreground" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  {/* Decorative elements */}
-                  <div className="absolute -top-4 -right-4 w-20 h-20 bg-primary/20 rounded-full blur-2xl" />
-                  <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-primary/20 rounded-full blur-2xl" />
+              {/* Right Side - Phone Mockups */}
+              <div className="flex gap-4 justify-center lg:justify-end overflow-x-auto pb-4">
+                {/* Light Mode */}
+                <div className="flex-shrink-0">
+                  <Image
+                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/light%20mode.png-DHrBM6kBfE4WnZOza5J67VtndVRxlb.jpeg"
+                    alt="SpaceButton App - Light Mode"
+                    width={280}
+                    height={560}
+                    className="w-64 sm:w-72 h-auto rounded-3xl shadow-2xl border-8 border-primary"
+                    unoptimized
+                  />
+                </div>
+
+                {/* Dark Mode */}
+                <div className="flex-shrink-0">
+                  <Image
+                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Dark%20Mode.png-OxqRQSX06JbIUzkdplL8QFNgD8FwUG.jpeg"
+                    alt="SpaceButton App - Dark Mode"
+                    width={280}
+                    height={560}
+                    className="w-64 sm:w-72 h-auto rounded-3xl shadow-2xl border-8 border-primary"
+                    unoptimized
+                  />
                 </div>
               </div>
             </div>

@@ -446,8 +446,8 @@ export default function AddPostPage() {
             </div>
           )}
 
-          {/* Total Package - Visible for Agent OR Connect with Landlord role OR Connect with Tenant and Roommate/Flatmate */}
-          {(listingType === "Agent" || (listingType === "Connect" && connectRole === "Landlord") || (listingType === "Connect" && connectRole === "Tenant" && (selectedCondition === "Roommate" || selectedCondition === "Flatmate"))) && (
+          {/* Total Package - Visible for Agent (except Vacating) OR Connect with Landlord role OR Connect with Tenant and Roommate/Flatmate */}
+          {((listingType === "Agent" && selectedCondition !== "Vacating") || (listingType === "Connect" && connectRole === "Landlord") || (listingType === "Connect" && connectRole === "Tenant" && (selectedCondition === "Roommate" || selectedCondition === "Flatmate"))) && (
             <div>
               <h3 className="font-medium text-foreground mb-3">Total Package</h3>
               <div className="relative">

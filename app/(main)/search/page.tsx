@@ -291,6 +291,25 @@ export default function SearchPage() {
             </div>
           )}
         </div>
+
+        {/* Clear Filters Button - Small, positioned at left */}
+        <button
+          onClick={() => {
+            setFilters({
+              location: '',
+              lga: '',
+              apartmentType: '',
+              minPrice: '',
+              maxPrice: '',
+            })
+            setSearchQuery('')
+            setShowResults(false)
+          }}
+          className="mt-3 px-3 py-2 rounded-lg bg-secondary text-foreground text-xs font-medium hover:bg-secondary/80 transition-colors"
+          title="Clear all filters"
+        >
+          Clear
+        </button>
       </div>
 
       {/* Results / Suggestions */}

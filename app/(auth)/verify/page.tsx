@@ -44,9 +44,9 @@ export default function VerificationCodePage() {
     }
 
     setIsLoading(true)
-    // Mock verification - redirect to phone verification
+    // Email verified - skip phone verification and go directly to welcome/explore
     setTimeout(() => {
-      router.push('/signup/phone-verification')
+      router.push('/welcome')
     }, 1000)
   }
 

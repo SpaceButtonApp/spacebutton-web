@@ -69,7 +69,7 @@ export default function CreatePasswordPage() {
     }
     
     // Skip phone verification - go to email verification which then goes to welcome
-    router.push('/signup/verify')
+    router.push('/verify')
   }
 
   return (

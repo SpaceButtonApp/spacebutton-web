@@ -17,6 +17,7 @@ export default function EditProfilePage() {
   
   const [formData, setFormData] = useState({
     name: user?.name || '',
+    gender: user?.gender || '',
     phone: user?.phone || '',
     location: user?.location || '',
     email: user?.email || '',
@@ -172,6 +173,26 @@ export default function EditProfilePage() {
               disabled
               className="h-14 rounded-xl border-border bg-muted px-4 cursor-not-allowed opacity-60"
             />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Gender</label>
+            <div className="grid grid-cols-3 gap-2">
+              {['Male', 'Female', 'Other'].map((gender) => (
+                <button
+                  key={gender}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, gender })}
+                  className={`py-3 rounded-xl font-medium text-sm transition-all ${
+                    formData.gender === gender
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-secondary border border-border text-muted-foreground hover:border-primary/50'
+                  }`}
+                >
+                  {gender}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="space-y-2">

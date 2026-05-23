@@ -292,7 +292,7 @@ export default function SearchPage() {
           )}
         </div>
 
-        {/* Clear Filters Button */}
+        {/* Clear Filters Button - Small, positioned at left */}
         <button
           onClick={() => {
             setFilters({
@@ -305,9 +305,10 @@ export default function SearchPage() {
             setSearchQuery('')
             setShowResults(false)
           }}
-          className="w-full h-12 rounded-xl bg-secondary text-foreground font-medium hover:bg-secondary/80 transition-colors mt-2"
+          className="mt-3 px-3 py-2 rounded-lg bg-secondary text-foreground text-xs font-medium hover:bg-secondary/80 transition-colors"
+          title="Clear all filters"
         >
-          Clear Filters
+          Clear
         </button>
       </div>
 

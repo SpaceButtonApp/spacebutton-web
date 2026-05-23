@@ -50,6 +50,10 @@ export interface Agent {
   closed: number
   rating: number
   online: boolean
+  gender?: 'Male' | 'Female' | 'Other'
+  bio?: string
+  state?: string
+  city?: string
 }
 
 export interface Message {

@@ -9,6 +9,7 @@ import { Sparkles, Home, Users, Zap, CheckCircle } from 'lucide-react'
 
 interface SignupData {
   name: string
+  gender: string
   profileType: 'individual' | 'agent'
   email: string
   phone: string
@@ -89,6 +90,7 @@ export default function WelcomePage() {
         phone: signupData.phone,
         type: signupData.profileType,
         avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+        gender: signupData.gender as 'Male' | 'Female' | 'Other',
       })
       
       setUser({
@@ -105,6 +107,7 @@ export default function WelcomePage() {
         walletBalance: 0,
         isPremium: false,
         connectsRemaining: 3,
+        gender: signupData.gender as 'Male' | 'Female' | 'Other',
       })
     }
   }, [user, setUser, addRegisteredUser])

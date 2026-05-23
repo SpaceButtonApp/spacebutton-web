@@ -97,6 +97,10 @@ interface RegisteredUser {
   listings: number
   joined: string
   offenseCount: number
+  gender?: 'Male' | 'Female' | 'Other'
+  bio?: string
+  state?: string
+  city?: string
 }
 
 interface AppState {

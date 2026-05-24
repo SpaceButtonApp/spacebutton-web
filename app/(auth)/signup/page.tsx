@@ -7,7 +7,7 @@ import Image from 'next/image'
 import { User, Mail, Ticket, Check, ChevronDown } from 'lucide-react'
 import { BackButton } from '@/components/back-button'
 
-const genderOptions = ['Male', 'Female', 'Other']
+const genderOptions = ['Male', 'Female']
 
 const countryCodes = [
   { code: '+234', country: 'Nigeria', flag: '🇳🇬' },

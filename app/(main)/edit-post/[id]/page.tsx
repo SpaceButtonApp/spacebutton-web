@@ -247,24 +247,15 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
           </div>
         </div>
 
-        {/* Listing Photos */}
+        {/* Listing Photos - Read Only */}
         <div>
           <Label className="mb-2 block font-semibold">Listing Photos</Label>
           <div className="grid grid-cols-2 gap-3">
             {images.map((image, index) => (
               <div key={index} className="relative aspect-video overflow-hidden rounded-xl">
                 <Image src={image} alt={`Photo ${index + 1}`} fill className="object-cover" />
-                <button
-                  onClick={() => removeImage(index)}
-                  className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/50 text-white"
-                >
-                  <X className="h-4 w-4" />
-                </button>
               </div>
             ))}
-            <button className="flex aspect-video items-center justify-center rounded-xl border-2 border-dashed">
-              <Plus className="h-8 w-8 text-muted-foreground" />
-            </button>
           </div>
         </div>
 

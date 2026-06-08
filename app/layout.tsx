@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from '@/components/theme-provider'
+import { SupportChatWidget } from '@/components/support-chat-widget'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -41,9 +42,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="font-sans antialiased bg-background text-foreground">
+      <body className="font-sans antialiased bg-background text-foreground" suppressHydrationWarning>
         <ThemeProvider>
           {children}
+          <SupportChatWidget />
         </ThemeProvider>
         <Analytics />
       </body>

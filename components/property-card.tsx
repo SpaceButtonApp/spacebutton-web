@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Camera, Grid3X3, Bookmark, MapPin, Users, Building2, CheckCircle2, Home, DollarSign, Maximize, Play } from 'lucide-react'
 import { useState, useRef } from 'react'
 import { useAppStore } from '@/lib/store'
+import { saveListing } from '@/lib/api/listings'
 import { formatPrice, type Property } from '@/lib/mock-data'
 import { cn } from '@/lib/utils'
 
@@ -15,7 +16,7 @@ interface PropertyCardProps {
 
 export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) {
   const router = useRouter()
-  const { savedProperties, toggleSaveProperty } = useAppStore()
+  const { savedProperties } = useAppStore()
   const isSaved = savedProperties.includes(property.id)
   
   // Check if this is a Properties listing type
@@ -23,7 +24,7 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
 
   const handleSave = (e: React.MouseEvent) => {
     e.stopPropagation()
-    toggleSaveProperty(property.id)
+    saveListing(property.id)
   }
 
   const handleViewDetails = () => {

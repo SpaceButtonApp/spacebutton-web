@@ -36,15 +36,15 @@ export default function EditListingPage() {
         price: listing.price || 0,
         beds: listing.beds || 0,
         baths: listing.baths || 0,
-        type: listing.type || 'connect',
-        category: listing.category || '',
+        type: (listing.type === 'agent' ? 'agent' : 'connect') as 'connect' | 'agent',
+        category: (listing.category || '') as string,
       })
     }
   }, [listing])
 
   const handleSave = () => {
     if (listing) {
-      updateProperty(listing.id, formData)
+      updateProperty(listing.id, formData as any)
       setSaved(true)
       setTimeout(() => {
         setSaved(false)

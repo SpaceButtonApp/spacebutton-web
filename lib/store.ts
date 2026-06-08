@@ -104,6 +104,12 @@ interface RegisteredUser {
 }
 
 interface AppState {
+  // Auth tokens
+  accessToken: string | null
+  refreshToken: string | null
+  setTokens: (accessToken: string, refreshToken: string) => void
+  clearAuth: () => void
+
   // User
   user: User | null
   setUser: (user: User | null) => void
@@ -114,6 +120,7 @@ interface AppState {
   closedProperties: string[]
   savedProperties: string[]
   toggleSaveProperty: (id: string) => void
+  setSavedProperties: (ids: string[]) => void
   addProperty: (property: Property) => void
   updateProperty: (id: string, updates: Partial<Property>) => void
   deleteProperty: (id: string) => void
@@ -175,11 +182,21 @@ interface AppState {
   // Connects
   connectsRemaining: number
   deductConnect: () => boolean
+
+  // Chat unread count (driven by messages page on load)
+  unreadChatsCount: number
+  setUnreadChatsCount: (n: number) => void
 }
 
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
+      // Auth tokens
+      accessToken: null,
+      refreshToken: null,
+      setTokens: (accessToken, refreshToken) => set({ accessToken, refreshToken }),
+      clearAuth: () => set({ accessToken: null, refreshToken: null, user: null }),
+
       // User
       user: null,
       setUser: (user) => set({ user }),
@@ -196,6 +213,7 @@ export const useAppStore = create<AppState>()(
           ? state.savedProperties.filter((pId) => pId !== id)
           : [...state.savedProperties, id]
       })),
+      setSavedProperties: (ids) => set({ savedProperties: ids }),
       addProperty: (property) => set((state) => ({
         properties: [property, ...state.properties]
       })),
@@ -504,11 +522,17 @@ export const useAppStore = create<AppState>()(
           user: { ...state.user, connectsRemaining: state.user.connectsRemaining - 1 }
         })
         return true
-      }
+      },
+
+      // Chat unread count
+      unreadChatsCount: 0,
+      setUnreadChatsCount: (n) => set({ unreadChatsCount: n }),
     }),
     {
       name: 'spacebutton-storage',
       partialize: (state) => ({
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
         user: state.user,
         savedProperties: state.savedProperties,
         transactions: state.transactions,

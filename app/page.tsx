@@ -473,8 +473,8 @@ export default function LandingPage() {
                     </div>
                     <div className="flex items-center gap-3 mb-4 text-xs text-muted-foreground">
                       <span className="capitalize bg-secondary px-2 py-1 rounded">{property.propertyCategory || property.category}</span>
-                      {property.bedrooms && <span>{property.bedrooms} Bed</span>}
-                      {property.bathrooms && <span>{property.bathrooms} Bath</span>}
+                      {property.beds && <span>{property.beds} Bed</span>}
+                      {property.baths && <span>{property.baths} Bath</span>}
                     </div>
                     <div className="flex items-center justify-between">
                       <p className="text-primary font-bold text-xl">

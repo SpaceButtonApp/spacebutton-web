@@ -4,16 +4,18 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AlertCircle, Zap } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
+import { useHydrated } from '@/lib/hooks/use-hydrated'
 import { cn } from '@/lib/utils'
 
 export function ConnectBalanceButton() {
   const router = useRouter()
   const { user } = useAppStore()
+  const hydrated = useHydrated()
   const [showModal, setShowModal] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState<string | null>('basic-50')
 
-  const connectBalance = user?.connectsRemaining || 0
+  const connectBalance = hydrated ? (user?.connectsRemaining || 0) : 0
   const hasNoConnects = connectBalance === 0
   const displayBalance = connectBalance === 999 ? 'Unlimited' : connectBalance
 

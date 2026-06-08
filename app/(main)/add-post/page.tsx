@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input"
 import { LocationInput } from "@/components/location-input"
 import Image from "next/image"
 import { useAppStore } from "@/lib/store"
-import { mockAgents } from "@/lib/mock-data"
 
 const listingConditionsLandlord = ["Rent", "Roommate", "Flatmate"]
 const listingConditionsTenant = ["Vacating", "Roommate", "Flatmate"]

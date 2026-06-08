@@ -17,24 +17,14 @@ export default function AdminLoginPage() {
     setError('')
     setLoading(true)
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 800))
-
-    // Check stored password or default
-    const storedAuth = localStorage.getItem('admin-auth')
-    const storedPassword = storedAuth ? JSON.parse(storedAuth).password || 'admin123' : 'admin123'
-
-    if (email === 'newdemo@admin.com' && password === storedPassword) {
-      localStorage.setItem('admin-auth', JSON.stringify({ 
-        email, 
-        name: 'Admin User',
-        role: 'Super Admin',
-        password: storedPassword,
-        loggedIn: true 
-      }))
+    try {
+      const { adminApi } = await import('@/lib/api/admin')
+      const token = await adminApi.loginAdmin(email, password)
+      localStorage.setItem('admin-token', token)
+      localStorage.setItem('admin-auth', JSON.stringify({ email, loggedIn: true }))
       router.push('/admin/dashboard')
-    } else {
-      setError('Invalid credentials. Use newdemo@admin.com / admin123')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Invalid credentials.')
       setLoading(false)
     }
   }

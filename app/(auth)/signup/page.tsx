@@ -63,10 +63,9 @@ export default function SignupPage() {
       return
     }
 
-    // Store form data with full phone number and navigate to password page
     localStorage.setItem('signupData', JSON.stringify({
       ...formData,
-      phone: `${formData.countryCode}${formData.phone}`
+      phone: `${formData.countryCode}${formData.phone}`,
     }))
     router.push('/signup/password')
   }

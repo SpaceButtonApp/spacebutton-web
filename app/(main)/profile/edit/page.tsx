@@ -7,14 +7,16 @@ import Image from 'next/image'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useAppStore } from '@/lib/store'
+import { userApi, agentApi } from '@/lib/api/users'
 
 export default function EditProfilePage() {
   const router = useRouter()
   const { user, updateUser } = useAppStore()
   const [profileImage, setProfileImage] = useState(user?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face')
   const [showImageOptions, setShowImageOptions] = useState(false)
-  const fileInputRef = useState<HTMLInputElement>(null)[1]
-  
+  const [saving, setSaving] = useState(false)
+  const isAgent = user?.type === 'agent'
+
   const [formData, setFormData] = useState({
     name: user?.name || '',
     gender: user?.gender || '',
@@ -26,21 +28,67 @@ export default function EditProfilePage() {
     city: user?.city || '',
   })
 
-  const handleSave = () => {
-    updateUser({ ...formData, avatar: profileImage })
-    router.back()
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      if (isAgent) {
+        const updated = await agentApi.updateMyAgentProfile({
+          bio: formData.bio || undefined,
+          state: formData.state || undefined,
+          city: formData.city || undefined,
+        })
+        updateUser({
+          bio: updated.bio ?? undefined,
+          state: updated.state ?? undefined,
+          city: updated.city ?? undefined,
+        })
+      } else {
+        const updated = await userApi.updateMyProfile({
+          bio: formData.bio || undefined,
+          state: formData.state || undefined,
+          city: formData.city || undefined,
+          gender: formData.gender || undefined,
+        })
+        updateUser({
+          bio: updated.bio ?? undefined,
+          state: updated.state ?? undefined,
+          city: updated.city ?? undefined,
+          gender: (updated.gender as 'Male' | 'Female' | 'Other' | undefined) ?? undefined,
+        })
+      }
+      router.back()
+    } catch {
+      // silently fall back to local update
+      updateUser({ bio: formData.bio || undefined, state: formData.state || undefined, city: formData.city || undefined })
+      router.back()
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setProfileImage(reader.result as string)
-        setShowImageOptions(false)
-      }
-      reader.readAsDataURL(file)
+    if (!file) return
+
+    // Preview immediately
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setProfileImage(reader.result as string)
+      setShowImageOptions(false)
     }
+    reader.readAsDataURL(file)
+
+    // Upload to backend
+    try {
+      const updated = isAgent
+        ? await agentApi.uploadMyAgentPhoto(file)
+        : await userApi.uploadMyPhoto(file)
+      const url = updated.profile_photo_url
+      if (url) {
+        setProfileImage(url)
+        updateUser({ avatar: url })
+      }
+    } catch { /* keep local preview */ }
   }
 
   const handleCameraCapture = () => {
@@ -222,9 +270,10 @@ export default function EditProfilePage() {
 
         <Button
           onClick={handleSave}
-          className="w-full h-14 rounded-xl bg-primary text-primary-foreground font-semibold text-base"
+          disabled={saving}
+          className="w-full h-14 rounded-xl bg-primary text-primary-foreground font-semibold text-base disabled:opacity-60"
         >
-          Save Changes
+          {saving ? 'Saving…' : 'Save Changes'}
         </Button>
       </div>
     </div>

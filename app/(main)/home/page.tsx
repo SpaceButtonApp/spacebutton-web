@@ -1,29 +1,93 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { Bookmark, Clock, Sparkles } from 'lucide-react'
+import { Bookmark, Sparkles } from 'lucide-react'
 import { BottomNav } from '@/components/bottom-nav'
 import { PropertyCard } from '@/components/property-card'
 import { ConnectBalanceButton } from '@/components/connect-balance-button'
 import { useAppStore } from '@/lib/store'
+import { listingsApi, mapListing } from '@/lib/api/listings'
 import { cn } from '@/lib/utils'
+import type { Property } from '@/lib/mock-data'
+import type { ListingFilters } from '@/lib/types/listing'
 
 const tabs = ['Connect', 'Agent', 'Shortlet', 'Properties'] as const
 type Tab = typeof tabs[number]
 
+function tabToFilters(tab: Tab): ListingFilters {
+  switch (tab) {
+    case 'Connect':    return { category: 'need_roommate', page_size: 20 }
+    case 'Agent':      return { owner_type: 'agent', page_size: 20 }
+    case 'Shortlet':   return { category: 'subletting', page_size: 20 }
+    case 'Properties': return { category: 'for_rent', owner_type: 'user', page_size: 20 }
+  }
+}
+
+function SkeletonCard() {
+  return (
+    <div className="rounded-2xl bg-card border border-border overflow-hidden animate-pulse">
+      <div className="aspect-[16/9] bg-secondary" />
+      <div className="p-4 space-y-3">
+        <div className="h-4 bg-secondary rounded w-3/4" />
+        <div className="h-3 bg-secondary rounded w-1/2" />
+        <div className="h-4 bg-secondary rounded w-1/3" />
+      </div>
+    </div>
+  )
+}
+
 export default function HomePage() {
   const router = useRouter()
-  const [mounted, setMounted] = useState(false)
-  const { user, activeTab, setActiveTab, properties, closedProperties } = useAppStore()
+  const { user, activeTab, setActiveTab, savedProperties, setSavedProperties } = useAppStore()
   const [currentTab, setCurrentTab] = useState<Tab>('Connect')
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const [listings, setListings] = useState<Property[]>([])
+  const [forYou, setForYou] = useState<Property[]>([])
+  const [loading, setLoading] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png'
+
+  useEffect(() => { setMounted(true) }, [])
+
+  // Load saved IDs once on mount (auth required)
+  useEffect(() => {
+    if (!user) return
+    listingsApi.getSavedIds()
+      .then((ids) => setSavedProperties(ids))
+      .catch(() => {})
+  }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Load recommended for "For You" strip (auth required)
+  useEffect(() => {
+    if (!user) return
+    listingsApi.getRecommended(1, 6)
+      .then((data) => {
+        const savedSet = new Set(savedProperties)
+        setForYou(data.listings.map((l) => mapListing(l, savedSet)))
+      })
+      .catch(() => {})
+  }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fetch listings whenever tab changes
+  const fetchListings = useCallback(async (tab: Tab) => {
+    setLoading(true)
+    setListings([])
+    try {
+      const data = await listingsApi.getListings(tabToFilters(tab))
+      const savedSet = new Set(savedProperties)
+      setListings(data.listings.map((l) => mapListing(l, savedSet)))
+    } catch {
+      setListings([])
+    } finally {
+      setLoading(false)
+    }
+  }, [savedProperties]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (mounted) fetchListings(currentTab)
+  }, [currentTab, mounted]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleTabChange = (tab: Tab) => {
     setCurrentTab(tab)
@@ -32,51 +96,32 @@ export default function HomePage() {
     }
   }
 
-  const filteredProperties = properties.filter((property) => {
-    if (closedProperties.includes(property.id)) return false
-    
-    const type = property.listingType || property.type
-    if (currentTab === 'Connect') return type === 'connect'
-    if (currentTab === 'Agent') return type === 'agent'
-    if (currentTab === 'Properties') return type === 'properties'
-    return false
-  })
-
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
       <div className="bg-card/80 backdrop-blur-xl px-4 py-4 sticky top-0 z-40 border-b border-border">
-        {/* Top Row */}
         <div className="flex items-center justify-between mb-4">
-          <button 
+          <button
             onClick={() => router.push('/profile')}
             className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary/50 flex-shrink-0 hover:border-primary transition-colors"
           >
             <Image
-              src={user?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'}
+              src={mounted && user?.avatar ? user.avatar : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'}
               alt="Profile"
               width={48}
               height={48}
               className="object-cover"
             />
           </button>
-          
-          {/* Centered Logo */}
+
           <div className="flex-1 flex items-center justify-center gap-2">
-            <Image
-              src={logoUrl}
-              alt="Spacebutton"
-              width={36}
-              height={36}
-              className="h-9 w-9"
-            />
+            <Image src={logoUrl} alt="Spacebutton" width={36} height={36} className="h-9 w-9" />
             <span className="text-lg font-bold text-foreground">SpaceButton</span>
           </div>
-          
-          {/* Right Actions */}
+
           <div className="flex items-center gap-2 flex-shrink-0">
             <ConnectBalanceButton />
-            <button 
+            <button
               onClick={() => router.push('/saved')}
               className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
             >
@@ -96,7 +141,7 @@ export default function HomePage() {
                   'px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 whitespace-nowrap',
                   currentTab === tab
                     ? 'bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-lg'
-                    : 'text-muted-foreground hover:text-foreground'
+                    : 'text-muted-foreground hover:text-foreground',
                 )}
               >
                 {tab}
@@ -108,16 +153,16 @@ export default function HomePage() {
 
       {/* Content */}
       <div className="px-4 py-6">
-        {/* For You Section - Show at the top for all tabs except Shortlet */}
-        {currentTab !== 'Shortlet' && properties.length > 0 && (
+        {/* For You — shown when we have recommended listings */}
+        {forYou.length > 0 && (
           <div className="mb-8">
             <div className="flex items-center gap-2 mb-4">
               <Sparkles className="w-5 h-5 text-primary" />
               <h3 className="text-lg font-bold text-foreground">For you</h3>
             </div>
             <div className="flex gap-3 overflow-x-auto pb-2 snap-x">
-              {properties.slice(0, 6).map((property) => (
-                <div 
+              {forYou.map((property) => (
+                <div
                   key={property.id}
                   onClick={() => router.push(`/property/${property.id}`)}
                   className="flex-shrink-0 w-40 rounded-xl overflow-hidden bg-card border border-border cursor-pointer hover:border-primary transition-colors snap-start group"
@@ -143,51 +188,26 @@ export default function HomePage() {
           </div>
         )}
 
-        {currentTab === 'Shortlet' ? (
+        {/* Main feed */}
+        {loading ? (
+          <div className="space-y-4">
+            {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
+          </div>
+        ) : listings.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="w-24 h-24 rounded-2xl bg-card border border-border flex items-center justify-center mb-4">
-              <Clock className="w-12 h-12 text-primary" />
+              <Bookmark className="w-12 h-12 text-muted-foreground" />
             </div>
-            <h2 className="text-xl font-bold text-foreground mb-2">Coming Soon</h2>
+            <h2 className="text-xl font-bold text-foreground mb-2">No Listings Yet</h2>
             <p className="text-muted-foreground text-center max-w-xs">
-              We&apos;re working on bringing you amazing {currentTab.toLowerCase()} options.
+              Be the first to post a listing in this category.
             </p>
-            <div className="flex items-center gap-2 mt-4 text-primary">
-              <Sparkles className="w-4 h-4" />
-              <span className="text-sm">Stay tuned for updates</span>
-            </div>
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredProperties.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20">
-                <div className="w-24 h-24 rounded-2xl bg-card border border-border flex items-center justify-center mb-4">
-                  {currentTab === 'Properties' ? (
-                    <Clock className="w-12 h-12 text-primary" />
-                  ) : (
-                    <Bookmark className="w-12 h-12 text-muted-foreground" />
-                  )}
-                </div>
-                <h2 className="text-xl font-bold text-foreground mb-2">
-                  {currentTab === 'Properties' ? 'Coming Soon' : 'No Listings Yet'}
-                </h2>
-                <p className="text-muted-foreground text-center max-w-xs">
-                  {currentTab === 'Properties' 
-                    ? "We're working on bringing you amazing Property options."
-                    : 'Be the first to post a listing in this category.'}
-                </p>
-                {currentTab === 'Properties' && (
-                  <div className="flex items-center gap-2 mt-4 text-primary">
-                    <Sparkles className="w-4 h-4" />
-                    <span className="text-sm">Stay tuned for updates</span>
-                  </div>
-                )}
-              </div>
-            ) : (
-              filteredProperties.map((property) => (
-                <PropertyCard key={property.id} property={property} />
-              ))
-            )}
+            {listings.map((property) => (
+              <PropertyCard key={property.id} property={property} />
+            ))}
           </div>
         )}
       </div>

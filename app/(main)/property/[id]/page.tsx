@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { 
   Bookmark, ChevronLeft, ChevronRight, ChevronDown, Bed, Bath, 
   Sofa, MapPin, Calendar, AlertTriangle, Users, Building2, ArrowLeft, X, Clock,
-  Home, DollarSign, Grid3X3, Maximize, Eye, Play, MessageSquare
+  Home, DollarSign, Grid3X3, Maximize, Eye, Play
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { Button } from '@/components/ui/button'
@@ -15,18 +15,24 @@ import { BackButton } from '@/components/back-button'
 import { ConnectCostModal } from '@/components/connect-cost-modal'
 import { SuggestedApartments } from '@/components/suggested-apartments'
 import { useAppStore } from '@/lib/store'
+import { listingsApi, mapListing, saveListing } from '@/lib/api/listings'
+import { chatApi } from '@/lib/api/chat'
 import { formatPrice, safetyTips } from '@/lib/mock-data'
 import { cn } from '@/lib/utils'
+import type { Property } from '@/lib/mock-data'
 
 export default function PropertyDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
-  const { savedProperties, toggleSaveProperty, user, connectsRemaining, deductConnect, properties, incrementPropertyViews, conversations } = useAppStore()
+  const { savedProperties, user } = useAppStore()
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [showFullScreen, setShowFullScreen] = useState(false)
   const [showConnectModal, setShowConnectModal] = useState(false)
   const [isVideoPlaying, setIsVideoPlaying] = useState(false)
+  const [existingChatId, setExistingChatId] = useState<string | null>(null)
   const [safetyTipsExpanded, setSafetyTipsExpanded] = useState(false)
+  const [property, setProperty] = useState<Property | null>(null)
+  const [fetchError, setFetchError] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
 
   const handlePlayVideo = (e: React.MouseEvent) => {
@@ -36,31 +42,48 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
       setIsVideoPlaying(true)
     }
   }
-  
-  const property = properties.find((p) => p.id === id)
-  const isSaved = savedProperties.includes(id)
-  
-  // Count conversations for this property
-  const propertyConversations = conversations.filter((c) => c.propertyId === id).length
-  
-  // Check if user has already opened a conversation for this property
-  const userConversation = conversations.find((c) => c.propertyId === id && c.userId === user?.id)
-  const hasExistingConversation = !!userConversation
-  
-  // Track view on component mount
+
+  // Fetch listing from API
   useEffect(() => {
-    if (property?.id) {
-      incrementPropertyViews(property.id)
-    }
-  }, [property?.id, incrementPropertyViews])
-  
+    setFetchError(false)
+    listingsApi.getListing(id)
+      .then((listing) => {
+        const savedSet = new Set(savedProperties)
+        setProperty(mapListing(listing, savedSet))
+      })
+      .catch(() => setFetchError(true))
+  }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Increment views (fire-and-forget)
+  useEffect(() => {
+    if (user) listingsApi.incrementViews(id)
+  }, [id, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Check if user already has a chat for this listing
+  useEffect(() => {
+    if (!user) return
+    chatApi.getMyChatForListing(id).then((chat) => {
+      if (chat) setExistingChatId(chat.id)
+    }).catch(() => {})
+  }, [id, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const isSaved = savedProperties.includes(id)
+
   // Check if this is a Properties listing type
   const isPropertyType = property?.type === 'properties' || property?.listingType === 'properties'
-  
+
+  if (fetchError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-muted-foreground">Property not found</p>
+      </div>
+    )
+  }
+
   if (!property) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p>Property not found</p>
+        <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -78,14 +101,23 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
   }
 
   const handleInterested = () => {
+    if (existingChatId) {
+      router.push(`/chat/${existingChatId}`)
+      return
+    }
     setShowConnectModal(true)
   }
 
-  const handleConnectConfirm = () => {
-    if (connectsRemaining > 0) {
-      deductConnect()
-      setShowConnectModal(false)
-    }
+  const handleConnectConfirm = async () => {
+    if (!property) return
+    const chat = await chatApi.createChat(
+      property.ownerId,
+      id,
+      `Hi, I'm interested in ${property.title}`,
+    )
+    setExistingChatId(chat.id)
+    setShowConnectModal(false)
+    router.push(`/chat/${chat.id}`)
   }
 
   return (
@@ -97,8 +129,8 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
           className="bg-background/80 backdrop-blur-sm"
         />
         
-        <button 
-          onClick={() => toggleSaveProperty(id)}
+        <button
+          onClick={() => saveListing(id)}
           className="w-10 h-10 flex items-center justify-center rounded-full bg-background/80 backdrop-blur-sm"
         >
           <Bookmark className={cn('w-5 h-5', isSaved && 'fill-primary text-primary')} />
@@ -179,10 +211,6 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
                     <span className="font-medium">{property.views}</span>
                   </div>
                 )}
-                <div className="flex items-center gap-1 text-xs bg-success/10 text-success px-2 py-1 rounded-lg" title="Active conversations">
-                  <MessageSquare className="w-3 h-3" />
-                  <span className="font-medium">{propertyConversations}</span>
-                </div>
               </div>
               {property.createdAt && (
                 <span className="text-xs text-muted-foreground">
@@ -449,24 +477,12 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
         )}
 
         {/* CTA Button */}
-        {hasExistingConversation ? (
-          <Button
-            onClick={() => router.push(`/chat/${userConversation!.id}`)}
-            className="w-full h-14 rounded-xl bg-success text-success-foreground font-semibold text-base hover:bg-success/90"
-          >
-            Open Conversation
-          </Button>
-        ) : (
-          <Button
-            onClick={handleInterested}
-            className="w-full h-14 rounded-xl bg-primary text-primary-foreground font-semibold text-base"
-          >
-            {property.isFreeConnect ? 'Connect' : (user?.isPremium || (user?.connectsRemaining && user.connectsRemaining > 0) 
-              ? 'Connect' 
-              : 'Interested')
-            }
-          </Button>
-        )}
+        <Button
+          onClick={handleInterested}
+          className="w-full h-14 rounded-xl font-semibold text-base"
+        >
+          {existingChatId ? 'Open Conversation' : 'Connect'}
+        </Button>
       </div>
 
       {/* Fullscreen image/video modal */}
@@ -529,7 +545,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
 
       {/* Suggested Apartments */}
       <div className="px-4 pb-8">
-        <SuggestedApartments apartments={properties} currentPropertyId={id} />
+        <SuggestedApartments apartments={[]} currentPropertyId={id} />
       </div>
 
       {/* Connect Cost Modal */}
@@ -538,7 +554,6 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
         onClose={() => setShowConnectModal(false)}
         onConfirm={handleConnectConfirm}
         propertyTitle={property.title}
-        agentId={property.agent.id}
         propertyId={property.id}
         isFreeConnect={property.isFreeConnect}
       />

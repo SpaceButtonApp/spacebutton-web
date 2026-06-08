@@ -1,15 +1,17 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Bookmark, Search, MapPin, Building2, Banknote, ChevronDown, Grid } from 'lucide-react'
+import { ArrowLeft, Bookmark, Search, MapPin, Building2, Banknote, ChevronDown } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { BottomNav } from '@/components/bottom-nav'
 import { PropertyCard } from '@/components/property-card'
 import { useAppStore } from '@/lib/store'
+import { listingsApi, mapListing } from '@/lib/api/listings'
 import { locations, apartmentTypes, priceRanges } from '@/lib/mock-data'
 import { cn } from '@/lib/utils'
+import type { Property } from '@/lib/mock-data'
 
 // Complete Nigerian states with their LGAs - matching the location-input component
 const stateWithLGAs: Record<string, string[]> = {
@@ -54,7 +56,7 @@ const stateWithLGAs: Record<string, string[]> = {
 
 export default function SearchPage() {
   const router = useRouter()
-  const { properties } = useAppStore()
+  const { savedProperties } = useAppStore()
   const [searchQuery, setSearchQuery] = useState('')
   const [filters, setFilters] = useState({
     location: '',
@@ -65,45 +67,48 @@ export default function SearchPage() {
   })
   const [showResults, setShowResults] = useState(false)
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
+  const [results, setResults] = useState<Property[]>([])
+  const [suggestions, setSuggestions] = useState<Property[]>([])
+  const [loading, setLoading] = useState(false)
 
   // Get LGAs for selected state
   const availableLGAs = filters.location ? (stateWithLGAs[filters.location] || []) : []
 
-  const handleSearch = () => {
+  // Load initial suggestions on mount
+  useEffect(() => {
+    listingsApi.getListings({ page_size: 4 })
+      .then((data) => {
+        const savedSet = new Set(savedProperties)
+        setSuggestions(data.listings.map((l) => mapListing(l, savedSet)))
+      })
+      .catch(() => {})
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleSearch = async () => {
+    setLoading(true)
     setShowResults(true)
+    try {
+      const savedSet = new Set(savedProperties)
+      let data
+      if (searchQuery.trim()) {
+        data = await listingsApi.search(searchQuery.trim())
+      } else {
+        const state = filters.location.replace(/ State$/, '')
+        data = await listingsApi.getListings({
+          state: state || undefined,
+          city: filters.lga || undefined,
+          min_price: filters.minPrice ? Number(filters.minPrice) : undefined,
+          max_price: filters.maxPrice ? Number(filters.maxPrice) : undefined,
+          page_size: 20,
+        })
+      }
+      setResults(data.listings.map((l) => mapListing(l, savedSet)))
+    } catch {
+      setResults([])
+    } finally {
+      setLoading(false)
+    }
   }
-
-  const filteredProperties = useMemo(() => {
-    return properties.filter((property) => {
-      const searchLower = searchQuery.toLowerCase()
-      // Search by title OR location
-      if (searchQuery && 
-          !property.title.toLowerCase().includes(searchLower) && 
-          !property.location.toLowerCase().includes(searchLower)) {
-        return false
-      }
-      // Filter by state (location)
-      if (filters.location && !property.location.toLowerCase().includes(filters.location.toLowerCase().replace(' state', ''))) {
-        return false
-      }
-      // Filter by LGA - check if property location includes the LGA
-      if (filters.lga && !property.location.toLowerCase().includes(filters.lga.toLowerCase())) {
-        return false
-      }
-      if (filters.apartmentType && property.category !== filters.apartmentType.toLowerCase()) {
-        return false
-      }
-      if (filters.minPrice && property.price < parseInt(filters.minPrice)) {
-        return false
-      }
-      if (filters.maxPrice && property.price > parseInt(filters.maxPrice)) {
-        return false
-      }
-      return true
-    })
-  }, [searchQuery, filters, properties])
-
-  const suggestedProperties = properties.slice(0, 2)
 
   return (
     <div className="min-h-screen bg-secondary pb-24">
@@ -295,15 +300,10 @@ export default function SearchPage() {
         {/* Clear Filters Button - Small, positioned at left */}
         <button
           onClick={() => {
-            setFilters({
-              location: '',
-              lga: '',
-              apartmentType: '',
-              minPrice: '',
-              maxPrice: '',
-            })
+            setFilters({ location: '', lga: '', apartmentType: '', minPrice: '', maxPrice: '' })
             setSearchQuery('')
             setShowResults(false)
+            setResults([])
           }}
           className="mt-3 px-3 py-2 rounded-lg bg-secondary text-foreground text-xs font-medium hover:bg-secondary/80 transition-colors"
           title="Clear all filters"
@@ -317,17 +317,26 @@ export default function SearchPage() {
         <h2 className="text-lg font-bold mb-4">
           {showResults ? 'Search Results' : 'Suggested Apartment'}
         </h2>
-        <div className="space-y-3">
-          {(showResults ? filteredProperties : suggestedProperties).map((property) => (
-            <PropertyCard key={property.id} property={property} variant="compact" />
-          ))}
-        </div>
-        
-        {showResults && filteredProperties.length === 0 && (
-          <div className="text-center py-12">
-            <Search className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-muted-foreground">No properties found matching your criteria.</p>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
+        ) : (
+          <>
+            <div className="space-y-3">
+              {(showResults ? results : suggestions).map((property) => (
+                <PropertyCard key={property.id} property={property} variant="compact" />
+              ))}
+            </div>
+
+            {showResults && results.length === 0 && (
+              <div className="text-center py-12">
+                <Search className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground">No properties found matching your criteria.</p>
+              </div>
+            )}
+          </>
         )}
       </div>
 

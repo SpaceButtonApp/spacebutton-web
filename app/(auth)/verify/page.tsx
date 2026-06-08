@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
+import { authApi, getAuthErrorMessage } from '@/lib/api/auth'
 
 export default function VerificationCodePage() {
   const router = useRouter()
@@ -12,6 +13,7 @@ export default function VerificationCodePage() {
   const email = searchParams.get('email') || ''
   const [codes, setCodes] = useState<string[]>(['', '', '', '', '', ''])
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const handleCodeChange = (index: number, value: string) => {
     if (value.length > 1) return
@@ -38,20 +40,28 @@ export default function VerificationCodePage() {
 
   const handleContinue = async () => {
     const verificationCode = codes.join('')
-    if (verificationCode.length !== 6) {
-      alert('Please enter all 6 digits')
-      return
-    }
+    if (verificationCode.length !== 6) return
 
     setIsLoading(true)
-    // Email verified - skip phone verification and go directly to welcome/explore
-    setTimeout(() => {
-      router.push('/welcome')
-    }, 1000)
+    setError('')
+    try {
+      await authApi.verifyEmail(email, verificationCode)
+      // Trigger phone OTP after email is verified
+      await authApi.sendPhoneOtpSignup(email)
+      router.push(`/signup/phone-verification?email=${encodeURIComponent(email)}`)
+    } catch (err) {
+      setError(getAuthErrorMessage(err))
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const handleResendOTP = () => {
-    alert('OTP has been resent to ' + email)
+  const handleResendOTP = async () => {
+    try {
+      await authApi.resendOtp(email)
+    } catch {
+      // silently fail — user can try again
+    }
   }
 
   const maskedEmail = email
@@ -126,9 +136,15 @@ export default function VerificationCodePage() {
           ))}
         </div>
 
+        {error && (
+          <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm text-center">
+            {error}
+          </div>
+        )}
+
         <Button
           onClick={handleContinue}
-          disabled={isLoading}
+          disabled={isLoading || codes.some(c => c === '')}
           className="w-full h-14 rounded-xl bg-primary text-primary-foreground font-semibold text-base mb-4"
         >
           {isLoading ? 'Verifying...' : 'Continue'}

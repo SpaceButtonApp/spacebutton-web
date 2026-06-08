@@ -1,31 +1,38 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { Phone, ArrowLeft, CheckCircle2, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { authApi, getAuthErrorMessage } from '@/lib/api/auth'
 
 export default function PhoneVerificationPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [codes, setCodes] = useState<string[]>(['', '', '', '', '', ''])
   const [isLoading, setIsLoading] = useState(false)
   const [isResending, setIsResending] = useState(false)
   const [resendTimer, setResendTimer] = useState(0)
+  const [error, setError] = useState('')
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
   const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png'
 
+  const [email, setEmail] = useState('')
   const [phoneNumber, setPhoneNumber] = useState('')
-  
+
   useEffect(() => {
+    const emailParam = searchParams.get('email') || ''
+    setEmail(emailParam)
     const signupData = localStorage.getItem('signupData')
     if (signupData) {
       const data = JSON.parse(signupData)
-      setPhoneNumber(data.phoneNumber || data.phone || '')
+      setPhoneNumber(data.phone || '')
+      if (!emailParam) setEmail(data.email || '')
     }
     inputRefs.current[0]?.focus()
-  }, [])
+  }, [searchParams])
 
   // Resend timer countdown
   useEffect(() => {
@@ -69,26 +76,40 @@ export default function PhoneVerificationPage() {
 
   const handleContinue = async () => {
     const verificationCode = codes.join('')
-    if (verificationCode.length !== 6) {
-      return
-    }
+    if (verificationCode.length !== 6) return
 
     setIsLoading(true)
-    setTimeout(() => {
+    setError('')
+    try {
+      await authApi.verifyPhoneSignup(email, verificationCode)
+      // Auto-login after successful phone verification
+      const signupData = localStorage.getItem('signupData')
+      if (signupData) {
+        const data = JSON.parse(signupData)
+        if (data.email && data.password) {
+          await authApi.login(data.email, data.password)
+        }
+        localStorage.removeItem('signupData')
+      }
       router.push('/welcome')
-    }, 1000)
+    } catch (err) {
+      setError(getAuthErrorMessage(err))
+      setIsLoading(false)
+    }
   }
 
-  const handleResendOTP = () => {
+  const handleResendOTP = async () => {
     setIsResending(true)
     setCodes(['', '', '', '', '', ''])
-    
-    // Simulate resend
-    setTimeout(() => {
+    try {
+      await authApi.sendPhoneOtpSignup(email)
+      setResendTimer(30)
+    } catch {
+      // silently ignore
+    } finally {
       setIsResending(false)
-      setResendTimer(30) // 30 second cooldown
       inputRefs.current[0]?.focus()
-    }, 1500)
+    }
   }
 
   const maskedPhone = phoneNumber
@@ -164,6 +185,12 @@ export default function PhoneVerificationPage() {
             </div>
           ))}
         </div>
+
+        {error && (
+          <div className="w-full max-w-sm mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm text-center">
+            {error}
+          </div>
+        )}
 
         {/* Verify Button */}
         <Button

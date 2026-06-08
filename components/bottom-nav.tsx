@@ -4,6 +4,8 @@ import { usePathname, useRouter } from 'next/navigation'
 import { Home, Search, MessageCircle, Settings, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/lib/store'
+import { useHydrated } from '@/lib/hooks/use-hydrated'
+
 
 const navItems = [
   { icon: Home, href: '/home', label: 'Home' },
@@ -15,10 +17,10 @@ const navItems = [
 export function BottomNav() {
   const pathname = usePathname()
   const router = useRouter()
-  const { conversations } = useAppStore()
-  
-  // Count unread messages
-  const unreadMessages = conversations.filter(convo => convo.unread > 0).length
+  const { unreadChatsCount } = useAppStore()
+  const hydrated = useHydrated()
+
+  const unreadMessages = hydrated ? unreadChatsCount : 0
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-t border-border">

@@ -2,11 +2,11 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { 
-  LayoutDashboard, 
-  Users, 
-  Building2, 
-  MessageSquare, 
+import {
+  LayoutDashboard,
+  Users,
+  Building2,
+  MessageSquare,
   CreditCard,
   Star,
   Settings,
@@ -14,21 +14,23 @@ import {
   ChevronLeft,
   ChevronRight,
   Bell,
-  Flag
+  Flag,
+  ShieldCheck,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useState } from 'react'
-import { useAppStore } from '@/lib/store'
+import { useState, useEffect } from 'react'
+
 
 const menuItems = [
   { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
   { label: 'Users', href: '/admin/users', icon: Users },
-  { label: 'User Reports', href: '/admin/reports', icon: Flag },
+  { label: 'Verifications', href: '/admin/verification', icon: ShieldCheck },
   { label: 'Listings', href: '/admin/listings', icon: Building2 },
   { label: 'Messages', href: '/admin/messages', icon: MessageSquare },
   { label: 'Transactions', href: '/admin/transactions', icon: CreditCard },
   { label: 'Reviews', href: '/admin/reviews', icon: Star },
   { label: 'Notifications', href: '/admin/notifications', icon: Bell },
+  { label: 'User Reports', href: '/admin/reports', icon: Flag },
   { label: 'Settings', href: '/admin/settings', icon: Settings },
 ]
 
@@ -37,11 +39,17 @@ export function AdminSidebar() {
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
   const [showLogoutModal, setShowLogoutModal] = useState(false)
-  const { reports } = useAppStore()
-  const pendingReportsCount = reports.filter(r => r.status === 'pending').length
+  const [pendingVerifCount, setPendingVerifCount] = useState(0)
+
+  useEffect(() => {
+    import('@/lib/api/admin').then(({ adminApi }) =>
+      adminApi.getPendingVerifications().then((list) => setPendingVerifCount(list.length)).catch(() => {}),
+    )
+  }, [])
 
   const handleLogout = () => {
     localStorage.removeItem('admin-auth')
+    localStorage.removeItem('admin-token')
     router.push('/admin/login')
   }
 
@@ -70,27 +78,31 @@ export function AdminSidebar() {
         <nav className="flex-1 p-4 overflow-y-auto">
           <ul className="space-y-1">
             {menuItems.map((item) => {
-              const isActive = pathname === item.href
-              const hasPendingReports = item.label === 'User Reports' && pendingReportsCount > 0
+              const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+              const badge =
+                item.label === 'Verifications' && pendingVerifCount > 0 ? pendingVerifCount : null
               return (
                 <li key={item.href}>
                   <Link
                     href={item.href}
                     className={cn(
                       "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 relative",
-                      isActive 
-                        ? "bg-primary/20 text-primary" 
+                      isActive
+                        ? "bg-primary/20 text-primary"
                         : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                     )}
                   >
                     <item.icon className={cn("w-5 h-5 shrink-0", isActive && "text-primary")} />
                     {!collapsed && <span className="font-medium">{item.label}</span>}
-                    {hasPendingReports && !collapsed && (
-                      <span className="ml-auto bg-destructive text-destructive-foreground text-xs font-bold px-2 py-0.5 rounded-full">
-                        {pendingReportsCount}
+                    {badge !== null && !collapsed && (
+                      <span className="ml-auto bg-yellow-500 text-black text-xs font-bold px-2 py-0.5 rounded-full">
+                        {badge}
                       </span>
                     )}
-                    {isActive && !collapsed && !hasPendingReports && (
+                    {badge !== null && collapsed && (
+                      <span className="absolute top-1 right-1 w-2 h-2 bg-yellow-500 rounded-full" />
+                    )}
+                    {isActive && !collapsed && badge === null && (
                       <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
                     )}
                   </Link>

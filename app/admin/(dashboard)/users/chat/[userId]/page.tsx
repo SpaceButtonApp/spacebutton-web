@@ -3,7 +3,7 @@
 import { useState, use } from 'react'
 import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Send, ArrowLeft, Building2, User, MapPin } from 'lucide-react'
+import { Send, ArrowLeft, Building2, User, MapPin, MessageCircle } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { AdminHeader } from '@/components/admin/header'
 import { useAppStore } from '@/lib/store'

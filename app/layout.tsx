@@ -1,8 +1,15 @@
 import type { Metadata, Viewport } from 'next'
+import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from '@/components/theme-provider'
 import { SupportChatWidget } from '@/components/support-chat-widget'
 import './globals.css'
+
+const inter = Inter({
+  subsets: ['latin', 'latin-ext'],
+  variable: '--font-inter',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'SpaceButton - Find Your Perfect Apartment',
@@ -42,7 +49,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="font-sans antialiased bg-background text-foreground" suppressHydrationWarning>
+      <body className={`${inter.variable} font-sans antialiased bg-background text-foreground`} suppressHydrationWarning>
         <ThemeProvider>
           {children}
           <SupportChatWidget />

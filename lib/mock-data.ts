@@ -542,13 +542,8 @@ export const safetyTips = [
 ]
 
 export const formatPrice = (price: number, rentPeriod?: 'monthly' | 'yearly'): string => {
-  const formattedPrice = new Intl.NumberFormat('en-NG', {
-    style: 'currency',
-    currency: 'NGN',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(price).replace('NGN', '₦')
-  
+  const num = price.toLocaleString('en-NG', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+  const formattedPrice = '₦' + num  // U+20A6 = ₦, avoids Intl.NumberFormat symbol variance
   if (rentPeriod) {
     return `${formattedPrice}/${rentPeriod === 'monthly' ? 'month' : 'year'}`
   }

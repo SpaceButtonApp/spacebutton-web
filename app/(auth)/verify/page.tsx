@@ -2,14 +2,14 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
 import { authApi, getAuthErrorMessage } from '@/lib/api/auth'
 
-export default function VerificationCodePage() {
+function VerificationCodePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const email = searchParams.get('email') || ''
@@ -166,4 +166,8 @@ export default function VerificationCodePage() {
       </div>
     </div>
   )
+}
+
+export default function VerificationCodePageWrapper() {
+  return <Suspense><VerificationCodePage /></Suspense>
 }

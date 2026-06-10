@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect, use, useRef } from 'react'
+import { useState, useEffect, use, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { ChevronLeft, MicOff, Volume2, PhoneOff, Phone } from 'lucide-react'
@@ -15,7 +15,7 @@ type CallState = 'connecting' | 'calling' | 'ongoing' | 'ended' | 'error'
 
 const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
 
-export default function VoiceCallPage({ params }: { params: Promise<{ id: string }> }) {
+function VoiceCallPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -183,4 +183,8 @@ export default function VoiceCallPage({ params }: { params: Promise<{ id: string
       </div>
     </div>
   )
+}
+
+export default function VoiceCallPageWrapper({ params }: { params: Promise<{ id: string }> }) {
+  return <Suspense><VoiceCallPage params={params} /></Suspense>
 }

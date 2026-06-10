@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { Phone, ArrowLeft, CheckCircle2, RefreshCw } from 'lucide-react'
@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 import { authApi, getAuthErrorMessage } from '@/lib/api/auth'
 import { syncMyProfile } from '@/lib/api/users'
 
-export default function PhoneVerificationPage() {
+function PhoneVerificationPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [codes, setCodes] = useState<string[]>(['', '', '', '', '', ''])
@@ -258,4 +258,8 @@ export default function PhoneVerificationPage() {
       </div>
     </div>
   )
+}
+
+export default function PhoneVerificationPageWrapper() {
+  return <Suspense><PhoneVerificationPage /></Suspense>
 }

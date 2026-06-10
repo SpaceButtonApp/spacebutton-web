@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { Mail } from 'lucide-react'
@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 import { BackButton } from '@/components/back-button'
 import { authApi, getAuthErrorMessage } from '@/lib/api/auth'
 
-export default function ForgotPasswordVerifyPage() {
+function ForgotPasswordVerifyPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const email = searchParams.get('email') || ''
@@ -174,4 +174,8 @@ export default function ForgotPasswordVerifyPage() {
       </div>
     </div>
   )
+}
+
+export default function ForgotPasswordVerifyPageWrapper() {
+  return <Suspense><ForgotPasswordVerifyPage /></Suspense>
 }

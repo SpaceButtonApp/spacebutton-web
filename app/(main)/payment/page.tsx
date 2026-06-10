@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft, Zap, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -17,7 +17,7 @@ const PACKAGES = [
   { connects: 1,  price: 2000,  label: '1 Connect',   badge: null },
 ]
 
-export default function PaymentPage() {
+function PaymentPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user } = useAppStore()
@@ -151,4 +151,8 @@ export default function PaymentPage() {
       </div>
     </div>
   )
+}
+
+export default function PaymentPageWrapper() {
+  return <Suspense><PaymentPage /></Suspense>
 }

@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState, use } from 'react'
+import { useState, use, Suspense } from 'react'
 import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Send, ArrowLeft, Building2, User, MapPin, MessageCircle } from 'lucide-react'
@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { AdminHeader } from '@/components/admin/header'
 import { useAppStore } from '@/lib/store'
 
-export default function AdminUserChatPage({ params }: { params: Promise<{ userId: string }> }) {
+function AdminUserChatPage({ params }: { params: Promise<{ userId: string }> }) {
   const { userId } = use(params)
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -194,4 +194,8 @@ export default function AdminUserChatPage({ params }: { params: Promise<{ userId
       </div>
     </div>
   )
+}
+
+export default function AdminUserChatPageWrapper({ params }: { params: Promise<{ userId: string }> }) {
+  return <Suspense><AdminUserChatPage params={params} /></Suspense>
 }

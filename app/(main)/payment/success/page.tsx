@@ -2,14 +2,14 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { BottomNav } from "@/components/bottom-nav"
 import { useAppStore } from "@/lib/store"
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const amount = parseInt(searchParams.get("amount") || "2000")
@@ -91,4 +91,8 @@ export default function PaymentSuccessPage() {
       <BottomNav />
     </div>
   )
+}
+
+export default function PaymentSuccessPageWrapper() {
+  return <Suspense><PaymentSuccessPage /></Suspense>
 }

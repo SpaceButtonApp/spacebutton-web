@@ -2,12 +2,12 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ChevronLeft, Copy, Check, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
-export default function TransferPage() {
+function TransferPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [timeLeft, setTimeLeft] = useState(43 * 60)
@@ -183,4 +183,8 @@ export default function TransferPage() {
       )}
     </div>
   )
+}
+
+export default function TransferPageWrapper() {
+  return <Suspense><TransferPage /></Suspense>
 }

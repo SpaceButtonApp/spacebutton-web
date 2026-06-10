@@ -2,14 +2,14 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, Suspense } from 'react'
 import { AdminHeader } from '@/components/admin/header'
 import { adminApi } from '@/lib/api/admin'
 import type { SupportChat, SupportMessage } from '@/lib/api/admin'
 import { Search, Send, MessageSquare, RefreshCw } from 'lucide-react'
 import { useSearchParams } from 'next/navigation'
 
-export default function MessagesPage() {
+function MessagesPage() {
   const searchParams = useSearchParams()
   const userIdFromUrl = searchParams.get('user')
 
@@ -249,4 +249,8 @@ export default function MessagesPage() {
       </div>
     </div>
   )
+}
+
+export default function MessagesPageWrapper() {
+  return <Suspense><MessagesPage /></Suspense>
 }

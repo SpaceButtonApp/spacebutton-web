@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { CheckCircle, XCircle, Loader2, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -11,7 +11,7 @@ import { useAppStore } from '@/lib/store'
 
 type State = 'verifying' | 'success' | 'failed'
 
-export default function PaymentVerifyPage() {
+function PaymentVerifyPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const reference = searchParams.get('reference') || searchParams.get('trxref') || ''
@@ -136,4 +136,8 @@ export default function PaymentVerifyPage() {
       </div>
     </div>
   )
+}
+
+export default function PaymentVerifyPageWrapper() {
+  return <Suspense><PaymentVerifyPage /></Suspense>
 }

@@ -13,9 +13,19 @@ interface BackButtonProps {
 export function BackButton({ fallbackUrl = '/home', className, variant = 'default' }: BackButtonProps) {
   const router = useRouter()
 
+  const handleBack = () => {
+    // If there is previous history in this tab, go back (same as browser back button).
+    // history.length is 1 when the page was opened fresh with no prior navigation.
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back()
+    } else {
+      router.push(fallbackUrl)
+    }
+  }
+
   return (
     <button
-      onClick={() => router.push(fallbackUrl)}
+      onClick={handleBack}
       className={cn(
         'w-10 h-10 flex items-center justify-center rounded-full transition-colors',
         variant === 'default' && 'bg-secondary border border-border hover:bg-secondary/80 text-foreground',

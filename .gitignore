@@ -8,3 +8,7 @@ node_modules/
 .next/
 .env*.local
 .DS_Store
+
+# Local planning files
+_PLAN.md
+_UPDATE.md

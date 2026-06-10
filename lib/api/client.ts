@@ -41,6 +41,7 @@ export function clearAuth() {
 
 let refreshPromise: Promise<boolean> | null = null
 
+// Tri-state: true = refreshed OK, false = token definitely expired (should logout), throws = transient error (don't logout)
 async function tryRefreshTokens(): Promise<boolean> {
   if (refreshPromise) return refreshPromise
 
@@ -48,23 +49,31 @@ async function tryRefreshTokens(): Promise<boolean> {
     const { refreshToken } = getTokens()
     if (!refreshToken) return false
 
+    let res: Response
     try {
-      const res = await fetch(`${BASE_URL}/auth/refresh-token`, {
+      res = await fetch(`${BASE_URL}/auth/refresh-token`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refresh_token: refreshToken }),
       })
-      if (!res.ok) return false
-      const json = await res.json() as { data?: { access_token: string; refresh_token: string } }
-      const data = json.data ?? (json as { access_token: string; refresh_token: string })
-      setTokens(data.access_token, data.refresh_token)
-      return true
-    } catch {
-      return false
-    } finally {
-      refreshPromise = null
+    } catch (networkErr) {
+      // Network/DNS failure — don't log the user out, just propagate
+      throw networkErr
     }
+
+    if (!res.ok) {
+      // 401 / 403 = token genuinely invalid or expired → log out
+      if (res.status === 401 || res.status === 403) return false
+      // 5xx or other server error → transient, don't log out
+      throw new Error(`refresh_http_${res.status}`)
+    }
+
+    const json = await res.json() as { data?: { access_token: string; refresh_token: string } }
+    const data = json.data ?? (json as { access_token: string; refresh_token: string })
+    setTokens(data.access_token, data.refresh_token)
+    return true
   })()
+    .finally(() => { refreshPromise = null })
 
   return refreshPromise
 }
@@ -110,13 +119,21 @@ export async function apiFetch<T = unknown>(
 
   // Auto-refresh on 401
   if (res.status === 401 && !skipAuth) {
-    const refreshed = await tryRefreshTokens()
+    let refreshed: boolean
+    try {
+      refreshed = await tryRefreshTokens()
+    } catch {
+      // Transient error (network down, server 5xx) — don't log out, just fail the request
+      throw new ApiError(401, { message: 'Connection issue. Please try again.' })
+    }
+
     if (refreshed) {
       const { accessToken: newToken } = getTokens()
       const retryHeaders: Record<string, string> = { ...headers }
       if (newToken) retryHeaders['Authorization'] = `Bearer ${newToken}`
       res = await fetch(`${BASE_URL}${endpoint}`, { ...init, headers: retryHeaders })
     } else {
+      // Token definitively invalid — log out
       clearAuth()
       throw new ApiError(401, { message: 'Session expired. Please log in again.' })
     }

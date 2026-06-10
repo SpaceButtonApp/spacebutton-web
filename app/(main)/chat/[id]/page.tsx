@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import {
   Video, Phone, MoreVertical, Send, X, Check, CheckSquare,
-  MessageSquare, Star, Flag, ArrowLeft,
+  MessageSquare, Star, Flag, ArrowLeft, CheckCheck,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -23,6 +23,23 @@ const DEFAULT_AVATAR = '/placeholder-user.jpg'
 const DEFAULT_PROPERTY_IMG = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=400&h=300&fit=crop'
 
 interface DisplayInfo { name: string; avatar: string | null }
+
+function formatMsgTime(iso: string) {
+  const d = new Date(iso)
+  const h = d.getHours()
+  const m = d.getMinutes().toString().padStart(2, '0')
+  return `${h % 12 || 12}:${m} ${h < 12 ? 'AM' : 'PM'}`
+}
+
+function formatDateSep(iso: string) {
+  const d = new Date(iso)
+  const today = new Date()
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+  if (d.toDateString() === today.toDateString()) return 'Today'
+  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday'
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
 
 export default function ChatPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: chatId } = use(params)
@@ -54,7 +71,6 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
   const myId = user?.id ?? ''
 
-  // ─── Load chat + messages on mount ─────────────────────────────────────────
   useEffect(() => {
     Promise.all([
       chatApi.getChat(chatId),
@@ -65,16 +81,10 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         setChat(chatData)
         setMessages(msgData.messages)
         setDoneDeal(dd)
-
-        // Mark read
         chatApi.markRead(chatId).catch(() => {})
-
-        // Load other party display info
         const otherId = chatData.user_id === myId ? chatData.agent_id : chatData.user_id
         const info = await getUserDisplayInfo(otherId).catch(() => null)
         setOtherInfo(info)
-
-        // Load listing if present
         if (chatData.listing_id) {
           const l = await listingsApi.getListing(chatData.listing_id).catch(() => null)
           if (l) setListing(mapListing(l, new Set()))
@@ -84,12 +94,10 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       .finally(() => setLoading(false))
   }, [chatId, myId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ─── Scroll to bottom when messages change ──────────────────────────────────
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // ─── WebSocket ──────────────────────────────────────────────────────────────
   const handleWsEvent = useCallback((event: { type: string; sender_id?: string; content?: string; is_typing?: boolean; user_id?: string }) => {
     if (event.type === 'message' && event.sender_id && event.content) {
       const pseudo: MessageResponse = {
@@ -104,26 +112,20 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       setMessages((prev) => [...prev, pseudo])
     } else if (event.type === 'typing' && event.user_id !== myId) {
       setIsTyping(!!event.is_typing)
-    } else if (event.type === 'read_receipt') {
-      // could mark messages as read visually — skip for now
     }
   }, [chatId, myId])
 
   const { wsMessage, wsTyping, wsRead } = useChatWs(loading ? null : chatId, handleWsEvent as Parameters<typeof useChatWs>[1])
 
-  // ─── Mark read via WS when page is focused ──────────────────────────────────
   useEffect(() => {
     if (!loading) wsRead()
   }, [loading]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ─── Send message ───────────────────────────────────────────────────────────
   const handleSend = async () => {
     const content = input.trim()
     if (!content || sending) return
     setInput('')
     setSending(true)
-
-    // Optimistic
     const optimistic: MessageResponse = {
       id: `opt-${Date.now()}`,
       chat_id: chatId,
@@ -134,24 +136,17 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       created_at: new Date().toISOString(),
     }
     setMessages((prev) => [...prev, optimistic])
-
     try {
       const saved = await chatApi.sendMessage(chatId, content)
-      // Replace optimistic with saved
-      setMessages((prev) =>
-        prev.map((m) => (m.id === optimistic.id ? saved : m))
-      )
-      // Broadcast via WebSocket so the other party gets it in real-time
+      setMessages((prev) => prev.map((m) => (m.id === optimistic.id ? saved : m)))
       wsMessage(content)
     } catch {
-      // Remove optimistic on failure
       setMessages((prev) => prev.filter((m) => m.id !== optimistic.id))
     } finally {
       setSending(false)
     }
   }
 
-  // ─── Typing indicator ───────────────────────────────────────────────────────
   const handleInputChange = (v: string) => {
     setInput(v)
     wsTyping(true)
@@ -159,7 +154,6 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     typingTimer.current = setTimeout(() => wsTyping(false), 1500)
   }
 
-  // ─── Done deal ──────────────────────────────────────────────────────────────
   const handleDoneDeal = async () => {
     if (!doneDeal || doneDeal.deal_locked) return
     try {
@@ -172,7 +166,6 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     } catch {}
   }
 
-  // ─── Submit review ──────────────────────────────────────────────────────────
   const handleSubmitFeedback = async () => {
     if (rating === 0 || !feedbackText.trim() || !chat) return
     const otherId = chat.user_id === myId ? chat.agent_id : chat.user_id
@@ -192,7 +185,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="h-[100dvh] bg-background flex items-center justify-center">
         <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     )
@@ -200,13 +193,10 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
   if (!chat) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="h-[100dvh] bg-background flex items-center justify-center p-4">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-2">Chat not found</h1>
-          <button
-            onClick={() => router.push('/messages')}
-            className="mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-lg font-medium"
-          >
+          <button onClick={() => router.push('/messages')} className="mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-lg font-medium">
             Back to Messages
           </button>
         </div>
@@ -219,180 +209,187 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const otherAvatar = otherInfo?.avatar ?? DEFAULT_AVATAR
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <div className="bg-background px-4 py-3 border-b border-border flex items-center gap-3 sticky top-0 z-40">
+    <div className="flex flex-col h-[100dvh] bg-background overflow-hidden">
+      {/* ── Header ── */}
+      <div className="bg-background px-4 py-3 border-b border-border flex items-center gap-3 flex-shrink-0 z-40">
         <button
           onClick={() => router.push('/messages')}
-          className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary hover:bg-secondary/80 transition-colors"
+          className="w-9 h-9 flex items-center justify-center rounded-full bg-secondary hover:bg-secondary/80 transition-colors flex-shrink-0"
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
 
-        <button
-          onClick={() => router.push(`/user/${otherId}`)}
-          className="flex items-center gap-3 flex-1"
-        >
-          <Image
-            src={otherAvatar}
-            alt={otherName}
-            width={44}
-            height={44}
-            className="rounded-full object-cover w-11 h-11 flex-shrink-0"
-            unoptimized
-          />
-          <div className="text-left">
-            <h2 className="font-semibold text-foreground">{otherName}</h2>
-            {isTyping && (
-              <p className="text-xs text-primary animate-pulse">Typing...</p>
+        <button onClick={() => router.push(`/user/${otherId}`)} className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="relative flex-shrink-0">
+            <Image
+              src={otherAvatar}
+              alt={otherName}
+              width={42}
+              height={42}
+              className="rounded-full object-cover w-[42px] h-[42px] border-2 border-border"
+              unoptimized
+            />
+            <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-green-500 border-2 border-background" />
+          </div>
+          <div className="text-left min-w-0">
+            <h2 className="font-semibold text-foreground text-sm truncate">{otherName}</h2>
+            {isTyping ? (
+              <p className="text-xs text-primary animate-pulse">typing…</p>
+            ) : (
+              <p className="text-xs text-muted-foreground">Online</p>
             )}
           </div>
         </button>
 
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => router.push(`/call/voice/${otherId}`)}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary hover:bg-secondary/80 transition-colors"
-          >
-            <Phone className="w-5 h-5" />
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <button onClick={() => router.push(`/call/voice/${otherId}`)} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-secondary transition-colors">
+            <Phone className="w-4.5 h-4.5 w-[18px] h-[18px]" />
           </button>
-          <button
-            onClick={() => router.push(`/call/video/${otherId}`)}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary hover:bg-secondary/80 transition-colors"
-          >
-            <Video className="w-5 h-5" />
+          <button onClick={() => router.push(`/call/video/${otherId}`)} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-secondary transition-colors">
+            <Video className="w-[18px] h-[18px]" />
           </button>
-          <button
-            onClick={() => setShowMenu((v) => !v)}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary hover:bg-secondary/80 transition-colors"
-          >
-            <MoreVertical className="w-5 h-5" />
+          <button onClick={() => setShowMenu((v) => !v)} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-secondary transition-colors">
+            <MoreVertical className="w-[18px] h-[18px]" />
           </button>
         </div>
       </div>
 
-      {/* Property banner */}
+      {/* ── Property banner ── */}
       {listing && (
-        <div className="px-4 py-2">
-          <button
-            onClick={() => router.push(`/property/${listing.id}`)}
-            className="w-full bg-secondary rounded-xl overflow-hidden border border-border hover:bg-secondary/80 transition-colors"
-          >
-            <div className="flex gap-3 p-3">
-              <Image
-                src={listing.images?.[0] ?? DEFAULT_PROPERTY_IMG}
-                alt={listing.title}
-                width={72}
-                height={72}
-                className="rounded-lg object-cover w-18 h-18 flex-shrink-0"
-                unoptimized
-              />
-              <div className="flex-1 text-left min-w-0">
-                <p className="font-semibold text-sm line-clamp-1">{listing.title}</p>
-                <p className="text-muted-foreground text-xs">{listing.location}</p>
-                <p className="text-primary font-bold text-sm mt-1">
-                  ₦{listing.price.toLocaleString()}
-                </p>
-              </div>
+        <div className="px-4 py-2 border-b border-border bg-secondary/50 flex-shrink-0">
+          <button onClick={() => router.push(`/property/${listing.id}`)} className="w-full flex items-center gap-3">
+            <Image
+              src={listing.images?.[0] ?? DEFAULT_PROPERTY_IMG}
+              alt={listing.title}
+              width={52}
+              height={52}
+              className="rounded-xl object-cover w-13 h-13 flex-shrink-0"
+              unoptimized
+            />
+            <div className="flex-1 text-left min-w-0">
+              <p className="font-semibold text-sm truncate">{listing.title}</p>
+              <p className="text-muted-foreground text-xs truncate">{listing.location}</p>
+              <p className="text-primary font-bold text-sm">₦{listing.price.toLocaleString()}</p>
             </div>
           </button>
         </div>
       )}
 
-      {/* Menu */}
+      {/* ── Dropdown menu ── */}
       {showMenu && !showFeedback && !showReportModal && (
-        <div className="mx-4 mt-2 bg-background rounded-xl border border-border shadow-lg overflow-hidden z-50">
-          <button
-            onClick={() => { router.push(`/user/${otherId}`); setShowMenu(false) }}
-            className="w-full text-left px-4 py-3 hover:bg-secondary transition-colors border-b border-border"
-          >
-            <span className="font-medium">View Profile</span>
+        <div className="absolute top-[57px] right-4 z-50 w-56 bg-background rounded-xl border border-border shadow-xl overflow-hidden">
+          <button onClick={() => { router.push(`/user/${otherId}`); setShowMenu(false) }}
+            className="w-full text-left px-4 py-3 hover:bg-secondary text-sm transition-colors border-b border-border">
+            View Profile
           </button>
-
-          <button
-            onClick={() => { setShowDoneDealInfo(true); setShowMenu(false) }}
-            className="w-full text-left px-4 py-3 hover:bg-secondary transition-colors border-b border-border"
-          >
-            <p className="text-sm text-muted-foreground">Learn about Done Deal</p>
+          <button onClick={() => { setShowDoneDealInfo(true); setShowMenu(false) }}
+            className="w-full text-left px-4 py-3 hover:bg-secondary text-sm transition-colors border-b border-border text-muted-foreground">
+            What is Done Deal?
           </button>
-
           {doneDeal && (
-            <button
-              onClick={handleDoneDeal}
-              disabled={doneDeal.deal_locked}
-              className={cn(
-                'w-full flex items-center justify-between px-4 py-4 transition-colors border-b border-border',
-                doneDeal.deal_locked ? 'bg-green-500/10 cursor-not-allowed' : 'hover:bg-secondary',
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <div className={cn(
-                  'w-6 h-6 rounded border-2 flex items-center justify-center',
-                  doneDeal.deal_locked
-                    ? 'bg-green-500 border-green-500'
-                    : doneDeal.my_done_deal
-                      ? 'bg-primary border-primary'
-                      : 'border-muted-foreground',
-                )}>
-                  {(doneDeal.my_done_deal || doneDeal.deal_locked) && (
-                    <Check className="w-4 h-4 text-white" />
-                  )}
-                </div>
-                <div>
-                  <span className="font-medium">Done Deal</span>
-                  {doneDeal.my_done_deal && !doneDeal.deal_locked && (
-                    <p className="text-xs text-primary">Waiting for other party...</p>
-                  )}
-                  {doneDeal.deal_locked && (
-                    <p className="text-xs text-green-500">Deal completed!</p>
-                  )}
-                </div>
+            <button onClick={handleDoneDeal} disabled={doneDeal.deal_locked}
+              className={cn('w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors border-b border-border',
+                doneDeal.deal_locked ? 'bg-green-500/10 cursor-not-allowed' : 'hover:bg-secondary')}>
+              <div className={cn('w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0',
+                doneDeal.deal_locked ? 'bg-green-500 border-green-500' : doneDeal.my_done_deal ? 'bg-primary border-primary' : 'border-muted-foreground')}>
+                {(doneDeal.my_done_deal || doneDeal.deal_locked) && <Check className="w-3 h-3 text-white" />}
+              </div>
+              <div>
+                <p className="font-medium">Done Deal</p>
+                {doneDeal.deal_locked && <p className="text-xs text-green-500">Completed!</p>}
+                {doneDeal.my_done_deal && !doneDeal.deal_locked && <p className="text-xs text-primary">Waiting…</p>}
               </div>
             </button>
           )}
-
-          <button
-            onClick={() => setShowFeedback(true)}
-            className="w-full flex items-center gap-3 px-4 py-4 hover:bg-secondary transition-colors border-b border-border"
-          >
-            <MessageSquare className="w-5 h-5 text-muted-foreground" />
-            <span className="font-medium">Leave Review</span>
+          <button onClick={() => setShowFeedback(true)}
+            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary text-sm transition-colors border-b border-border">
+            <MessageSquare className="w-4 h-4 text-muted-foreground" />
+            Leave Review
           </button>
-
-          <button
-            onClick={() => { setShowReportModal(true); setShowMenu(false) }}
-            className="w-full flex items-center gap-3 px-4 py-4 hover:bg-secondary transition-colors text-destructive"
-          >
-            <Flag className="w-5 h-5" />
-            <span className="font-medium">Report User</span>
+          <button onClick={() => { setShowReportModal(true); setShowMenu(false) }}
+            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary text-sm transition-colors text-destructive">
+            <Flag className="w-4 h-4" />
+            Report User
           </button>
         </div>
       )}
 
-      {/* Messages */}
-      <div className="flex-1 px-4 py-4 overflow-auto space-y-3 min-h-0">
+      {/* ── Messages ── */}
+      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-2 space-y-1">
         {messages.length === 0 ? (
-          <div className="flex items-center justify-center h-32 text-muted-foreground">
-            <p className="text-sm">No messages yet. Start the conversation!</p>
+          <div className="flex items-center justify-center h-32">
+            <p className="text-sm text-muted-foreground">No messages yet. Start the conversation!</p>
           </div>
         ) : (
-          messages.map((msg) => {
+          messages.map((msg, index) => {
             const isOwn = msg.sender_id === myId
+            const prev = messages[index - 1]
+            const next = messages[index + 1]
+
+            const showDate = !prev ||
+              new Date(prev.created_at).toDateString() !== new Date(msg.created_at).toDateString()
+
+            // Show avatar only on the last consecutive message from the other party
+            const showAvatar = !isOwn && (!next || next.sender_id !== msg.sender_id)
+            // Group consecutive messages — reduce gap when same sender
+            const sameAsPrev = prev && prev.sender_id === msg.sender_id
+
             return (
-              <div
-                key={msg.id}
-                className={cn(
-                  'max-w-[80%] px-4 py-3 rounded-2xl',
-                  isOwn
-                    ? 'ml-auto bg-primary text-primary-foreground rounded-br-sm'
-                    : 'mr-auto bg-secondary text-foreground rounded-bl-sm border border-border',
+              <div key={msg.id}>
+                {showDate && (
+                  <div className="flex items-center gap-3 my-4">
+                    <div className="flex-1 h-px bg-border" />
+                    <span className="text-xs text-muted-foreground bg-background px-2 py-0.5 rounded-full border border-border">
+                      {formatDateSep(msg.created_at)}
+                    </span>
+                    <div className="flex-1 h-px bg-border" />
+                  </div>
                 )}
-              >
-                <p className="text-sm leading-relaxed">
-                  {msg.is_deleted ? (
-                    <span className="italic opacity-60">This message was deleted</span>
-                  ) : msg.content}
-                </p>
+
+                <div className={cn(
+                  'flex items-end gap-2',
+                  isOwn ? 'justify-end' : 'justify-start',
+                  sameAsPrev ? 'mt-0.5' : 'mt-3',
+                )}>
+                  {/* Avatar placeholder for incoming (keeps alignment) */}
+                  {!isOwn && (
+                    <div className="w-8 h-8 flex-shrink-0">
+                      {showAvatar ? (
+                        <Image
+                          src={otherAvatar}
+                          alt={otherName}
+                          width={32}
+                          height={32}
+                          className="rounded-full object-cover w-8 h-8"
+                          unoptimized
+                        />
+                      ) : null}
+                    </div>
+                  )}
+
+                  <div className={cn('flex flex-col max-w-[72%]', isOwn ? 'items-end' : 'items-start')}>
+                    <div className={cn(
+                      'px-4 py-2.5 rounded-2xl text-sm leading-relaxed',
+                      isOwn
+                        ? 'bg-primary text-primary-foreground rounded-br-sm'
+                        : 'bg-secondary text-foreground rounded-bl-sm border border-border/60',
+                    )}>
+                      {msg.is_deleted ? (
+                        <span className="italic opacity-60 text-xs">This message was deleted</span>
+                      ) : msg.content}
+                    </div>
+
+                    {/* Time + status */}
+                    <div className={cn('flex items-center gap-1 mt-0.5 px-1', isOwn ? 'flex-row-reverse' : 'flex-row')}>
+                      <span className="text-[10px] text-muted-foreground">{formatMsgTime(msg.created_at)}</span>
+                      {isOwn && (
+                        msg.status === 'read'
+                          ? <CheckCheck className="w-3.5 h-3.5 text-primary" />
+                          : <Check className="w-3.5 h-3.5 text-muted-foreground" />
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             )
           })
@@ -400,49 +397,45 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
-      <div className="p-4 bg-background border-t border-border">
-        <div className="flex items-center gap-3">
+      {/* ── Input ── */}
+      <div className="flex-shrink-0 px-4 py-3 bg-background border-t border-border">
+        <div className="flex items-center gap-2">
           <Input
             type="text"
-            placeholder="Message here..."
+            placeholder="Type a message…"
             value={input}
             onChange={(e) => handleInputChange(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-            className="flex-1 h-12 rounded-full border-border bg-secondary px-4"
+            className="flex-1 h-11 rounded-full border-border bg-secondary px-4 text-sm focus-visible:ring-1 focus-visible:ring-primary"
           />
           <button
             onClick={handleSend}
             disabled={!input.trim() || sending}
-            className="w-12 h-12 rounded-full bg-primary flex items-center justify-center hover:bg-primary/90 transition-colors disabled:opacity-50"
+            className="w-11 h-11 rounded-full bg-primary flex items-center justify-center hover:bg-primary/90 transition-all disabled:opacity-40 active:scale-95"
           >
-            <Send className="w-5 h-5 text-primary-foreground" />
+            <Send className="w-4.5 h-4.5 w-[18px] h-[18px] text-primary-foreground" />
           </button>
         </div>
       </div>
 
-      {/* Done deal info modal */}
+      {/* ── Done deal info modal ── */}
       {showDoneDealInfo && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center">
           <div className="w-full max-w-md rounded-t-3xl bg-background p-6 pb-8">
             <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-muted" />
             <p className="font-semibold text-lg mb-3">How to use Done Deal</p>
-            <p className="text-muted-foreground text-sm mb-4">
-              Use this feature after a successful transaction between both parties.
-            </p>
+            <p className="text-muted-foreground text-sm mb-4">Use this after a successful transaction between both parties.</p>
             <div className="space-y-2 bg-secondary p-4 rounded-xl text-sm text-muted-foreground mb-6">
               <p>1. Both parties agree on a deal outside the app</p>
               <p>2. Each party taps &quot;Done Deal&quot; in this chat&apos;s menu</p>
               <p>3. When both confirm, the deal is locked</p>
             </div>
-            <Button onClick={() => setShowDoneDealInfo(false)} className="w-full rounded-xl">
-              Got it
-            </Button>
+            <Button onClick={() => setShowDoneDealInfo(false)} className="w-full rounded-xl">Got it</Button>
           </div>
         </div>
       )}
 
-      {/* Congrats modal */}
+      {/* ── Congrats modal ── */}
       {showCongrats && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="w-full max-w-sm rounded-3xl bg-background p-8 text-center">
@@ -450,89 +443,71 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               <CheckSquare className="w-10 h-10 text-green-500" />
             </div>
             <h2 className="text-2xl font-bold mb-2">Congratulations!</h2>
-            <p className="text-muted-foreground mb-6">
-              Both parties confirmed the deal. This chat has been archived.
-            </p>
-            <Button
-              onClick={() => { setShowCongrats(false); router.push('/messages') }}
-              className="w-full rounded-xl"
-            >
+            <p className="text-muted-foreground mb-6">Both parties confirmed the deal. This chat has been archived.</p>
+            <Button onClick={() => { setShowCongrats(false); router.push('/messages') }} className="w-full rounded-xl">
               Back to Messages
             </Button>
           </div>
         </div>
       )}
 
-      {/* Feedback / review modal */}
+      {/* ── Review modal ── */}
       {showFeedback && (
-        <div className="mx-4 mt-2 bg-background rounded-xl border border-border shadow-lg p-4 z-50 fixed bottom-24 left-0 right-0">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold">Leave a Review</h3>
-            <button onClick={() => { setShowFeedback(false); setShowMenu(false) }}>
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          <div className="mb-4">
-            <p className="text-sm text-muted-foreground mb-2">Rate your experience</p>
-            <div className="flex gap-2">
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center">
+          <div className="w-full max-w-md rounded-t-3xl bg-background p-6 pb-8">
+            <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-muted" />
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="font-bold text-lg">Leave a Review</h3>
+              <button onClick={() => { setShowFeedback(false); setShowMenu(false) }} className="w-8 h-8 flex items-center justify-center rounded-full bg-secondary">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-sm text-muted-foreground mb-3">Rate your experience</p>
+            <div className="flex gap-2 mb-5">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button key={star} onClick={() => setRating(star)} className="p-1">
-                  <Star className={cn(
-                    'w-8 h-8 transition-colors',
-                    star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground',
-                  )} />
+                  <Star className={cn('w-8 h-8 transition-colors', star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground')} />
                 </button>
               ))}
             </div>
+            <textarea
+              placeholder="Write your review…"
+              value={feedbackText}
+              onChange={(e) => setFeedbackText(e.target.value)}
+              className="w-full h-24 p-3 rounded-xl border border-border bg-background resize-none text-sm mb-4"
+            />
+            <Button onClick={handleSubmitFeedback} disabled={rating === 0 || !feedbackText.trim()} className="w-full h-12 rounded-xl">
+              Submit Review
+            </Button>
           </div>
-          <textarea
-            placeholder="Write your review..."
-            value={feedbackText}
-            onChange={(e) => setFeedbackText(e.target.value)}
-            className="w-full h-20 p-3 rounded-xl border border-border bg-background resize-none text-sm"
-          />
-          <Button
-            onClick={handleSubmitFeedback}
-            disabled={rating === 0 || !feedbackText.trim()}
-            className="w-full mt-4 h-12 rounded-xl"
-          >
-            Submit Review
-          </Button>
         </div>
       )}
 
-      {/* Report modal */}
+      {/* ── Report modal ── */}
       {showReportModal && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="w-full max-w-sm rounded-2xl bg-background p-6">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
-                  <Flag className="w-6 h-6 text-destructive" />
+                <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <Flag className="w-5 h-5 text-destructive" />
                 </div>
                 <h3 className="font-bold text-lg">Report User</h3>
               </div>
-              <button onClick={() => setShowReportModal(false)}>
-                <X className="w-5 h-5" />
+              <button onClick={() => setShowReportModal(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-secondary">
+                <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="space-y-2 mb-6">
+            <div className="space-y-2 mb-5">
               {[
                 { id: 'scam', label: 'Scam or Fraud' },
                 { id: 'harassment', label: 'Harassment' },
                 { id: 'fake', label: 'Fake Content' },
                 { id: 'other', label: 'Other' },
               ].map((r) => (
-                <button
-                  key={r.id}
-                  onClick={() => setSelectedReportReason(r.id)}
-                  className={cn(
-                    'w-full text-left p-3 rounded-lg border-2 transition-all text-sm font-medium',
-                    selectedReportReason === r.id
-                      ? 'border-destructive bg-destructive/5'
-                      : 'border-border hover:border-destructive/30',
-                  )}
-                >
+                <button key={r.id} onClick={() => setSelectedReportReason(r.id)}
+                  className={cn('w-full text-left p-3 rounded-xl border-2 transition-all text-sm font-medium',
+                    selectedReportReason === r.id ? 'border-destructive bg-destructive/5' : 'border-border hover:border-destructive/30')}>
                   {r.label}
                 </button>
               ))}
@@ -541,27 +516,19 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               <textarea
                 value={reportDetails}
                 onChange={(e) => setReportDetails(e.target.value)}
-                placeholder="Describe the issue..."
-                className="w-full h-20 px-3 py-2 rounded-lg border border-border bg-background text-sm resize-none mb-4"
+                placeholder="Describe the issue…"
+                className="w-full h-20 px-3 py-2 rounded-xl border border-border bg-background text-sm resize-none mb-4"
               />
             )}
             <div className="space-y-2">
               <button
                 disabled={!selectedReportReason || (selectedReportReason === 'other' && !reportDetails.trim())}
                 onClick={() => setShowReportModal(false)}
-                className={cn(
-                  'w-full h-12 rounded-lg font-medium transition-colors',
-                  selectedReportReason
-                    ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
-                    : 'bg-secondary text-muted-foreground cursor-not-allowed',
-                )}
-              >
+                className={cn('w-full h-12 rounded-xl font-medium transition-colors',
+                  selectedReportReason ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : 'bg-secondary text-muted-foreground cursor-not-allowed')}>
                 Submit Report
               </button>
-              <button
-                onClick={() => setShowReportModal(false)}
-                className="w-full h-12 rounded-lg border border-border font-medium hover:bg-secondary transition-colors"
-              >
+              <button onClick={() => setShowReportModal(false)} className="w-full h-12 rounded-xl border border-border font-medium hover:bg-secondary transition-colors">
                 Cancel
               </button>
             </div>

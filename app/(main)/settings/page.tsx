@@ -1,31 +1,41 @@
-﻿'use client'
+'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { 
-  User, Wallet, Crown, Bell, 
-  HelpCircle, LogOut, ChevronRight 
+import {
+  User, Wallet, Crown, Bell,
+  HelpCircle, LogOut, ChevronRight
 } from 'lucide-react'
 import { BottomNav } from '@/components/bottom-nav'
 import { LogoutModal } from '@/components/logout-modal'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { useAppStore } from '@/lib/store'
+import { notificationsApi } from '@/lib/api/notifications'
 import { cn } from '@/lib/utils'
-
-const menuItems = [
-  { icon: User, label: 'Profile', href: '/profile', color: 'text-foreground', bg: 'bg-primary/20' },
-  { icon: Wallet, label: 'My Wallet', href: '/wallet', color: 'text-foreground', bg: 'bg-blue-500/20' },
-  { icon: Crown, label: 'Premium', href: '/premium', color: 'text-foreground', bg: 'bg-yellow-500/20' },
-  { icon: Bell, label: 'Notifications', href: '/notifications', badge: 5, color: 'text-foreground', bg: 'bg-green-500/20' },
-  { icon: HelpCircle, label: 'Help & Support', href: '/help', color: 'text-foreground', bg: 'bg-cyan-500/20' },
-  { icon: LogOut, label: 'Log Out', href: '/logout', color: 'text-destructive', bg: 'bg-destructive/20' },
-]
 
 export default function SettingsPage() {
   const router = useRouter()
   const { user } = useAppStore()
   const [showLogoutModal, setShowLogoutModal] = useState(false)
+  const [notifUnread, setNotifUnread] = useState(0)
+
+  useEffect(() => {
+    notificationsApi.getNotifications(1, 50)
+      .then(({ notifications }) => {
+        setNotifUnread(notifications.filter(n => !n.is_read).length)
+      })
+      .catch(() => {})
+  }, [])
+
+  const menuItems = [
+    { icon: User, label: 'Profile', href: '/profile', badge: 0, color: 'text-foreground', bg: 'bg-primary/20' },
+    { icon: Wallet, label: 'My Wallet', href: '/wallet', badge: 0, color: 'text-foreground', bg: 'bg-blue-500/20' },
+    { icon: Crown, label: 'Premium', href: '/premium', badge: 0, color: 'text-foreground', bg: 'bg-yellow-500/20' },
+    { icon: Bell, label: 'Notifications', href: '/notifications', badge: notifUnread, color: 'text-foreground', bg: 'bg-green-500/20' },
+    { icon: HelpCircle, label: 'Help & Support', href: '/help', badge: 0, color: 'text-foreground', bg: 'bg-cyan-500/20' },
+    { icon: LogOut, label: 'Log Out', href: '/logout', badge: 0, color: 'text-destructive', bg: 'bg-destructive/20' },
+  ]
 
   const handleItemClick = (item: typeof menuItems[0]) => {
     if (item.label === 'Log Out') {
@@ -73,7 +83,7 @@ export default function SettingsPage() {
               <span className={cn('font-medium', item.color)}>{item.label}</span>
             </div>
             <div className="flex items-center gap-2">
-              {item.badge && (
+              {item.badge > 0 && (
                 <div className="w-6 h-6 rounded-full bg-success flex items-center justify-center">
                   <span className="text-xs text-success-foreground font-medium">{item.badge}</span>
                 </div>
@@ -89,4 +99,3 @@ export default function SettingsPage() {
     </div>
   )
 }
-

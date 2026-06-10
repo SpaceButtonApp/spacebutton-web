@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { Star, Edit, Trash2, X, ShieldCheck } from 'lucide-react'
+import { Star, Edit, Trash2, X } from 'lucide-react'
+import { VerifiedBadge } from '@/components/verified-badge'
 import { BottomNav } from '@/components/bottom-nav'
 import { BackButton } from '@/components/back-button'
 import { PropertyCard } from '@/components/property-card'
@@ -101,7 +102,7 @@ export default function ProfilePage() {
 
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-bold">{user?.name || 'Guest'}</h1>
-          {isVerified && <ShieldCheck className="w-5 h-5 text-primary" />}
+          {isVerified && <VerifiedBadge size={22} />}
         </div>
         <p className="text-muted-foreground capitalize">{user?.type || 'Individual'}</p>
         {agentProfile?.agency_name && (

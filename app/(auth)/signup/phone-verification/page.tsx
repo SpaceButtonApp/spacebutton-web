@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { Phone, ArrowLeft, CheckCircle2, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { authApi, getAuthErrorMessage } from '@/lib/api/auth'
+import { syncMyProfile } from '@/lib/api/users'
 
 export default function PhoneVerificationPage() {
   const router = useRouter()
@@ -88,6 +89,7 @@ export default function PhoneVerificationPage() {
         const data = JSON.parse(signupData)
         if (data.email && data.password) {
           await authApi.login(data.email, data.password)
+          syncMyProfile().catch(() => {})
         }
         localStorage.removeItem('signupData')
       }

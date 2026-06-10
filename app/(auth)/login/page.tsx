@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
 import { authApi, getAuthErrorMessage } from '@/lib/api/auth'
+import { syncMyProfile } from '@/lib/api/users'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -40,6 +41,7 @@ export default function LoginPage() {
     setLoading(true)
     try {
       await authApi.login(formData.emailOrPhone.trim().toLowerCase(), formData.password)
+      syncMyProfile().catch(() => {})
       const from = new URLSearchParams(window.location.search).get('from')
       router.push(from && from.startsWith('/') ? from : '/home')
     } catch (err) {

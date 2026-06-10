@@ -170,7 +170,7 @@ export default function WelcomePage() {
 
         {/* CTA Button */}
         <Button
-          onClick={() => router.push('/home')}
+          onClick={() => router.replace('/home')}
           className="w-full max-w-sm h-14 rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-primary-foreground font-semibold text-base shadow-lg shadow-primary/25 transition-all"
         >
           Start Exploring

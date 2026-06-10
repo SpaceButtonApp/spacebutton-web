@@ -43,7 +43,7 @@ export default function LoginPage() {
       await authApi.login(formData.emailOrPhone.trim().toLowerCase(), formData.password)
       syncMyProfile().catch(() => {})
       const from = new URLSearchParams(window.location.search).get('from')
-      router.push(from && from.startsWith('/') ? from : '/home')
+      router.replace(from && from.startsWith('/') ? from : '/home')
     } catch (err) {
       setErrors({ general: getAuthErrorMessage(err) })
     } finally {

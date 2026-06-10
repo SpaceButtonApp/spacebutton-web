@@ -56,11 +56,11 @@ export default function EditProfilePage() {
           gender: (updated.gender as 'Male' | 'Female' | 'Other' | undefined) ?? undefined,
         })
       }
-      router.back()
+      router.push('/profile')
     } catch {
       // silently fall back to local update
       updateUser({ bio: formData.bio || undefined, state: formData.state || undefined, city: formData.city || undefined })
-      router.back()
+      router.push('/profile')
     } finally {
       setSaving(false)
     }
@@ -171,7 +171,7 @@ export default function EditProfilePage() {
             <label className="text-sm text-muted-foreground">Referral Code</label>
             <div className="flex items-center gap-2 mt-1">
               <div className="flex-1 h-12 px-4 rounded-xl bg-background border border-border flex items-center">
-                <span className="font-mono font-semibold">{user?.name?.split(' ')[0] || user?.referralCode || 'N/A'}</span>
+                <span className="font-mono font-semibold">{user?.referralCode || 'N/A'}</span>
               </div>
               <button
                 onClick={copyReferralCode}

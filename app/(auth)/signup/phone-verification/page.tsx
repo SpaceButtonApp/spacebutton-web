@@ -93,7 +93,7 @@ export default function PhoneVerificationPage() {
         }
         localStorage.removeItem('signupData')
       }
-      router.push('/welcome')
+      router.replace('/welcome')
     } catch (err) {
       setError(getAuthErrorMessage(err))
       setIsLoading(false)

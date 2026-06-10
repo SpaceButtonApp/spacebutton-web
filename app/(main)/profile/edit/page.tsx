@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -12,7 +12,7 @@ import { userApi, agentApi } from '@/lib/api/users'
 export default function EditProfilePage() {
   const router = useRouter()
   const { user, updateUser } = useAppStore()
-  const [profileImage, setProfileImage] = useState(user?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face')
+  const [profileImage, setProfileImage] = useState(user?.avatar || '/placeholder-user.jpg')
   const [showImageOptions, setShowImageOptions] = useState(false)
   const [saving, setSaving] = useState(false)
   const isAgent = user?.type === 'agent'
@@ -238,7 +238,7 @@ export default function EditProfilePage() {
             <textarea
               value={formData.bio}
               onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-              placeholder="Tell people about yourself…"
+              placeholder="Tell people about yourselfâ€¦"
               className="w-full p-4 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all resize-none h-24"
             />
           </div>
@@ -273,9 +273,10 @@ export default function EditProfilePage() {
           disabled={saving}
           className="w-full h-14 rounded-xl bg-primary text-primary-foreground font-semibold text-base disabled:opacity-60"
         >
-          {saving ? 'Saving…' : 'Save Changes'}
+          {saving ? 'Savingâ€¦' : 'Save Changes'}
         </Button>
       </div>
     </div>
   )
 }
+

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -47,7 +47,7 @@ export default function SettingsPage() {
       <div className="px-6 pt-4 pb-6 flex flex-col items-center">
         <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-primary/30 mb-4 shadow-lg shadow-primary/20">
           <Image
-            src={user?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'}
+            src={user?.avatar || '/placeholder-user.jpg'}
             alt={user?.name || 'User'}
             width={112}
             height={112}
@@ -89,3 +89,4 @@ export default function SettingsPage() {
     </div>
   )
 }
+

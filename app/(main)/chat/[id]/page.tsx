@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils'
 import type { ChatResponse, MessageResponse, DoneDealState } from '@/lib/types/chat'
 import type { Property } from '@/lib/mock-data'
 
-const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'
+const DEFAULT_AVATAR = '/placeholder-user.jpg'
 const DEFAULT_PROPERTY_IMG = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=400&h=300&fit=crop'
 
 interface DisplayInfo { name: string; avatar: string | null }

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -63,7 +63,7 @@ export default function ProfilePage() {
 
   const avatarUrl = profile?.profile_photo_url
     || user?.avatar
-    || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'
+    || '/placeholder-user.jpg'
 
   const agentProfile = isAgent ? (profile as AgentProfile | null) : null
   const averageRating = agentProfile?.avg_rating?.toFixed(1) ?? '0.0'
@@ -306,3 +306,4 @@ export default function ProfilePage() {
     </div>
   )
 }
+

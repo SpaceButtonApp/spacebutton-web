@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
@@ -106,7 +106,7 @@ export default function HomePage() {
             className="w-12 h-12 rounded-full overflow-hidden border-2 border-primary/50 flex-shrink-0 hover:border-primary transition-colors"
           >
             <Image
-              src={mounted && user?.avatar ? user.avatar : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'}
+              src={mounted && user?.avatar ? user.avatar : '/placeholder-user.jpg'}
               alt="Profile"
               width={48}
               height={48}
@@ -153,7 +153,7 @@ export default function HomePage() {
 
       {/* Content */}
       <div className="px-4 py-6">
-        {/* For You — shown when we have recommended listings */}
+        {/* For You â€” shown when we have recommended listings */}
         {forYou.length > 0 && (
           <div className="mb-8">
             <div className="flex items-center gap-2 mb-4">
@@ -180,7 +180,7 @@ export default function HomePage() {
                   <div className="p-3">
                     <p className="text-sm font-semibold text-foreground line-clamp-1">{property.title}</p>
                     <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{property.location}</p>
-                    <p className="text-primary font-bold text-sm mt-2">₦{property.price.toLocaleString()}</p>
+                    <p className="text-primary font-bold text-sm mt-2">â‚¦{property.price.toLocaleString()}</p>
                   </div>
                 </div>
               ))}
@@ -216,3 +216,4 @@ export default function HomePage() {
     </div>
   )
 }
+

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -89,7 +89,7 @@ export default function WelcomePage() {
         email: signupData.email,
         phone: signupData.phone,
         type: signupData.profileType,
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+        avatar: '',
         gender: signupData.gender as 'Male' | 'Female' | 'Other',
       })
       
@@ -98,7 +98,7 @@ export default function WelcomePage() {
         name: signupData.name,
         email: signupData.email,
         phone: signupData.phone,
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+        avatar: '',
         type: signupData.profileType,
         isLoggedIn: true,
         referralCode: `REF${Date.now().toString(36).toUpperCase()}`,
@@ -115,7 +115,7 @@ export default function WelcomePage() {
   const features = [
     { icon: Home, label: 'Find your perfect space' },
     { icon: Users, label: 'Verified property listings' },
-    { icon: Zap, label: '₦6000 connect included' },
+    { icon: Zap, label: 'â‚¦6000 connect included' },
   ]
 
   return (
@@ -179,3 +179,4 @@ export default function WelcomePage() {
     </div>
   )
 }
+

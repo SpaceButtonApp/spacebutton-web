@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -11,7 +11,7 @@ import { getUserDisplayInfo } from '@/lib/api/users'
 import { formatDistanceToNow } from 'date-fns'
 import type { ChatResponse } from '@/lib/types/chat'
 
-const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'
+const DEFAULT_AVATAR = '/placeholder-user.jpg'
 
 interface DisplayInfo { name: string; avatar: string | null }
 
@@ -139,3 +139,4 @@ export default function MessagesPage() {
     </div>
   )
 }
+

@@ -123,6 +123,17 @@ export const authApi = {
   async resetPassword(data: ResetPasswordRequest): Promise<void> {
     await api.post('/auth/reset-password', data, { skipAuth: true })
   },
+
+  async exchangeWebToken(webToken: string): Promise<void> {
+    const res = await api.post<ApiResponse<TokenResponse>>(
+      '/auth/exchange-web-token',
+      { web_token: webToken },
+      { skipAuth: true }
+    )
+    const data = res.data
+    setTokens(data.access_token, data.refresh_token)
+    useAppStore.getState().setUser(mapUserFromToken(data.user))
+  },
 }
 
 // ─── Error message extractor ──────────────────────────────────

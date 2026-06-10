@@ -4,6 +4,7 @@ import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from '@/components/theme-provider'
 import { SupportChatWidget } from '@/components/support-chat-widget'
 import { NavigationRefresh } from '@/components/navigation-refresh'
+import { WebTokenHandler } from '@/components/web-token-handler'
 import './globals.css'
 
 const inter = Inter({
@@ -39,6 +40,7 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans antialiased bg-background text-foreground`} suppressHydrationWarning>
         <ThemeProvider>
           <NavigationRefresh />
+          <WebTokenHandler />
           {children}
           <SupportChatWidget />
         </ThemeProvider>

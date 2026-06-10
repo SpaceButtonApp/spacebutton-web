@@ -43,9 +43,11 @@ export default function PaymentPage() {
     setLoading(true)
     setError(null)
     try {
+      const callbackUrl = `${window.location.origin}/payment/verify`
       const { authorization_url } = await paymentsApi.initializePayment(
         connectsToPackage(pkg.connects),
         user.email,
+        callbackUrl,
       )
       window.location.href = authorization_url
     } catch (err) {

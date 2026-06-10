@@ -15,10 +15,10 @@ export function connectsToPackage(qty: number): ConnectPackage {
 }
 
 export const paymentsApi = {
-  async initializePayment(pkg: ConnectPackage, email: string): Promise<PaystackInitResponse> {
+  async initializePayment(pkg: ConnectPackage, email: string, callbackUrl?: string): Promise<PaystackInitResponse> {
     const res = await api.post<ApiResponse<PaystackInitResponse>>(
       '/connects/initialize',
-      { package: pkg, email },
+      { package: pkg, email, callback_url: callbackUrl },
     )
     return res.data
   },

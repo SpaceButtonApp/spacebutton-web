@@ -19,7 +19,7 @@ type Tab = typeof tabs[number]
 function tabToFilters(tab: Tab): ListingFilters {
   switch (tab) {
     case 'Connect':    return { category: 'need_roommate', page_size: 20 }
-    case 'Agent':      return { owner_type: 'agent', page_size: 20 }
+    case 'Agent':      return { category: 'for_rent', page_size: 20 }
     case 'Shortlet':   return { category: 'subletting', page_size: 20 }
     case 'Properties': return { category: 'for_rent', owner_type: 'user', page_size: 20 }
   }
@@ -193,7 +193,7 @@ export default function HomePage() {
                   <div className="p-3">
                     <p className="text-sm font-semibold text-foreground line-clamp-1">{property.title}</p>
                     <p className="text-xs text-muted-foreground mt-1 line-clamp-1">{property.location}</p>
-                    <p className="text-primary font-bold text-sm mt-2">â‚¦{property.price.toLocaleString()}</p>
+                    <p className="text-primary font-bold text-sm mt-2">&#x20A6;{property.price.toLocaleString()}</p>
                   </div>
                 </div>
               ))}

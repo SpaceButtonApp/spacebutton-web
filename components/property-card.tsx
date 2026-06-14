@@ -2,8 +2,7 @@
 
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { Camera, Grid3X3, Bookmark, MapPin, Users, Building2, CheckCircle2, Home, DollarSign, Maximize, Play } from 'lucide-react'
-import { useState, useRef } from 'react'
+import { Camera, Grid3X3, Bookmark, MapPin, Users, Building2, CheckCircle2, Home, DollarSign, Maximize } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { saveListing } from '@/lib/api/listings'
 import { formatPrice, type Property } from '@/lib/mock-data'
@@ -31,52 +30,21 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
     router.push(`/property/${property.id}`)
   }
 
-  const [isPlaying, setIsPlaying] = useState(false)
-  const videoRef = useRef<HTMLVideoElement>(null)
-
-  const handlePlayVideo = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (videoRef.current) {
-      videoRef.current.play()
-      setIsPlaying(true)
-    }
-  }
-
   if (variant === 'compact' || variant === 'horizontal') {
     return (
       <div 
         onClick={handleViewDetails}
         className="flex gap-3 bg-card rounded-2xl p-3 border border-border cursor-pointer hover:border-[#703BF7]/30 transition-all duration-200"
       >
-        {/* Image/Video */}
+        {/* Image */}
         <div className="relative w-32 h-28 flex-shrink-0 rounded-xl overflow-hidden">
-          {property.images[0]?.startsWith('data:video') ? (
-            <>
-              <video 
-                ref={videoRef}
-                src={property.images[0]} 
-                className="w-full h-full object-cover"
-                muted
-                loop
-                playsInline
-                poster={property.images[1] || ''}
-              />
-              {!isPlaying && (
-                <div className="video-play-overlay" onClick={handlePlayVideo}>
-                  <div className="video-play-button">
-                    <Play className="w-6 h-6 text-foreground ml-1" fill="currentColor" />
-                  </div>
-                </div>
-              )}
-            </>
-          ) : (
-            <Image
-              src={property.images[0]}
-              alt={property.title}
-              fill
-              className="object-cover"
-            />
-          )}
+          <Image
+            src={property.images[0] || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=400&h=300&fit=crop'}
+            alt={property.title}
+            fill
+            className="object-cover"
+            unoptimized
+          />
           {property.isAdminPost && (
             <div className="absolute top-2 left-2 w-6 h-6 rounded-full bg-[#703BF7] flex items-center justify-center">
               <CheckCircle2 className="w-4 h-4 text-white" />
@@ -156,48 +124,17 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
     )
   }
 
-  const [isPlayingFull, setIsPlayingFull] = useState(false)
-  const videoRefFull = useRef<HTMLVideoElement>(null)
-
-  const handlePlayVideoFull = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (videoRefFull.current) {
-      videoRefFull.current.play()
-      setIsPlayingFull(true)
-    }
-  }
-
   return (
     <div className="bg-card rounded-3xl overflow-hidden border border-border hover:border-[#703BF7]/30 transition-all duration-200">
-      {/* Image/Video */}
+      {/* Image */}
       <div className="relative aspect-[4/3]">
-        {property.images[0]?.startsWith('data:video') ? (
-          <>
-            <video 
-              ref={videoRefFull}
-              src={property.images[0]} 
-              className="w-full h-full object-cover"
-              muted
-              loop
-              playsInline
-              poster={property.images[1] || ''}
-            />
-            {!isPlayingFull && (
-              <div className="video-play-overlay" onClick={handlePlayVideoFull}>
-                <div className="video-play-button">
-                  <Play className="w-6 h-6 text-foreground ml-1" fill="currentColor" />
-                </div>
-              </div>
-            )}
-          </>
-        ) : (
-          <Image
-            src={property.images[0]}
-            alt={property.title}
-            fill
-            className="object-cover"
-          />
-        )}
+        <Image
+          src={property.images[0] || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=400&h=300&fit=crop'}
+          alt={property.title}
+          fill
+          className="object-cover"
+          unoptimized
+        />
         
         {/* Verified badge - Only for admin posts */}
         {property.isAdminPost && (

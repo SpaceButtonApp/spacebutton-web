@@ -78,6 +78,8 @@ export default function VerificationPage() {
   const pendingCount = verifications.filter((v) =>
     v.id_verification_status === 'pending' || v.live_verification_status === 'pending',
   ).length
+  const verifiedCount = verifications.filter((v) => v.is_identity_verified && v.is_live_verified).length
+  const notVerifiedCount = verifications.length - verifiedCount
 
   return (
     <div className="min-h-screen">
@@ -85,20 +87,22 @@ export default function VerificationPage() {
 
       <div className="p-6">
         {/* Stats row */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
             <p className="text-sm text-gray-400 mb-1">Total Submissions</p>
             <p className="text-2xl font-bold text-white">{loading ? '—' : verifications.length}</p>
           </div>
           <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
-            <p className="text-sm text-gray-400 mb-1">Pending Review</p>
-            <p className="text-2xl font-bold text-yellow-400">{loading ? '—' : pendingCount}</p>
+            <p className="text-sm text-gray-400 mb-1">Verified Users</p>
+            <p className="text-2xl font-bold text-green-400">{loading ? '—' : verifiedCount}</p>
           </div>
           <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
-            <p className="text-sm text-gray-400 mb-1">Fully Verified</p>
-            <p className="text-2xl font-bold text-green-400">
-              {loading ? '—' : verifications.filter((v) => v.is_identity_verified && v.is_live_verified).length}
-            </p>
+            <p className="text-sm text-gray-400 mb-1">Not Verified</p>
+            <p className="text-2xl font-bold text-red-400">{loading ? '—' : notVerifiedCount}</p>
+          </div>
+          <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
+            <p className="text-sm text-gray-400 mb-1">Pending Review</p>
+            <p className="text-2xl font-bold text-yellow-400">{loading ? '—' : pendingCount}</p>
           </div>
         </div>
 

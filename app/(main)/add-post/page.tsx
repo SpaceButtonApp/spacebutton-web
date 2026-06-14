@@ -1,13 +1,15 @@
-"use client"
+﻿"use client"
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { ChevronLeft, ChevronDown, MapPin, X, Plus, ArrowLeft } from "lucide-react"
+import { ChevronLeft, ChevronDown, X, Plus, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { LocationInput } from "@/components/location-input"
 import Image from "next/image"
 import { useAppStore } from "@/lib/store"
+import { listingsApi } from "@/lib/api/listings"
+import type { ListingCategory, PropertyType } from "@/lib/types/listing"
 
 const listingConditionsLandlord = ["Rent", "Roommate", "Flatmate"]
 const listingConditionsTenant = ["Vacating", "Roommate", "Flatmate"]
@@ -18,7 +20,7 @@ const facilities = ["Parking Lot", "Pet Allowed", "Park", "Garden", "Estate", "K
 
 export default function AddPostPage() {
   const router = useRouter()
-  const { addProperty, user } = useAppStore()
+  const { user } = useAppStore()
   const isAgent = user?.type === 'agent'
   const [listingType, setListingType] = useState<"Connect" | "Agent">(isAgent ? "Agent" : "Connect")
   const [connectRole, setConnectRole] = useState<"Tenant" | "Landlord">("Tenant")
@@ -41,6 +43,9 @@ export default function AddPostPage() {
     nearestBusStop: "",
   })
   const [photos, setPhotos] = useState<string[]>([])
+  const [mediaFiles, setMediaFiles] = useState<File[]>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
   const [rentPrice, setRentPrice] = useState("")
   const [rentPeriod, setRentPeriod] = useState<'monthly' | 'yearly'>('yearly')
   const [showRentPeriodDropdown, setShowRentPeriodDropdown] = useState(false)
@@ -67,19 +72,14 @@ export default function AddPostPage() {
 
   const removePhoto = (index: number) => {
     setPhotos((prev) => prev.filter((_, i) => i !== index))
+    setMediaFiles((prev) => prev.filter((_, i) => i !== index))
   }
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (files && files.length > 0) {
-      Array.from(files).forEach((file) => {
-        const reader = new FileReader()
-        reader.onloadend = () => {
-          setPhotos((prev) => [...prev, reader.result as string])
-        }
-        reader.readAsDataURL(file)
-      })
-    }
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0) return
+    setMediaFiles((prev) => [...prev, ...files])
+    setPhotos((prev) => [...prev, ...files.map((f) => URL.createObjectURL(f))])
   }
 
   const today = new Date()
@@ -145,7 +145,7 @@ export default function AddPostPage() {
       return false
     }
     
-    const hasVideo = photos.some(p => p.startsWith('data:video'))
+    const hasVideo = mediaFiles.some(f => f.type.startsWith('video/'))
     if (!hasVideo) {
       setValidationMessage("Please upload at least one video of the property")
       setShowValidationModal(true)
@@ -210,7 +210,7 @@ export default function AddPostPage() {
     }
   }
 
-  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png'
+  const logoUrl = '/icon.png'
 
   return (
     <div className="min-h-screen bg-background">
@@ -347,10 +347,10 @@ export default function AddPostPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {photos.map((photo, index) => (
               <div key={index} className="relative aspect-[4/3] rounded-xl overflow-hidden">
-                {photo.startsWith('data:video') ? (
+                {mediaFiles[index]?.type.startsWith('video/') ? (
                   <video src={photo} className="w-full h-full object-cover" muted />
                 ) : (
-                  <Image src={photo} alt="" fill className="object-cover" />
+                  <Image src={photo} alt="" fill className="object-cover" unoptimized />
                 )}
                 <button
                   onClick={() => removePhoto(index)}
@@ -358,7 +358,7 @@ export default function AddPostPage() {
                 >
                   <X className="w-4 h-4 text-foreground" />
                 </button>
-                {photo.startsWith('data:video') && (
+                {mediaFiles[index]?.type.startsWith('video/') && (
                   <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/70 rounded text-xs text-foreground">
                     Video
                   </div>
@@ -629,7 +629,7 @@ export default function AddPostPage() {
           <textarea
             value={descriptions}
             onChange={(e) => setDescriptions(e.target.value)}
-            placeholder="Write other descriptions if available (text and numbers allowed)"
+            placeholder="Write other descriptions if available"
             className="w-full px-4 py-3 bg-secondary border border-border text-foreground rounded-xl placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
             rows={4}
           />
@@ -688,76 +688,77 @@ export default function AddPostPage() {
                 Your property will be visible on the home page shortly.
               </p>
 
+              {submitError && (
+                <p className="text-sm text-destructive text-center mb-2">{submitError}</p>
+              )}
+
               <div className="flex w-full gap-3">
                 <Button
                   variant="outline"
                   className="flex-1 rounded-xl bg-secondary border-border text-foreground hover:bg-secondary/80"
+                  disabled={isSubmitting}
                   onClick={() => setShowReviewModal(false)}
                 >
                   Edit Post
                 </Button>
                 <Button
-                  className="flex-1 rounded-xl bg-primary hover:bg-primary/90 text-foreground"
-                  onClick={() => {
-                    const propertyType = listingType.toLowerCase() as 'connect' | 'agent'
-                    const propertyCondition = selectedCondition.toLowerCase() as 'rent' | 'roommate' | 'flatmate'
-                    const newProperty = {
-                      id: Date.now().toString(),
-                      title: listingTitle,
-                      location: `${location.nearestBusStop}, ${location.lga}, ${location.state}`,
-                      price: parseInt(rentPrice.replace(/,/g, '') || '0'),
-                      rentPeriod: rentPeriod,
-                      images: photos,
-                      bedrooms,
-                      bathrooms,
-                      beds: bedrooms,
-                      baths: bathrooms,
-                      reception: sittingRooms,
-                      size: bedrooms * 400,
-                      category: selectedCategory.toLowerCase() as 'flat' | 'self-con' | 'duplex' | 'storey' | 'penthouse',
-                      type: propertyType,
-                      listingType: propertyType,
-                      condition: propertyCondition,
-                      rating: 5.0,
-                      reviews: 0,
-                      description: descriptions || `Beautiful ${bedrooms} bedroom ${selectedCategory.toLowerCase()} available for ${selectedCondition.toLowerCase()}.`,
-                      amenities: selectedFacilities,
-                      features: selectedFacilities,
-                      agent: {
-                        id: user?.id || '1',
-                        name: user?.name || 'Anonymous User',
-                        avatar: user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=user',
-                        type: user?.type || 'individual',
-                        listings: 1,
-                        closed: 0,
-                        rating: 5.0,
-                        online: true,
-                        gender: user?.gender,
-                        bio: user?.bio,
-                        state: user?.state,
-                        city: user?.city,
-                      },
-                      ownerId: user?.id || '1',
-                      verified: false,
-                      isVerified: false,
-                      isAdminPost: false,
-                      isFeatured: false,
-                      saved: false,
-                      photoCount: photos.length,
-                      bonus: listingType === 'Connect' && connectRole === 'Tenant' ? `₦${calculatedReward.toLocaleString()} Reward` : undefined,
-                      totalPackage: (listingType === 'Agent' || (listingType === 'Connect' && connectRole === 'Landlord')) ? parseInt(totalPackage.replace(/,/g, '') || '0') : undefined,
-                      rentDueDate: listingType === 'Connect' && connectRole === 'Tenant' && selectedDate ? selectedDate.toISOString() : undefined,
-                      connectRole: listingType === 'Connect' ? connectRole : undefined,
-                      landlordPresence: landlordPresence,
-                      balconies: balconies,
-                      genderNeeded: selectedGender.toLowerCase() as 'male' | 'female' | 'both',
-                      createdAt: new Date().toISOString(),
+                  className="flex-1 rounded-xl bg-primary hover:bg-primary/90 text-foreground disabled:opacity-60"
+                  disabled={isSubmitting}
+                  onClick={async () => {
+                    setIsSubmitting(true)
+                    setSubmitError('')
+                    try {
+                      const category: ListingCategory =
+                        selectedCondition === 'Vacating' ? 'subletting' :
+                        (selectedCondition === 'Roommate' || selectedCondition === 'Flatmate') ? 'need_roommate' :
+                        'for_rent'
+
+                      const property_type: PropertyType =
+                        selectedCategory === 'Self Con' ? 'self_contain' :
+                        (selectedCategory === 'Duplex' || selectedCategory === 'Storey') ? 'house' :
+                        'apartment'
+
+                      const listing = await listingsApi.createListing({
+                        title: listingTitle,
+                        description: descriptions || `Beautiful ${bedrooms} bedroom ${selectedCategory.toLowerCase()} available for ${selectedCondition.toLowerCase()}.`,
+                        property_type,
+                        category,
+                        price: parseInt(rentPrice.replace(/,/g, '') || '0'),
+                        state: location.state,
+                        city: location.lga,
+                        address: location.nearestBusStop,
+                        bedrooms,
+                        bathrooms,
+                        rent_period: rentPeriod,
+                        total_package: (listingType === 'Agent' || (listingType === 'Connect' && connectRole === 'Landlord'))
+                          ? parseInt(totalPackage.replace(/,/g, '') || '0') : undefined,
+                        rent_due_date: ((listingType === 'Connect' && connectRole === 'Tenant') || (isAgent && selectedCondition === 'Vacating')) && selectedDate
+                          ? selectedDate.toISOString() : undefined,
+                        gender_needed: selectedGender.toLowerCase(),
+                        landlord_presence: landlordPresence,
+                        balconies,
+                        sitting_rooms: sittingRooms,
+                        facilities: selectedFacilities.join(','),
+                        connect_role: listingType === 'Connect' ? connectRole : undefined,
+                      })
+
+                      const imageFiles = mediaFiles.filter(f => !f.type.startsWith('video/'))
+                      const videoFile = mediaFiles.find(f => f.type.startsWith('video/'))
+                      if (imageFiles.length > 0) {
+                        await listingsApi.uploadImages(listing.id, imageFiles)
+                      }
+                      if (videoFile) {
+                        await listingsApi.uploadVideo(listing.id, videoFile)
+                      }
+
+                      router.push('/home')
+                    } catch {
+                      setSubmitError('Failed to submit. Please try again.')
+                      setIsSubmitting(false)
                     }
-                    addProperty(newProperty)
-                    router.push('/home')
                   }}
                 >
-                  Finish
+                  {isSubmitting ? 'Submitting…' : 'Finish'}
                 </Button>
               </div>
             </div>

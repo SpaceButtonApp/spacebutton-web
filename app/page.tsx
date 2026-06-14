@@ -84,7 +84,7 @@ export default function LandingPage() {
 
   if (!mounted) return null
 
-  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png'
+  const logoUrl = '/icon.png'
 
   const availableProperties = properties.slice(0, 3)
   
@@ -221,7 +221,7 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0">
               <Image src={logoUrl} alt="SpaceButton" width={32} height={32} className="h-8 w-8" />
-              <span className="font-bold text-base sm:text-lg text-foreground hidden sm:inline">SpaceButton</span>
+              <span className="font-bold text-base sm:text-lg text-foreground">SpaceButton</span>
             </Link>
 
             <div className="hidden md:flex items-center gap-8">

@@ -54,12 +54,10 @@ export default function ProfilePage() {
       })
       .catch(() => {})
 
-    // Load reviews (agents only)
-    if (isAgent) {
-      reviewApi.getAgentReviews(user.id)
-        .then((data) => setReviewData(data))
-        .catch(() => {})
-    }
+    // Load reviews
+    reviewApi.getAgentReviews(user.id)
+      .then((data) => setReviewData(data))
+      .catch(() => {})
   }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const avatarUrl = profile?.profile_photo_url

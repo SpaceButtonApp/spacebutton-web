@@ -47,7 +47,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false)
   const [mounted, setMounted] = useState(false)
 
-  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png'
+  const logoUrl = '/icon.png'
 
   useEffect(() => { setMounted(true) }, [])
 
@@ -153,8 +153,21 @@ export default function HomePage() {
 
       {/* Content */}
       <div className="px-4 py-6">
-        {/* For You â€” shown when we have recommended listings */}
-        {forYou.length > 0 && (
+        {/* Coming soon for Shortlet & Properties */}
+        {(currentTab === 'Shortlet' || currentTab === 'Properties') && (
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center mb-5">
+              <Sparkles className="w-10 h-10 text-primary" />
+            </div>
+            <h2 className="text-xl font-bold text-foreground mb-2">{currentTab} — Coming Soon</h2>
+            <p className="text-muted-foreground text-center max-w-xs text-sm">
+              We&apos;re working on something great. {currentTab} listings will be available here soon. Stay tuned!
+            </p>
+          </div>
+        )}
+
+        {/* For You — shown when we have recommended listings */}
+        {currentTab !== 'Shortlet' && currentTab !== 'Properties' && forYou.length > 0 && (
           <div className="mb-8">
             <div className="flex items-center gap-2 mb-4">
               <Sparkles className="w-5 h-5 text-primary" />
@@ -189,26 +202,28 @@ export default function HomePage() {
         )}
 
         {/* Main feed */}
-        {loading ? (
-          <div className="space-y-4">
-            {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
-          </div>
-        ) : listings.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="w-24 h-24 rounded-2xl bg-card border border-border flex items-center justify-center mb-4">
-              <Bookmark className="w-12 h-12 text-muted-foreground" />
+        {currentTab !== 'Shortlet' && currentTab !== 'Properties' && (
+          loading ? (
+            <div className="space-y-4">
+              {Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)}
             </div>
-            <h2 className="text-xl font-bold text-foreground mb-2">No Listings Yet</h2>
-            <p className="text-muted-foreground text-center max-w-xs">
-              Be the first to post a listing in this category.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {listings.map((property) => (
-              <PropertyCard key={property.id} property={property} />
-            ))}
-          </div>
+          ) : listings.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <div className="w-24 h-24 rounded-2xl bg-card border border-border flex items-center justify-center mb-4">
+                <Bookmark className="w-12 h-12 text-muted-foreground" />
+              </div>
+              <h2 className="text-xl font-bold text-foreground mb-2">No Listings Yet</h2>
+              <p className="text-muted-foreground text-center max-w-xs">
+                Be the first to post a listing in this category.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {listings.map((property) => (
+                <PropertyCard key={property.id} property={property} />
+              ))}
+            </div>
+          )
         )}
       </div>
 

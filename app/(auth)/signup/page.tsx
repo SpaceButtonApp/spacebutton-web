@@ -4,23 +4,10 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { User, Mail, Ticket, Check, ChevronDown } from 'lucide-react'
+import { User, Mail, Ticket, Check } from 'lucide-react'
 import { BackButton } from '@/components/back-button'
 
 const genderOptions = ['Male', 'Female']
-
-const countryCodes = [
-  { code: '+234', country: 'Nigeria', flag: '🇳🇬' },
-  { code: '+1', country: 'USA', flag: '🇺🇸' },
-  { code: '+44', country: 'UK', flag: '🇬🇧' },
-  { code: '+91', country: 'India', flag: '🇮🇳' },
-  { code: '+27', country: 'South Africa', flag: '🇿🇦' },
-  { code: '+254', country: 'Kenya', flag: '🇰🇪' },
-  { code: '+233', country: 'Ghana', flag: '🇬🇭' },
-  { code: '+971', country: 'UAE', flag: '🇦🇪' },
-  { code: '+86', country: 'China', flag: '🇨🇳' },
-  { code: '+81', country: 'Japan', flag: '🇯🇵' },
-]
 
 export default function SignupPage() {
   const router = useRouter()
@@ -35,11 +22,8 @@ export default function SignupPage() {
     agreeToTerms: false,
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [showCountryPicker, setShowCountryPicker] = useState(false)
 
-  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png'
-
-  const selectedCountry = countryCodes.find(c => c.code === formData.countryCode) || countryCodes[0]
+  const logoUrl = '/icon.png'
 
   const handlePhoneChange = (value: string) => {
     // Only allow numbers
@@ -197,49 +181,17 @@ export default function SignupPage() {
                   Phone Number
                 </label>
                 <div className="flex gap-2">
-                  {/* Country Code Selector */}
-                  <div className="relative">
-                    <button
-                      type="button"
-                      onClick={() => setShowCountryPicker(!showCountryPicker)}
-                      className="flex items-center gap-2 px-3 py-3 bg-secondary border border-border rounded-xl text-foreground hover:border-primary/50 transition-all min-w-[100px]"
-                    >
-                      <span className="text-lg">{selectedCountry.flag}</span>
-                      <span className="text-sm">{selectedCountry.code}</span>
-                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                    </button>
-                    
-                    {showCountryPicker && (
-                      <div className="absolute z-50 top-full left-0 mt-2 w-64 bg-card border border-border rounded-xl shadow-xl max-h-60 overflow-y-auto">
-                        {countryCodes.map((country) => (
-                          <button
-                            key={country.code}
-                            type="button"
-                            onClick={() => {
-                              setFormData({ ...formData, countryCode: country.code })
-                              setShowCountryPicker(false)
-                            }}
-                            className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-secondary transition-colors ${
-                              formData.countryCode === country.code ? 'bg-primary/20' : ''
-                            }`}
-                          >
-                            <span className="text-lg">{country.flag}</span>
-                            <span className="text-foreground text-sm flex-1 text-left">{country.country}</span>
-                            <span className="text-muted-foreground text-sm">{country.code}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                  <div className="flex items-center px-3 py-3 bg-secondary border border-border rounded-xl text-foreground min-w-[80px] justify-center gap-1">
+                    <span className="text-lg">🇳🇬</span>
+                    <span className="text-sm font-medium">+234</span>
                   </div>
-                  
-                  {/* Phone Number Input */}
                   <input
                     type="tel"
                     inputMode="numeric"
                     pattern="[0-9]*"
                     value={formData.phone}
                     onChange={(e) => handlePhoneChange(e.target.value)}
-                    placeholder="Enter phone number"
+                    placeholder="080XXXXXXXX"
                     className="flex-1 px-4 py-3 bg-secondary border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
                   />
                 </div>

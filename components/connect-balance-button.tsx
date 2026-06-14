@@ -66,8 +66,8 @@ export function ConnectBalanceButton() {
           onClick={() => setShowModal(false)}
         >
           {/* Modal Content */}
-          <div 
-            className="bg-white dark:bg-[#1a1a24] rounded-2xl w-full max-w-md shadow-2xl relative"
+          <div
+            className="bg-white dark:bg-[#1a1a24] rounded-2xl w-full max-w-md shadow-2xl relative overflow-y-auto max-h-[90vh]"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}

@@ -20,7 +20,7 @@ function PhoneVerificationPage() {
   const [error, setError] = useState('')
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
-  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png'
+  const logoUrl = '/icon.png'
 
   const [email, setEmail] = useState('')
   const [phoneNumber, setPhoneNumber] = useState('')

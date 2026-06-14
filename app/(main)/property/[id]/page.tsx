@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, use, useEffect, useRef } from 'react'
 import Image from 'next/image'
@@ -88,15 +88,18 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
     )
   }
 
+  const mediaItems = [...property.images, ...(property.videoUrl ? [property.videoUrl] : [])]
+  const isVideoItem = (url: string) => !!property.videoUrl && url === property.videoUrl
+
   const handlePrevImage = () => {
-    setCurrentImageIndex((prev) => 
-      prev === 0 ? property.images.length - 1 : prev - 1
+    setCurrentImageIndex((prev) =>
+      prev === 0 ? mediaItems.length - 1 : prev - 1
     )
   }
 
   const handleNextImage = () => {
-    setCurrentImageIndex((prev) => 
-      prev === property.images.length - 1 ? 0 : prev + 1
+    setCurrentImageIndex((prev) =>
+      prev === mediaItems.length - 1 ? 0 : prev + 1
     )
   }
 
@@ -139,16 +142,16 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
 
       {/* Image Gallery */}
       <div className="relative aspect-[4/3]">
-        {property.images[currentImageIndex]?.startsWith('data:video') ? (
+        {isVideoItem(mediaItems[currentImageIndex]) ? (
           <>
-            <video 
+            <video
               ref={videoRef}
-              src={property.images[currentImageIndex]} 
+              src={mediaItems[currentImageIndex]}
               className="w-full h-full object-cover cursor-pointer"
               muted
               loop
               playsInline
-              poster={property.images.find(img => !img.startsWith('data:video')) || ''}
+              poster={property.images[0] || ''}
               onClick={() => setShowFullScreen(true)}
             />
             {!isVideoPlaying && (
@@ -161,14 +164,15 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
           </>
         ) : (
           <Image
-            src={property.images[currentImageIndex]}
+            src={mediaItems[currentImageIndex] || '/placeholder.jpg'}
             alt={property.title}
             fill
             className="object-cover cursor-pointer"
             onClick={() => setShowFullScreen(true)}
+            unoptimized
           />
         )}
-        
+
         {/* Navigation arrows */}
         <button
           onClick={handlePrevImage}
@@ -183,9 +187,9 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
           <ChevronRight className="w-6 h-6 text-background" />
         </button>
 
-        {/* Image indicators */}
+        {/* Media indicators */}
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1">
-          {property.images.map((_, index) => (
+          {mediaItems.map((item, index) => (
             <div
               key={index}
               className={cn(
@@ -486,8 +490,8 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
       </div>
 
       {/* Fullscreen image/video modal */}
-      {showFullScreen && property.images && property.images.length > 0 && (
-        <div 
+      {showFullScreen && mediaItems.length > 0 && (
+        <div
           className="fixed inset-0 z-50 bg-black flex items-center justify-center"
           onClick={() => setShowFullScreen(false)}
         >
@@ -498,37 +502,37 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
             <X className="w-5 h-5 text-white" />
           </button>
           <div className="relative w-full h-full flex items-center justify-center">
-            {property.images[currentImageIndex]?.startsWith('data:video') ? (
+            {isVideoItem(mediaItems[currentImageIndex]) ? (
               <video
-                src={property.images[currentImageIndex]}
+                src={mediaItems[currentImageIndex]}
                 className="max-w-full max-h-full object-contain"
                 controls
                 loop
-                muted
                 playsInline
-                poster={property.images.find(img => !img.startsWith('data:video')) || ''}
+                poster={property.images[0] || ''}
                 onClick={(e) => e.stopPropagation()}
               />
             ) : (
               <Image
-                src={property.images[currentImageIndex]}
+                src={mediaItems[currentImageIndex]}
                 alt={property.title}
                 fill
                 className="object-contain"
+                unoptimized
                 onClick={(e) => e.stopPropagation()}
               />
             )}
           </div>
-          {property.images.length > 1 && (
+          {mediaItems.length > 1 && (
             <>
               <button
-                onClick={(e) => { e.stopPropagation(); handlePrevImage(); }}
+                onClick={(e) => { e.stopPropagation(); handlePrevImage() }}
                 className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center z-10"
               >
                 <ChevronLeft className="w-6 h-6 text-white" />
               </button>
               <button
-                onClick={(e) => { e.stopPropagation(); handleNextImage(); }}
+                onClick={(e) => { e.stopPropagation(); handleNextImage() }}
                 className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center z-10"
               >
                 <ChevronRight className="w-6 h-6 text-white" />
@@ -536,7 +540,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
             </>
           )}
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 px-3 py-1 rounded-full text-white text-sm">
-            {currentImageIndex + 1} / {property.images.length}
+            {currentImageIndex + 1} / {mediaItems.length}
           </div>
         </div>
       )}

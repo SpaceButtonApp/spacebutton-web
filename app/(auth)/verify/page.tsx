@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -16,6 +16,9 @@ function VerificationCodePage() {
   const [codes, setCodes] = useState<string[]>(['', '', '', '', '', ''])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [isResending, setIsResending] = useState(false)
+  const [resendTimer, setResendTimer] = useState(0)
+  const [resendSuccess, setResendSuccess] = useState(false)
 
   const handleCodeChange = (index: number, value: string) => {
     if (value.length > 1) return
@@ -59,12 +62,26 @@ function VerificationCodePage() {
   }
 
   const handleResendOTP = async () => {
+    if (isResending || resendTimer > 0) return
+    setIsResending(true)
+    setResendSuccess(false)
     try {
       await authApi.resendOtp(email)
+      setResendSuccess(true)
+      setResendTimer(30)
+      setCodes(['', '', '', '', '', ''])
     } catch {
-      // silently fail — user can try again
+      // silently fail
+    } finally {
+      setIsResending(false)
     }
   }
+
+  useEffect(() => {
+    if (resendTimer <= 0) return
+    const t = setTimeout(() => setResendTimer((v) => v - 1), 1000)
+    return () => clearTimeout(t)
+  }, [resendTimer])
 
   const maskedEmail = email
     ? email.substring(0, 3) + '*'.repeat(email.length - 6) + email.substring(email.length - 3)
@@ -103,10 +120,11 @@ function VerificationCodePage() {
         <div className="text-center mb-8">
           <div className="inline-block p-3 bg-primary/10 rounded-full mb-4">
             <Image
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png"
+              src="/icon.png"
               alt="SpaceButton"
               width={40}
               height={40}
+              className="rounded-lg"
             />
           </div>
         </div>
@@ -152,16 +170,26 @@ function VerificationCodePage() {
           {isLoading ? 'Verifying...' : 'Continue'}
         </Button>
 
-        <div className="text-center">
-          <p className="text-sm text-muted-foreground">
-            Didn&apos;t receive the OTP?{' '}
-            <button
-              onClick={handleResendOTP}
-              className="text-primary font-semibold hover:underline"
-            >
-              Resend OTP
-            </button>
-          </p>
+        <div className="text-center mt-4">
+          {resendSuccess && (
+            <p className="text-sm text-green-500 mb-2">Code resent! Check your inbox.</p>
+          )}
+          {resendTimer > 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Resend code in <span className="text-primary font-semibold">{resendTimer}s</span>
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Didn&apos;t receive the OTP?{' '}
+              <button
+                onClick={handleResendOTP}
+                disabled={isResending}
+                className="text-primary font-semibold hover:underline disabled:opacity-50"
+              >
+                {isResending ? 'Sending...' : 'Resend OTP'}
+              </button>
+            </p>
+          )}
         </div>
       </div>
     </div>

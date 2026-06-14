@@ -178,7 +178,7 @@ export function SupportChatWidget() {
       {/* Floating button */}
       <button
         onClick={() => setOpen(prev => !prev)}
-        className="fixed bottom-5 right-5 z-50 w-14 h-14 rounded-full bg-[#703BF7] hover:bg-[#5f32d4] shadow-lg shadow-[#703BF7]/30 flex items-center justify-center text-white transition-all active:scale-95"
+        className="fixed bottom-[84px] right-4 sm:bottom-5 sm:right-5 z-50 w-14 h-14 rounded-full bg-[#703BF7] hover:bg-[#5f32d4] shadow-lg shadow-[#703BF7]/30 flex items-center justify-center text-white transition-all active:scale-95"
         aria-label="Support chat"
       >
         {open ? <X className="w-6 h-6" /> : <MessageCircle className="w-6 h-6" />}

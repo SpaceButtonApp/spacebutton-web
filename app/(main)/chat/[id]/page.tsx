@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, use, useEffect, useRef, useCallback } from 'react'
 import Image from 'next/image'
@@ -65,6 +65,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [rating, setRating] = useState(0)
   const [feedbackText, setFeedbackText] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  const [showUserPopup, setShowUserPopup] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -219,7 +220,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           <ArrowLeft className="w-5 h-5" />
         </button>
 
-        <button onClick={() => router.push(`/user/${otherId}`)} className="flex items-center gap-3 flex-1 min-w-0">
+        <button onClick={() => setShowUserPopup(true)} className="flex items-center gap-3 flex-1 min-w-0">
           <div className="relative flex-shrink-0">
             <Image
               src={otherAvatar}
@@ -484,6 +485,44 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       )}
 
       {/* ── Report modal ── */}
+      {/* User profile popup */}
+      {showUserPopup && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center sm:items-center p-4"
+          onClick={() => setShowUserPopup(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl bg-background p-6 flex flex-col items-center gap-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowUserPopup(false)}
+              className="self-end w-8 h-8 flex items-center justify-center rounded-full bg-secondary"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <Image
+              src={otherAvatar}
+              alt={otherName}
+              width={80}
+              height={80}
+              className="rounded-full object-cover border-4 border-border"
+              unoptimized
+            />
+            <div className="text-center">
+              <h3 className="text-xl font-bold text-foreground">{otherName}</h3>
+              <p className="text-sm text-muted-foreground mt-1">SpaceButton User</p>
+            </div>
+            <button
+              onClick={() => { setShowUserPopup(false); router.push(`/user/${otherId}`) }}
+              className="w-full h-11 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors"
+            >
+              View Full Profile
+            </button>
+          </div>
+        </div>
+      )}
+
       {showReportModal && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
           <div className="w-full max-w-sm rounded-2xl bg-background p-6">

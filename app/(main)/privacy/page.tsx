@@ -38,21 +38,9 @@ export default function PrivacyPolicyPage() {
 
         <hr className="my-6" />
 
-        <h3 className="mb-2 font-bold">2. Who We Are</h3>
-        <p className="mb-4">
-          <strong>Data Controller:</strong> SPACE BUTTON<br />
-          <strong>Contact Email:</strong> [Insert Email]<br />
-          <strong>Address:</strong> [Insert Address]
-        </p>
-        <p className="mb-4">
-          For any privacy-related inquiries, you may contact our Data Protection Officer (DPO) at: [Insert DPO Email]
-        </p>
-
-        <hr className="my-6" />
-
-        <h3 className="mb-2 font-bold">3. Information We Collect</h3>
+        <h3 className="mb-2 font-bold">2. Information We Collect</h3>
         
-        <h4 className="mb-2 font-semibold">3.1 Personal Information You Provide</h4>
+        <h4 className="mb-2 font-semibold">2.1 Personal Information You Provide</h4>
         <p className="mb-4">When you register, verify your identity, or use our Platform, we may collect:</p>
         <ul className="mb-4 ml-4 list-disc">
           <li><strong>Identity Data:</strong> Full name, date of birth, gender</li>
@@ -63,7 +51,7 @@ export default function PrivacyPolicyPage() {
           <li><strong>Communication Data:</strong> Your messages with other users, inquiries to customer support</li>
         </ul>
 
-        <h4 className="mb-2 font-semibold">3.2 Information Collected Automatically</h4>
+        <h4 className="mb-2 font-semibold">2.2 Information Collected Automatically</h4>
         <p className="mb-4">When you use our Platform, we automatically collect:</p>
         <ul className="mb-4 ml-4 list-disc">
           <li><strong>Usage Data:</strong> Pages viewed, time spent, clicks, searches</li>
@@ -72,7 +60,7 @@ export default function PrivacyPolicyPage() {
           <li><strong>Cookies & Tracking Technologies:</strong> As described in Section 11</li>
         </ul>
 
-        <h4 className="mb-2 font-semibold">3.3 Information from Third Parties</h4>
+        <h4 className="mb-2 font-semibold">2.3 Information from Third Parties</h4>
         <p className="mb-4">We may receive information from:</p>
         <ul className="mb-4 ml-4 list-disc">
           <li>Identity verification services</li>
@@ -82,7 +70,7 @@ export default function PrivacyPolicyPage() {
 
         <hr className="my-6" />
 
-        <h3 className="mb-2 font-bold">4. How We Use Your Information</h3>
+        <h3 className="mb-2 font-bold">3. How We Use Your Information</h3>
         <p className="mb-4">We use your personal data for the following purposes:</p>
         <ul className="mb-4 ml-4 list-disc">
           <li>To create and manage your account</li>
@@ -97,7 +85,7 @@ export default function PrivacyPolicyPage() {
 
         <hr className="my-6" />
 
-        <h3 className="mb-2 font-bold">5. Data Sharing</h3>
+        <h3 className="mb-2 font-bold">4. Data Sharing</h3>
         <p className="mb-4">We may share your information with:</p>
         <ul className="mb-4 ml-4 list-disc">
           <li><strong>Other Users:</strong> Your profile information, listings, and reviews are visible to other users</li>
@@ -108,7 +96,7 @@ export default function PrivacyPolicyPage() {
 
         <hr className="my-6" />
 
-        <h3 className="mb-2 font-bold">6. Your Rights</h3>
+        <h3 className="mb-2 font-bold">5. Your Rights</h3>
         <p className="mb-4">Under the NDPA, you have the right to:</p>
         <ul className="mb-4 ml-4 list-disc">
           <li>Access your personal data</li>
@@ -122,14 +110,14 @@ export default function PrivacyPolicyPage() {
 
         <hr className="my-6" />
 
-        <h3 className="mb-2 font-bold">7. Data Security</h3>
+        <h3 className="mb-2 font-bold">6. Data Security</h3>
         <p className="mb-4">
           We implement appropriate technical and organizational measures to protect your personal data against unauthorized access, alteration, disclosure, or destruction.
         </p>
 
         <hr className="my-6" />
 
-        <h3 className="mb-2 font-bold">8. Contact Us</h3>
+        <h3 className="mb-2 font-bold">7. Contact Us</h3>
         <p className="mb-4">
           If you have any questions about this Privacy Policy, please contact us at:<br />
           <strong>Email:</strong> [Insert Email]<br />

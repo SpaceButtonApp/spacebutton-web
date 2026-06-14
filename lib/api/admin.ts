@@ -209,6 +209,10 @@ export const adminApi = {
     })
   },
 
+  async deleteListing(listingId: string): Promise<void> {
+    await adminFetch(`/admin/listings/${listingId}`, { method: 'DELETE' })
+  },
+
   // Verification — routes are on user service, accessible via gateway with admin JWT
   async getPendingVerifications(): Promise<PendingVerification[]> {
     const res = await adminFetch<{ total: number; verifications: PendingVerification[] }>(

@@ -10,6 +10,7 @@ import {
   Eye,
   CheckCircle,
   XCircle,
+  Trash2,
   MapPin,
   Bed,
   Bath,
@@ -29,6 +30,7 @@ export default function ListingsPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [rejectModal, setRejectModal] = useState<string | null>(null)
   const [rejectReason, setRejectReason] = useState('')
+  const [deleteModal, setDeleteModal] = useState<string | null>(null)
 
   const PAGE_SIZE = 20
 
@@ -67,6 +69,17 @@ export default function ListingsPage() {
       setListings((prev) => prev.map((l) => l.id === rejectModal ? { ...l, status: 'rejected' } : l))
     } catch { /* ignore */ }
     finally { setActionLoading(null); setRejectModal(null); setRejectReason('') }
+  }
+
+  const handleDelete = async () => {
+    if (!deleteModal) return
+    setActionLoading(deleteModal)
+    try {
+      await adminApi.deleteListing(deleteModal)
+      setListings((prev) => prev.filter((l) => l.id !== deleteModal))
+      setTotal((prev) => prev - 1)
+    } catch { /* ignore */ }
+    finally { setActionLoading(null); setDeleteModal(null) }
   }
 
   const totalPages = Math.ceil(total / PAGE_SIZE)
@@ -219,6 +232,12 @@ export default function ListingsPage() {
                                     </button>
                                   </>
                                 )}
+                                <button
+                                  onClick={() => { setDeleteModal(listing.id); setShowActionMenu(null) }}
+                                  className="w-full px-4 py-2.5 text-left text-sm text-red-500 hover:bg-gray-800 flex items-center gap-2 border-t border-gray-800/50"
+                                >
+                                  <Trash2 className="w-4 h-4" /> Delete
+                                </button>
                               </div>
                             )}
                           </div>
@@ -268,6 +287,29 @@ export default function ListingsPage() {
                 className="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-400 text-white font-medium rounded-xl disabled:opacity-50"
               >
                 {actionLoading ? 'Rejecting...' : 'Reject'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#12121a] border border-gray-800 rounded-2xl p-6 max-w-sm w-full">
+            <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center mb-4">
+              <Trash2 className="w-6 h-6 text-red-500" />
+            </div>
+            <h3 className="text-lg font-semibold text-white mb-2">Delete Listing</h3>
+            <p className="text-gray-400 text-sm mb-6">This will permanently delete the listing. This action cannot be undone.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteModal(null)} className="flex-1 px-4 py-2.5 bg-gray-800 hover:bg-gray-700 text-white rounded-xl">Cancel</button>
+              <button
+                onClick={handleDelete}
+                disabled={!!actionLoading}
+                className="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-400 text-white font-medium rounded-xl disabled:opacity-50"
+              >
+                {actionLoading ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </div>

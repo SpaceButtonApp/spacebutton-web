@@ -46,11 +46,16 @@ function PaymentPage() {
     setError(null)
     try {
       const callbackUrl = `${window.location.origin}/payment/verify`
-      const { authorization_url } = await paymentsApi.initializePayment(
+      const { authorization_url, reference, already_paid } = await paymentsApi.initializePayment(
         connectsToPackage(pkg.connects),
         user.email,
         callbackUrl,
       )
+      if (already_paid && reference) {
+        // Connects were already credited — go straight to verify page (shows success)
+        router.push(`/payment/verify?reference=${encodeURIComponent(reference)}`)
+        return
+      }
       window.location.href = authorization_url
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Payment initialization failed. Try again.')

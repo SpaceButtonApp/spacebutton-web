@@ -11,6 +11,7 @@ export interface PaystackInitResponse {
   reference: string
   connects_qty: number
   amount_kobo: number
+  already_paid?: boolean
 }
 
 export interface ConnectsBalanceResponse {

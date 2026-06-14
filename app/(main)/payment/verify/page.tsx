@@ -30,8 +30,12 @@ function PaymentVerifyPage() {
       return
     }
 
+    // Save reference so we can retry after login if session expired
+    sessionStorage.setItem('pending_payment_reference', reference)
+
     paymentsApi.verifyPayment(reference)
       .then(async ({ connects_added }) => {
+        sessionStorage.removeItem('pending_payment_reference')
         setConnectsAdded(connects_added)
         await syncConnectsBalance()
         const balance = useAppStore.getState().user?.connectsRemaining ?? null
@@ -40,8 +44,10 @@ function PaymentVerifyPage() {
       })
       .catch((err) => {
         const msg = err instanceof Error ? err.message : ''
+
         // Webhook already credited the connects — still a success for the user
         if (msg.toLowerCase().includes('already verified') || msg.toLowerCase().includes('already_verified')) {
+          sessionStorage.removeItem('pending_payment_reference')
           syncConnectsBalance().then(() => {
             const balance = useAppStore.getState().user?.connectsRemaining ?? null
             setNewBalance(balance)
@@ -49,7 +55,15 @@ function PaymentVerifyPage() {
           })
           return
         }
-        setError(msg || 'Payment verification failed. Please contact support.')
+
+        // Session expired while user was on Paystack — redirect to login then back here
+        if (msg.toLowerCase().includes('session expired') || msg.toLowerCase().includes('log in')) {
+          const verifyPath = `/payment/verify?reference=${encodeURIComponent(reference)}`
+          router.replace(`/login?from=${encodeURIComponent(verifyPath)}`)
+          return
+        }
+
+        setError(msg || 'Payment verification failed. Please contact support if you were charged.')
         setState('failed')
       })
   }, [reference]) // eslint-disable-line react-hooks/exhaustive-deps

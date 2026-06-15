@@ -30,7 +30,7 @@ const menuItems = [
   { label: 'Transactions', href: '/admin/transactions', icon: CreditCard },
   { label: 'Reviews', href: '/admin/reviews', icon: Star },
   { label: 'Notifications', href: '/admin/notifications', icon: Bell },
-  { label: 'User Reports', href: '/admin/reports', icon: Flag },
+  { label: 'Reports', href: '/admin/reports', icon: Flag },
   { label: 'Settings', href: '/admin/settings', icon: Settings },
 ]
 

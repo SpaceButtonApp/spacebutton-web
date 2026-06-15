@@ -271,26 +271,41 @@ export default function UsersPage() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-gray-800/50">
-                        {['Agent', 'Agency', 'Location', 'Rating', 'Reviews', 'Joined', 'Actions'].map((h) => (
+                        {['Agent', 'Agency', 'Location', 'Rating', 'Status', 'Joined', 'Actions'].map((h) => (
                           <th key={h} className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
-                      {agents.map((a) => (
+                      {agents.map((a) => {
+                        const name = [a.first_name, a.last_name].filter(Boolean).join(' ') || a.agency_name || 'Agent'
+                        const st = (a.status || '').toLowerCase()
+                        return (
                         <tr key={a.id} className="border-b border-gray-800/30 hover:bg-gray-800/20">
                           <td className="px-5 py-4">
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-medium shrink-0">
-                                {(a.agency_name || 'A').charAt(0)}
+                                {name.charAt(0).toUpperCase()}
                               </div>
-                              <p className="text-xs text-gray-500 font-mono">{a.user_id.slice(0, 8)}…</p>
+                              <div>
+                                <p className="text-sm text-white font-medium">{name}</p>
+                                <p className="text-xs text-gray-500">{a.email || a.user_id.slice(0, 8) + '…'}</p>
+                              </div>
                             </div>
                           </td>
                           <td className="px-5 py-4 text-sm text-white">{a.agency_name || '—'}</td>
                           <td className="px-5 py-4 text-sm text-gray-400">{[a.city, a.state].filter(Boolean).join(', ') || '—'}</td>
-                          <td className="px-5 py-4 text-sm text-yellow-400">{a.average_rating?.toFixed(1) ?? '—'} ★</td>
-                          <td className="px-5 py-4 text-sm text-gray-400">{a.total_reviews ?? 0}</td>
+                          <td className="px-5 py-4 text-sm text-yellow-400">{a.average_rating != null ? `${a.average_rating.toFixed(1)} ★` : '—'}</td>
+                          <td className="px-5 py-4">
+                            <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${
+                              st === 'suspended' ? 'text-red-400' : st === 'active' ? 'text-green-400' : 'text-gray-400'
+                            }`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${
+                                st === 'suspended' ? 'bg-red-400' : st === 'active' ? 'bg-green-400' : 'bg-gray-400'
+                              }`} />
+                              {st ? st.charAt(0).toUpperCase() + st.slice(1) : 'Unknown'}
+                            </span>
+                          </td>
                           <td className="px-5 py-4 text-sm text-gray-400">{new Date(a.created_at).toLocaleDateString()}</td>
                           <td className="px-5 py-4 text-right">
                             <a href={`/user/${a.user_id}`} target="_blank" rel="noopener noreferrer" className="text-xs text-purple-400 hover:text-purple-300">
@@ -298,7 +313,8 @@ export default function UsersPage() {
                             </a>
                           </td>
                         </tr>
-                      ))}
+                        )
+                      })}
                     </tbody>
                   </table>
                 </div>

@@ -47,6 +47,10 @@ export interface AdminUserListResponse {
 export interface AdminAgent {
   id: string
   user_id: string
+  first_name?: string
+  last_name?: string
+  email?: string
+  status?: string
   agency_name?: string
   state?: string
   city?: string
@@ -60,6 +64,59 @@ export interface AdminAgent {
 export interface AdminAgentListResponse {
   total: number
   agents: AdminAgent[]
+}
+
+export interface AdminUserReport {
+  id: string
+  reporter_id: string
+  reported_user_id: string
+  reason: string
+  details?: string
+  chat_id?: string
+  status: string
+  created_at: string
+}
+
+export interface AdminUserReportListResponse {
+  total: number
+  page: number
+  page_size: number
+  reports: AdminUserReport[]
+}
+
+export interface AdminListingReport {
+  id: string
+  reporter_id: string
+  listing_id: string
+  listing_title?: string
+  reason: string
+  details?: string
+  status: string
+  created_at: string
+}
+
+export interface AdminListingReportListResponse {
+  total: number
+  page: number
+  page_size: number
+  reports: AdminListingReport[]
+}
+
+export interface AdminChatMessage {
+  id: string
+  sender_id: string
+  content: string
+  status: string
+  created_at: string
+}
+
+export interface AdminChatMessagesResponse {
+  chat_id: string
+  chat_info?: { user_id?: string; agent_id?: string; listing_id?: string }
+  total: number
+  page: number
+  page_size: number
+  messages: AdminChatMessage[]
 }
 
 export interface AdminListing {
@@ -262,5 +319,42 @@ export const adminApi = {
       { method: 'POST', body: JSON.stringify({ text }) },
     )
     return res.data
+  },
+
+  // User Reports
+  async getUserReports(page = 1, pageSize = 20): Promise<AdminUserReportListResponse> {
+    const qs = new URLSearchParams({ page: String(page), page_size: String(pageSize) })
+    const res = await adminFetch<{ success: boolean; data: AdminUserReportListResponse }>(
+      `/admin/user-reports?${qs}`,
+    )
+    const inner = (res as any)?.data ?? res
+    return inner as AdminUserReportListResponse
+  },
+
+  async updateUserReport(reportId: string, status: 'actioned' | 'dismissed'): Promise<void> {
+    await adminFetch(`/admin/user-reports/${reportId}?status=${status}`, { method: 'PATCH' })
+  },
+
+  // Listing Reports
+  async getListingReports(page = 1, pageSize = 20): Promise<AdminListingReportListResponse> {
+    const qs = new URLSearchParams({ page: String(page), page_size: String(pageSize) })
+    const res = await adminFetch<{ success: boolean; data: AdminListingReportListResponse }>(
+      `/admin/listing-reports?${qs}`,
+    )
+    const inner = (res as any)?.data ?? res
+    return inner as AdminListingReportListResponse
+  },
+
+  async updateListingReport(reportId: string, status: 'actioned' | 'dismissed'): Promise<void> {
+    await adminFetch(`/admin/listing-reports/${reportId}?status=${status}`, { method: 'PATCH' })
+  },
+
+  // Chat Evidence
+  async getChatMessages(chatId: string): Promise<AdminChatMessagesResponse> {
+    const res = await adminFetch<{ success: boolean; data: AdminChatMessagesResponse }>(
+      `/admin/chats/${chatId}/messages`,
+    )
+    const inner = (res as any)?.data ?? res
+    return inner as AdminChatMessagesResponse
   },
 }

@@ -52,8 +52,8 @@ const STATUS_STYLE: Record<string, string> = {
   dismissed: 'bg-gray-500/20 text-gray-400',
 }
 
-function id8(id: string) {
-  return id.slice(0, 8) + '…'
+function id8(id?: string | null) {
+  return id ? id.slice(0, 8) + '…' : '–'
 }
 
 export default function ReportsPage() {
@@ -217,8 +217,8 @@ export default function ReportsPage() {
                             {r.details || '—'}
                           </td>
                           <td className="px-5 py-4">
-                            <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_STYLE[r.status] ?? 'bg-gray-500/20 text-gray-400'}`}>
-                              {r.status.charAt(0).toUpperCase() + r.status.slice(1)}
+                            <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_STYLE[r.status ?? ''] ?? 'bg-gray-500/20 text-gray-400'}`}>
+                              {(r.status || 'unknown').charAt(0).toUpperCase() + (r.status || 'unknown').slice(1)}
                             </span>
                           </td>
                           <td className="px-5 py-4 text-sm text-gray-400">{new Date(r.created_at).toLocaleDateString()}</td>
@@ -317,8 +317,8 @@ export default function ReportsPage() {
                             {r.details || '—'}
                           </td>
                           <td className="px-5 py-4">
-                            <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_STYLE[r.status] ?? 'bg-gray-500/20 text-gray-400'}`}>
-                              {r.status.charAt(0).toUpperCase() + r.status.slice(1)}
+                            <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_STYLE[r.status ?? ''] ?? 'bg-gray-500/20 text-gray-400'}`}>
+                              {(r.status || 'unknown').charAt(0).toUpperCase() + (r.status || 'unknown').slice(1)}
                             </span>
                           </td>
                           <td className="px-5 py-4 text-sm text-gray-400">{new Date(r.created_at).toLocaleDateString()}</td>
@@ -405,8 +405,8 @@ export default function ReportsPage() {
               <div className="flex items-center gap-3">
                 <div>
                   <p className="text-xs text-gray-500 mb-1">Status</p>
-                  <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_STYLE[selectedUserReport.status] ?? 'bg-gray-500/20 text-gray-400'}`}>
-                    {selectedUserReport.status.charAt(0).toUpperCase() + selectedUserReport.status.slice(1)}
+                  <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_STYLE[selectedUserReport.status ?? ''] ?? 'bg-gray-500/20 text-gray-400'}`}>
+                    {(selectedUserReport.status || 'unknown').charAt(0).toUpperCase() + (selectedUserReport.status || 'unknown').slice(1)}
                   </span>
                 </div>
                 <div>
@@ -481,8 +481,8 @@ export default function ReportsPage() {
               <div className="flex items-center gap-3">
                 <div>
                   <p className="text-xs text-gray-500 mb-1">Status</p>
-                  <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_STYLE[selectedListingReport.status] ?? 'bg-gray-500/20 text-gray-400'}`}>
-                    {selectedListingReport.status.charAt(0).toUpperCase() + selectedListingReport.status.slice(1)}
+                  <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_STYLE[selectedListingReport.status ?? ''] ?? 'bg-gray-500/20 text-gray-400'}`}>
+                    {(selectedListingReport.status || 'unknown').charAt(0).toUpperCase() + (selectedListingReport.status || 'unknown').slice(1)}
                   </span>
                 </div>
                 <div>

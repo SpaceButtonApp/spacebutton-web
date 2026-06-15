@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { AdminHeader } from '@/components/admin/header'
 import { adminApi } from '@/lib/api/admin'
-import type { AdminUser, AdminAgent } from '@/lib/api/admin'
+import type { AdminUser } from '@/lib/api/admin'
 import {
   Search,
   MoreVertical,
@@ -36,7 +36,7 @@ export default function UsersPage() {
   const [actionLoading, setActionLoading] = useState(false)
 
   // Agents state
-  const [agents, setAgents] = useState<AdminAgent[]>([])
+  const [agents, setAgents] = useState<AdminUser[]>([])
   const [agentTotal, setAgentTotal] = useState(0)
   const [agentPage, setAgentPage] = useState(1)
   const [agentsLoading, setAgentsLoading] = useState(false)
@@ -58,8 +58,8 @@ export default function UsersPage() {
   const loadAgents = useCallback(async (p = agentPage) => {
     setAgentsLoading(true)
     try {
-      const data = await adminApi.getAgents(p, PAGE_SIZE)
-      setAgents(data.agents ?? [])
+      const data = await adminApi.getUsers(p, PAGE_SIZE, 'agent')
+      setAgents(data.users ?? [])
       setAgentTotal(data.total ?? 0)
     } catch { /* show empty */ }
     finally { setAgentsLoading(false) }
@@ -271,14 +271,14 @@ export default function UsersPage() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-gray-800/50">
-                        {['Agent', 'Agency', 'Location', 'Rating', 'Status', 'Joined', 'Actions'].map((h) => (
+                        {['Agent', 'Email', 'Verified', 'Status', 'Joined', 'Actions'].map((h) => (
                           <th key={h} className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
                       {agents.map((a) => {
-                        const name = [a.first_name, a.last_name].filter(Boolean).join(' ') || a.agency_name || 'Agent'
+                        const name = [a.first_name, a.last_name].filter(Boolean).join(' ') || 'Agent'
                         const st = (a.status || '').toLowerCase()
                         return (
                         <tr key={a.id} className="border-b border-gray-800/30 hover:bg-gray-800/20">
@@ -287,15 +287,16 @@ export default function UsersPage() {
                               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-medium shrink-0">
                                 {name.charAt(0).toUpperCase()}
                               </div>
-                              <div>
-                                <p className="text-sm text-white font-medium">{name}</p>
-                                <p className="text-xs text-gray-500">{a.email || a.user_id.slice(0, 8) + '…'}</p>
-                              </div>
+                              <p className="text-sm text-white font-medium">{name}</p>
                             </div>
                           </td>
-                          <td className="px-5 py-4 text-sm text-white">{a.agency_name || '—'}</td>
-                          <td className="px-5 py-4 text-sm text-gray-400">{[a.city, a.state].filter(Boolean).join(', ') || '—'}</td>
-                          <td className="px-5 py-4 text-sm text-yellow-400">{a.average_rating != null ? `${a.average_rating.toFixed(1)} ★` : '—'}</td>
+                          <td className="px-5 py-4 text-sm text-gray-300">{a.email}</td>
+                          <td className="px-5 py-4 text-sm">
+                            {a.is_email_verified
+                              ? <span className="text-green-400">Email verified</span>
+                              : <span className="text-gray-500">Unverified</span>
+                            }
+                          </td>
                           <td className="px-5 py-4">
                             <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${
                               st === 'suspended' ? 'text-red-400' : st === 'active' ? 'text-green-400' : 'text-gray-400'
@@ -308,7 +309,7 @@ export default function UsersPage() {
                           </td>
                           <td className="px-5 py-4 text-sm text-gray-400">{new Date(a.created_at).toLocaleDateString()}</td>
                           <td className="px-5 py-4 text-right">
-                            <a href={`/user/${a.user_id}`} target="_blank" rel="noopener noreferrer" className="text-xs text-purple-400 hover:text-purple-300">
+                            <a href={`/user/${a.id}`} target="_blank" rel="noopener noreferrer" className="text-xs text-purple-400 hover:text-purple-300">
                               View Profile
                             </a>
                           </td>

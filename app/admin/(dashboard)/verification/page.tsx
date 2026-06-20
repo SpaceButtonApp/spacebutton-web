@@ -35,6 +35,7 @@ export default function VerificationPage() {
   const [rejectModal, setRejectModal] = useState<{ userId: string; type: 'id' | 'live' } | null>(null)
   const [rejectReason, setRejectReason] = useState('')
   const [previewImage, setPreviewImage] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -52,13 +53,13 @@ export default function VerificationPage() {
   const handleAction = async (userId: string, action: ActionType, reason?: string) => {
     const key = `${userId}-${action}`
     setActionLoading(key)
+    setActionError(null)
     try {
       if (action === 'id-approve') await adminApi.approveIdVerification(userId)
       else if (action === 'id-reject') await adminApi.rejectIdVerification(userId, reason || 'Does not meet requirements')
       else if (action === 'live-approve') await adminApi.approveLiveVerification(userId)
       else if (action === 'live-reject') await adminApi.rejectLiveVerification(userId, reason || 'Does not meet requirements')
 
-      // Update local state optimistically
       setVerifications((prev) => prev.map((v) => {
         if (v.user_id !== userId) return v
         const approved = action.endsWith('approve')
@@ -71,7 +72,9 @@ export default function VerificationPage() {
 
       setRejectModal(null)
       setRejectReason('')
-    } catch { /* ignore */ }
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Action failed')
+    }
     finally { setActionLoading(null) }
   }
 
@@ -105,6 +108,13 @@ export default function VerificationPage() {
             <p className="text-2xl font-bold text-yellow-400">{loading ? '—' : pendingCount}</p>
           </div>
         </div>
+
+        {actionError && (
+          <div className="mb-4 flex items-center justify-between gap-3 px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-xl text-sm text-red-400">
+            <span>{actionError}</span>
+            <button onClick={() => setActionError(null)} className="text-red-400/60 hover:text-red-400">✕</button>
+          </div>
+        )}
 
         {loading ? (
           <div className="flex items-center justify-center h-64">

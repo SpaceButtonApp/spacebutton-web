@@ -18,8 +18,8 @@ type Tab = typeof tabs[number]
 
 function tabToFilters(tab: Tab): ListingFilters {
   switch (tab) {
-    case 'Connect':    return { category: 'need_roommate', page_size: 20 }
-    case 'Agent':      return { category: 'for_rent', page_size: 20 }
+    case 'Connect':    return { owner_type: 'user', page_size: 20 }
+    case 'Agent':      return { owner_type: 'agent', page_size: 20 }
     case 'Shortlet':   return { category: 'subletting', page_size: 20 }
     case 'Properties': return { category: 'for_rent', owner_type: 'user', page_size: 20 }
   }

@@ -1,11 +1,13 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { useEffect, useRef } from 'react'
 import { Home, Search, MessageCircle, Settings, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAppStore } from '@/lib/store'
 import { useHydrated } from '@/lib/hooks/use-hydrated'
+import { callsApi } from '@/lib/api/calls'
 
 const navItems = [
   { icon: Home, href: '/home', label: 'Home' },
@@ -16,10 +18,32 @@ const navItems = [
 
 export function BottomNav() {
   const pathname = usePathname()
-  const { unreadChatsCount } = useAppStore()
+  const router = useRouter()
+  const { user, unreadChatsCount } = useAppStore()
   const hydrated = useHydrated()
+  const seenCallIds = useRef<Set<string>>(new Set())
 
   const unreadMessages = hydrated ? unreadChatsCount : 0
+
+  // Poll for incoming calls every 6 seconds when user is logged in and not already on a call page
+  useEffect(() => {
+    if (!user) return
+    if (pathname.startsWith('/call/')) return
+
+    const poll = async () => {
+      try {
+        const incoming = await callsApi.getIncomingCall()
+        if (incoming && !seenCallIds.current.has(incoming.id)) {
+          seenCallIds.current.add(incoming.id)
+          router.push(`/call/incoming/${incoming.id}`)
+        }
+      } catch { /* ignore — backend may return 404 when no incoming call */ }
+    }
+
+    poll() // check immediately on mount
+    const interval = setInterval(poll, 6000)
+    return () => clearInterval(interval)
+  }, [user?.id, pathname]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-t border-border">

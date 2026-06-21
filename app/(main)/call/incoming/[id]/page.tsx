@@ -41,8 +41,8 @@ export default function IncomingCallPage({ params }: { params: Promise<{ id: str
 
   const handleAccept = async () => {
     if (!call) return
-    // Join the call first, then navigate to voice page with callId
-    router.push(`/call/voice/${call.caller_id}?callId=${id}`)
+    const type = call.call_type === 'video' ? 'video' : 'voice'
+    router.push(`/call/${type}/${call.caller_id}?callId=${id}`)
   }
 
   const handleDecline = async () => {
@@ -74,7 +74,7 @@ export default function IncomingCallPage({ params }: { params: Promise<{ id: str
               <Image src={avatar} alt={callerName} fill className="rounded-full object-cover" />
             </div>
             <h2 className="text-2xl font-semibold">{callerName}</h2>
-            <p className="text-muted-foreground mt-2">Voice Call</p>
+            <p className="text-muted-foreground mt-2">{call?.call_type === 'video' ? 'Video Call' : 'Voice Call'}</p>
           </>
         )}
       </div>

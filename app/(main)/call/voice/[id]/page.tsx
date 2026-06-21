@@ -5,43 +5,62 @@ export const dynamic = 'force-dynamic'
 import { useState, useEffect, use, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
-import { ChevronLeft, MicOff, Volume2, PhoneOff, Phone } from 'lucide-react'
+import { ChevronLeft, MicOff, Mic, Volume2, VolumeX, PhoneOff, Phone } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { callsApi } from '@/lib/api/calls'
 import { getUserDisplayInfo } from '@/lib/api/users'
+import type { IAgoraRTCClient, IMicrophoneAudioTrack, IAgoraRTCRemoteUser } from 'agora-rtc-sdk-ng'
 import type { CallResponse } from '@/lib/types/call'
 
 type CallState = 'connecting' | 'calling' | 'ongoing' | 'ended' | 'error'
 
 const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
+const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!
 
 function VoiceCallPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
   const searchParams = useSearchParams()
-  const callIdParam = searchParams.get('callId')  // set when joining an incoming call
+  const callIdParam = searchParams.get('callId')
 
   const [callState, setCallState] = useState<CallState>('connecting')
   const [callTime, setCallTime] = useState(0)
   const [isMuted, setIsMuted] = useState(false)
-  const [isSpeakerOn, setIsSpeakerOn] = useState(false)
+  const [isSpeakerOff, setIsSpeakerOff] = useState(false)
   const [otherName, setOtherName] = useState('Connecting...')
   const [otherAvatar, setOtherAvatar] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
+
   const callRef = useRef<CallResponse | null>(null)
+  const clientRef = useRef<IAgoraRTCClient | null>(null)
+  const audioTrackRef = useRef<IMicrophoneAudioTrack | null>(null)
+  const remoteUsersRef = useRef<IAgoraRTCRemoteUser[]>([])
+  const endingRef = useRef(false)
+
+  const handleEndCall = async () => {
+    if (endingRef.current) return
+    endingRef.current = true
+    setCallState('ended')
+    audioTrackRef.current?.close()
+    await clientRef.current?.leave().catch(() => {})
+    if (callRef.current) {
+      await callsApi.endCall(callRef.current.id).catch(() => {})
+    }
+    router.back()
+  }
 
   useEffect(() => {
     let cancelled = false
 
     async function setup() {
       try {
-        // Resolve display info for the other party
+        const { default: AgoraRTC } = await import('agora-rtc-sdk-ng')
+
         const info = await getUserDisplayInfo(id)
         if (cancelled) return
         setOtherName(info.name)
         setOtherAvatar(info.avatar)
 
-        // Either join an existing call (incoming) or initiate a new one (outgoing)
         let call: CallResponse
         if (callIdParam) {
           call = await callsApi.joinCall(callIdParam)
@@ -52,10 +71,33 @@ function VoiceCallPage({ params }: { params: Promise<{ id: string }> }) {
         callRef.current = call
         setCallState('calling')
 
-        // Simulate brief ringing before connecting
-        await new Promise((r) => setTimeout(r, 2000))
-        if (cancelled) return
+        const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' })
+        clientRef.current = client
+
+        await client.join(APP_ID, call.channel_name, call.agora_token, null)
+        if (cancelled) { await client.leave(); return }
+
+        const audioTrack = await AgoraRTC.createMicrophoneAudioTrack()
+        if (cancelled) { audioTrack.close(); await client.leave(); return }
+        audioTrackRef.current = audioTrack
+        await client.publish([audioTrack])
+
         setCallState('ongoing')
+
+        client.on('user-published', async (user, mediaType) => {
+          if (mediaType !== 'audio') return
+          await client.subscribe(user, 'audio')
+          user.audioTrack?.play()
+          if (isSpeakerOff) user.audioTrack?.setVolume(0)
+          remoteUsersRef.current = [...remoteUsersRef.current, user]
+        })
+
+        client.on('user-unpublished', (user) => {
+          remoteUsersRef.current = remoteUsersRef.current.filter(u => u.uid !== user.uid)
+        })
+
+        client.on('user-left', () => { handleEndCall() })
+
       } catch (err) {
         if (!cancelled) {
           setErrorMsg(err instanceof Error ? err.message : 'Call failed to connect.')
@@ -65,12 +107,16 @@ function VoiceCallPage({ params }: { params: Promise<{ id: string }> }) {
     }
 
     setup()
-    return () => { cancelled = true }
-  }, [id, callIdParam])
+    return () => {
+      cancelled = true
+      audioTrackRef.current?.close()
+      clientRef.current?.leave().catch(() => {})
+    }
+  }, [id, callIdParam]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (callState !== 'ongoing') return
-    const interval = setInterval(() => setCallTime((t) => t + 1), 1000)
+    const interval = setInterval(() => setCallTime(t => t + 1), 1000)
     return () => clearInterval(interval)
   }, [callState])
 
@@ -79,12 +125,16 @@ function VoiceCallPage({ params }: { params: Promise<{ id: string }> }) {
     return `${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
   }
 
-  const handleEndCall = async () => {
-    setCallState('ended')
-    if (callRef.current) {
-      await callsApi.endCall(callRef.current.id).catch(() => {})
-    }
-    router.back()
+  const handleToggleMute = () => {
+    const next = !isMuted
+    audioTrackRef.current?.setEnabled(!next)
+    setIsMuted(next)
+  }
+
+  const handleToggleSpeaker = () => {
+    const next = !isSpeakerOff
+    remoteUsersRef.current.forEach(u => u.audioTrack?.setVolume(next ? 0 : 100))
+    setIsSpeakerOff(next)
   }
 
   const avatar = otherAvatar || DEFAULT_AVATAR
@@ -111,10 +161,9 @@ function VoiceCallPage({ params }: { params: Promise<{ id: string }> }) {
           </h1>
           <div className="w-12" />
         </header>
-
         <div className="flex flex-1 flex-col items-center justify-center px-4">
           <div className="relative mb-6 h-48 w-48">
-            <Image src={avatar} alt={otherName} fill className="rounded-full object-cover" />
+            <Image src={avatar} alt={otherName} fill className="rounded-full object-cover" unoptimized />
             {callState === 'calling' && (
               <div className="absolute inset-0 animate-ping rounded-full bg-primary/20" />
             )}
@@ -124,7 +173,6 @@ function VoiceCallPage({ params }: { params: Promise<{ id: string }> }) {
             {callState === 'connecting' ? 'Setting up call...' : 'Ringing...'}
           </p>
         </div>
-
         <div className="px-4 pb-12 flex justify-center">
           <button onClick={handleEndCall} className="flex h-16 w-16 items-center justify-center rounded-full bg-red-500 text-white shadow-lg">
             <PhoneOff className="h-7 w-7" />
@@ -150,7 +198,7 @@ function VoiceCallPage({ params }: { params: Promise<{ id: string }> }) {
       <div className="flex flex-1 flex-col items-center justify-center px-4">
         <div className="relative mb-6 h-48 w-48">
           <div className="absolute inset-0 animate-pulse rounded-full bg-primary/20" />
-          <Image src={avatar} alt={otherName} fill className="rounded-full border-4 border-white object-cover shadow-lg" />
+          <Image src={avatar} alt={otherName} fill className="rounded-full border-4 border-white object-cover shadow-lg" unoptimized />
         </div>
         <p className="text-muted-foreground text-sm mt-2">Voice Call</p>
       </div>
@@ -158,16 +206,16 @@ function VoiceCallPage({ params }: { params: Promise<{ id: string }> }) {
       <div className="px-4 pb-8">
         <div className="mx-auto mb-4 flex max-w-xs items-center justify-center gap-6 rounded-full bg-muted p-4">
           <button
-            onClick={() => setIsSpeakerOn(!isSpeakerOn)}
-            className={`flex h-14 w-14 items-center justify-center rounded-full ${isSpeakerOn ? 'bg-primary text-primary-foreground' : 'bg-background'}`}
+            onClick={handleToggleSpeaker}
+            className={`flex h-14 w-14 items-center justify-center rounded-full transition-colors ${!isSpeakerOff ? 'bg-primary text-primary-foreground' : 'bg-background'}`}
           >
-            <Volume2 className="h-6 w-6" />
+            {isSpeakerOff ? <VolumeX className="h-6 w-6" /> : <Volume2 className="h-6 w-6" />}
           </button>
           <button
-            onClick={() => setIsMuted(!isMuted)}
-            className={`flex h-14 w-14 items-center justify-center rounded-full ${isMuted ? 'bg-primary text-primary-foreground' : 'bg-background'}`}
+            onClick={handleToggleMute}
+            className={`flex h-14 w-14 items-center justify-center rounded-full transition-colors ${isMuted ? 'bg-red-500 text-white' : 'bg-background'}`}
           >
-            <MicOff className="h-6 w-6" />
+            {isMuted ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
           </button>
         </div>
 

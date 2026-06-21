@@ -74,6 +74,21 @@ function VoiceCallPage({ params }: { params: Promise<{ id: string }> }) {
         const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' })
         clientRef.current = client
 
+        // Register handlers BEFORE join so we don't miss events from users
+        // already in the channel when we arrive
+        client.on('user-published', async (user, mediaType) => {
+          if (mediaType !== 'audio') return
+          await client.subscribe(user, 'audio')
+          user.audioTrack?.play()
+          remoteUsersRef.current = [...remoteUsersRef.current, user]
+        })
+
+        client.on('user-unpublished', (user) => {
+          remoteUsersRef.current = remoteUsersRef.current.filter(u => u.uid !== user.uid)
+        })
+
+        client.on('user-left', () => { handleEndCall() })
+
         await client.join(APP_ID, call.channel_name, call.agora_token, null)
         if (cancelled) { await client.leave(); return }
 
@@ -83,20 +98,6 @@ function VoiceCallPage({ params }: { params: Promise<{ id: string }> }) {
         await client.publish([audioTrack])
 
         setCallState('ongoing')
-
-        client.on('user-published', async (user, mediaType) => {
-          if (mediaType !== 'audio') return
-          await client.subscribe(user, 'audio')
-          user.audioTrack?.play()
-          if (isSpeakerOff) user.audioTrack?.setVolume(0)
-          remoteUsersRef.current = [...remoteUsersRef.current, user]
-        })
-
-        client.on('user-unpublished', (user) => {
-          remoteUsersRef.current = remoteUsersRef.current.filter(u => u.uid !== user.uid)
-        })
-
-        client.on('user-left', () => { handleEndCall() })
 
       } catch (err) {
         if (!cancelled) {

@@ -71,18 +71,8 @@ function VideoCallPage({ params }: { params: Promise<{ id: string }> }) {
         const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' })
         clientRef.current = client
 
-        await client.join(APP_ID, call.channel_name, call.agora_token, null)
-        if (cancelled) { await client.leave(); return }
-
-        const [audioTrack, videoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks()
-        if (cancelled) { audioTrack.close(); videoTrack.close(); await client.leave(); return }
-        audioTrackRef.current = audioTrack
-        videoTrackRef.current = videoTrack
-
-        await client.publish([audioTrack, videoTrack])
-        setCallState('ongoing')
-
-        // Remote user events
+        // Register handlers BEFORE join so we don't miss events from users
+        // already in the channel when we arrive
         client.on('user-published', async (user, mediaType) => {
           await client.subscribe(user, mediaType)
           if (mediaType === 'video') {
@@ -103,6 +93,17 @@ function VideoCallPage({ params }: { params: Promise<{ id: string }> }) {
         })
 
         client.on('user-left', () => { handleEndCall() })
+
+        await client.join(APP_ID, call.channel_name, call.agora_token, null)
+        if (cancelled) { await client.leave(); return }
+
+        const [audioTrack, videoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks()
+        if (cancelled) { audioTrack.close(); videoTrack.close(); await client.leave(); return }
+        audioTrackRef.current = audioTrack
+        videoTrackRef.current = videoTrack
+
+        await client.publish([audioTrack, videoTrack])
+        setCallState('ongoing')
 
       } catch {
         if (!cancelled) setCallState('error')

@@ -3,10 +3,11 @@
 import { useState, use, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { 
-  Bookmark, ChevronLeft, ChevronRight, ChevronDown, Bed, Bath, 
+import {
+  Bookmark, ChevronLeft, ChevronRight, ChevronDown, Bed, Bath,
   Sofa, MapPin, Calendar, AlertTriangle, Users, Building2, ArrowLeft, X, Clock,
-  Home, DollarSign, Grid3X3, Maximize, Eye, Play
+  Home, DollarSign, Grid3X3, Maximize, Eye, Play, Pause,
+  Maximize2, Minimize2, SkipBack, SkipForward
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { Button } from '@/components/ui/button'
@@ -34,6 +35,8 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
   const [property, setProperty] = useState<Property | null>(null)
   const [fetchError, setFetchError] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
+  const fullscreenVideoRef = useRef<HTMLVideoElement>(null)
+  const [isFullscreenVideoPlaying, setIsFullscreenVideoPlaying] = useState(false)
 
   const handlePlayVideo = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -43,9 +46,35 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
     }
   }
 
+  const handleFullscreenPlayPause = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    const video = fullscreenVideoRef.current
+    if (!video) return
+    if (isFullscreenVideoPlaying) {
+      video.pause()
+      setIsFullscreenVideoPlaying(false)
+    } else {
+      video.play()
+      setIsFullscreenVideoPlaying(true)
+    }
+  }
+
+  const handleSkipBackward = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (fullscreenVideoRef.current)
+      fullscreenVideoRef.current.currentTime = Math.max(0, fullscreenVideoRef.current.currentTime - 10)
+  }
+
+  const handleSkipForward = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (fullscreenVideoRef.current)
+      fullscreenVideoRef.current.currentTime += 10
+  }
+
   // Reset play state when switching media items
   useEffect(() => {
     setIsVideoPlaying(false)
+    setIsFullscreenVideoPlaying(false)
     if (videoRef.current) {
       videoRef.current.pause()
       videoRef.current.currentTime = 0
@@ -211,6 +240,14 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
             />
           ))}
         </div>
+
+        {/* Maximize button */}
+        <button
+          onClick={() => setShowFullScreen(true)}
+          className="absolute bottom-4 right-4 w-9 h-9 rounded-full bg-black/50 flex items-center justify-center backdrop-blur-sm"
+        >
+          <Maximize2 className="w-4 h-4 text-white" />
+        </button>
       </div>
 
       {/* Content */}
@@ -501,30 +538,62 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
         </Button>
       </div>
 
-      {/* Fullscreen image/video modal */}
+      {/* Fullscreen modal */}
       {showFullScreen && mediaItems.length > 0 && (
-        <div
-          className="fixed inset-0 z-50 bg-black flex items-center justify-center"
-          onClick={() => setShowFullScreen(false)}
-        >
-          <button
-            onClick={() => setShowFullScreen(false)}
-            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center z-10"
-          >
-            <X className="w-5 h-5 text-white" />
-          </button>
-          <div className="relative w-full h-full flex items-center justify-center">
-            {isVideoItem(mediaItems[currentImageIndex]) ? (
+        <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
+
+          {isVideoItem(mediaItems[currentImageIndex]) ? (
+            /* ── Video fullscreen ── */
+            <div className="relative w-full h-full flex items-center justify-center">
               <video
+                ref={fullscreenVideoRef}
                 src={mediaItems[currentImageIndex]}
                 className="max-w-full max-h-full object-contain"
-                controls
                 loop
                 playsInline
+                autoPlay
                 poster={property.images[0] || ''}
-                onClick={(e) => e.stopPropagation()}
+                onPlay={() => setIsFullscreenVideoPlaying(true)}
+                onPause={() => setIsFullscreenVideoPlaying(false)}
               />
-            ) : (
+
+              {/* Minimize */}
+              <button
+                onClick={() => setShowFullScreen(false)}
+                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center"
+              >
+                <Minimize2 className="w-5 h-5 text-white" />
+              </button>
+
+              {/* Video controls bar */}
+              <div className="absolute bottom-0 left-0 right-0 px-6 pb-10 pt-16 bg-gradient-to-t from-black/80 to-transparent">
+                <div className="flex items-center justify-center gap-10">
+                  <button onClick={handleSkipBackward} className="flex flex-col items-center gap-1">
+                    <SkipBack className="w-7 h-7 text-white" fill="white" />
+                    <span className="text-white text-xs">10s</span>
+                  </button>
+                  <button
+                    onClick={handleFullscreenPlayPause}
+                    className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center border border-white/30"
+                  >
+                    {isFullscreenVideoPlaying
+                      ? <Pause className="w-8 h-8 text-white" fill="white" />
+                      : <Play className="w-8 h-8 text-white ml-1" fill="white" />
+                    }
+                  </button>
+                  <button onClick={handleSkipForward} className="flex flex-col items-center gap-1">
+                    <SkipForward className="w-7 h-7 text-white" fill="white" />
+                    <span className="text-white text-xs">10s</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* ── Image fullscreen ── */
+            <div
+              className="relative w-full h-full flex items-center justify-center"
+              onClick={() => setShowFullScreen(false)}
+            >
               <Image
                 src={mediaItems[currentImageIndex]}
                 alt={property.title}
@@ -533,27 +602,39 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
                 unoptimized
                 onClick={(e) => e.stopPropagation()}
               />
-            )}
-          </div>
-          {mediaItems.length > 1 && (
-            <>
+
+              {/* Minimize */}
               <button
-                onClick={(e) => { e.stopPropagation(); handlePrevImage() }}
-                className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center z-10"
+                onClick={() => setShowFullScreen(false)}
+                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center z-10"
               >
-                <ChevronLeft className="w-6 h-6 text-white" />
+                <Minimize2 className="w-5 h-5 text-white" />
               </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); handleNextImage() }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center z-10"
-              >
-                <ChevronRight className="w-6 h-6 text-white" />
-              </button>
-            </>
+
+              {/* Prev / Next */}
+              {mediaItems.length > 1 && (
+                <>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handlePrevImage() }}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center z-10"
+                  >
+                    <ChevronLeft className="w-6 h-6 text-white" />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleNextImage() }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center z-10"
+                  >
+                    <ChevronRight className="w-6 h-6 text-white" />
+                  </button>
+                </>
+              )}
+
+              {/* Counter */}
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/50 px-3 py-1 rounded-full text-white text-sm">
+                {currentImageIndex + 1} / {mediaItems.length}
+              </div>
+            </div>
           )}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 px-3 py-1 rounded-full text-white text-sm">
-            {currentImageIndex + 1} / {mediaItems.length}
-          </div>
         </div>
       )}
 

@@ -84,7 +84,7 @@ export default function LandingPage() {
 
   if (!mounted) return null
 
-  const logoUrl = '/icon.png'
+  const logoUrl = '/logo.png'
 
   const availableProperties = properties.slice(0, 3)
   
@@ -220,7 +220,7 @@ export default function LandingPage() {
         <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-lg border-b border-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity flex-shrink-0">
-              <Image src={logoUrl} alt="SpaceButton" width={32} height={32} className="h-8 w-8" />
+              <Image src={logoUrl} alt="SpaceButton" width={40} height={69} className="h-7 w-auto" style={{ width: 'auto' }} />
               <span className="font-bold text-base sm:text-lg text-foreground">SpaceButton</span>
             </Link>
 
@@ -707,7 +707,7 @@ export default function LandingPage() {
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-8 mb-8">
               <div className="col-span-2 lg:col-span-1">
                 <div className="flex items-center gap-2 mb-4">
-                  <Image src={logoUrl} alt="SpaceButton" width={32} height={32} className="h-8 w-8" />
+                  <Image src={logoUrl} alt="SpaceButton" width={40} height={69} className="h-7 w-auto" style={{ width: 'auto' }} />
                   <span className="font-bold text-foreground">SpaceButton</span>
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">Finding your dream space, made easy. No inspection fees, just real connections.</p>

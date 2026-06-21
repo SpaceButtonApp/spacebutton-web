@@ -60,7 +60,7 @@ export default function AdminAddPostPage() {
   const [propertySize, setPropertySize] = useState('')
   const [buildingYear, setBuildingYear] = useState('')
 
-  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png'
+  const logoUrl = '/logo.png'
 
   const toggleFacility = (facility: string) => {
     setSelectedFacilities((prev) =>
@@ -911,9 +911,10 @@ export default function AdminAddPostPage() {
                 <Image
                   src={logoUrl}
                   alt="SpaceButton"
-                  width={48}
-                  height={48}
-                  className="h-12 w-12"
+                  width={40}
+                  height={69}
+                  className="h-12 w-auto"
+                  style={{ width: 'auto' }}
                 />
               </div>
               

@@ -14,7 +14,7 @@ export default function VerificationPage() {
   const [resendTimer, setResendTimer] = useState(0)
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
-  const logoUrl = '/icon.png'
+  const logoUrl = '/logo.png'
 
   const [email, setEmail] = useState('')
   
@@ -124,9 +124,10 @@ export default function VerificationPage() {
             <Image
               src={logoUrl}
               alt="SpaceButton"
-              width={28}
-              height={28}
-              className="h-7 w-7"
+              width={40}
+              height={69}
+              className="h-7 w-auto"
+              style={{ width: 'auto' }}
             />
             <span className="text-lg font-bold text-foreground">SpaceButton</span>
           </div>

@@ -10,7 +10,7 @@ interface SplashScreenProps {
 export function SplashScreen({ onComplete }: SplashScreenProps) {
   const [phase, setPhase] = useState<'initial' | 'pulse' | 'expand' | 'reveal' | 'hold' | 'fadeOut'>('initial')
   
-  const logoIcon = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png'
+  const logoIcon = '/logo.png'
 
   useEffect(() => {
     // Phase 0: Initial - logo starts small (0-100ms)
@@ -83,9 +83,10 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
           <Image
             src={logoIcon}
             alt="SpaceButton"
-            width={72}
-            height={72}
-            className="w-18 h-18"
+            width={40}
+            height={69}
+            className="h-16 w-auto"
+            style={{ width: 'auto' }}
             priority
           />
         </div>

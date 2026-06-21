@@ -210,7 +210,7 @@ export default function AddPostPage() {
     }
   }
 
-  const logoUrl = '/icon.png'
+  const logoUrl = '/logo.png'
 
   return (
     <div className="min-h-screen bg-background">
@@ -224,7 +224,7 @@ export default function AddPostPage() {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2 flex-1 justify-center pr-8">
-            <Image src={logoUrl} alt="SpaceButton" width={28} height={28} className="h-7 w-7" />
+            <Image src={logoUrl} alt="SpaceButton" width={40} height={69} className="h-7 w-auto" style={{ width: 'auto' }} />
             <h1 className="text-lg font-semibold text-foreground">Add Apartment Details</h1>
           </div>
         </div>

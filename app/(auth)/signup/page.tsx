@@ -23,7 +23,7 @@ export default function SignupPage() {
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const logoUrl = '/icon.png'
+  const logoUrl = '/logo.png'
 
   const handlePhoneChange = (value: string) => {
     // Only allow numbers
@@ -76,9 +76,10 @@ export default function SignupPage() {
               <Image
                 src={logoUrl}
                 alt="SpaceButton"
-                width={28}
-                height={28}
-                className="h-7 w-7"
+                width={40}
+                height={69}
+                className="h-7 w-auto"
+                style={{ width: 'auto' }}
               />
               <span className="text-xl font-bold text-foreground">SpaceButton</span>
             </div>

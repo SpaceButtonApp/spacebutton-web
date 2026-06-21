@@ -120,11 +120,12 @@ function VerificationCodePage() {
         <div className="text-center mb-8">
           <div className="inline-block p-3 bg-primary/10 rounded-full mb-4">
             <Image
-              src="/icon.png"
+              src="/logo.png"
               alt="SpaceButton"
-              width={32}
-              height={32}
-              className="rounded-lg"
+              width={40}
+              height={69}
+              className="h-10 w-auto rounded-lg"
+              style={{ width: 'auto' }}
             />
           </div>
         </div>

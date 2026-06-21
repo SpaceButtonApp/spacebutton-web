@@ -47,7 +47,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false)
   const [mounted, setMounted] = useState(false)
 
-  const logoUrl = '/icon.png'
+  const logoUrl = '/logo.png'
 
   useEffect(() => { setMounted(true) }, [])
 
@@ -115,7 +115,7 @@ export default function HomePage() {
           </button>
 
           <div className="flex-1 flex items-center justify-center gap-2">
-            <Image src={logoUrl} alt="Spacebutton" width={28} height={28} className="h-7 w-7" />
+            <Image src={logoUrl} alt="SpaceButton" width={40} height={69} className="h-7 w-auto" style={{ width: 'auto' }} />
             <span className="text-lg font-bold text-foreground">SpaceButton</span>
           </div>
 

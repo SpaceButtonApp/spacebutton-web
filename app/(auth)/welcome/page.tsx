@@ -72,7 +72,7 @@ export default function WelcomePage() {
   const user = useAppStore((state) => state.user)
   const setUser = useAppStore((state) => state.setUser)
   const addRegisteredUser = useAppStore((state) => state.addRegisteredUser)
-  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png'
+  const logoUrl = '/logo.png'
   
   // Create user from signup data on mount
   useEffect(() => {
@@ -140,9 +140,10 @@ export default function WelcomePage() {
           <Image
             src={logoUrl}
             alt="SpaceButton"
-            width={28}
-            height={28}
-            className="h-7 w-7"
+            width={40}
+            height={69}
+            className="h-7 w-auto"
+            style={{ width: 'auto' }}
           />
           <span className="text-xl font-bold text-foreground">SpaceButton</span>
         </div>

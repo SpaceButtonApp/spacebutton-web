@@ -19,7 +19,7 @@ function ForgotPasswordVerifyPage() {
   const [error, setError] = useState('')
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
-  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png'
+  const logoUrl = '/logo.png'
 
   useEffect(() => {
     inputRefs.current[0]?.focus()
@@ -111,9 +111,10 @@ function ForgotPasswordVerifyPage() {
             <Image
               src={logoUrl}
               alt="SpaceButton"
-              width={28}
-              height={28}
-              className="h-7 w-7"
+              width={40}
+              height={69}
+              className="h-7 w-auto"
+              style={{ width: 'auto' }}
             />
             <span className="text-lg font-bold text-foreground">SpaceButton</span>
           </div>

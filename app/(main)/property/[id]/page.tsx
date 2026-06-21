@@ -133,7 +133,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-24 md:max-w-2xl md:mx-auto md:border-x md:border-border">
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-40 p-4 flex items-center justify-between">
         <BackButton 
@@ -150,7 +150,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
       </div>
 
       {/* Image Gallery */}
-      <div className="relative aspect-[4/3]">
+      <div className="relative aspect-[4/3] md:aspect-auto md:h-80">
         {isVideoItem(mediaItems[currentImageIndex]) ? (
           <>
             <video

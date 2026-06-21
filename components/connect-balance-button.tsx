@@ -24,12 +24,11 @@ export function ConnectBalanceButton() {
     router.push(`/payment?amount=${amount}&plan=basic&connects=${connects}`)
   }
 
-  // Plans ordered from highest to lowest (N40,000 at top, N2,000 at bottom)
   const plans = [
-    { id: 'basic-50', title: '50 Connects', subtitle: 'Best value package', price: 'N40,000', amount: 40000, connects: 50 },
-    { id: 'basic-10', title: '10 Connects', subtitle: 'Multiple reach outs', price: 'N10,000', amount: 10000, connects: 10 },
-    { id: 'basic-5', title: '5 Connects', subtitle: 'Small package', price: 'N5,000', amount: 5000, connects: 5 },
     { id: 'basic-single', title: '1 Connect', subtitle: 'Single reach out', price: 'N2,000', amount: 2000, connects: 1 },
+    { id: 'basic-5', title: '5 Connects', subtitle: 'Small package', price: 'N5,000', amount: 5000, connects: 5 },
+    { id: 'basic-10', title: '10 Connects', subtitle: 'Multiple reach outs', price: 'N10,000', amount: 10000, connects: 10 },
+    { id: 'basic-50', title: '50 Connects', subtitle: 'Best value package', price: 'N40,000', amount: 40000, connects: 50 },
   ]
 
   return (
@@ -67,19 +66,19 @@ export function ConnectBalanceButton() {
         >
           {/* Modal Content */}
           <div
-            className="bg-white dark:bg-[#1a1a24] rounded-2xl w-full max-w-md shadow-2xl relative flex flex-col max-h-[85vh]"
+            className="bg-white dark:bg-[#1a1a24] rounded-2xl w-full max-w-md shadow-2xl relative"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="pt-6 pb-4 px-6 text-center flex-shrink-0">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Purchase Connects</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                Connects allows you to reach out to property owners and agents directly
+            <div className="pt-5 pb-3 px-6 text-center">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">Purchase Connects</h2>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Connects allow you to reach out to property owners and agents directly
               </p>
             </div>
 
-            {/* Plans — scrollable if they don't fit */}
-            <div className="px-4 space-y-3 overflow-y-auto flex-1 pb-2">
+            {/* Plans */}
+            <div className="px-4 space-y-2">
               {plans.map((plan) => (
                 <button
                   key={plan.id}
@@ -88,23 +87,23 @@ export function ConnectBalanceButton() {
                     handlePurchase(plan.id, plan.amount, plan.connects)
                   }}
                   className={cn(
-                    'w-full rounded-xl border-2 p-4 text-left transition-all flex items-center justify-between',
+                    'w-full rounded-xl border-2 px-4 py-3 text-left transition-all flex items-center justify-between',
                     selectedPlan === plan.id
                       ? 'border-[#703BF7] bg-[#703BF7]/5 dark:bg-[#703BF7]/10'
                       : 'border-gray-200 dark:border-gray-700 hover:border-[#703BF7]/50 bg-white dark:bg-[#12121a]'
                   )}
                 >
                   <div>
-                    <p className="font-semibold text-gray-900 dark:text-white">{plan.title}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{plan.subtitle}</p>
+                    <p className="font-semibold text-sm text-gray-900 dark:text-white">{plan.title}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{plan.subtitle}</p>
                   </div>
-                  <p className="font-bold text-[#703BF7] text-lg">{plan.price}</p>
+                  <p className="font-bold text-[#703BF7]">{plan.price}</p>
                 </button>
               ))}
             </div>
 
-            {/* Cancel Button — always pinned at bottom */}
-            <div className="px-4 py-4 flex-shrink-0">
+            {/* Cancel Button */}
+            <div className="px-4 pt-3 pb-5">
               <button
                 onClick={() => setShowModal(false)}
                 className="w-full py-3 rounded-xl border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"

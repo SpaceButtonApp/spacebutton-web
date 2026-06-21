@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import {
-  User, Wallet, Crown, Bell,
+  User, Wallet, Zap, Bell,
   HelpCircle, LogOut, ChevronRight
 } from 'lucide-react'
 import { BottomNav } from '@/components/bottom-nav'
@@ -31,7 +31,7 @@ export default function SettingsPage() {
   const menuItems = [
     { icon: User, label: 'Profile', href: '/profile', badge: 0, color: 'text-foreground', bg: 'bg-primary/20' },
     { icon: Wallet, label: 'My Wallet', href: '/wallet', badge: 0, color: 'text-foreground', bg: 'bg-blue-500/20' },
-    { icon: Crown, label: 'Premium', href: '/premium', badge: 0, color: 'text-foreground', bg: 'bg-yellow-500/20' },
+    { icon: Zap, label: 'Get Connects', href: '/premium', badge: 0, color: 'text-foreground', bg: 'bg-[#703BF7]/20' },
     { icon: Bell, label: 'Notifications', href: '/notifications', badge: notifUnread, color: 'text-foreground', bg: 'bg-green-500/20' },
     { icon: HelpCircle, label: 'Help & Support', href: '/help', badge: 0, color: 'text-foreground', bg: 'bg-cyan-500/20' },
     { icon: LogOut, label: 'Log Out', href: '/logout', badge: 0, color: 'text-destructive', bg: 'bg-destructive/20' },

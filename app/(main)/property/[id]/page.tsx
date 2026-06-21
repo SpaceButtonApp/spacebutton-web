@@ -43,6 +43,15 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
     }
   }
 
+  // Reset play state when switching media items
+  useEffect(() => {
+    setIsVideoPlaying(false)
+    if (videoRef.current) {
+      videoRef.current.pause()
+      videoRef.current.currentTime = 0
+    }
+  }, [currentImageIndex])
+
   // Fetch listing from API
   useEffect(() => {
     setFetchError(false)
@@ -155,9 +164,12 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
               onClick={() => setShowFullScreen(true)}
             />
             {!isVideoPlaying && (
-              <div className="video-play-overlay" onClick={handlePlayVideo}>
-                <div className="video-play-button">
-                  <Play className="w-6 h-6 text-foreground ml-1" fill="currentColor" />
+              <div
+                className="absolute inset-0 flex items-center justify-center bg-black/30 cursor-pointer"
+                onClick={handlePlayVideo}
+              >
+                <div className="w-16 h-16 rounded-full bg-black/60 flex items-center justify-center backdrop-blur-sm">
+                  <Play className="w-7 h-7 text-white ml-1" fill="white" />
                 </div>
               </div>
             )}

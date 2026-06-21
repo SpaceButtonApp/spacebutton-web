@@ -9,6 +9,7 @@ import { PropertyCard } from '@/components/property-card'
 import { ConnectBalanceButton } from '@/components/connect-balance-button'
 import { useAppStore } from '@/lib/store'
 import { listingsApi, mapListing } from '@/lib/api/listings'
+import { syncMyProfile } from '@/lib/api/users'
 import { cn } from '@/lib/utils'
 import type { Property } from '@/lib/mock-data'
 import type { ListingFilters } from '@/lib/types/listing'
@@ -27,12 +28,13 @@ function tabToFilters(tab: Tab): ListingFilters {
 
 function SkeletonCard() {
   return (
-    <div className="rounded-2xl bg-card border border-border overflow-hidden animate-pulse">
-      <div className="aspect-[16/9] bg-secondary" />
-      <div className="p-4 space-y-3">
-        <div className="h-4 bg-secondary rounded w-3/4" />
+    <div className="flex gap-3 bg-card rounded-2xl p-3 border border-border animate-pulse">
+      <div className="w-32 h-28 flex-shrink-0 rounded-xl bg-secondary" />
+      <div className="flex-1 space-y-2 pt-1">
+        <div className="h-3.5 bg-secondary rounded w-3/4" />
         <div className="h-3 bg-secondary rounded w-1/2" />
-        <div className="h-4 bg-secondary rounded w-1/3" />
+        <div className="h-3 bg-secondary rounded w-2/3" />
+        <div className="h-4 bg-secondary rounded w-1/3 mt-2" />
       </div>
     </div>
   )
@@ -50,6 +52,12 @@ export default function HomePage() {
   const logoUrl = '/logo.png'
 
   useEffect(() => { setMounted(true) }, [])
+
+  // Sync connects balance from backend on mount
+  useEffect(() => {
+    if (!user) return
+    syncMyProfile().catch(() => {})
+  }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load saved IDs once on mount (auth required)
   useEffect(() => {
@@ -220,7 +228,7 @@ export default function HomePage() {
           ) : (
             <div className="space-y-4">
               {listings.map((property) => (
-                <PropertyCard key={property.id} property={property} />
+                <PropertyCard key={property.id} property={property} variant="compact" />
               ))}
             </div>
           )

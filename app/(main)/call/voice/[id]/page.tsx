@@ -46,7 +46,7 @@ function VoiceCallPage({ params }: { params: Promise<{ id: string }> }) {
     if (callRef.current) {
       await callsApi.endCall(callRef.current.id).catch(() => {})
     }
-    router.back()
+    window.history.back()
   }
 
   useEffect(() => {
@@ -144,7 +144,7 @@ function VoiceCallPage({ params }: { params: Promise<{ id: string }> }) {
       <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
         <p className="text-muted-foreground mb-2">Call failed</p>
         <p className="text-sm text-destructive mb-6">{errorMsg}</p>
-        <Button variant="outline" onClick={() => router.back()}>Go Back</Button>
+        <Button variant="outline" onClick={() => window.history.back()}>Go Back</Button>
       </div>
     )
   }
@@ -153,7 +153,7 @@ function VoiceCallPage({ params }: { params: Promise<{ id: string }> }) {
     return (
       <div className="flex min-h-screen flex-col bg-background">
         <header className="flex items-center gap-4 p-4">
-          <button onClick={() => router.back()} className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+          <button onClick={() => window.history.back()} className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
             <ChevronLeft className="h-6 w-6" />
           </button>
           <h1 className="flex-1 text-center text-xl font-semibold">
@@ -185,7 +185,7 @@ function VoiceCallPage({ params }: { params: Promise<{ id: string }> }) {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="flex items-center gap-4 p-4">
-        <button onClick={() => router.back()} className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+        <button onClick={() => window.history.back()} className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
           <ChevronLeft className="h-6 w-6" />
         </button>
         <div className="flex-1 text-center">

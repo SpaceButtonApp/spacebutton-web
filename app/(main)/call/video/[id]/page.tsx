@@ -48,7 +48,7 @@ function VideoCallPage({ params }: { params: Promise<{ id: string }> }) {
     if (callRef.current) {
       await callsApi.endCall(callRef.current.id).catch(() => {})
     }
-    router.back()
+    window.history.back()
   }
 
   useEffect(() => {
@@ -170,7 +170,7 @@ function VideoCallPage({ params }: { params: Promise<{ id: string }> }) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
         <p className="text-muted-foreground mb-4">Call failed to connect</p>
-        <Button variant="outline" onClick={() => router.back()}>Go Back</Button>
+        <Button variant="outline" onClick={() => window.history.back()}>Go Back</Button>
       </div>
     )
   }
@@ -199,7 +199,7 @@ function VideoCallPage({ params }: { params: Promise<{ id: string }> }) {
 
       {/* Header */}
       <header className="relative z-10 flex items-center gap-4 p-4">
-        <button onClick={() => router.back()} className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
+        <button onClick={() => window.history.back()} className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
           <ChevronLeft className="h-6 w-6 text-white" />
         </button>
         <div className="flex-1 text-center">

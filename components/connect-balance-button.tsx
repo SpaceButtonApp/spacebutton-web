@@ -60,13 +60,15 @@ export function ConnectBalanceButton() {
 
       {/* Modal Overlay */}
       {showModal && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
-          onClick={() => setShowModal(false)}
-        >
-          {/* Modal Content */}
+        <>
+          {/* Backdrop */}
           <div
-            className="bg-white dark:bg-[#1a1a24] rounded-2xl w-full max-w-md shadow-2xl relative"
+            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowModal(false)}
+          />
+          {/* Modal — always centered in viewport regardless of parent transforms */}
+          <div
+            className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-[#1a1a24] rounded-2xl w-[calc(100vw-2rem)] max-w-md shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -112,7 +114,7 @@ export function ConnectBalanceButton() {
               </button>
             </div>
           </div>
-        </div>
+        </>
       )}
     </>
   )

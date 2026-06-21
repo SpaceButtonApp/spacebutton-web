@@ -114,9 +114,9 @@ export default function CreatePasswordPage() {
               <Image
                 src={logoUrl}
                 alt="SpaceButton"
-                width={40}
-                height={40}
-                className="h-10 w-10"
+                width={28}
+                height={28}
+                className="h-7 w-7"
               />
               <span className="text-xl font-bold text-foreground">SpaceButton</span>
             </div>

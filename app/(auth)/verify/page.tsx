@@ -122,8 +122,8 @@ function VerificationCodePage() {
             <Image
               src="/icon.png"
               alt="SpaceButton"
-              width={40}
-              height={40}
+              width={32}
+              height={32}
               className="rounded-lg"
             />
           </div>

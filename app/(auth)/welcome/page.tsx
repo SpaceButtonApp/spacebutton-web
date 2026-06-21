@@ -140,11 +140,11 @@ export default function WelcomePage() {
           <Image
             src={logoUrl}
             alt="SpaceButton"
-            width={48}
-            height={48}
-            className="h-12 w-12"
+            width={28}
+            height={28}
+            className="h-7 w-7"
           />
-          <span className="text-2xl font-bold text-foreground">SpaceButton</span>
+          <span className="text-xl font-bold text-foreground">SpaceButton</span>
         </div>
 
         {/* Welcome Text */}

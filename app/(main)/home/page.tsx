@@ -115,7 +115,7 @@ export default function HomePage() {
           </button>
 
           <div className="flex-1 flex items-center justify-center gap-2">
-            <Image src={logoUrl} alt="Spacebutton" width={36} height={36} className="h-9 w-9" />
+            <Image src={logoUrl} alt="Spacebutton" width={28} height={28} className="h-7 w-7" />
             <span className="text-lg font-bold text-foreground">SpaceButton</span>
           </div>
 

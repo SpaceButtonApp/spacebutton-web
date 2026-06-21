@@ -38,7 +38,7 @@ export function AdminHeader({ title }: { title: string }) {
   return (
     <header className="h-16 bg-card backdrop-blur-xl border-b border-border flex items-center justify-between px-6 sticky top-0 z-40">
       <div className="flex items-center gap-4">
-        <Image src={logoUrl} alt="SpaceButton" width={32} height={32} className="h-8 w-8" />
+        <Image src={logoUrl} alt="SpaceButton" width={28} height={28} className="h-7 w-7" />
         <h1 className="text-xl font-semibold text-foreground">{title}</h1>
       </div>
 

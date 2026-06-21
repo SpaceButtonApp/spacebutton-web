@@ -51,9 +51,9 @@ export default function GetStartedPage() {
           <Image
             src={logoIcon}
             alt="Spacebutton"
-            width={32}
-            height={32}
-            className="h-8 w-8"
+            width={28}
+            height={28}
+            className="h-7 w-7"
             loading="eager"
             priority
           />

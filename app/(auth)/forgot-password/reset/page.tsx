@@ -82,9 +82,9 @@ function ResetPasswordPage() {
             <Image
               src={logoUrl}
               alt="SpaceButton"
-              width={32}
-              height={32}
-              className="h-8 w-8"
+              width={28}
+              height={28}
+              className="h-7 w-7"
             />
             <span className="text-lg font-bold text-foreground">SpaceButton</span>
           </div>

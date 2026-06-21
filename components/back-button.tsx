@@ -14,10 +14,10 @@ export function BackButton({ fallbackUrl = '/home', className, variant = 'defaul
   const router = useRouter()
 
   const handleBack = () => {
-    // If there is previous history in this tab, go back (same as browser back button).
-    // history.length is 1 when the page was opened fresh with no prior navigation.
     if (typeof window !== 'undefined' && window.history.length > 1) {
-      router.back()
+      // Use native browser back — reliably restores the previous page
+      // including component re-render, unlike router.back() in Next.js App Router.
+      window.history.back()
     } else {
       router.push(fallbackUrl)
     }

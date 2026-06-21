@@ -67,19 +67,19 @@ export function ConnectBalanceButton() {
         >
           {/* Modal Content */}
           <div
-            className="bg-white dark:bg-[#1a1a24] rounded-2xl w-full max-w-md shadow-2xl relative overflow-y-auto max-h-[90vh]"
+            className="bg-white dark:bg-[#1a1a24] rounded-2xl w-full max-w-md shadow-2xl relative flex flex-col max-h-[85vh]"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="pt-6 pb-4 px-6 text-center">
+            <div className="pt-6 pb-4 px-6 text-center flex-shrink-0">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">Purchase Connects</h2>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                 Connects allows you to reach out to property owners and agents directly
               </p>
             </div>
 
-            {/* Plans */}
-            <div className="px-4 pb-4 space-y-3">
+            {/* Plans — scrollable if they don't fit */}
+            <div className="px-4 space-y-3 overflow-y-auto flex-1 pb-2">
               {plans.map((plan) => (
                 <button
                   key={plan.id}
@@ -103,8 +103,8 @@ export function ConnectBalanceButton() {
               ))}
             </div>
 
-            {/* Cancel Button */}
-            <div className="px-4 pb-6">
+            {/* Cancel Button — always pinned at bottom */}
+            <div className="px-4 py-4 flex-shrink-0">
               <button
                 onClick={() => setShowModal(false)}
                 className="w-full py-3 rounded-xl border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"

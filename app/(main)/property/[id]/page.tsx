@@ -133,7 +133,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24 md:max-w-2xl md:mx-auto md:border-x md:border-border">
+    <div className="relative min-h-screen bg-background pb-24 md:max-w-2xl md:mx-auto md:border-x md:border-border">
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-40 p-4 flex items-center justify-between">
         <BackButton 

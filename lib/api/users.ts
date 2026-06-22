@@ -88,6 +88,22 @@ export const verificationApi = {
     const res = await api.get<ApiResponse<VerificationStatus>>('/verification/status')
     return res.data
   },
+
+  async submitId(idType: string, file: File, documentNumber?: string): Promise<string> {
+    const form = new FormData()
+    form.append('id_type', idType)
+    form.append('file', file)
+    if (documentNumber) form.append('document_number', documentNumber)
+    const res = await api.post<ApiResponse<null>>('/verification/id', form)
+    return res.message
+  },
+
+  async submitSelfie(file: File): Promise<string> {
+    const form = new FormData()
+    form.append('file', file)
+    const res = await api.post<ApiResponse<null>>('/verification/live', form)
+    return res.message
+  },
 }
 
 // ─── Display info helper (name from auth svc + avatar from user svc) ─────────

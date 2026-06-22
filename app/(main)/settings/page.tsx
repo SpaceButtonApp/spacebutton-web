@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import {
   User, Wallet, Zap, Bell,
-  HelpCircle, LogOut, ChevronRight
+  HelpCircle, LogOut, ChevronRight, ShieldCheck
 } from 'lucide-react'
 import { BottomNav } from '@/components/bottom-nav'
 import { LogoutModal } from '@/components/logout-modal'
@@ -30,6 +30,7 @@ export default function SettingsPage() {
 
   const menuItems = [
     { icon: User, label: 'Profile', href: '/profile', badge: 0, color: 'text-foreground', bg: 'bg-primary/20' },
+    { icon: ShieldCheck, label: 'Verify Account', href: '/verification', badge: 0, color: 'text-foreground', bg: 'bg-green-500/20' },
     { icon: Wallet, label: 'My Wallet', href: '/wallet', badge: 0, color: 'text-foreground', bg: 'bg-blue-500/20' },
     { icon: Zap, label: 'Get Connects', href: '/premium', badge: 0, color: 'text-foreground', bg: 'bg-[#703BF7]/20' },
     { icon: Bell, label: 'Notifications', href: '/notifications', badge: notifUnread, color: 'text-foreground', bg: 'bg-green-500/20' },

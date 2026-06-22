@@ -12,10 +12,10 @@ import { verificationApi } from '@/lib/api/users'
 import type { VerificationStatus } from '@/lib/types/user'
 
 const ID_TYPES = [
-  { value: 'nin', label: 'NIN (National ID Number)' },
-  { value: 'passport', label: 'International Passport' },
-  { value: 'driver_license', label: "Driver's License" },
-  { value: 'voter_card', label: "Voter's Card" },
+  { value: 'NIN', label: 'NIN (National ID Number)', numberLabel: 'NIN Number', placeholder: '11-digit NIN', maxLength: 11 },
+  { value: 'PASSPORT', label: 'International Passport', numberLabel: 'Passport Number', placeholder: 'e.g. A12345678', maxLength: 20 },
+  { value: 'DRIVERS_LICENSE', label: "Driver's License", numberLabel: "License Number", placeholder: 'e.g. ABC12345DE', maxLength: 20 },
+  { value: 'VOTER_CARD', label: "Voter's Card", numberLabel: "Voter ID Number", placeholder: 'e.g. 1234567890', maxLength: 20 },
 ]
 
 function StatusBadge({ status }: { status: string }) {
@@ -99,7 +99,7 @@ export default function VerificationPage() {
   const [loading, setLoading] = useState(true)
 
   // ID form state
-  const [idType, setIdType] = useState('nin')
+  const [idType, setIdType] = useState('NIN')
   const [idFile, setIdFile] = useState<File | null>(null)
   const [idPreview, setIdPreview] = useState<string | null>(null)
   const [documentNumber, setDocumentNumber] = useState('')
@@ -142,7 +142,7 @@ export default function VerificationPage() {
       const msg = await verificationApi.submitId(
         idType,
         idFile,
-        idType === 'nin' ? documentNumber || undefined : undefined,
+        documentNumber.trim() || undefined,
       )
       setIdMessage(msg)
       const updated = await verificationApi.getStatus()
@@ -281,7 +281,7 @@ export default function VerificationPage() {
                       <label className="text-sm font-medium text-foreground mb-1.5 block">ID Type</label>
                       <select
                         value={idType}
-                        onChange={e => setIdType(e.target.value)}
+                        onChange={e => { setIdType(e.target.value); setDocumentNumber('') }}
                         className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
                       >
                         {ID_TYPES.map(t => (
@@ -290,21 +290,30 @@ export default function VerificationPage() {
                       </select>
                     </div>
 
-                    {idType === 'nin' && (
-                      <div>
-                        <label className="text-sm font-medium text-foreground mb-1.5 block">
-                          NIN Number <span className="text-muted-foreground font-normal">(optional — enables auto-approval)</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={documentNumber}
-                          onChange={e => setDocumentNumber(e.target.value)}
-                          placeholder="11-digit NIN"
-                          maxLength={11}
-                          className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                        />
-                      </div>
-                    )}
+                    {(() => {
+                      const selected = ID_TYPES.find(t => t.value === idType)!
+                      return (
+                        <div>
+                          <label className="text-sm font-medium text-foreground mb-1.5 block">
+                            {selected.numberLabel}{' '}
+                            <span className="text-muted-foreground font-normal">
+                              {idType === 'NIN' ? '(optional — enables instant approval)' : '(optional — prevents duplicate submissions)'}
+                            </span>
+                          </label>
+                          <input
+                            type="text"
+                            value={documentNumber}
+                            onChange={e => setDocumentNumber(e.target.value)}
+                            placeholder={selected.placeholder}
+                            maxLength={selected.maxLength}
+                            className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          />
+                          {idType === 'NIN' && documentNumber && !/^\d{11}$/.test(documentNumber) && (
+                            <p className="text-xs text-destructive mt-1">NIN must be exactly 11 digits</p>
+                          )}
+                        </div>
+                      )
+                    })()}
 
                     <div>
                       <label className="text-sm font-medium text-foreground mb-1.5 block">Upload ID Photo</label>

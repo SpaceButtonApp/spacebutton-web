@@ -79,9 +79,7 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
             <div className="flex items-center gap-1">
               <Users className="w-3 h-3" />
               <span>
-                {property.type === 'connect'
-                  ? (property.connectRole === 'Landlord' ? 'Landlord' : 'Tenant')
-                  : property.type === 'agent' ? 'Agent' : 'Owner'}
+                {property.type === 'agent' ? 'Agent' : (property.connectRole ?? 'Landlord')}
               </span>
             </div>
             <div className="flex items-center gap-1">
@@ -161,9 +159,7 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
           <div className="flex items-center gap-1">
             <Users className="w-3.5 h-3.5" />
             <span>
-              {property.type === 'connect'
-                ? (property.connectRole === 'Landlord' ? 'Landlord' : 'Tenant')
-                : property.type === 'agent' ? 'Agent' : 'Owner'}
+              {property.type === 'agent' ? 'Agent' : (property.connectRole ?? 'Landlord')}
             </span>
           </div>
           <div className="flex items-center gap-1">

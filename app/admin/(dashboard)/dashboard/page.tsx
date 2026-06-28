@@ -3,14 +3,21 @@
 import { useState, useEffect } from 'react'
 import { AdminHeader } from '@/components/admin/header'
 import { adminApi } from '@/lib/api/admin'
-import type { AdminStats } from '@/lib/api/admin'
-import { Users, Building2, CreditCard, TrendingUp, ShieldCheck, Clock } from 'lucide-react'
+import type { AdminStats, WaitlistEntry } from '@/lib/api/admin'
+import { Users, Building2, CreditCard, TrendingUp, ShieldCheck, Clock, Mail, ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
+
+const PAGE_SIZE = 50
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [pendingVerifCount, setPendingVerifCount] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
+
+  const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([])
+  const [waitlistTotal, setWaitlistTotal] = useState(0)
+  const [waitlistPage, setWaitlistPage] = useState(1)
+  const [waitlistLoading, setWaitlistLoading] = useState(true)
 
   useEffect(() => {
     Promise.allSettled([
@@ -22,6 +29,17 @@ export default function DashboardPage() {
       setLoading(false)
     })
   }, [])
+
+  useEffect(() => {
+    setWaitlistLoading(true)
+    adminApi.getWaitlist(waitlistPage, PAGE_SIZE)
+      .then((res) => {
+        setWaitlist(res.entries ?? [])
+        setWaitlistTotal(res.total ?? 0)
+      })
+      .catch(() => {})
+      .finally(() => setWaitlistLoading(false))
+  }, [waitlistPage])
 
   const totalUsers = stats?.users?.total_users ?? 0
   const totalAgents = stats?.users?.total_agents ?? 0
@@ -171,6 +189,78 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
+
+        {/* Waitlist Card */}
+        <div className="bg-[#12121a] border border-gray-800/50 rounded-2xl overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800/50">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
+                <Mail className="w-5 h-5 text-purple-400" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-white">Waitlist</h3>
+                <p className="text-xs text-gray-500">
+                  {waitlistLoading ? '…' : `${waitlistTotal.toLocaleString()} sign-up${waitlistTotal !== 1 ? 's' : ''}`}
+                </p>
+              </div>
+            </div>
+            {waitlistTotal > PAGE_SIZE && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setWaitlistPage((p) => Math.max(1, p - 1))}
+                  disabled={waitlistPage === 1 || waitlistLoading}
+                  className="p-1.5 rounded-lg bg-gray-800 text-gray-400 hover:text-white disabled:opacity-40 transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="text-xs text-gray-500">
+                  {waitlistPage} / {Math.ceil(waitlistTotal / PAGE_SIZE)}
+                </span>
+                <button
+                  onClick={() => setWaitlistPage((p) => p + 1)}
+                  disabled={waitlistPage >= Math.ceil(waitlistTotal / PAGE_SIZE) || waitlistLoading}
+                  className="p-1.5 rounded-lg bg-gray-800 text-gray-400 hover:text-white disabled:opacity-40 transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {waitlistLoading ? (
+            <div className="divide-y divide-gray-800/50">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="flex items-center justify-between px-6 py-3 animate-pulse">
+                  <div className="h-4 w-48 bg-gray-800 rounded" />
+                  <div className="h-3 w-24 bg-gray-800 rounded" />
+                </div>
+              ))}
+            </div>
+          ) : waitlist.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-gray-600">
+              <Mail className="w-10 h-10 mb-3 opacity-40" />
+              <p className="text-sm">No waitlist sign-ups yet</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-800/50">
+              {waitlist.map((entry, i) => (
+                <div key={entry.id ?? i} className="flex items-center justify-between px-6 py-3 hover:bg-white/[0.02] transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="w-7 h-7 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                      <span className="text-xs text-purple-400 font-medium">
+                        {entry.email[0].toUpperCase()}
+                      </span>
+                    </div>
+                    <span className="text-sm text-gray-200">{entry.email}</span>
+                  </div>
+                  <span className="text-xs text-gray-600 flex-shrink-0">
+                    {new Date(entry.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

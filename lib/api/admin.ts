@@ -171,6 +171,19 @@ export interface PendingVerification {
   created_at?: string
 }
 
+export interface WaitlistEntry {
+  id: string
+  email: string
+  created_at: string
+}
+
+export interface WaitlistResponse {
+  total: number
+  page: number
+  page_size: number
+  entries: WaitlistEntry[]
+}
+
 export interface SupportChat {
   user_id: string
   user_name: string
@@ -347,6 +360,16 @@ export const adminApi = {
 
   async updateListingReport(reportId: string, status: 'actioned' | 'dismissed'): Promise<void> {
     await adminFetch(`/admin/listing-reports/${reportId}?status=${status}`, { method: 'PATCH' })
+  },
+
+  // Waitlist
+  async getWaitlist(page = 1, pageSize = 50): Promise<WaitlistResponse> {
+    const qs = new URLSearchParams({ page: String(page), page_size: String(pageSize) })
+    const res = await adminFetch<{ success: boolean; data: WaitlistResponse }>(
+      `/admin/waitlist?${qs}`,
+    )
+    const inner = (res as any)?.data ?? res
+    return inner as WaitlistResponse
   },
 
   // Chat Evidence

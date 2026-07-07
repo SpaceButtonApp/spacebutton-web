@@ -24,6 +24,7 @@ interface User {
   bio?: string
   state?: string
   city?: string
+  verificationStatus?: 'not-started' | 'in-progress' | 'approved' | 'rejected'
 }
 
 interface Transaction {
@@ -175,6 +176,10 @@ interface AppState {
   // Connects
   connectsRemaining: number
   deductConnect: () => boolean
+  addConnects: (count: number) => void
+  
+  // Identity Verification
+  updateIdentityVerification: (status: 'not-started' | 'in-progress' | 'approved' | 'rejected') => void
 }
 
 export const useAppStore = create<AppState>()(
@@ -504,7 +509,19 @@ export const useAppStore = create<AppState>()(
           user: { ...state.user, connectsRemaining: state.user.connectsRemaining - 1 }
         })
         return true
-      }
+      },
+      addConnects: (count) => set((state) => ({
+        user: state.user 
+          ? { ...state.user, connectsRemaining: state.user.connectsRemaining + count }
+          : null
+      })),
+      
+      // Identity Verification
+      updateIdentityVerification: (status) => set((state) => ({
+        user: state.user 
+          ? { ...state.user, verificationStatus: status }
+          : null
+      }))
     }),
     {
       name: 'spacebutton-storage',

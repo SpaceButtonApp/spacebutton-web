@@ -27,6 +27,7 @@ export default function ListingsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState<'all' | 'connect' | 'agent'>('all')
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'closed'>('all')
+  const [approvalFilter, setApprovalFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all')
   const [showActionMenu, setShowActionMenu] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table')
   const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null)
@@ -39,11 +40,16 @@ export default function ListingsPage() {
     const matchesStatus = statusFilter === 'all' || 
                          (statusFilter === 'active' && !isClosed) ||
                          (statusFilter === 'closed' && isClosed)
-    return matchesSearch && matchesType && matchesStatus
+    const matchesApproval = approvalFilter === 'all' || 
+                           listing.approvalStatus === approvalFilter
+    return matchesSearch && matchesType && matchesStatus && matchesApproval
   })
 
   const activeCount = properties.filter(p => !closedProperties.includes(p.id)).length
   const closedCount = closedProperties.length
+  const pendingApprovalCount = properties.filter(p => p.approvalStatus === 'pending').length
+  const approvedCount = properties.filter(p => p.approvalStatus === 'approved').length
+  const rejectedCount = properties.filter(p => p.approvalStatus === 'rejected').length
 
   const handleCloseListing = (id: string) => {
     closeProperty(id)
@@ -74,7 +80,7 @@ export default function ListingsPage() {
       
       <div className="p-6 space-y-6">
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
             <p className="text-sm text-gray-400 mb-1">Total Listings</p>
             <p className="text-2xl font-bold text-white">{properties.length}</p>
@@ -86,6 +92,10 @@ export default function ListingsPage() {
           <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
             <p className="text-sm text-gray-400 mb-1">Closed</p>
             <p className="text-2xl font-bold text-gray-400">{closedCount}</p>
+          </div>
+          <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
+            <p className="text-sm text-gray-400 mb-1">Pending Approval</p>
+            <p className="text-2xl font-bold text-yellow-400">{pendingApprovalCount}</p>
           </div>
           <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
             <p className="text-sm text-gray-400 mb-1">Connect Listings</p>
@@ -124,6 +134,16 @@ export default function ListingsPage() {
               <option value="active">Active</option>
               <option value="closed">Closed</option>
             </select>
+            <select
+              value={approvalFilter}
+              onChange={(e) => setApprovalFilter(e.target.value as any)}
+              className="px-4 py-2.5 bg-[#12121a] border border-gray-800 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+            >
+              <option value="all">All Approval</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+            </select>
             <div className="flex bg-[#12121a] border border-gray-800 rounded-xl overflow-hidden">
               <button 
                 onClick={() => setViewMode('table')}
@@ -161,6 +181,7 @@ export default function ListingsPage() {
                     <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">Type</th>
                     <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">Price</th>
                     <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">Status</th>
+                    <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">Approval</th>
                     <th className="text-right text-xs font-medium text-gray-400 uppercase px-5 py-4">Actions</th>
                   </tr>
                 </thead>
@@ -244,6 +265,17 @@ export default function ListingsPage() {
                           }`}>
                             {isClosed ? <XCircle className="w-3.5 h-3.5" /> : <CheckCircle className="w-3.5 h-3.5" />}
                             {isClosed ? 'Closed' : 'Active'}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4">
+                          <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${
+                            listing.approvalStatus === 'pending' 
+                              ? 'bg-yellow-500/20 text-yellow-400' 
+                              : listing.approvalStatus === 'approved'
+                              ? 'bg-green-500/20 text-green-400'
+                              : 'bg-red-500/20 text-red-400'
+                          }`}>
+                            {listing.approvalStatus ? listing.approvalStatus.charAt(0).toUpperCase() + listing.approvalStatus.slice(1) : 'Approved'}
                           </span>
                         </td>
                         <td className="px-5 py-4 text-right">

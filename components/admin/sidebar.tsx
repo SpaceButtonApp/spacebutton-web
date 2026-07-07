@@ -14,7 +14,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Bell,
-  Flag
+  Flag,
+  Shield
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
@@ -23,6 +24,7 @@ import { useAppStore } from '@/lib/store'
 const menuItems = [
   { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
   { label: 'Users', href: '/admin/users', icon: Users },
+  { label: 'Verification', href: '/admin/verification', icon: Shield },
   { label: 'User Reports', href: '/admin/reports', icon: Flag },
   { label: 'Listings', href: '/admin/listings', icon: Building2 },
   { label: 'Messages', href: '/admin/messages', icon: MessageSquare },

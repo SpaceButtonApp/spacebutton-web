@@ -753,9 +753,10 @@ export default function AddPostPage() {
                       balconies: balconies,
                       genderNeeded: selectedGender.toLowerCase() as 'male' | 'female' | 'both',
                       createdAt: new Date().toISOString(),
+                      approvalStatus: 'pending',
                     }
                     addProperty(newProperty)
-                    router.push('/home')
+                    router.push('/listing-pending-approval')
                   }}
                 >
                   Finish

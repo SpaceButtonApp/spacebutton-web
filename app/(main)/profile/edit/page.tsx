@@ -19,7 +19,6 @@ export default function EditProfilePage() {
 
   const [formData, setFormData] = useState({
     name: user?.name || '',
-    gender: user?.gender || '',
     phone: user?.phone || '',
     location: user?.location || '',
     email: user?.email || '',
@@ -47,13 +46,11 @@ export default function EditProfilePage() {
           bio: formData.bio || undefined,
           state: formData.state || undefined,
           city: formData.city || undefined,
-          gender: formData.gender || undefined,
         })
         updateUser({
           bio: updated.bio ?? undefined,
           state: updated.state ?? undefined,
           city: updated.city ?? undefined,
-          gender: (updated.gender as 'Male' | 'Female' | 'Other' | undefined) ?? undefined,
         })
       }
       router.push('/profile')
@@ -218,16 +215,6 @@ export default function EditProfilePage() {
             <Input
               type="email"
               value={formData.email}
-              disabled
-              className="h-14 rounded-xl border-border bg-muted px-4 cursor-not-allowed opacity-60"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">Gender</label>
-            <Input
-              type="text"
-              value={formData.gender}
               disabled
               className="h-14 rounded-xl border-border bg-muted px-4 cursor-not-allowed opacity-60"
             />

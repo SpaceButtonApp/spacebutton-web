@@ -7,13 +7,10 @@ import Image from 'next/image'
 import { User, Mail, Ticket, Check } from 'lucide-react'
 import { BackButton } from '@/components/back-button'
 
-const genderOptions = ['Male', 'Female']
-
 export default function SignupPage() {
   const router = useRouter()
   const [formData, setFormData] = useState({
     name: '',
-    gender: '' as string,
     profileType: 'individual' as 'individual' | 'agent',
     email: '',
     phone: '',
@@ -36,7 +33,6 @@ export default function SignupPage() {
     const newErrors: Record<string, string> = {}
     
     if (!formData.name) newErrors.name = 'Name is required'
-    if (!formData.gender) newErrors.gender = 'Please select your gender'
     if (!formData.email) newErrors.email = 'Email is required'
     if (!formData.phone) newErrors.phone = 'Phone number is required'
     if (formData.phone.length < 10) newErrors.phone = 'Please enter a valid phone number'
@@ -105,29 +101,6 @@ export default function SignupPage() {
                   />
                 </div>
                 {errors.name && <p className="mt-2 text-sm text-destructive">{errors.name}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-muted-foreground mb-2">
-                  Gender
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {genderOptions.map((gender) => (
-                    <button
-                      key={gender}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, gender })}
-                      className={`py-3 rounded-xl font-medium text-sm transition-all ${
-                        formData.gender === gender
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-secondary border border-border text-muted-foreground hover:border-primary/50'
-                      }`}
-                    >
-                      {gender}
-                    </button>
-                  ))}
-                </div>
-                {errors.gender && <p className="mt-2 text-sm text-destructive">{errors.gender}</p>}
               </div>
 
               <div>

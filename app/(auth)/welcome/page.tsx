@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Sparkles, ShieldCheck, Zap } from 'lucide-react'
+import { authApi } from '@/lib/api/auth'
 
 function Confetti() {
   const [ribbons, setRibbons] = useState<Array<{ id: number; left: number; delay: number; duration: number; color: string }>>([])
@@ -49,9 +50,18 @@ function Confetti() {
 export default function WelcomePage() {
   const router = useRouter()
 
-  // Clean up signup temp data now that onboarding is complete
   useEffect(() => {
+    const raw = localStorage.getItem('signupData')
+    if (!raw) return
     localStorage.removeItem('signupData')
+    try {
+      const data = JSON.parse(raw)
+      if (data.email && data.password) {
+        authApi.login(data.email, data.password).catch(() => {})
+      }
+    } catch {
+      // corrupt data, ignore
+    }
   }, [])
 
   return (

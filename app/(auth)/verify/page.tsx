@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
-import { authApi, getAuthErrorMessage } from '@/lib/api/auth'
+import { getAuthErrorMessage } from '@/lib/api/auth'
 
 function VerificationCodePage() {
   const router = useRouter()
@@ -43,21 +43,6 @@ function VerificationCodePage() {
     }
   }
 
-  const autoLoginAndContinue = async () => {
-    try {
-      const raw = localStorage.getItem('signupData')
-      if (raw) {
-        const data = JSON.parse(raw)
-        if (data.password) {
-          await authApi.login(data.email || email, data.password)
-        }
-      }
-    } catch {
-      // auto-login failed silently; user can log in manually
-    }
-    router.push('/welcome')
-  }
-
   const handleContinue = async () => {
     const verificationCode = codes.join('')
     if (verificationCode.length !== 6) return
@@ -66,17 +51,16 @@ function VerificationCodePage() {
     setError('')
     try {
       await authApi.verifyEmail(email, verificationCode)
-      await autoLoginAndContinue()
+      router.push('/welcome')
     } catch (err) {
       const msg = getAuthErrorMessage(err)
       // Email already verified on a previous attempt — treat as success
       if (msg.toLowerCase().includes('already verified')) {
-        await autoLoginAndContinue()
-        return
+        router.push('/welcome')
+      } else {
+        setError(msg)
+        setIsLoading(false)
       }
-      setError(msg)
-    } finally {
-      setIsLoading(false)
     }
   }
 

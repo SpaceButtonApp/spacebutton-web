@@ -4,7 +4,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   return (
     <>
       <DesktopSidebar />
-      <div className="md:ml-[40vw]">
+      <div className="md:ml-[25vw]">
         {children}
       </div>
     </>

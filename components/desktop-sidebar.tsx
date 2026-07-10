@@ -22,7 +22,7 @@ export function DesktopSidebar() {
   const unreadMessages = hydrated ? unreadChatsCount : 0
 
   return (
-    <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-[40vw] bg-card border-r border-border z-50 items-center justify-center">
+    <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-[25vw] bg-card border-r border-border z-50 items-center justify-center">
       {/* Inner column — fixed width so nav items don't stretch across 40vw */}
       <div className="flex flex-col h-full w-64 py-6">
         {/* Logo */}

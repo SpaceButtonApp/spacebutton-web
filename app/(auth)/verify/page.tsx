@@ -43,6 +43,21 @@ function VerificationCodePage() {
     }
   }
 
+  const autoLoginAndContinue = async () => {
+    try {
+      const raw = localStorage.getItem('signupData')
+      if (raw) {
+        const data = JSON.parse(raw)
+        if (data.password) {
+          await authApi.login(data.email || email, data.password)
+        }
+      }
+    } catch {
+      // auto-login failed silently; user can log in manually
+    }
+    router.push('/welcome')
+  }
+
   const handleContinue = async () => {
     const verificationCode = codes.join('')
     if (verificationCode.length !== 6) return
@@ -51,11 +66,15 @@ function VerificationCodePage() {
     setError('')
     try {
       await authApi.verifyEmail(email, verificationCode)
-      // Trigger phone OTP after email is verified
-      await authApi.sendPhoneOtpSignup(email)
-      router.push(`/signup/phone-verification?email=${encodeURIComponent(email)}`)
+      await autoLoginAndContinue()
     } catch (err) {
-      setError(getAuthErrorMessage(err))
+      const msg = getAuthErrorMessage(err)
+      // Email already verified on a previous attempt — treat as success
+      if (msg.toLowerCase().includes('already verified')) {
+        await autoLoginAndContinue()
+        return
+      }
+      setError(msg)
     } finally {
       setIsLoading(false)
     }

@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
-import { getAuthErrorMessage } from '@/lib/api/auth'
+import { authApi, getAuthErrorMessage } from '@/lib/api/auth'
 
 function VerificationCodePage() {
   const router = useRouter()

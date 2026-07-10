@@ -28,10 +28,10 @@ function tabToFilters(tab: Tab): ListingFilters {
 
 function SkeletonCard() {
   return (
-    <div className="flex gap-3 bg-card rounded-2xl p-3 border border-border animate-pulse">
-      <div className="w-32 h-28 flex-shrink-0 rounded-xl bg-secondary" />
-      <div className="flex-1 space-y-2 pt-1">
-        <div className="h-3.5 bg-secondary rounded w-3/4" />
+    <div className="bg-card rounded-2xl border border-border overflow-hidden animate-pulse">
+      <div className="aspect-video bg-secondary w-full" />
+      <div className="p-3 space-y-2">
+        <div className="h-4 bg-secondary rounded w-3/4" />
         <div className="h-3 bg-secondary rounded w-1/2" />
         <div className="h-3 bg-secondary rounded w-2/3" />
         <div className="h-4 bg-secondary rounded w-1/3 mt-2" />
@@ -228,7 +228,7 @@ export default function HomePage() {
           ) : (
             <div className="space-y-4">
               {listings.map((property) => (
-                <PropertyCard key={property.id} property={property} variant="compact" />
+                <PropertyCard key={property.id} property={property} variant="full" />
               ))}
             </div>
           )

@@ -46,7 +46,7 @@ export function BottomNav() {
   }, [user?.id, pathname]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-t border-border">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-t border-border">
       <div className="max-w-lg mx-auto flex items-center justify-between px-2 py-2">
         {navItems.map((item) => {
           const isActive = pathname.startsWith(item.href)

@@ -710,12 +710,15 @@ export default function AddPostPage() {
                     try {
                       const category: ListingCategory =
                         selectedCondition === 'Vacating' ? 'subletting' :
-                        (selectedCondition === 'Roommate' || selectedCondition === 'Flatmate') ? 'need_roommate' :
+                        selectedCondition === 'Roommate' ? 'need_roommate' :
+                        selectedCondition === 'Flatmate' ? 'flatmate' :
                         'for_rent'
 
                       const property_type: PropertyType =
                         selectedCategory === 'Self Con' ? 'self_contain' :
-                        (selectedCategory === 'Duplex' || selectedCategory === 'Storey') ? 'house' :
+                        selectedCategory === 'Duplex' ? 'duplex' :
+                        selectedCategory === 'Storey' ? 'storey' :
+                        selectedCategory === 'Penthouse' ? 'penthouse' :
                         'apartment'
 
                       const listing = await listingsApi.createListing({

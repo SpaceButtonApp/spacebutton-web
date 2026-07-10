@@ -18,6 +18,10 @@ function mapCategory(l: ListingResponse): Property['category'] {
     case 'house': return 'house'
     case 'self_contain': return 'self-con'
     case 'room_and_parlour': return 'flat'
+    case 'duplex': return 'duplex'
+    case 'storey': return 'storey'
+    case 'penthouse': return 'penthouse'
+    default: return 'flat'
   }
 }
 
@@ -25,12 +29,14 @@ function mapCondition(l: ListingResponse): Property['condition'] {
   switch (l.category) {
     case 'for_rent': return 'rent'
     case 'need_roommate': return 'roommate'
+    case 'flatmate': return 'flatmate'
     case 'subletting': return 'flatmate'
+    default: return 'rent'
   }
 }
 
 function mapType(l: ListingResponse): Property['type'] {
-  if (l.category === 'need_roommate') return 'connect'
+  if (l.category === 'need_roommate' || l.category === 'flatmate') return 'connect'
   if (l.category === 'subletting') return 'shortlet'
   if (l.owner_type === 'agent') return 'agent'
   return 'properties'

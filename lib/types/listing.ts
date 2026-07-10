@@ -1,7 +1,7 @@
-export type PropertyType = 'apartment' | 'house' | 'self_contain' | 'room_and_parlour'
+export type PropertyType = 'apartment' | 'house' | 'self_contain' | 'room_and_parlour' | 'duplex' | 'storey' | 'penthouse'
 export type ListingStatus = 'active' | 'inactive' | 'pending' | 'rejected' | 'sold'
 export type ListingOwnerType = 'agent' | 'user'
-export type ListingCategory = 'for_rent' | 'need_roommate' | 'subletting'
+export type ListingCategory = 'for_rent' | 'need_roommate' | 'subletting' | 'flatmate'
 
 export interface ListingImageResponse {
   id: string

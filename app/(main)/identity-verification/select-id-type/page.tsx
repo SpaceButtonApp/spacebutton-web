@@ -9,8 +9,8 @@ import { BottomNav } from '@/components/bottom-nav'
 const idTypes = [
   { id: 'nin', label: 'National Identification Number (NIN)' },
   { id: 'passport', label: 'International Passport' },
-  { id: 'drivers-license', label: "Driver's License" },
-  { id: 'voters-card', label: "Voter's Card" }
+  { id: 'drivers-license', label: 'Driver\'s License' },
+  { id: 'voters-card', label: 'Voter\'s Card' }
 ]
 
 export default function SelectIDTypePage() {

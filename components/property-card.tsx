@@ -89,9 +89,7 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
             <div className="flex items-center gap-1">
               <Tag className="w-3 h-3" />
               <span className="capitalize">
-                {property.condition === 'rent' && property.connectRole === 'Tenant'
-                  ? 'Vacating'
-                  : (property.condition || 'rent')}
+                {property.condition === 'vacating' ? 'Vacating' : (property.condition || 'rent')}
               </span>
             </div>
           </div>
@@ -169,9 +167,7 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
           <div className="flex items-center gap-1">
             <Tag className="w-3.5 h-3.5" />
             <span className="capitalize">
-              {property.condition === 'rent' && property.connectRole === 'Tenant'
-                ? 'Vacating'
-                : (property.condition || 'rent')}
+              {property.condition === 'vacating' ? 'Vacating' : (property.condition || 'rent')}
             </span>
           </div>
         </div>

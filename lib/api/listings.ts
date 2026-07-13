@@ -30,7 +30,7 @@ function mapCondition(l: ListingResponse): Property['condition'] {
     case 'for_rent': return 'rent'
     case 'need_roommate': return 'roommate'
     case 'flatmate': return 'flatmate'
-    case 'subletting': return 'rent'
+    case 'subletting': return 'vacating'
     default: return 'rent'
   }
 }

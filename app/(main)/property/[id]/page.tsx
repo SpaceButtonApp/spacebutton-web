@@ -327,9 +327,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
                 <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-background border border-border">
                   <Tag className="w-4 h-4 text-primary" />
                   <span className="text-sm capitalize">
-                    {property.condition === 'rent' && property.connectRole === 'Tenant'
-                      ? 'Vacating'
-                      : property.condition}
+                    {property.condition === 'vacating' ? 'Vacating' : property.condition}
                   </span>
                 </div>
                 {/* Category */}

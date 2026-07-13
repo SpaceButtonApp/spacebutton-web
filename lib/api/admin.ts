@@ -171,6 +171,21 @@ export interface PendingVerification {
   created_at?: string
 }
 
+export interface VerifiedUser {
+  user_id: string
+  first_name: string
+  last_name: string
+  email: string
+  id_type?: string
+}
+
+export interface VerifiedUsersResponse {
+  total: number
+  page: number
+  page_size: number
+  users: VerifiedUser[]
+}
+
 export interface WaitlistEntry {
   id: string
   email: string
@@ -311,6 +326,15 @@ export const adminApi = {
       method: 'PATCH',
       body: JSON.stringify({ reason }),
     })
+  },
+
+  async getVerifiedUsers(page = 1, pageSize = 50): Promise<VerifiedUsersResponse> {
+    const qs = new URLSearchParams({ page: String(page), page_size: String(pageSize) })
+    const res = await adminFetch<{ success: boolean; data: VerifiedUsersResponse }>(
+      `/admin/verifications/verified?${qs}`,
+    )
+    const inner = (res as any)?.data ?? res
+    return inner as VerifiedUsersResponse
   },
 
   // Support / Customer Service

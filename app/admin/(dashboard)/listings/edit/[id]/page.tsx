@@ -76,7 +76,7 @@ export default function EditListingPage() {
       <div className="p-6">
         {/* Back Button */}
         <button 
-          onClick={() => router.back()}
+          onClick={() => window.history.back()}
           className="flex items-center gap-2 text-gray-400 hover:text-white mb-6 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />

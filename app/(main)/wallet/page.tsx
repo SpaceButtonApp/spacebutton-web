@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
@@ -54,7 +54,7 @@ export default function WalletPage() {
     <div className="min-h-screen bg-background pb-24">
       <header className="sticky top-0 z-10 bg-background px-4 py-4 flex items-center justify-between border-b border-border">
         <button
-          onClick={() => router.back()}
+          onClick={() => window.history.back()}
           className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center"
         >
           <ChevronLeft className="w-5 h-5" />

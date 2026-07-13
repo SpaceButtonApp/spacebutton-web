@@ -130,7 +130,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-center p-6">
         <p className="text-muted-foreground">Listing not found or you don't have access to edit it.</p>
-        <Button variant="outline" onClick={() => router.back()}>Go Back</Button>
+        <Button variant="outline" onClick={() => window.history.back()}>Go Back</Button>
       </div>
     )
   }
@@ -140,7 +140,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   return (
     <div className="min-h-screen bg-background pb-8">
       <header className="sticky top-0 z-10 flex items-center gap-4 border-b bg-background p-4">
-        <button onClick={() => router.back()} className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+        <button onClick={() => window.history.back()} className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
           <ChevronLeft className="h-5 w-5" />
         </button>
         <h1 className="flex-1 text-center text-lg font-semibold">Edit Listing</h1>

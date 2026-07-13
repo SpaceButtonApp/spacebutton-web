@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -324,7 +324,7 @@ export default function AdminAddPostPage() {
       <div className="max-w-3xl mx-auto p-6 space-y-6">
         {/* Back Button */}
         <button
-          onClick={() => router.back()}
+          onClick={() => window.history.back()}
           className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />

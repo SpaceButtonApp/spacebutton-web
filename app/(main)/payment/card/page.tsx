@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,7 +45,7 @@ function PayWithCardPage() {
     <div className="min-h-screen bg-background">
       <header className="flex items-center gap-4 p-4">
         <button
-          onClick={() => router.back()}
+          onClick={() => window.history.back()}
           className="flex h-12 w-12 items-center justify-center rounded-full bg-muted"
         >
           <ChevronLeft className="h-6 w-6" />

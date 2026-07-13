@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useRouter } from 'next/navigation'
 import { ChevronLeft } from 'lucide-react'
@@ -10,7 +10,7 @@ export default function AboutUsPage() {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-10 flex items-center gap-4 border-b bg-background p-4">
         <button
-          onClick={() => router.back()}
+          onClick={() => window.history.back()}
           className="flex h-10 w-10 items-center justify-center rounded-full bg-muted"
         >
           <ChevronLeft className="h-5 w-5" />

@@ -218,7 +218,7 @@ export default function AddPostPage() {
       <div className="sticky top-0 z-10 bg-background border-b border-border px-4 py-4">
         <div className="max-w-3xl mx-auto flex items-center gap-4">
           <button
-            onClick={() => router.back()}
+            onClick={() => window.history.back()}
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />

@@ -104,7 +104,7 @@ export default function EditProfilePage() {
       <div className="bg-background px-4 py-4 sticky top-0 z-40 border-b border-border">
         <div className="flex items-center justify-between">
           <button 
-            onClick={() => router.back()}
+            onClick={() => window.history.back()}
             className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary"
           >
             <ArrowLeft className="w-5 h-5" />

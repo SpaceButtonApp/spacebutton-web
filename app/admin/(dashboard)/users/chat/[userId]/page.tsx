@@ -69,7 +69,7 @@ function AdminUserChatPage({ params }: { params: Promise<{ userId: string }> }) 
         {/* User Info Header */}
         <div className="bg-[#12121a] border-b border-gray-800/50 px-6 py-4">
           <button
-            onClick={() => router.back()}
+            onClick={() => window.history.back()}
             className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4"
           >
             <ArrowLeft className="w-4 h-4" />

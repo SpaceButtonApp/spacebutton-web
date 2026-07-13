@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 export const dynamic = 'force-dynamic'
 
@@ -68,7 +68,7 @@ function PaymentPage() {
       {/* Header */}
       <div className="px-4 py-4 border-b border-border flex items-center gap-3">
         <button
-          onClick={() => router.back()}
+          onClick={() => window.history.back()}
           className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary"
         >
           <ArrowLeft className="w-5 h-5" />

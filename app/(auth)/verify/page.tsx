@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 export const dynamic = 'force-dynamic'
 
@@ -114,7 +114,7 @@ function VerificationCodePage() {
       {/* Form */}
       <div className="flex-1 px-6 py-8 flex flex-col">
         <button
-          onClick={() => router.back()}
+          onClick={() => window.history.back()}
           className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary mb-8"
         >
           <ArrowLeft className="w-5 h-5" />

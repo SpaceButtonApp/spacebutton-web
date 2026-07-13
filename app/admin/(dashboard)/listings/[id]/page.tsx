@@ -79,7 +79,7 @@ export default function AdminListingDetailPage() {
         <div className="flex items-center justify-center h-64 flex-col gap-4">
           <Building2 className="w-12 h-12 text-gray-700" />
           <p className="text-gray-400">Listing not found</p>
-          <Button variant="outline" onClick={() => router.back()}>Go Back</Button>
+          <Button variant="outline" onClick={() => window.history.back()}>Go Back</Button>
         </div>
       </div>
     )
@@ -91,7 +91,7 @@ export default function AdminListingDetailPage() {
 
       <div className="p-6 max-w-4xl mx-auto space-y-6">
         {/* Back */}
-        <button onClick={() => router.back()} className="flex items-center gap-2 text-gray-400 hover:text-white text-sm">
+        <button onClick={() => window.history.back()} className="flex items-center gap-2 text-gray-400 hover:text-white text-sm">
           <ArrowLeft className="w-4 h-4" /> Back to listings
         </button>
 

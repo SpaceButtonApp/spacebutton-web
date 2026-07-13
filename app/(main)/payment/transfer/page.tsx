@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 export const dynamic = 'force-dynamic'
 
@@ -49,7 +49,7 @@ function TransferPage() {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-10 bg-background px-4 py-4 flex items-center gap-4">
         <button
-          onClick={() => router.back()}
+          onClick={() => window.history.back()}
           className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center"
         >
           <ChevronLeft className="w-5 h-5" />
@@ -132,7 +132,7 @@ function TransferPage() {
         </Button>
 
         <button
-          onClick={() => router.back()}
+          onClick={() => window.history.back()}
           className="w-full text-center font-medium"
         >
           Change Payment Method

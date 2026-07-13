@@ -47,7 +47,7 @@ export default function IncomingCallPage({ params }: { params: Promise<{ id: str
 
   const handleDecline = async () => {
     await callsApi.endCall(id, 'rejected').catch(() => {})
-    router.back()
+    window.history.back()
   }
 
   const avatar = callerAvatar || DEFAULT_AVATAR
@@ -55,7 +55,7 @@ export default function IncomingCallPage({ params }: { params: Promise<{ id: str
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="flex items-center gap-4 p-4">
-        <button onClick={() => router.back()} className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+        <button onClick={() => window.history.back()} className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
           <ChevronLeft className="h-6 w-6" />
         </button>
         <h1 className="flex-1 text-center text-xl font-semibold">

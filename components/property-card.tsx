@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { Camera, Grid3X3, Bookmark, MapPin, Users, Building2, CheckCircle2, DollarSign } from 'lucide-react'
+import { Camera, Grid3X3, Bookmark, MapPin, Users, Building2, CheckCircle2, Tag } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { saveListing } from '@/lib/api/listings'
 import { formatPrice, type Property } from '@/lib/mock-data'
@@ -87,7 +87,7 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
               <span className="capitalize">{property.category}</span>
             </div>
             <div className="flex items-center gap-1">
-              <DollarSign className="w-3 h-3" />
+              <Tag className="w-3 h-3" />
               <span className="capitalize">
                 {property.condition === 'rent' && property.connectRole === 'Tenant'
                   ? 'Vacating'
@@ -167,7 +167,7 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
             <span className="capitalize">{property.category}</span>
           </div>
           <div className="flex items-center gap-1">
-            <DollarSign className="w-3.5 h-3.5" />
+            <Tag className="w-3.5 h-3.5" />
             <span className="capitalize">
               {property.condition === 'rent' && property.connectRole === 'Tenant'
                 ? 'Vacating'

@@ -25,12 +25,12 @@ export function ConnectBalanceButton() {
       {hasNoConnects ? (
         <>
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
-          <span>0 Connects</span>
+          <span>0</span>
         </>
       ) : (
         <>
           <Zap className="w-4 h-4 flex-shrink-0" />
-          <span>{displayBalance} Connects</span>
+          <span>{displayBalance}</span>
         </>
       )}
     </div>

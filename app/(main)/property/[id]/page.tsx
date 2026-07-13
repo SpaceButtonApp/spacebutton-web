@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import {
   Bookmark, ChevronLeft, ChevronRight, ChevronDown, Bed, Bath,
   Sofa, MapPin, Calendar, AlertTriangle, Users, Building2, ArrowLeft, X, Clock,
-  Home, DollarSign, Grid3X3, Maximize, Eye, Play, Pause,
+  Home, Tag, Grid3X3, Maximize, Eye, Play, Pause,
   Maximize2, Minimize2, SkipBack, SkipForward
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
@@ -316,26 +316,23 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
               </>
             ) : (
               <>
-                {property.type === 'connect' && property.connectRole && (
-                  <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-background border border-border">
-                    <Users className="w-4 h-4 text-primary" />
-                    <span className="text-sm">{property.connectRole}</span>
-                  </div>
-                )}
-                {property.type === 'agent' && (
-                  <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-background border border-border">
-                    <Users className="w-4 h-4 text-primary" />
-                    <span className="text-sm">Agent</span>
-                  </div>
-                )}
+                {/* Role — always shown */}
                 <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-background border border-border">
                   <Users className="w-4 h-4 text-primary" />
+                  <span className="text-sm">
+                    {property.type === 'agent' ? 'Agent' : (property.connectRole ?? 'Landlord')}
+                  </span>
+                </div>
+                {/* Condition */}
+                <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-background border border-border">
+                  <Tag className="w-4 h-4 text-primary" />
                   <span className="text-sm capitalize">
-                    {property.condition === 'rent' && property.connectRole === 'Tenant' 
-                      ? 'Vacating' 
+                    {property.condition === 'rent' && property.connectRole === 'Tenant'
+                      ? 'Vacating'
                       : property.condition}
                   </span>
                 </div>
+                {/* Category */}
                 <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-background border border-border">
                   <Building2 className="w-4 h-4 text-primary" />
                   <span className="text-sm capitalize">{property.category}</span>

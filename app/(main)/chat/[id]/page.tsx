@@ -11,8 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useAppStore } from '@/lib/store'
 import { chatApi } from '@/lib/api/chat'
-import { reviewApi } from '@/lib/api/users'
-import { getUserDisplayInfo } from '@/lib/api/users'
+import { reviewApi, userApi, getUserDisplayInfo } from '@/lib/api/users'
 import { listingsApi, mapListing } from '@/lib/api/listings'
 import { useChatWs } from '@/lib/hooks/use-chat-ws'
 import { cn } from '@/lib/utils'
@@ -66,6 +65,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [feedbackText, setFeedbackText] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [showUserPopup, setShowUserPopup] = useState(false)
+  const [popupProfile, setPopupProfile] = useState<{ bio: string | null; rating: number; reviewCount: number } | null>(null)
+  const [popupLoading, setPopupLoading] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -184,6 +185,24 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     setFeedbackText('')
   }
 
+  const handleOpenUserPopup = async () => {
+    if (!chat) return
+    const targetId = chat.user_id === myId ? chat.agent_id : chat.user_id
+    setShowUserPopup(true)
+    if (popupProfile) return
+    setPopupLoading(true)
+    const [profileRes, reviewsRes] = await Promise.allSettled([
+      userApi.getPublicProfile(targetId),
+      reviewApi.getAgentReviews(targetId),
+    ])
+    setPopupProfile({
+      bio: profileRes.status === 'fulfilled' ? profileRes.value.bio : null,
+      rating: reviewsRes.status === 'fulfilled' ? reviewsRes.value.average_rating : 0,
+      reviewCount: reviewsRes.status === 'fulfilled' ? reviewsRes.value.total : 0,
+    })
+    setPopupLoading(false)
+  }
+
   if (loading) {
     return (
       <div className="h-[100dvh] bg-background flex items-center justify-center">
@@ -220,7 +239,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           <ArrowLeft className="w-5 h-5" />
         </button>
 
-        <button onClick={() => setShowUserPopup(true)} className="flex items-center gap-3 flex-1 min-w-0">
+        <button onClick={handleOpenUserPopup} className="flex items-center gap-3 flex-1 min-w-0">
           <div className="relative flex-shrink-0">
             <Image
               src={otherAvatar}
@@ -279,10 +298,6 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       {/* ── Dropdown menu ── */}
       {showMenu && !showFeedback && !showReportModal && (
         <div className="absolute top-[57px] right-4 z-50 w-56 bg-background rounded-xl border border-border shadow-xl overflow-hidden">
-          <button onClick={() => { router.push(`/user/${otherId}`); setShowMenu(false) }}
-            className="w-full text-left px-4 py-3 hover:bg-secondary text-sm transition-colors border-b border-border">
-            View Profile
-          </button>
           <button onClick={() => { setShowDoneDealInfo(true); setShowMenu(false) }}
             className="w-full text-left px-4 py-3 hover:bg-secondary text-sm transition-colors border-b border-border text-muted-foreground">
             What is Done Deal?
@@ -501,6 +516,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             >
               <X className="w-4 h-4" />
             </button>
+
             <Image
               src={otherAvatar}
               alt={otherName}
@@ -509,16 +525,42 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               className="rounded-full object-cover border-4 border-border"
               unoptimized
             />
-            <div className="text-center">
-              <h3 className="text-xl font-bold text-foreground">{otherName}</h3>
-              <p className="text-sm text-muted-foreground mt-1">SpaceButton User</p>
-            </div>
-            <button
-              onClick={() => { setShowUserPopup(false); router.push(`/user/${otherId}`) }}
-              className="w-full h-11 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors"
-            >
-              View Full Profile
-            </button>
+
+            <h3 className="text-xl font-bold text-foreground text-center">{otherName}</h3>
+
+            {popupLoading ? (
+              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <>
+                {(popupProfile?.reviewCount ?? 0) > 0 && (
+                  <div className="flex flex-col items-center gap-1">
+                    <div className="flex gap-0.5">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star
+                          key={s}
+                          className={cn(
+                            'w-5 h-5',
+                            s <= Math.round(popupProfile!.rating)
+                              ? 'fill-yellow-400 text-yellow-400'
+                              : 'text-muted-foreground',
+                          )}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {popupProfile!.rating.toFixed(1)} · {popupProfile!.reviewCount}{' '}
+                      {popupProfile!.reviewCount === 1 ? 'review' : 'reviews'}
+                    </p>
+                  </div>
+                )}
+
+                {popupProfile?.bio && (
+                  <p className="text-sm text-muted-foreground text-center leading-relaxed">
+                    {popupProfile.bio}
+                  </p>
+                )}
+              </>
+            )}
           </div>
         </div>
       )}

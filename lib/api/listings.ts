@@ -30,7 +30,7 @@ function mapCondition(l: ListingResponse): Property['condition'] {
     case 'for_rent': return 'rent'
     case 'need_roommate': return 'roommate'
     case 'flatmate': return 'flatmate'
-    case 'subletting': return 'flatmate'
+    case 'subletting': return 'rent'
     default: return 'rent'
   }
 }
@@ -70,7 +70,7 @@ export function mapListing(l: ListingResponse, savedIds: Set<string> = new Set()
   return {
     id: l.id,
     title: l.title,
-    location: `${l.city}, ${l.state}`,
+    location: l.address ? `${l.address}, ${l.city}, ${l.state}` : `${l.city}, ${l.state}`,
     price: Number(l.price),
     rentPeriod: l.rent_period === 'monthly' ? 'monthly' : 'yearly',
     images: sortedImages.length > 0 ? sortedImages : [FALLBACK_IMAGE],

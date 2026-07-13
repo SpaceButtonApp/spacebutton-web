@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import {
   Bookmark, ChevronLeft, ChevronRight, ChevronDown, Bed, Bath,
   Sofa, MapPin, Calendar, AlertTriangle, Users, Building2, ArrowLeft, X, Clock,
-  Home, Tag, Grid3X3, Maximize, Eye, Play, Pause,
+  Home, Tag, DollarSign, Grid3X3, Maximize, Eye, Play, Pause,
   Maximize2, Minimize2, SkipBack, SkipForward
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'

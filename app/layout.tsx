@@ -3,7 +3,6 @@ import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from '@/components/theme-provider'
 import { SupportChatWidget } from '@/components/support-chat-widget'
-import { NavigationRefresh } from '@/components/navigation-refresh'
 import { WebTokenHandler } from '@/components/web-token-handler'
 import './globals.css'
 
@@ -39,7 +38,6 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased bg-background text-foreground`} suppressHydrationWarning>
         <ThemeProvider>
-          <NavigationRefresh />
           <WebTokenHandler />
           {children}
           <SupportChatWidget />

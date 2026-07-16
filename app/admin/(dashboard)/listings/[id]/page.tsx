@@ -75,6 +75,15 @@ export default function AdminListingDetailPage() {
     setFullscreen(false)
   }
 
+  // Auto-play fullscreen video once the modal mounts
+  useEffect(() => {
+    if (fullscreen && current?.kind === 'video') {
+      fsVideoRef.current?.play()
+        .then(() => setIsFsPlaying(true))
+        .catch(() => setIsFsPlaying(false))
+    }
+  }, [fullscreen])
+
   useEffect(() => {
     adminApi.getListing(listingId)
       .then(setListing)
@@ -385,14 +394,13 @@ export default function AdminListingDetailPage() {
                 <video
                   ref={fsVideoRef}
                   src={current.url}
-                  autoPlay
                   className="max-w-full max-h-full"
                   onPlay={() => setIsFsPlaying(true)}
                   onPause={() => setIsFsPlaying(false)}
                   onEnded={() => setIsFsPlaying(false)}
                 />
                 {/* Custom fullscreen video controls */}
-                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-6 bg-black/50 backdrop-blur-sm px-6 py-3 rounded-2xl">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-6 bg-black/50 backdrop-blur-sm px-6 py-3 rounded-2xl">
                   <button
                     onClick={() => skip(fsVideoRef, -10)}
                     className="flex flex-col items-center gap-0.5 text-white/90 hover:text-white"

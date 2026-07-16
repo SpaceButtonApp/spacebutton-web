@@ -272,7 +272,7 @@ export default function UsersPage() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-gray-800/50">
-                        {['Agent', 'Email', 'Verified', 'Status', 'Joined', 'Actions'].map((h) => (
+                        {['Agent', 'Email', 'Phone', 'Verified', 'Status', 'Joined'].map((h) => (
                           <th key={h} className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">{h}</th>
                         ))}
                       </tr>
@@ -292,6 +292,7 @@ export default function UsersPage() {
                             </div>
                           </td>
                           <td className="px-5 py-4 text-sm text-gray-300">{a.email}</td>
+                          <td className="px-5 py-4 text-sm text-gray-300">{a.phone_number || <span className="text-gray-600">—</span>}</td>
                           <td className="px-5 py-4 text-sm">
                             {a.is_email_verified
                               ? <span className="text-green-400">Email verified</span>
@@ -309,11 +310,6 @@ export default function UsersPage() {
                             </span>
                           </td>
                           <td className="px-5 py-4 text-sm text-gray-400">{new Date(a.created_at).toLocaleDateString()}</td>
-                          <td className="px-5 py-4 text-right">
-                            <a href={`/user/${a.id}`} target="_blank" rel="noopener noreferrer" className="text-xs text-purple-400 hover:text-purple-300">
-                              View Profile
-                            </a>
-                          </td>
                         </tr>
                         )
                       })}

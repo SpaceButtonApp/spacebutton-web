@@ -126,6 +126,8 @@ export interface AdminListing {
   property_type?: string
   status?: string
   price?: string
+  total_package?: string
+  rent_period?: string
   state?: string
   city?: string
   address?: string
@@ -244,6 +246,12 @@ export const adminApi = {
     // The admin service proxies to auth service which returns raw JSON (no envelope wrap)
     const inner = (res as any)?.data ?? res
     return inner as AdminUserListResponse
+  },
+
+  async getUser(userId: string): Promise<AdminUser> {
+    const res = await adminFetch<{ success: boolean; data: AdminUser }>(`/admin/users/${userId}`)
+    const inner = (res as any)?.data ?? res
+    return inner as AdminUser
   },
 
   async suspendUser(userId: string): Promise<void> {

@@ -179,7 +179,7 @@ export default function UsersPage() {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-gray-800/50">
-                          {['User', 'Email', 'Role', 'Status', 'Joined', 'Actions'].map((h) => (
+                          {['User', 'Email', 'Phone', 'Role', 'Status', 'Joined', 'Actions'].map((h) => (
                             <th key={h} className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">{h}</th>
                           ))}
                         </tr>
@@ -198,6 +198,7 @@ export default function UsersPage() {
                                 </div>
                               </td>
                               <td className="px-5 py-4 text-sm text-gray-300">{u.email}</td>
+                              <td className="px-5 py-4 text-sm text-gray-300">{u.phone_number || <span className="text-gray-600">—</span>}</td>
                               <td className="px-5 py-4">
                                 <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${
                                   u.role === 'agent' ? 'bg-purple-500/20 text-purple-400' : 'bg-blue-500/20 text-blue-400'

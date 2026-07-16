@@ -1,11 +1,11 @@
 'use client'
 
-import { useParams, useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useParams } from 'next/navigation'
+import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { AdminHeader } from '@/components/admin/header'
 import { adminApi } from '@/lib/api/admin'
-import type { AdminListing } from '@/lib/api/admin'
+import type { AdminListing, AdminUser } from '@/lib/api/admin'
 import {
   ArrowLeft,
   Bed,
@@ -18,20 +18,35 @@ import {
   Building2,
   Calendar,
   Loader2,
+  Play,
+  Maximize2,
+  X,
+  User,
+  Phone,
+  Mail,
+  LayoutList,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
+type MediaItem =
+  | { kind: 'image'; url: string }
+  | { kind: 'video'; url: string }
+
 export default function AdminListingDetailPage() {
   const params = useParams()
-  const router = useRouter()
   const listingId = params.id as string
 
   const [listing, setListing] = useState<AdminListing | null>(null)
   const [loading, setLoading] = useState(true)
-  const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [currentIndex, setCurrentIndex] = useState(0)
   const [actionLoading, setActionLoading] = useState<'approve' | 'reject' | null>(null)
   const [rejectModal, setRejectModal] = useState(false)
   const [rejectReason, setRejectReason] = useState('')
+  const [fullscreen, setFullscreen] = useState(false)
+  const [profileModal, setProfileModal] = useState(false)
+  const [profileUser, setProfileUser] = useState<AdminUser | null>(null)
+  const [profileLoading, setProfileLoading] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
     adminApi.getListing(listingId)
@@ -58,7 +73,24 @@ export default function AdminListingDetailPage() {
     finally { setActionLoading(null); setRejectModal(false); setRejectReason('') }
   }
 
-  const images = listing?.images ?? []
+  const handleViewProfile = async () => {
+    setProfileModal(true)
+    if (profileUser) return
+    setProfileLoading(true)
+    try {
+      const user = await adminApi.getUser(listing!.agent_id)
+      setProfileUser(user)
+    } catch { /* show fallback */ }
+    finally { setProfileLoading(false) }
+  }
+
+  // Build unified media list: images first, then video
+  const media: MediaItem[] = [
+    ...(listing?.images ?? []).map((img) => ({ kind: 'image' as const, url: img.url })),
+    ...(listing?.video_tour_url ? [{ kind: 'video' as const, url: listing.video_tour_url }] : []),
+  ]
+
+  const current = media[currentIndex]
   const status = (listing?.status || '').toLowerCase()
 
   if (loading) {
@@ -95,44 +127,64 @@ export default function AdminListingDetailPage() {
           <ArrowLeft className="w-4 h-4" /> Back to listings
         </button>
 
-        {/* Images */}
-        {images.length > 0 ? (
-          <div className="relative w-full h-80 rounded-2xl overflow-hidden bg-gray-800">
-            <Image src={images[currentImageIndex].url} alt={listing.title} fill className="object-cover" />
-            {images.length > 1 && (
+        {/* Media carousel */}
+        {media.length > 0 ? (
+          <div className="relative w-full h-80 rounded-2xl overflow-hidden bg-gray-900">
+            {current.kind === 'image' ? (
+              <Image src={current.url} alt={listing.title} fill className="object-cover" unoptimized />
+            ) : (
+              <video
+                ref={videoRef}
+                src={current.url}
+                controls
+                className="w-full h-full object-contain"
+              />
+            )}
+
+            {/* Fullscreen button */}
+            <button
+              onClick={() => setFullscreen(true)}
+              className="absolute top-3 right-3 w-9 h-9 bg-black/60 rounded-full flex items-center justify-center text-white hover:bg-black/80"
+            >
+              <Maximize2 className="w-4 h-4" />
+            </button>
+
+            {media.length > 1 && (
               <>
                 <button
-                  onClick={() => setCurrentImageIndex((i) => Math.max(0, i - 1))}
-                  disabled={currentImageIndex === 0}
+                  onClick={() => setCurrentIndex((i) => Math.max(0, i - 1))}
+                  disabled={currentIndex === 0}
                   className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-black/60 rounded-full flex items-center justify-center text-white disabled:opacity-30"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
                 <button
-                  onClick={() => setCurrentImageIndex((i) => Math.min(images.length - 1, i + 1))}
-                  disabled={currentImageIndex === images.length - 1}
+                  onClick={() => setCurrentIndex((i) => Math.min(media.length - 1, i + 1))}
+                  disabled={currentIndex === media.length - 1}
                   className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-black/60 rounded-full flex items-center justify-center text-white disabled:opacity-30"
                 >
                   <ChevronRight className="w-5 h-5" />
                 </button>
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-                  {images.map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setCurrentImageIndex(i)}
-                      className={`w-2 h-2 rounded-full transition-all ${i === currentImageIndex ? 'bg-white' : 'bg-white/40'}`}
-                    />
-                  ))}
-                </div>
               </>
             )}
+
             {/* Thumbnail strip */}
-            {images.length > 1 && (
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 pt-8 pb-3 px-3">
+            {media.length > 1 && (
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 pt-8 pb-3 px-3">
                 <div className="flex gap-2 overflow-x-auto">
-                  {images.map((img, i) => (
-                    <button key={i} onClick={() => setCurrentImageIndex(i)} className={`relative w-14 h-10 rounded shrink-0 overflow-hidden border-2 ${i === currentImageIndex ? 'border-purple-400' : 'border-transparent'}`}>
-                      <Image src={img.url} alt="" fill className="object-cover" />
+                  {media.map((item, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setCurrentIndex(i)}
+                      className={`relative w-14 h-10 rounded shrink-0 overflow-hidden border-2 ${i === currentIndex ? 'border-purple-400' : 'border-transparent'}`}
+                    >
+                      {item.kind === 'image' ? (
+                        <Image src={item.url} alt="" fill className="object-cover" unoptimized />
+                      ) : (
+                        <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+                          <Play className="w-4 h-4 text-white" />
+                        </div>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -171,11 +223,23 @@ export default function AdminListingDetailPage() {
             <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" />Posted {new Date(listing.created_at).toLocaleDateString()}</span>
           </div>
 
-          {listing.price && (
-            <p className="text-2xl font-bold text-white">
-              ₦{Number(listing.price).toLocaleString()}
-            </p>
-          )}
+          <div className="flex items-end gap-6 flex-wrap">
+            {listing.price && (
+              <div>
+                <p className="text-xs text-gray-500 mb-0.5">Rent</p>
+                <p className="text-2xl font-bold text-white">
+                  ₦{Number(listing.price).toLocaleString()}
+                  {listing.rent_period && <span className="text-sm text-gray-400 font-normal ml-1">/ {listing.rent_period}</span>}
+                </p>
+              </div>
+            )}
+            {listing.total_package && (
+              <div>
+                <p className="text-xs text-gray-500 mb-0.5">Total Package</p>
+                <p className="text-xl font-bold text-purple-400">₦{Number(listing.total_package).toLocaleString()}</p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Description */}
@@ -188,17 +252,24 @@ export default function AdminListingDetailPage() {
 
         {/* Agent info */}
         <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
-          <h3 className="font-semibold text-white mb-2">Posted By</h3>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold">A</div>
-            <div>
-              <p className="text-sm text-white font-mono">{listing.agent_id}</p>
-              <a href={`/user/${listing.agent_id}`} target="_blank" rel="noopener noreferrer" className="text-xs text-purple-400 hover:underline">View profile →</a>
+          <h3 className="font-semibold text-white mb-3">Posted By</h3>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold shrink-0">
+                <User className="w-5 h-5" />
+              </div>
+              <p className="text-sm text-gray-400 font-mono">{listing.agent_id}</p>
             </div>
+            <button
+              onClick={handleViewProfile}
+              className="text-xs text-purple-400 hover:text-purple-300 border border-purple-500/30 hover:border-purple-400/50 px-3 py-1.5 rounded-lg transition-colors"
+            >
+              View Profile
+            </button>
           </div>
         </div>
 
-        {/* Action buttons — only show for pending listings */}
+        {/* Action buttons */}
         {status === 'pending' && (
           <div className="bg-[#12121a] border border-yellow-500/30 rounded-xl p-5">
             <p className="text-yellow-400 font-medium mb-4">This listing is awaiting your review.</p>
@@ -222,6 +293,109 @@ export default function AdminListingDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Fullscreen media modal */}
+      {fullscreen && current && (
+        <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
+          <button
+            onClick={() => setFullscreen(false)}
+            className="absolute top-4 right-4 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white z-10"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          {media.length > 1 && (
+            <>
+              <button
+                onClick={() => setCurrentIndex((i) => Math.max(0, i - 1))}
+                disabled={currentIndex === 0}
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-11 h-11 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white disabled:opacity-30 z-10"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+              <button
+                onClick={() => setCurrentIndex((i) => Math.min(media.length - 1, i + 1))}
+                disabled={currentIndex === media.length - 1}
+                className="absolute right-4 top-1/2 -translate-y-1/2 w-11 h-11 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white disabled:opacity-30 z-10"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            </>
+          )}
+
+          <div className="w-full h-full flex items-center justify-center p-4">
+            {current.kind === 'image' ? (
+              <img src={current.url} alt="" className="max-w-full max-h-full object-contain" />
+            ) : (
+              <video src={current.url} controls autoPlay className="max-w-full max-h-full" />
+            )}
+          </div>
+
+          {/* Counter */}
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/60 text-white text-sm px-4 py-1.5 rounded-full">
+            {currentIndex + 1} / {media.length}
+          </div>
+        </div>
+      )}
+
+      {/* User profile modal */}
+      {profileModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="bg-[#12121a] border border-gray-800 rounded-2xl p-6 max-w-sm w-full">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-semibold text-white">User Profile</h3>
+              <button onClick={() => setProfileModal(false)} className="text-gray-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {profileLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="w-8 h-8 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
+              </div>
+            ) : profileUser ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white text-xl font-bold shrink-0">
+                    {(profileUser.first_name || '?').charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="text-white font-semibold text-lg">{profileUser.first_name} {profileUser.last_name}</p>
+                    <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full ${
+                      profileUser.role === 'agent' ? 'bg-purple-500/20 text-purple-400' : 'bg-blue-500/20 text-blue-400'
+                    }`}>
+                      {(profileUser.role || '').charAt(0).toUpperCase() + profileUser.role.slice(1)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-3 pt-1">
+                  <div className="flex items-center gap-3 text-sm">
+                    <Mail className="w-4 h-4 text-gray-500 shrink-0" />
+                    <span className="text-gray-300 break-all">{profileUser.email}</span>
+                  </div>
+                  {profileUser.phone_number && (
+                    <div className="flex items-center gap-3 text-sm">
+                      <Phone className="w-4 h-4 text-gray-500 shrink-0" />
+                      <span className="text-gray-300">{profileUser.phone_number}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-3 text-sm">
+                    <Calendar className="w-4 h-4 text-gray-500 shrink-0" />
+                    <span className="text-gray-300">Joined {new Date(profileUser.created_at).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <User className="w-10 h-10 text-gray-700 mx-auto mb-3" />
+                <p className="text-gray-400 text-sm">Could not load user details</p>
+                <p className="text-gray-600 text-xs mt-1 font-mono">{listing.agent_id}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Reject Modal */}
       {rejectModal && (

@@ -47,7 +47,7 @@ export default function UsersPage() {
   const loadUsers = useCallback(async (p = userPage) => {
     setUsersLoading(true)
     try {
-      const data = await adminApi.getUsers(p, PAGE_SIZE)
+      const data = await adminApi.getUsers(p, PAGE_SIZE, 'user')
       setUsers(data.users ?? [])
       setUserTotal(data.total ?? 0)
     } catch { /* show empty */ }

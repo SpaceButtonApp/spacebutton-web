@@ -170,7 +170,7 @@ export default function AdminListingDetailPage() {
                   onEnded={() => setIsPlaying(false)}
                 />
                 {/* Custom video controls */}
-                <div className="absolute bottom-14 left-0 right-0 flex items-center justify-center gap-5">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center gap-5">
                   <button
                     onClick={() => skip(videoRef, -10)}
                     className="flex flex-col items-center gap-0.5 text-white/90 hover:text-white"

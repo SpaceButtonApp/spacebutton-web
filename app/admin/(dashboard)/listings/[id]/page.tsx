@@ -53,13 +53,13 @@ export default function AdminListingDetailPage() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const fsVideoRef = useRef<HTMLVideoElement>(null)
 
-  const togglePlay = (ref: React.RefObject<HTMLVideoElement>, setPlaying: (v: boolean) => void) => {
+  const togglePlay = (ref: React.RefObject<HTMLVideoElement | null>, setPlaying: (v: boolean) => void) => {
     const v = ref.current
     if (!v) return
     if (v.paused) { v.play(); setPlaying(true) } else { v.pause(); setPlaying(false) }
   }
 
-  const skip = (ref: React.RefObject<HTMLVideoElement>, secs: number) => {
+  const skip = (ref: React.RefObject<HTMLVideoElement | null>, secs: number) => {
     if (ref.current) ref.current.currentTime = Math.max(0, ref.current.currentTime + secs)
   }
 

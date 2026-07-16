@@ -19,12 +19,14 @@ import {
   Calendar,
   Loader2,
   Play,
+  Pause,
+  RotateCcw,
+  RotateCw,
   Maximize2,
   X,
   User,
   Phone,
   Mail,
-  LayoutList,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -46,7 +48,32 @@ export default function AdminListingDetailPage() {
   const [profileModal, setProfileModal] = useState(false)
   const [profileUser, setProfileUser] = useState<AdminUser | null>(null)
   const [profileLoading, setProfileLoading] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [isFsPlaying, setIsFsPlaying] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
+  const fsVideoRef = useRef<HTMLVideoElement>(null)
+
+  const togglePlay = (ref: React.RefObject<HTMLVideoElement>, setPlaying: (v: boolean) => void) => {
+    const v = ref.current
+    if (!v) return
+    if (v.paused) { v.play(); setPlaying(true) } else { v.pause(); setPlaying(false) }
+  }
+
+  const skip = (ref: React.RefObject<HTMLVideoElement>, secs: number) => {
+    if (ref.current) ref.current.currentTime = Math.max(0, ref.current.currentTime + secs)
+  }
+
+  const openFullscreen = () => {
+    videoRef.current?.pause()
+    setIsPlaying(false)
+    setFullscreen(true)
+  }
+
+  const closeFullscreen = () => {
+    fsVideoRef.current?.pause()
+    setIsFsPlaying(false)
+    setFullscreen(false)
+  }
 
   useEffect(() => {
     adminApi.getListing(listingId)
@@ -133,17 +160,44 @@ export default function AdminListingDetailPage() {
             {current.kind === 'image' ? (
               <Image src={current.url} alt={listing.title} fill className="object-cover" unoptimized />
             ) : (
-              <video
-                ref={videoRef}
-                src={current.url}
-                controls
-                className="w-full h-full object-contain"
-              />
+              <>
+                <video
+                  ref={videoRef}
+                  src={current.url}
+                  className="w-full h-full object-contain"
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                  onEnded={() => setIsPlaying(false)}
+                />
+                {/* Custom video controls */}
+                <div className="absolute bottom-14 left-0 right-0 flex items-center justify-center gap-5">
+                  <button
+                    onClick={() => skip(videoRef, -10)}
+                    className="flex flex-col items-center gap-0.5 text-white/90 hover:text-white"
+                  >
+                    <RotateCcw className="w-6 h-6" />
+                    <span className="text-[10px] font-semibold leading-none">10</span>
+                  </button>
+                  <button
+                    onClick={() => togglePlay(videoRef, setIsPlaying)}
+                    className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white backdrop-blur-sm"
+                  >
+                    {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 ml-0.5" />}
+                  </button>
+                  <button
+                    onClick={() => skip(videoRef, 10)}
+                    className="flex flex-col items-center gap-0.5 text-white/90 hover:text-white"
+                  >
+                    <RotateCw className="w-6 h-6" />
+                    <span className="text-[10px] font-semibold leading-none">10</span>
+                  </button>
+                </div>
+              </>
             )}
 
             {/* Fullscreen button */}
             <button
-              onClick={() => setFullscreen(true)}
+              onClick={openFullscreen}
               className="absolute top-3 right-3 w-9 h-9 bg-black/60 rounded-full flex items-center justify-center text-white hover:bg-black/80"
             >
               <Maximize2 className="w-4 h-4" />
@@ -298,7 +352,7 @@ export default function AdminListingDetailPage() {
       {fullscreen && current && (
         <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
           <button
-            onClick={() => setFullscreen(false)}
+            onClick={closeFullscreen}
             className="absolute top-4 right-4 w-10 h-10 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white z-10"
           >
             <X className="w-5 h-5" />
@@ -327,14 +381,49 @@ export default function AdminListingDetailPage() {
             {current.kind === 'image' ? (
               <img src={current.url} alt="" className="max-w-full max-h-full object-contain" />
             ) : (
-              <video src={current.url} controls autoPlay className="max-w-full max-h-full" />
+              <div className="relative w-full h-full flex items-center justify-center">
+                <video
+                  ref={fsVideoRef}
+                  src={current.url}
+                  autoPlay
+                  className="max-w-full max-h-full"
+                  onPlay={() => setIsFsPlaying(true)}
+                  onPause={() => setIsFsPlaying(false)}
+                  onEnded={() => setIsFsPlaying(false)}
+                />
+                {/* Custom fullscreen video controls */}
+                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-6 bg-black/50 backdrop-blur-sm px-6 py-3 rounded-2xl">
+                  <button
+                    onClick={() => skip(fsVideoRef, -10)}
+                    className="flex flex-col items-center gap-0.5 text-white/90 hover:text-white"
+                  >
+                    <RotateCcw className="w-7 h-7" />
+                    <span className="text-[10px] font-semibold leading-none">10</span>
+                  </button>
+                  <button
+                    onClick={() => togglePlay(fsVideoRef, setIsFsPlaying)}
+                    className="w-14 h-14 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center text-white"
+                  >
+                    {isFsPlaying ? <Pause className="w-7 h-7" /> : <Play className="w-7 h-7 ml-1" />}
+                  </button>
+                  <button
+                    onClick={() => skip(fsVideoRef, 10)}
+                    className="flex flex-col items-center gap-0.5 text-white/90 hover:text-white"
+                  >
+                    <RotateCw className="w-7 h-7" />
+                    <span className="text-[10px] font-semibold leading-none">10</span>
+                  </button>
+                </div>
+              </div>
             )}
           </div>
 
-          {/* Counter */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/60 text-white text-sm px-4 py-1.5 rounded-full">
-            {currentIndex + 1} / {media.length}
-          </div>
+          {/* Counter — only for images in fullscreen */}
+          {current.kind === 'image' && (
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/60 text-white text-sm px-4 py-1.5 rounded-full">
+              {currentIndex + 1} / {media.length}
+            </div>
+          )}
         </div>
       )}
 

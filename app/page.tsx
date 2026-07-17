@@ -648,13 +648,31 @@ export default function LandingPage() {
                   <button onClick={() => router.push('/get-started')} className="hover:text-foreground transition-colors">Cookies</button>
                 </div>
               </div>
-              <div className="border-t border-border pt-6 flex flex-col sm:flex-row items-center justify-center gap-6">
-                <p className="text-sm text-muted-foreground text-center">
-                  Registered with CAC (RC: 9510448)
-                </p>
-                <p className="text-sm text-muted-foreground text-center">
-                  Protected by NDPC
-                </p>
+              <div className="border-t border-border pt-6 flex flex-col sm:flex-row items-center justify-center gap-8">
+                <div className="flex items-center gap-3">
+                  <Image
+                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/CAC-DbDwrt0HNLVQxjrq5uqfjfVo0vSkFU.png"
+                    alt="CAC Logo"
+                    width={48}
+                    height={48}
+                    className="h-12 w-12 object-contain"
+                  />
+                  <p className="text-sm text-muted-foreground text-center">
+                    Registered with CAC<br />(RC: 9510448)
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Image
+                    src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/NDPC-dw3AsaZsvSJjEgnk7c2uVxcqzRwtLf.png"
+                    alt="NDPC Logo"
+                    width={48}
+                    height={48}
+                    className="h-12 w-12 object-contain"
+                  />
+                  <p className="text-sm text-muted-foreground text-center">
+                    Protected by NDPC
+                  </p>
+                </div>
               </div>
             </div>
           </div>

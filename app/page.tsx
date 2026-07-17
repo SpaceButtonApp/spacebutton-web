@@ -394,57 +394,6 @@ export default function LandingPage() {
         </section>
 
 
-<<<<<<< HEAD
-=======
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {availableProperties.map((property) => (
-                <button
-                  key={property.id}
-                  onClick={() => router.push('/get-started')}
-                  className="group rounded-2xl overflow-hidden bg-card border border-border hover:border-primary/50 transition-all hover:shadow-xl text-left"
-                >
-                  <div className="relative aspect-[4/3] bg-muted overflow-hidden">
-                    <Image
-                      src={property.images[0]}
-                      alt={property.title}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <div className="absolute top-3 left-3 bg-primary text-primary-foreground text-xs font-semibold px-2 py-1 rounded-lg">
-                      Featured
-                    </div>
-                    <div className="absolute bottom-3 right-3 flex items-center gap-1 bg-black/60 text-white rounded-lg px-2 py-1 backdrop-blur-sm text-xs">
-                      <Grid3X3 className="w-3 h-3" />
-                      {property.photoCount}
-                    </div>
-                  </div>
-                  <div className="p-5">
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <h3 className="font-bold text-foreground line-clamp-1">{property.title}</h3>
-                    </div>
-                    <div className="flex items-center gap-1 text-muted-foreground mb-3 text-sm">
-                      <MapPin className="w-4 h-4" />
-                      {property.location}
-                    </div>
-                    <div className="flex items-center gap-3 mb-4 text-xs text-muted-foreground">
-                      <span className="capitalize bg-secondary px-2 py-1 rounded">{property.propertyCategory || property.category}</span>
-                      {property.beds && <span>{property.beds} Bed</span>}
-                      {property.baths && <span>{property.baths} Bath</span>}
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <p className="text-primary font-bold text-xl">
-                        ₦{property.price?.toLocaleString() || 'N/A'}
-                        <span className="text-sm font-normal text-muted-foreground">{property.rentPeriod ? `/${property.rentPeriod}` : ''}</span>
-                      </p>
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
->>>>>>> main
-
 
 
         {/* FAQs */}

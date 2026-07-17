@@ -1,9 +1,9 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
-import { Power, X } from 'lucide-react'
+import { useState } from 'react'
+import { Power, X, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useAppStore } from '@/lib/store'
+import { authApi } from '@/lib/api/auth'
 
 interface LogoutModalProps {
   isOpen: boolean
@@ -11,12 +11,11 @@ interface LogoutModalProps {
 }
 
 export function LogoutModal({ isOpen, onClose }: LogoutModalProps) {
-  const router = useRouter()
-  const { setUser } = useAppStore()
+  const [loading, setLoading] = useState(false)
 
-  const handleLogout = () => {
-    setUser(null)
-    router.push('/login')
+  const handleLogout = async () => {
+    setLoading(true)
+    await authApi.logout() // clears tokens, cookie, and redirects to /login
   }
 
   if (!isOpen) return null
@@ -59,8 +58,9 @@ export function LogoutModal({ isOpen, onClose }: LogoutModalProps) {
             <Button
               className="flex-1 h-12 rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={handleLogout}
+              disabled={loading}
             >
-              Yes
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Yes'}
             </Button>
           </div>
         </div>

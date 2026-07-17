@@ -1,17 +1,24 @@
-'use client'
+﻿'use client'
 
-import { useState } from 'react'
+export const dynamic = 'force-dynamic'
+
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
+import { authApi, getAuthErrorMessage } from '@/lib/api/auth'
 
-export default function VerificationCodePage() {
+function VerificationCodePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const email = searchParams.get('email') || ''
   const [codes, setCodes] = useState<string[]>(['', '', '', '', '', ''])
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [isResending, setIsResending] = useState(false)
+  const [resendTimer, setResendTimer] = useState(0)
+  const [resendSuccess, setResendSuccess] = useState(false)
 
   const handleCodeChange = (index: number, value: string) => {
     if (value.length > 1) return
@@ -38,21 +45,46 @@ export default function VerificationCodePage() {
 
   const handleContinue = async () => {
     const verificationCode = codes.join('')
-    if (verificationCode.length !== 6) {
-      alert('Please enter all 6 digits')
-      return
-    }
+    if (verificationCode.length !== 6) return
 
     setIsLoading(true)
-    // Email verified - skip phone verification and go directly to welcome/explore
-    setTimeout(() => {
+    setError('')
+    try {
+      await authApi.verifyEmail(email, verificationCode)
       router.push('/welcome')
-    }, 1000)
+    } catch (err) {
+      const msg = getAuthErrorMessage(err)
+      // Email already verified on a previous attempt — treat as success
+      if (msg.toLowerCase().includes('already verified')) {
+        router.push('/welcome')
+      } else {
+        setError(msg)
+        setIsLoading(false)
+      }
+    }
   }
 
-  const handleResendOTP = () => {
-    alert('OTP has been resent to ' + email)
+  const handleResendOTP = async () => {
+    if (isResending || resendTimer > 0) return
+    setIsResending(true)
+    setResendSuccess(false)
+    try {
+      await authApi.resendOtp(email)
+      setResendSuccess(true)
+      setResendTimer(30)
+      setCodes(['', '', '', '', '', ''])
+    } catch {
+      // silently fail
+    } finally {
+      setIsResending(false)
+    }
   }
+
+  useEffect(() => {
+    if (resendTimer <= 0) return
+    const t = setTimeout(() => setResendTimer((v) => v - 1), 1000)
+    return () => clearTimeout(t)
+  }, [resendTimer])
 
   const maskedEmail = email
     ? email.substring(0, 3) + '*'.repeat(email.length - 6) + email.substring(email.length - 3)
@@ -82,7 +114,7 @@ export default function VerificationCodePage() {
       {/* Form */}
       <div className="flex-1 px-6 py-8 flex flex-col">
         <button
-          onClick={() => router.back()}
+          onClick={() => window.history.back()}
           className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary mb-8"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -91,10 +123,12 @@ export default function VerificationCodePage() {
         <div className="text-center mb-8">
           <div className="inline-block p-3 bg-primary/10 rounded-full mb-4">
             <Image
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png"
+              src="/logo.png"
               alt="SpaceButton"
               width={40}
-              height={40}
+              height={69}
+              className="h-10 w-auto rounded-lg"
+              style={{ width: 'auto' }}
             />
           </div>
         </div>
@@ -126,26 +160,46 @@ export default function VerificationCodePage() {
           ))}
         </div>
 
+        {error && (
+          <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm text-center">
+            {error}
+          </div>
+        )}
+
         <Button
           onClick={handleContinue}
-          disabled={isLoading}
+          disabled={isLoading || codes.some(c => c === '')}
           className="w-full h-14 rounded-xl bg-primary text-primary-foreground font-semibold text-base mb-4"
         >
           {isLoading ? 'Verifying...' : 'Continue'}
         </Button>
 
-        <div className="text-center">
-          <p className="text-sm text-muted-foreground">
-            Didn&apos;t receive the OTP?{' '}
-            <button
-              onClick={handleResendOTP}
-              className="text-primary font-semibold hover:underline"
-            >
-              Resend OTP
-            </button>
-          </p>
+        <div className="text-center mt-4">
+          {resendSuccess && (
+            <p className="text-sm text-green-500 mb-2">Code resent! Check your inbox.</p>
+          )}
+          {resendTimer > 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Resend code in <span className="text-primary font-semibold">{resendTimer}s</span>
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Didn&apos;t receive the OTP?{' '}
+              <button
+                onClick={handleResendOTP}
+                disabled={isResending}
+                className="text-primary font-semibold hover:underline disabled:opacity-50"
+              >
+                {isResending ? 'Sending...' : 'Resend OTP'}
+              </button>
+            </p>
+          )}
         </div>
       </div>
     </div>
   )
+}
+
+export default function VerificationCodePageWrapper() {
+  return <Suspense><VerificationCodePage /></Suspense>
 }

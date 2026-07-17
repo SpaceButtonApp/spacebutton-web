@@ -1,138 +1,242 @@
 'use client'
 
-import { useState, useEffect, use, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
-import Image from 'next/image'
-import { ChevronLeft, MessageSquare, MicOff, Phone, Video } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { mockAgents, mockConversations } from '@/lib/mock-data'
-import { useAppStore } from '@/lib/store'
+export const dynamic = 'force-dynamic'
 
-export default function VideoCallPage({ params }: { params: Promise<{ id: string }> }) {
+import { useState, useEffect, use, useRef, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { ChevronLeft, MicOff, Mic, Phone, Video, VideoOff } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { callsApi } from '@/lib/api/calls'
+import { getUserDisplayInfo } from '@/lib/api/users'
+import type { IAgoraRTCClient, IMicrophoneAudioTrack, ICameraVideoTrack } from 'agora-rtc-sdk-ng'
+import type { CallResponse } from '@/lib/types/call'
+
+type CallState = 'connecting' | 'ongoing' | 'ended' | 'error'
+
+const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!
+
+function VideoCallPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const callIdParam = searchParams.get('callId')
+
+  const [callState, setCallState] = useState<CallState>('connecting')
   const [callTime, setCallTime] = useState(0)
   const [isMuted, setIsMuted] = useState(false)
   const [isVideoOff, setIsVideoOff] = useState(false)
-  const { properties, conversations } = useAppStore()
+  const [otherName, setOtherName] = useState('Connecting...')
+  const [hasRemoteVideo, setHasRemoteVideo] = useState(false)
 
-  // Find the user/agent by ID - check store conversations, mock conversations, properties, and agents
-  const caller = useMemo(() => {
-    // First check store conversations
-    const storeConv = conversations.find((c) => c.user?.id === id)
-    if (storeConv?.user) return storeConv.user
-    
-    // Check mock conversations
-    const mockConv = mockConversations.find((c) => c.user?.id === id)
-    if (mockConv?.user) return mockConv.user
-    
-    // Check properties for agent
-    const property = properties.find((p) => p.agent?.id === id)
-    if (property?.agent) return property.agent
-    
-    // Finally check mock agents
-    return mockAgents.find((a) => a.id === id)
-  }, [id, conversations, properties])
-  
-  const callerName = caller?.name || 'Unknown'
-  const callerAvatar = caller?.avatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
+  const callRef = useRef<CallResponse | null>(null)
+  const clientRef = useRef<IAgoraRTCClient | null>(null)
+  const audioTrackRef = useRef<IMicrophoneAudioTrack | null>(null)
+  const videoTrackRef = useRef<ICameraVideoTrack | null>(null)
+  const localVideoRef = useRef<HTMLDivElement>(null)
+  const remoteVideoRef = useRef<HTMLDivElement>(null)
+  const endingRef = useRef(false)
+  // Store remote user so we can play video once refs are in DOM
+  const pendingRemoteRef = useRef<{ uid: string | number; videoTrack: unknown } | null>(null)
+
+  const handleEndCall = async () => {
+    if (endingRef.current) return
+    endingRef.current = true
+    setCallState('ended')
+    audioTrackRef.current?.close()
+    videoTrackRef.current?.close()
+    await clientRef.current?.leave().catch(() => {})
+    if (callRef.current) {
+      await callsApi.endCall(callRef.current.id).catch(() => {})
+    }
+    window.history.back()
+  }
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCallTime((prev) => prev + 1)
-    }, 1000)
+    let cancelled = false
+
+    async function setup() {
+      try {
+        const { default: AgoraRTC } = await import('agora-rtc-sdk-ng')
+
+        const info = await getUserDisplayInfo(id)
+        if (cancelled) return
+        setOtherName(info.name)
+
+        const call = callIdParam
+          ? await callsApi.joinCall(callIdParam)
+          : await callsApi.initiateCall(id, 'video')
+        if (cancelled) return
+        callRef.current = call
+
+        const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' })
+        clientRef.current = client
+
+        // Register handlers BEFORE join so we don't miss events from users
+        // already in the channel when we arrive
+        client.on('user-published', async (user, mediaType) => {
+          await client.subscribe(user, mediaType)
+          if (mediaType === 'video') {
+            setHasRemoteVideo(true)
+            if (remoteVideoRef.current) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              user.videoTrack?.play(remoteVideoRef.current as any)
+            } else {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              pendingRemoteRef.current = { uid: user.uid, videoTrack: user.videoTrack as any }
+            }
+          }
+          if (mediaType === 'audio') user.audioTrack?.play()
+        })
+
+        client.on('user-unpublished', (_user, mediaType) => {
+          if (mediaType === 'video') setHasRemoteVideo(false)
+        })
+
+        client.on('user-left', () => { handleEndCall() })
+
+        await client.join(APP_ID, call.channel_name, call.agora_token, null)
+        if (cancelled) { await client.leave(); return }
+
+        const [audioTrack, videoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks()
+        if (cancelled) { audioTrack.close(); videoTrack.close(); await client.leave(); return }
+        audioTrackRef.current = audioTrack
+        videoTrackRef.current = videoTrack
+
+        await client.publish([audioTrack, videoTrack])
+        setCallState('ongoing')
+
+      } catch {
+        if (!cancelled) setCallState('error')
+      }
+    }
+
+    setup()
+    return () => {
+      cancelled = true
+      audioTrackRef.current?.close()
+      videoTrackRef.current?.close()
+      clientRef.current?.leave().catch(() => {})
+    }
+  }, [id, callIdParam]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Play local video once the UI is in 'ongoing' state and ref is mounted
+  useEffect(() => {
+    if (callState !== 'ongoing') return
+    if (localVideoRef.current && videoTrackRef.current) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      videoTrackRef.current.play(localVideoRef.current as any)
+    }
+    // Flush any pending remote video
+    if (remoteVideoRef.current && pendingRemoteRef.current) {
+      const { videoTrack } = pendingRemoteRef.current
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(videoTrack as any)?.play(remoteVideoRef.current)
+      pendingRemoteRef.current = null
+    }
+  }, [callState])
+
+  // Re-play local video when camera is turned back on
+  useEffect(() => {
+    if (callState !== 'ongoing' || isVideoOff) return
+    if (localVideoRef.current && videoTrackRef.current) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      videoTrackRef.current.play(localVideoRef.current as any)
+    }
+  }, [isVideoOff, callState])
+
+  useEffect(() => {
+    if (callState !== 'ongoing') return
+    const interval = setInterval(() => setCallTime(t => t + 1), 1000)
     return () => clearInterval(interval)
-  }, [])
+  }, [callState])
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+  const formatTime = (s: number) => {
+    const m = Math.floor(s / 60)
+    return `${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
   }
 
-  const handleEndCall = () => {
-    router.back()
+  const handleToggleMute = () => {
+    const next = !isMuted
+    audioTrackRef.current?.setEnabled(!next)
+    setIsMuted(next)
   }
 
-  if (!caller) {
+  const handleToggleVideo = () => {
+    const next = !isVideoOff
+    videoTrackRef.current?.setEnabled(!next)
+    setIsVideoOff(next)
+  }
+
+  if (callState === 'error') {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-background">
-        <p className="text-muted-foreground">User not found</p>
-        <Button variant="outline" className="mt-4" onClick={() => router.back()}>
-          Go Back
-        </Button>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
+        <p className="text-muted-foreground mb-4">Call failed to connect</p>
+        <Button variant="outline" onClick={() => window.history.back()}>Go Back</Button>
+      </div>
+    )
+  }
+
+  if (callState === 'connecting') {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-black">
+        <div className="w-10 h-10 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+        <p className="text-white/60 mt-4">Connecting video call...</p>
       </div>
     )
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col">
-      {/* Remote video (full screen background) */}
-      <div className="absolute inset-0">
-        <Image
-          src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&h=1200&fit=crop"
-          alt="Remote video"
-          fill
-          className="object-cover"
-        />
-      </div>
+    <div className="relative flex min-h-screen flex-col bg-black overflow-hidden">
 
-      {/* Overlay */}
-      <div className="absolute inset-0 bg-black/20" />
+      {/* Remote video — always in DOM so ref is stable */}
+      <div ref={remoteVideoRef} className="absolute inset-0" />
+      {!hasRemoteVideo && (
+        <div className="absolute inset-0 flex items-center justify-center bg-neutral-900">
+          <p className="text-white/40 text-sm">Waiting for {otherName}…</p>
+        </div>
+      )}
+      {/* Subtle overlay so controls stay readable */}
+      <div className="absolute inset-0 bg-black/20 pointer-events-none" />
 
       {/* Header */}
       <header className="relative z-10 flex items-center gap-4 p-4">
-        <button
-          onClick={() => router.back()}
-          className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90"
-        >
-          <ChevronLeft className="h-6 w-6" />
+        <button onClick={() => window.history.back()} className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
+          <ChevronLeft className="h-6 w-6 text-white" />
         </button>
         <div className="flex-1 text-center">
-          <h1 className="text-xl font-semibold text-white">{callerName}</h1>
-          <span className="rounded-full bg-black/50 px-3 py-1 text-sm text-white">
-            {formatTime(callTime)}
-          </span>
+          <h1 className="text-xl font-semibold text-white drop-shadow">{otherName}</h1>
+          <span className="rounded-full bg-black/50 px-3 py-1 text-sm text-white">{formatTime(callTime)}</span>
         </div>
         <div className="w-12" />
       </header>
 
-      {/* Local video (picture-in-picture) */}
+      {/* Local video (PiP) — always in DOM */}
       <div className="relative z-10 flex flex-1 items-end justify-end p-4">
-        <div className="relative h-40 w-28 overflow-hidden rounded-2xl border-2 border-white shadow-lg">
-          <Image
-            src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=300&fit=crop"
-            alt="Local video"
-            fill
-            className="object-cover"
-          />
+        <div className="relative h-40 w-28 overflow-hidden rounded-2xl border-2 border-white shadow-xl bg-neutral-800">
+          {isVideoOff ? (
+            <div className="flex h-full items-center justify-center">
+              <VideoOff className="w-8 h-8 text-white/40" />
+            </div>
+          ) : (
+            <div ref={localVideoRef} className="h-full w-full" />
+          )}
         </div>
       </div>
 
       {/* Controls */}
-      <div className="relative z-10 px-4 pb-8">
-        <div className="mx-auto mb-4 flex max-w-xs items-center justify-center gap-6 rounded-full bg-white/90 p-4">
-          <button 
-            onClick={() => router.push(`/chat/${id}`)}
-            className="flex h-14 w-14 items-center justify-center rounded-full bg-muted"
+      <div className="relative z-10 px-4 pb-10">
+        <div className="mx-auto mb-4 flex max-w-xs items-center justify-center gap-6 rounded-full bg-white/90 backdrop-blur-sm p-4">
+          <button
+            onClick={handleToggleMute}
+            className={`flex h-14 w-14 items-center justify-center rounded-full transition-colors ${isMuted ? 'bg-red-500 text-white' : 'bg-muted'}`}
           >
-            <MessageSquare className="h-6 w-6" />
+            {isMuted ? <MicOff className="h-6 w-6" /> : <Mic className="h-6 w-6" />}
           </button>
           <button
-            onClick={() => setIsMuted(!isMuted)}
-            className={`flex h-14 w-14 items-center justify-center rounded-full ${
-              isMuted ? 'bg-primary text-primary-foreground' : 'bg-muted'
-            }`}
+            onClick={handleToggleVideo}
+            className={`flex h-14 w-14 items-center justify-center rounded-full transition-colors ${isVideoOff ? 'bg-red-500 text-white' : 'bg-muted'}`}
           >
-            <MicOff className="h-6 w-6" />
-          </button>
-          <button 
-            onClick={() => setIsVideoOff(!isVideoOff)}
-            className={`flex h-14 w-14 items-center justify-center rounded-full ${
-              isVideoOff ? 'bg-primary text-primary-foreground' : 'bg-muted'
-            }`}
-          >
-            <Video className="h-6 w-6" />
+            {isVideoOff ? <VideoOff className="h-6 w-6" /> : <Video className="h-6 w-6" />}
           </button>
         </div>
 
@@ -148,4 +252,8 @@ export default function VideoCallPage({ params }: { params: Promise<{ id: string
       </div>
     </div>
   )
+}
+
+export default function VideoCallPageWrapper({ params }: { params: Promise<{ id: string }> }) {
+  return <Suspense><VideoCallPage params={params} /></Suspense>
 }

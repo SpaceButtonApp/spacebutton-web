@@ -1,11 +1,13 @@
-"use client"
+﻿"use client"
 
-import { useState, useEffect } from "react"
+export const dynamic = 'force-dynamic'
+
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ChevronLeft, Copy, Check, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
-export default function TransferPage() {
+function TransferPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [timeLeft, setTimeLeft] = useState(43 * 60)
@@ -47,7 +49,7 @@ export default function TransferPage() {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-10 bg-background px-4 py-4 flex items-center gap-4">
         <button
-          onClick={() => router.back()}
+          onClick={() => window.history.back()}
           className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center"
         >
           <ChevronLeft className="w-5 h-5" />
@@ -130,7 +132,7 @@ export default function TransferPage() {
         </Button>
 
         <button
-          onClick={() => router.back()}
+          onClick={() => window.history.back()}
           className="w-full text-center font-medium"
         >
           Change Payment Method
@@ -181,4 +183,8 @@ export default function TransferPage() {
       )}
     </div>
   )
+}
+
+export default function TransferPageWrapper() {
+  return <Suspense><TransferPage /></Suspense>
 }

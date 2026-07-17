@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -7,17 +7,18 @@ import Image from 'next/image'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useAppStore } from '@/lib/store'
+import { userApi, agentApi } from '@/lib/api/users'
 
 export default function EditProfilePage() {
   const router = useRouter()
   const { user, updateUser } = useAppStore()
-  const [profileImage, setProfileImage] = useState(user?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face')
+  const [profileImage, setProfileImage] = useState(user?.avatar || '/placeholder-user.jpg')
   const [showImageOptions, setShowImageOptions] = useState(false)
-  const fileInputRef = useState<HTMLInputElement>(null)[1]
-  
+  const [saving, setSaving] = useState(false)
+  const isAgent = user?.type === 'agent'
+
   const [formData, setFormData] = useState({
     name: user?.name || '',
-    gender: user?.gender || '',
     phone: user?.phone || '',
     location: user?.location || '',
     email: user?.email || '',
@@ -26,21 +27,65 @@ export default function EditProfilePage() {
     city: user?.city || '',
   })
 
-  const handleSave = () => {
-    updateUser({ ...formData, avatar: profileImage })
-    router.back()
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      if (isAgent) {
+        const updated = await agentApi.updateMyAgentProfile({
+          bio: formData.bio || undefined,
+          state: formData.state || undefined,
+          city: formData.city || undefined,
+        })
+        updateUser({
+          bio: updated.bio ?? undefined,
+          state: updated.state ?? undefined,
+          city: updated.city ?? undefined,
+        })
+      } else {
+        const updated = await userApi.updateMyProfile({
+          bio: formData.bio || undefined,
+          state: formData.state || undefined,
+          city: formData.city || undefined,
+        })
+        updateUser({
+          bio: updated.bio ?? undefined,
+          state: updated.state ?? undefined,
+          city: updated.city ?? undefined,
+        })
+      }
+      router.push('/profile')
+    } catch {
+      // silently fall back to local update
+      updateUser({ bio: formData.bio || undefined, state: formData.state || undefined, city: formData.city || undefined })
+      router.push('/profile')
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setProfileImage(reader.result as string)
-        setShowImageOptions(false)
-      }
-      reader.readAsDataURL(file)
+    if (!file) return
+
+    // Preview immediately
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setProfileImage(reader.result as string)
+      setShowImageOptions(false)
     }
+    reader.readAsDataURL(file)
+
+    // Upload to backend
+    try {
+      const updated = isAgent
+        ? await agentApi.uploadMyAgentPhoto(file)
+        : await userApi.uploadMyPhoto(file)
+      const url = updated.profile_photo_url
+      if (url) {
+        setProfileImage(url)
+        updateUser({ avatar: url })
+      }
+    } catch { /* keep local preview */ }
   }
 
   const handleCameraCapture = () => {
@@ -59,7 +104,7 @@ export default function EditProfilePage() {
       <div className="bg-background px-4 py-4 sticky top-0 z-40 border-b border-border">
         <div className="flex items-center justify-between">
           <button 
-            onClick={() => router.back()}
+            onClick={() => window.history.back()}
             className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -123,7 +168,7 @@ export default function EditProfilePage() {
             <label className="text-sm text-muted-foreground">Referral Code</label>
             <div className="flex items-center gap-2 mt-1">
               <div className="flex-1 h-12 px-4 rounded-xl bg-background border border-border flex items-center">
-                <span className="font-mono font-semibold">{user?.name?.split(' ')[0] || user?.referralCode || 'N/A'}</span>
+                <span className="font-mono font-semibold">{user?.referralCode || 'N/A'}</span>
               </div>
               <button
                 onClick={copyReferralCode}
@@ -176,21 +221,11 @@ export default function EditProfilePage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-muted-foreground">Gender</label>
-            <Input
-              type="text"
-              value={formData.gender}
-              disabled
-              className="h-14 rounded-xl border-border bg-muted px-4 cursor-not-allowed opacity-60"
-            />
-          </div>
-
-          <div className="space-y-2">
             <label className="text-sm font-medium">Bio</label>
             <textarea
               value={formData.bio}
               onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-              placeholder="Tell people about yourself…"
+              placeholder="Tell people about yourselfâ€¦"
               className="w-full p-4 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all resize-none h-24"
             />
           </div>
@@ -222,11 +257,13 @@ export default function EditProfilePage() {
 
         <Button
           onClick={handleSave}
-          className="w-full h-14 rounded-xl bg-primary text-primary-foreground font-semibold text-base"
+          disabled={saving}
+          className="w-full h-14 rounded-xl bg-primary text-primary-foreground font-semibold text-base disabled:opacity-60"
         >
-          Save Changes
+          {saving ? 'Savingâ€¦' : 'Save Changes'}
         </Button>
       </div>
     </div>
   )
 }
+

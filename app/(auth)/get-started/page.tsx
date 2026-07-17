@@ -32,9 +32,7 @@ export default function GetStartedPage() {
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
 
-  const logoUrlDark = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/dark%20mode%20logo-CjRTz9JJQtYa2G7RQELe0ZpCK7Ox6J.png'
-  const logoUrlLight = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/light%20mode%20logo-djYPBAoZdHLo7JAoZ5JWz9ogNcy9Ue.png'
-  const logoIcon = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png'
+  const logoIcon = '/logo.png'
 
   useEffect(() => {
     if (user?.isLoggedIn) {
@@ -51,9 +49,10 @@ export default function GetStartedPage() {
           <Image
             src={logoIcon}
             alt="Spacebutton"
-            width={32}
-            height={32}
-            className="h-8 w-8"
+            width={40}
+            height={69}
+            className="h-7 w-auto"
+            style={{ width: 'auto' }}
             loading="eager"
             priority
           />

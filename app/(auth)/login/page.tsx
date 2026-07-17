@@ -5,11 +5,11 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
-import { useAppStore } from '@/lib/store'
+import { authApi, getAuthErrorMessage } from '@/lib/api/auth'
+import { syncMyProfile } from '@/lib/api/users'
 
 export default function LoginPage() {
   const router = useRouter()
-  const setUser = useAppStore((state) => state.setUser)
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -18,14 +18,16 @@ export default function LoginPage() {
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png'
+  const logoUrl = '/logo.png'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const newErrors: Record<string, string> = {}
 
     if (!formData.emailOrPhone) {
-      newErrors.emailOrPhone = 'Email or phone number is required'
+      newErrors.emailOrPhone = 'Email address is required'
+    } else if (!formData.emailOrPhone.includes('@')) {
+      newErrors.emailOrPhone = 'Please log in with your email address'
     }
     if (!formData.password) {
       newErrors.password = 'Password is required'
@@ -37,32 +39,16 @@ export default function LoginPage() {
     }
 
     setLoading(true)
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 800))
-
-    // Mock login - derive name from email
-    const emailName = formData.emailOrPhone.includes('@') 
-      ? formData.emailOrPhone.split('@')[0].replace(/[._]/g, ' ')
-      : 'User'
-    const capitalizedName = emailName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-    
-    setUser({
-      id: `user-${Date.now()}`,
-      name: capitalizedName,
-      email: formData.emailOrPhone.includes('@') ? formData.emailOrPhone : '',
-      phone: formData.emailOrPhone.includes('@') ? '' : formData.emailOrPhone,
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-      type: 'individual',
-      isLoggedIn: true,
-      referralCode: `REF${Date.now().toString(36).toUpperCase()}`,
-      referredCount: 0,
-      location: 'Nigeria',
-      walletBalance: 0,
-      isPremium: false,
-      connectsRemaining: 0,
-    })
-
-    router.push('/home')
+    try {
+      await authApi.login(formData.emailOrPhone.trim().toLowerCase(), formData.password)
+      syncMyProfile().catch(() => {})
+      const from = new URLSearchParams(window.location.search).get('from')
+      router.replace(from && from.startsWith('/') ? from : '/home')
+    } catch (err) {
+      setErrors({ general: getAuthErrorMessage(err) })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -74,11 +60,12 @@ export default function LoginPage() {
             <Image
               src={logoUrl}
               alt="SpaceButton"
-              width={48}
-              height={48}
-              className="h-12 w-12"
+              width={40}
+              height={69}
+              className="h-7 w-auto"
+              style={{ width: 'auto' }}
             />
-            <span className="text-2xl font-bold text-foreground">SpaceButton</span>
+            <span className="text-xl font-bold text-foreground">SpaceButton</span>
           </div>
           <p className="text-muted-foreground text-sm">Find your perfect space</p>
         </div>

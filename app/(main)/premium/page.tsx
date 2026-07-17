@@ -1,119 +1,53 @@
 "use client"
 
-import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Check } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Zap } from "lucide-react"
 import { BackButton } from '@/components/back-button'
 
-const plans = {
-  basic: {
-    name: "Basic",
-    features: [
-      { text: "Basic Premium", included: true },
-      { text: "Get the chance to Chat the owner of the space", included: true },
-      { text: "Get the chance to Call the owner of the space", included: true },
-      { text: "Get the chance to Video Call the owner of the space", included: true },
-    ],
-    pricing: [
-      { connects: 1, price: 2000, label: "1 Connect" },
-      { connects: 5, price: 5000, label: "5 Connects" },
-    ],
-  },
-  basicPlus: {
-    name: "Basic+",
-    features: [
-      { text: "Basic Premium", included: true },
-      { text: "Get the chance to Chat the owner of the space", included: true },
-      { text: "Get the chance to Call the owner of the space", included: true },
-      { text: "Get the chance to Video Call the owner of the space", included: true },
-    ],
-    pricing: [
-      { connects: 10, price: 10000, label: "10 Connects" },
-      { connects: 50, price: 40000, label: "50 Connects" },
-    ],
-  },
-}
+const connects = [
+  { id: 'c1',  label: '1 Connect',   subtitle: 'Single reach out',    price: 2000,  connects: 1  },
+  { id: 'c5',  label: '5 Connects',  subtitle: 'Small package',       price: 5000,  connects: 5  },
+  { id: 'c10', label: '10 Connects', subtitle: 'Multiple reach outs', price: 10000, connects: 10 },
+  { id: 'c50', label: '50 Connects', subtitle: 'Best value package',  price: 40000, connects: 50 },
+]
 
-export default function PremiumPage() {
+export default function GetConnectsPage() {
   const router = useRouter()
-  const [selectedPlan, setSelectedPlan] = useState<"basic" | "basicPlus">("basic")
-  const [selectedPricing, setSelectedPricing] = useState(0)
-
-  const currentPlan = plans[selectedPlan]
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-10 bg-background px-4 py-4 flex items-center gap-4">
+      <header className="sticky top-0 z-10 bg-background px-4 py-4 flex items-center gap-4 border-b border-border">
         <BackButton fallbackUrl="/settings" />
+        <h1 className="text-lg font-bold">Get Connects</h1>
       </header>
 
-      <div className="px-4 pb-8">
-        <h1 className="text-2xl font-bold text-center mb-6">SpaceButton Premium</h1>
+      <div className="px-4 py-6 space-y-4">
+        <p className="text-sm text-muted-foreground text-center pb-2">
+          Connects let you reach out directly to property owners and agents.
+        </p>
 
-        <div className="bg-secondary rounded-full p-1 flex mb-6">
+        {connects.map((plan) => (
           <button
-            onClick={() => {
-              setSelectedPlan("basic")
-              setSelectedPricing(0)
-            }}
-            className={`flex-1 py-3 rounded-full text-sm font-medium transition-colors ${selectedPlan === "basic" ? "bg-background shadow-sm" : ""
-              }`}
+            key={plan.id}
+            onClick={() =>
+              router.push(`/payment?amount=${plan.price}&plan=basic&connects=${plan.connects}`)
+            }
+            className="w-full rounded-2xl border border-border bg-secondary hover:border-[#703BF7]/60 hover:bg-[#703BF7]/5 transition-all p-5 flex items-center justify-between gap-4"
           >
-            Basic
-          </button>
-          <button
-            onClick={() => {
-              setSelectedPlan("basicPlus")
-              setSelectedPricing(0)
-            }}
-            className={`flex-1 py-3 rounded-full text-sm font-medium transition-colors ${selectedPlan === "basicPlus" ? "bg-background shadow-sm" : ""
-              }`}
-          >
-            Basic+
-          </button>
-        </div>
-
-        <div className="border border-border rounded-2xl p-6 mb-6">
-          <div className="space-y-4">
-            {currentPlan.features.map((feature, index) => (
-              <div key={index} className="flex items-start gap-3">
-                <Check className="w-5 h-5 text-success flex-shrink-0 mt-0.5" />
-                <span className="text-sm">{feature.text}</span>
+            <div className="flex items-center gap-4">
+              <div className="w-11 h-11 rounded-xl bg-[#703BF7]/15 flex items-center justify-center flex-shrink-0">
+                <Zap className="w-5 h-5 text-[#703BF7]" fill="#703BF7" />
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Pricing options side by side */}
-        <div className="grid grid-cols-2 gap-3 mb-8">
-          {currentPlan.pricing.map((pricing, index) => (
-            <button
-              key={index}
-              onClick={() => setSelectedPricing(index)}
-              className={`p-4 rounded-xl border-2 transition-colors text-center ${selectedPricing === index
-                ? "border-primary bg-primary/5"
-                : "border-border"
-                }`}
-            >
-              <p className="text-sm font-medium mb-1">{pricing.label}</p>
-              <p className="text-xl font-bold">
-                N{pricing.price.toLocaleString()}
-              </p>
-              <span className="text-xs text-muted-foreground">/otp</span>
-            </button>
-          ))}
-        </div>
-
-        <Button
-          onClick={() => {
-            const selectedOption = currentPlan.pricing[selectedPricing]
-            router.push(`/payment?amount=${selectedOption.price}&plan=${currentPlan.name.toLowerCase()}&connects=${selectedOption.connects}`)
-          }}
-          className="w-full h-14 text-base font-semibold"
-        >
-          Continue
-        </Button>
+              <div className="text-left">
+                <p className="font-semibold">{plan.label}</p>
+                <p className="text-xs text-muted-foreground">{plan.subtitle}</p>
+              </div>
+            </div>
+            <p className="font-bold text-[#703BF7] text-lg whitespace-nowrap">
+              ₦{plan.price.toLocaleString()}
+            </p>
+          </button>
+        ))}
       </div>
     </div>
   )

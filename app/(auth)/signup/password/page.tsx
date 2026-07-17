@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Eye, EyeOff, Check, X, Lock } from 'lucide-react'
 import { BackButton } from '@/components/back-button'
+import { authApi, getAuthErrorMessage } from '@/lib/api/auth'
 
 interface PasswordRequirement {
   label: string
@@ -29,8 +30,9 @@ export default function CreatePasswordPage() {
     email: '',
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [loading, setLoading] = useState(false)
 
-  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png'
+  const logoUrl = '/logo.png'
 
   // Get email from signup data on mount
   useEffect(() => {
@@ -44,32 +46,50 @@ export default function CreatePasswordPage() {
   const allRequirementsMet = requirements.every((req) => req.test(formData.password))
   const passwordsMatch = formData.password === formData.confirmPassword && formData.confirmPassword.length > 0
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const newErrors: Record<string, string> = {}
-    
+
     if (!allRequirementsMet) {
       newErrors.password = 'Password does not meet requirements'
     }
     if (!passwordsMatch) {
       newErrors.confirmPassword = 'Passwords do not match'
     }
-    
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors)
       return
     }
 
-    // Get signup data and create user directly
-    const signupData = localStorage.getItem('signupData')
-    if (signupData) {
-      const data = JSON.parse(signupData)
-      // Store complete signup data for final user creation
+    const raw = localStorage.getItem('signupData')
+    if (!raw) { router.push('/signup'); return }
+    const data = JSON.parse(raw)
+
+    // Split full name → first / last
+    const nameParts = (data.name as string).trim().split(/\s+/)
+    const firstName = nameParts[0]
+    const lastName = nameParts.slice(1).join(' ') || '.'
+
+    setLoading(true)
+    try {
+      await authApi.signup({
+        first_name: firstName,
+        last_name: lastName,
+        email: data.email,
+        phone_number: data.phone,
+        password: formData.password,
+        role: data.profileType === 'agent' ? 'agent' : 'user',
+        referral_code: data.invitationCode || undefined,
+      })
+      // Save password for auto-login after phone verification
       localStorage.setItem('signupData', JSON.stringify({ ...data, password: formData.password }))
+      router.push(`/verify?email=${encodeURIComponent(data.email)}`)
+    } catch (err) {
+      setErrors({ general: getAuthErrorMessage(err) })
+    } finally {
+      setLoading(false)
     }
-    
-    // Skip phone verification - go to email verification which then goes to welcome
-    router.push('/verify')
   }
 
   return (
@@ -95,8 +115,9 @@ export default function CreatePasswordPage() {
                 src={logoUrl}
                 alt="SpaceButton"
                 width={40}
-                height={40}
-                className="h-10 w-10"
+                height={69}
+                className="h-7 w-auto"
+                style={{ width: 'auto' }}
               />
               <span className="text-xl font-bold text-foreground">SpaceButton</span>
             </div>
@@ -107,6 +128,11 @@ export default function CreatePasswordPage() {
           {/* Form Card */}
           <div className="bg-card border border-border rounded-2xl p-6">
             <form onSubmit={handleSubmit} className="space-y-5">
+              {errors.general && (
+                <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm text-center">
+                  {errors.general}
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-muted-foreground mb-2">
                   Create Password
@@ -182,10 +208,12 @@ export default function CreatePasswordPage() {
 
               <button
                 type="submit"
-                disabled={!allRequirementsMet || !passwordsMatch}
-                className="w-full py-3.5 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-primary-foreground font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!allRequirementsMet || !passwordsMatch || loading}
+                className="w-full py-3.5 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-primary-foreground font-semibold rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                Continue
+                {loading ? (
+                  <><div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />Creating account...</>
+                ) : 'Continue'}
               </button>
             </form>
 

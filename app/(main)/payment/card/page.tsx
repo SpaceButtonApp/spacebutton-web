@@ -1,13 +1,15 @@
-'use client'
+﻿'use client'
 
-import { useState } from 'react'
+export const dynamic = 'force-dynamic'
+
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { ChevronLeft, CreditCard, ScanLine } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 
-export default function PayWithCardPage() {
+function PayWithCardPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const amount = searchParams.get('amount') || '2000'
@@ -43,7 +45,7 @@ export default function PayWithCardPage() {
     <div className="min-h-screen bg-background">
       <header className="flex items-center gap-4 p-4">
         <button
-          onClick={() => router.back()}
+          onClick={() => window.history.back()}
           className="flex h-12 w-12 items-center justify-center rounded-full bg-muted"
         >
           <ChevronLeft className="h-6 w-6" />
@@ -144,4 +146,8 @@ export default function PayWithCardPage() {
       </div>
     </div>
   )
+}
+
+export default function PayWithCardPageWrapper() {
+  return <Suspense><PayWithCardPage /></Suspense>
 }

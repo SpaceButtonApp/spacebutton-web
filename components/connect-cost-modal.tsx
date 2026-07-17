@@ -9,9 +9,10 @@ import { Check } from 'lucide-react'
 interface ConnectCostModalProps {
   isOpen: boolean
   onClose: () => void
-  onConfirm: () => void
+  /** Called when user confirms — parent is responsible for API call + navigation */
+  onConfirm: () => void | Promise<void>
   propertyTitle: string
-  agentId?: string
+  /** Used only for the "Buy Connects" redirect return URL */
   propertyId?: string
   isFreeConnect?: boolean
 }
@@ -23,39 +24,26 @@ const connectOptions = [
   { connects: 1, price: 2000, label: "1 Connect" },
 ]
 
-export function ConnectCostModal({ isOpen, onClose, onConfirm, propertyTitle, agentId, propertyId, isFreeConnect }: ConnectCostModalProps) {
+export function ConnectCostModal({ isOpen, onClose, onConfirm, propertyTitle, propertyId, isFreeConnect }: ConnectCostModalProps) {
   const router = useRouter()
   const user = useAppStore((state) => state.user)
-  const deductConnect = useAppStore((state) => state.deductConnect)
   const connectsRemaining = user?.connectsRemaining || 0
-  const [selectedOption, setSelectedOption] = useState(3) // Default to lowest (1 Connect)
+  const [selectedOption, setSelectedOption] = useState(3)
+  const [confirming, setConfirming] = useState(false)
 
   if (!isOpen) return null
 
-  // For free connect properties, user can chat without using connects
   const hasEnoughConnects = isFreeConnect || connectsRemaining > 0
 
-  const handlePrimaryAction = () => {
-    if (isFreeConnect) {
-      // Free connect - no deduction needed
-      onConfirm()
-      if (propertyId) {
-        router.push(`/chat/${agentId || 'new'}?propertyId=${propertyId}`)
-      } else if (agentId) {
-        router.push(`/chat/${agentId}`)
-      }
-    } else if (hasEnoughConnects) {
-      // Deduct 1 connect when user clicks Chat
-      deductConnect()
-      onConfirm()
-      // Navigate to chat with property owner using propertyId to get the correct agent
-      if (propertyId) {
-        router.push(`/chat/${agentId || 'new'}?propertyId=${propertyId}`)
-      } else if (agentId) {
-        router.push(`/chat/${agentId}`)
+  const handlePrimaryAction = async () => {
+    if (hasEnoughConnects) {
+      setConfirming(true)
+      try {
+        await onConfirm()
+      } finally {
+        setConfirming(false)
       }
     } else {
-      // Go to payment with selected option, include return URL
       const option = connectOptions[selectedOption]
       const returnUrl = propertyId ? `/property/${propertyId}` : '/home'
       router.push(`/payment?amount=${option.price}&plan=basic&connects=${option.connects}&returnUrl=${encodeURIComponent(returnUrl)}`)
@@ -136,9 +124,10 @@ export function ConnectCostModal({ isOpen, onClose, onConfirm, propertyTitle, ag
         <div className="flex flex-col gap-3">
           <Button
             onClick={handlePrimaryAction}
+            disabled={confirming}
             className="w-full rounded-xl h-12"
           >
-            {hasEnoughConnects ? 'Chat' : 'Buy Connects'}
+            {confirming ? 'Starting chat...' : hasEnoughConnects ? 'Chat' : 'Buy Connects'}
           </Button>
           <Button
             variant="outline"

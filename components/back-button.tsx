@@ -3,7 +3,6 @@
 import { useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useEffect, useState } from 'react'
 
 interface BackButtonProps {
   fallbackUrl?: string
@@ -13,24 +12,12 @@ interface BackButtonProps {
 
 export function BackButton({ fallbackUrl = '/home', className, variant = 'default' }: BackButtonProps) {
   const router = useRouter()
-  const [canGoBack, setCanGoBack] = useState(false)
-
-  useEffect(() => {
-    // Check if there's actual history to go back to
-    // We need at least 2 entries (current page + previous page)
-    if (typeof window !== 'undefined') {
-      // Use a small delay to ensure the page has fully loaded
-      const checkHistory = () => {
-        const hasHistory = window.history.length > 2
-        setCanGoBack(hasHistory)
-      }
-      checkHistory()
-    }
-  }, [])
 
   const handleBack = () => {
-    if (canGoBack) {
-      router.back()
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      // Use native browser back — reliably restores the previous page
+      // including component re-render, unlike router.back() in Next.js App Router.
+      window.history.back()
     } else {
       router.push(fallbackUrl)
     }

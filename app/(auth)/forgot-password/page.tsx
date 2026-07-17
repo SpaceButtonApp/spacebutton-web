@@ -6,25 +6,38 @@ import Image from 'next/image'
 import { Mail, KeyRound } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { BackButton } from '@/components/back-button'
+import { authApi, getAuthErrorMessage } from '@/lib/api/auth'
 
 export default function ForgotPasswordPage() {
   const router = useRouter()
   const [emailOrPhone, setEmailOrPhone] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png'
+  const logoUrl = '/logo.png'
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!emailOrPhone) {
-      setError('Please enter your email or phone number')
+      setError('Please enter your email address')
       return
     }
-    
-    // Store for next step
-    localStorage.setItem('resetEmail', emailOrPhone)
-    router.push(`/forgot-password/verify?email=${encodeURIComponent(emailOrPhone)}`)
+    if (!emailOrPhone.includes('@')) {
+      setError('Please enter a valid email address')
+      return
+    }
+
+    setLoading(true)
+    setError('')
+    try {
+      await authApi.forgotPassword(emailOrPhone.trim().toLowerCase())
+      router.push(`/forgot-password/verify?email=${encodeURIComponent(emailOrPhone.trim().toLowerCase())}`)
+    } catch (err) {
+      setError(getAuthErrorMessage(err))
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -49,9 +62,10 @@ export default function ForgotPasswordPage() {
             <Image
               src={logoUrl}
               alt="SpaceButton"
-              width={32}
-              height={32}
-              className="h-8 w-8"
+              width={40}
+              height={69}
+              className="h-7 w-auto"
+              style={{ width: 'auto' }}
             />
             <span className="text-lg font-bold text-foreground">SpaceButton</span>
           </div>
@@ -79,9 +93,10 @@ export default function ForgotPasswordPage() {
 
           <Button
             type="submit"
-            className="w-full h-14 rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-primary-foreground font-semibold text-base shadow-lg shadow-primary/20"
+            disabled={loading}
+            className="w-full h-14 rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-primary-foreground font-semibold text-base shadow-lg shadow-primary/20 disabled:opacity-50"
           >
-            Send Verification Code
+            {loading ? 'Sending...' : 'Send Verification Code'}
           </Button>
         </form>
       </div>

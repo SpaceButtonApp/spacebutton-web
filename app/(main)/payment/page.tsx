@@ -1,203 +1,163 @@
-"use client"
+﻿'use client'
 
-import { useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { X, Wallet, CreditCard, Building2, Globe } from "lucide-react"
-import { useAppStore } from "@/lib/store"
+export const dynamic = 'force-dynamic'
 
-export default function PaymentPage() {
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { ArrowLeft, Zap, Loader2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { useAppStore } from '@/lib/store'
+import { paymentsApi, connectsToPackage } from '@/lib/api/payments'
+import { cn } from '@/lib/utils'
+
+const PACKAGES = [
+  { connects: 50, price: 40000, label: '50 Connects', badge: 'Best Value' },
+  { connects: 10, price: 10000, label: '10 Connects', badge: null },
+  { connects: 5,  price: 5000,  label: '5 Connects',  badge: null },
+  { connects: 1,  price: 2000,  label: '1 Connect',   badge: null },
+]
+
+function PaymentPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [selectedMethod, setSelectedMethod] = useState<string | null>(null)
-  const [showUnavailableModal, setShowUnavailableModal] = useState(false)
-  const [showInsufficientFundsModal, setShowInsufficientFundsModal] = useState(false)
-  const user = useAppStore((state) => state.user)
-  const { deductFromWallet, addTransaction } = useAppStore()
-  const walletBalance = user?.walletBalance || 0
+  const { user } = useAppStore()
 
-  const allPaymentMethods = [
-    {
-      id: "wallet",
-      name: "Pay with Wallet",
-      subtitle: `NGN ${walletBalance.toLocaleString()}.00`,
-      icon: Wallet,
-    },
-    {
-      id: "card",
-      name: "Pay with Card",
-      icon: CreditCard,
-    },
-    {
-      id: "transfer",
-      name: "Pay with Transfer",
-      icon: Building2,
-    },
-    {
-      id: "country",
-      name: "Charge my Country",
-      icon: Globe,
-    },
-  ]
-  
-  const amount = parseInt(searchParams.get("amount") || "2000")
-  const plan = searchParams.get("plan") || "basic"
-  const connects = searchParams.get("connects") || "1"
-  const type = searchParams.get("type") || ""
-  const returnUrl = searchParams.get("returnUrl") || "/home"
+  // Pre-select based on `connects` query param (from connect-cost-modal)
+  const requestedConnects = parseInt(searchParams.get('connects') || '1')
+  const returnUrl = searchParams.get('returnUrl') || '/home'
 
-  // Filter out wallet payment method when funding wallet
-  const paymentMethods = type === "wallet" 
-    ? allPaymentMethods.filter(method => method.id !== "wallet")
-    : allPaymentMethods
+  const [selected, setSelected] = useState<number>(
+    PACKAGES.findIndex((p) => p.connects === requestedConnects) !== -1
+      ? PACKAGES.findIndex((p) => p.connects === requestedConnects)
+      : 3,
+  )
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleMethodClick = (methodId: string) => {
-    if (methodId === "country") {
-      setShowUnavailableModal(true)
-    } else {
-      setSelectedMethod(methodId)
-    }
-  }
+  // Store returnUrl in sessionStorage so verify page can redirect back
+  useEffect(() => {
+    sessionStorage.setItem('payment_return_url', returnUrl)
+  }, [returnUrl])
 
-  const handleContinue = () => {
-    const params = `amount=${amount}&plan=${plan}&connects=${connects}&type=${type}&returnUrl=${encodeURIComponent(returnUrl)}`
-    if (selectedMethod === "transfer") {
-      router.push(`/payment/transfer?${params}`)
-    } else if (selectedMethod === "card") {
-      router.push(`/payment/card?${params}`)
-    } else if (selectedMethod === "wallet") {
-      // Check if wallet has sufficient funds
-      if (walletBalance < amount) {
-        setShowInsufficientFundsModal(true)
+  const handlePay = async () => {
+    if (!user?.email) return
+    const pkg = PACKAGES[selected]
+    setLoading(true)
+    setError(null)
+    try {
+      const callbackUrl = `${window.location.origin}/payment/verify`
+      const { authorization_url, reference, already_paid } = await paymentsApi.initializePayment(
+        connectsToPackage(pkg.connects),
+        user.email,
+        callbackUrl,
+      )
+      if (already_paid && reference) {
+        // Connects were already credited — go straight to verify page (shows success)
+        router.push(`/payment/verify?reference=${encodeURIComponent(reference)}`)
         return
       }
-      // Deduct from wallet and add transaction
-      deductFromWallet(amount)
-      
-      // Determine transaction title based on what's being purchased
-      let transactionTitle = 'Connect Purchase'
-      if (plan.includes('premium')) {
-        transactionTitle = 'Premium Subscription'
-      } else if (parseInt(connects) === 5) {
-        transactionTitle = '5 Connects Purchase'
-      } else if (parseInt(connects) === 1) {
-        transactionTitle = '1 Connect Purchase'
-      }
-      
-      addTransaction({
-        type: 'debit',
-        title: transactionTitle,
-        amount: amount
-      })
-      
-      router.push(`/payment/success?${params}&paymentMethod=wallet`)
-    } else {
-      router.push(`/payment/success?${params}`)
+      window.location.href = authorization_url
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Payment initialization failed. Try again.')
+      setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-10 bg-background px-4 py-4 flex items-center justify-between">
-        <div className="flex-1" />
-        <h1 className="text-lg font-semibold">Select Payment Method</h1>
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Header */}
+      <div className="px-4 py-4 border-b border-border flex items-center gap-3">
         <button
-          onClick={() => router.back()}
-          className="w-10 h-10 flex items-center justify-center"
+          onClick={() => window.history.back()}
+          className="w-10 h-10 flex items-center justify-center rounded-full bg-secondary"
         >
-          <X className="w-5 h-5" />
+          <ArrowLeft className="w-5 h-5" />
         </button>
-      </header>
+        <h1 className="text-lg font-bold">Buy Connects</h1>
+      </div>
 
-      <div className="px-4 pb-8">
-        <div className="text-center mb-8">
-          <p className="text-muted-foreground mb-2">You pay</p>
-          <div className="inline-block bg-success/10 px-6 py-2 rounded-full">
-            <span className="text-2xl font-bold text-success">
-              #{amount.toLocaleString()}.00
-            </span>
+      <div className="flex-1 px-4 py-6 space-y-6">
+        {/* What are connects */}
+        <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Zap className="w-5 h-5 text-primary" />
+            <p className="font-semibold text-foreground">What are Connects?</p>
           </div>
+          <p className="text-sm text-muted-foreground">
+            Connects let you start conversations with property owners and agents.
+            Each new chat costs 1 connect.
+          </p>
         </div>
 
-        <div className="space-y-4">
-          {paymentMethods.map((method) => (
+        {/* Package selector */}
+        <div className="space-y-3">
+          <p className="font-semibold text-foreground">Choose a package</p>
+          {PACKAGES.map((pkg, i) => (
             <button
-              key={method.id}
-              onClick={() => handleMethodClick(method.id)}
-              className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition-colors ${
-                selectedMethod === method.id
-                  ? "border-primary"
-                  : "border-border"
-              }`}
+              key={i}
+              onClick={() => setSelected(i)}
+              className={cn(
+                'w-full rounded-2xl border-2 p-4 text-left flex items-center justify-between transition-all',
+                selected === i
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border hover:border-primary/30 bg-card',
+              )}
             >
-              <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center">
-                <method.icon className="w-6 h-6 text-muted-foreground" />
+              <div className="flex items-center gap-3">
+                <div className={cn(
+                  'w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0',
+                  selected === i ? 'border-primary bg-primary' : 'border-muted-foreground',
+                )}>
+                  {selected === i && <div className="w-2 h-2 rounded-full bg-white" />}
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground">{pkg.label}</p>
+                  {pkg.badge && (
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full font-medium">
+                      {pkg.badge}
+                    </span>
+                  )}
+                </div>
               </div>
-              <div className="flex-1 text-left">
-                <p className="font-medium">{method.name}</p>
-                {method.subtitle && (
-                  <p className="text-sm text-muted-foreground">{method.subtitle}</p>
-                )}
-              </div>
-              <div
-                className={`w-6 h-6 rounded-full border-2 ${
-                  selectedMethod === method.id
-                    ? "border-primary bg-primary"
-                    : "border-border"
-                }`}
-              />
+              <p className="font-bold text-primary text-lg">₦{pkg.price.toLocaleString()}</p>
             </button>
           ))}
         </div>
 
-        {selectedMethod && (
-          <button
-            onClick={handleContinue}
-            className="w-full mt-8 h-14 bg-primary text-primary-foreground rounded-2xl font-semibold"
-          >
-            Continue
-          </button>
+        {error && (
+          <p className="text-sm text-destructive text-center bg-destructive/10 p-3 rounded-xl">
+            {error}
+          </p>
         )}
       </div>
 
-      {/* Unavailable Option Modal */}
-      {showUnavailableModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-background rounded-2xl p-6 max-w-sm w-full">
-            <h2 className="text-lg font-semibold mb-2">Option Unavailable</h2>
-            <p className="text-muted-foreground mb-6">This option is not available for you at this moment</p>
-            <button
-              onClick={() => setShowUnavailableModal(false)}
-              className="w-full h-12 bg-primary text-primary-foreground rounded-xl font-medium"
-            >
-              Okay
-            </button>
-          </div>
+      {/* Bottom CTA */}
+      <div className="px-4 py-6 border-t border-border">
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-muted-foreground text-sm">You&apos;ll pay</p>
+          <p className="font-bold text-2xl text-foreground">
+            ₦{PACKAGES[selected].price.toLocaleString()}
+          </p>
         </div>
-      )}
-
-      {/* Insufficient Funds Modal */}
-      {showInsufficientFundsModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-background rounded-2xl p-6 max-w-sm w-full">
-            <h2 className="text-lg font-semibold mb-2 text-destructive">Insufficient Funds</h2>
-            <p className="text-muted-foreground mb-6">You do not have enough money in your wallet. Please fund your wallet to proceed.</p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowInsufficientFundsModal(false)}
-                className="flex-1 h-12 border border-border rounded-xl font-medium"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => router.push('/wallet/fund')}
-                className="flex-1 h-12 bg-primary text-primary-foreground rounded-xl font-medium"
-              >
-                Fund Wallet
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+        <Button
+          onClick={handlePay}
+          disabled={loading}
+          className="w-full h-14 rounded-xl text-base font-semibold"
+        >
+          {loading ? (
+            <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Redirecting to Paystack...</>
+          ) : (
+            `Pay ₦${PACKAGES[selected].price.toLocaleString()} via Paystack`
+          )}
+        </Button>
+        <p className="text-xs text-muted-foreground text-center mt-3">
+          Secured by Paystack · SSL encrypted
+        </p>
+      </div>
     </div>
   )
+}
+
+export default function PaymentPageWrapper() {
+  return <Suspense><PaymentPage /></Suspense>
 }

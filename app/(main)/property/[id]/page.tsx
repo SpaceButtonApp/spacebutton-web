@@ -1,12 +1,13 @@
-'use client'
+﻿'use client'
 
 import { useState, use, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { 
-  Bookmark, ChevronLeft, ChevronRight, ChevronDown, Bed, Bath, 
+import {
+  Bookmark, ChevronLeft, ChevronRight, ChevronDown, Bed, Bath,
   Sofa, MapPin, Calendar, AlertTriangle, Users, Building2, ArrowLeft, X, Clock,
-  Home, DollarSign, Grid3X3, Maximize, Eye, Play, MessageSquare
+  Home, Tag, DollarSign, Grid3X3, Maximize, Eye, Play, Pause,
+  Maximize2, Minimize2, SkipBack, SkipForward
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { Button } from '@/components/ui/button'
@@ -15,19 +16,27 @@ import { BackButton } from '@/components/back-button'
 import { ConnectCostModal } from '@/components/connect-cost-modal'
 import { SuggestedApartments } from '@/components/suggested-apartments'
 import { useAppStore } from '@/lib/store'
+import { listingsApi, mapListing, saveListing } from '@/lib/api/listings'
+import { chatApi } from '@/lib/api/chat'
 import { formatPrice, safetyTips } from '@/lib/mock-data'
 import { cn } from '@/lib/utils'
+import type { Property } from '@/lib/mock-data'
 
 export default function PropertyDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
-  const { savedProperties, toggleSaveProperty, user, connectsRemaining, deductConnect, properties, incrementPropertyViews, conversations } = useAppStore()
+  const { savedProperties, user } = useAppStore()
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [showFullScreen, setShowFullScreen] = useState(false)
   const [showConnectModal, setShowConnectModal] = useState(false)
   const [isVideoPlaying, setIsVideoPlaying] = useState(false)
+  const [existingChatId, setExistingChatId] = useState<string | null>(null)
   const [safetyTipsExpanded, setSafetyTipsExpanded] = useState(false)
+  const [property, setProperty] = useState<Property | null>(null)
+  const [fetchError, setFetchError] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
+  const fullscreenVideoRef = useRef<HTMLVideoElement>(null)
+  const [isFullscreenVideoPlaying, setIsFullscreenVideoPlaying] = useState(false)
 
   const handlePlayVideo = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -36,60 +45,124 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
       setIsVideoPlaying(true)
     }
   }
-  
-  const property = properties.find((p) => p.id === id)
-  const isSaved = savedProperties.includes(id)
-  
-  // Count conversations for this property
-  const propertyConversations = conversations.filter((c) => c.propertyId === id).length
-  
-  // Check if user has already opened a conversation for this property
-  const userConversation = conversations.find((c) => c.propertyId === id && c.userId === user?.id)
-  const hasExistingConversation = !!userConversation
-  
-  // Track view on component mount
-  useEffect(() => {
-    if (property?.id) {
-      incrementPropertyViews(property.id)
+
+  const handleFullscreenPlayPause = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    const video = fullscreenVideoRef.current
+    if (!video) return
+    if (isFullscreenVideoPlaying) {
+      video.pause()
+      setIsFullscreenVideoPlaying(false)
+    } else {
+      video.play()
+      setIsFullscreenVideoPlaying(true)
     }
-  }, [property?.id, incrementPropertyViews])
-  
+  }
+
+  const handleSkipBackward = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (fullscreenVideoRef.current)
+      fullscreenVideoRef.current.currentTime = Math.max(0, fullscreenVideoRef.current.currentTime - 10)
+  }
+
+  const handleSkipForward = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (fullscreenVideoRef.current)
+      fullscreenVideoRef.current.currentTime += 10
+  }
+
+  // Reset play state when switching media items
+  useEffect(() => {
+    setIsVideoPlaying(false)
+    setIsFullscreenVideoPlaying(false)
+    if (videoRef.current) {
+      videoRef.current.pause()
+      videoRef.current.currentTime = 0
+    }
+  }, [currentImageIndex])
+
+  // Fetch listing from API
+  useEffect(() => {
+    setFetchError(false)
+    listingsApi.getListing(id)
+      .then((listing) => {
+        const savedSet = new Set(savedProperties)
+        setProperty(mapListing(listing, savedSet))
+      })
+      .catch(() => setFetchError(true))
+  }, [id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Increment views (fire-and-forget)
+  useEffect(() => {
+    if (user) listingsApi.incrementViews(id)
+  }, [id, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Check if user already has a chat for this listing
+  useEffect(() => {
+    if (!user) return
+    chatApi.getMyChatForListing(id).then((chat) => {
+      if (chat) setExistingChatId(chat.id)
+    }).catch(() => {})
+  }, [id, user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const isSaved = savedProperties.includes(id)
+
   // Check if this is a Properties listing type
   const isPropertyType = property?.type === 'properties' || property?.listingType === 'properties'
-  
-  if (!property) {
+
+  if (fetchError) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p>Property not found</p>
+        <p className="text-muted-foreground">Property not found</p>
       </div>
     )
   }
 
+  if (!property) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  const mediaItems = [...property.images, ...(property.videoUrl ? [property.videoUrl] : [])]
+  const isVideoItem = (url: string) => !!property.videoUrl && url === property.videoUrl
+
   const handlePrevImage = () => {
-    setCurrentImageIndex((prev) => 
-      prev === 0 ? property.images.length - 1 : prev - 1
+    setCurrentImageIndex((prev) =>
+      prev === 0 ? mediaItems.length - 1 : prev - 1
     )
   }
 
   const handleNextImage = () => {
-    setCurrentImageIndex((prev) => 
-      prev === property.images.length - 1 ? 0 : prev + 1
+    setCurrentImageIndex((prev) =>
+      prev === mediaItems.length - 1 ? 0 : prev + 1
     )
   }
 
   const handleInterested = () => {
+    if (existingChatId) {
+      router.push(`/chat/${existingChatId}`)
+      return
+    }
     setShowConnectModal(true)
   }
 
-  const handleConnectConfirm = () => {
-    if (connectsRemaining > 0) {
-      deductConnect()
-      setShowConnectModal(false)
-    }
+  const handleConnectConfirm = async () => {
+    if (!property) return
+    const chat = await chatApi.createChat(
+      property.ownerId,
+      id,
+      `Hi, I'm interested in ${property.title}`,
+    )
+    setExistingChatId(chat.id)
+    setShowConnectModal(false)
+    router.push(`/chat/${chat.id}`)
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="relative min-h-screen bg-background pb-24 md:max-w-2xl md:mx-auto md:border-x md:border-border">
       {/* Header */}
       <div className="absolute top-0 left-0 right-0 z-40 p-4 flex items-center justify-between">
         <BackButton 
@@ -97,8 +170,8 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
           className="bg-background/80 backdrop-blur-sm"
         />
         
-        <button 
-          onClick={() => toggleSaveProperty(id)}
+        <button
+          onClick={() => saveListing(id)}
           className="w-10 h-10 flex items-center justify-center rounded-full bg-background/80 backdrop-blur-sm"
         >
           <Bookmark className={cn('w-5 h-5', isSaved && 'fill-primary text-primary')} />
@@ -106,37 +179,41 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
       </div>
 
       {/* Image Gallery */}
-      <div className="relative aspect-[4/3]">
-        {property.images[currentImageIndex]?.startsWith('data:video') ? (
+      <div className="relative aspect-[4/3] md:aspect-auto md:h-80">
+        {isVideoItem(mediaItems[currentImageIndex]) ? (
           <>
-            <video 
+            <video
               ref={videoRef}
-              src={property.images[currentImageIndex]} 
+              src={mediaItems[currentImageIndex]}
               className="w-full h-full object-cover cursor-pointer"
               muted
               loop
               playsInline
-              poster={property.images.find(img => !img.startsWith('data:video')) || ''}
+              poster={property.images[0] || ''}
               onClick={() => setShowFullScreen(true)}
             />
             {!isVideoPlaying && (
-              <div className="video-play-overlay" onClick={handlePlayVideo}>
-                <div className="video-play-button">
-                  <Play className="w-6 h-6 text-foreground ml-1" fill="currentColor" />
+              <div
+                className="absolute inset-0 flex items-center justify-center bg-black/30 cursor-pointer"
+                onClick={handlePlayVideo}
+              >
+                <div className="w-16 h-16 rounded-full bg-black/60 flex items-center justify-center backdrop-blur-sm">
+                  <Play className="w-7 h-7 text-white ml-1" fill="white" />
                 </div>
               </div>
             )}
           </>
         ) : (
           <Image
-            src={property.images[currentImageIndex]}
+            src={mediaItems[currentImageIndex] || '/placeholder.jpg'}
             alt={property.title}
             fill
             className="object-cover cursor-pointer"
             onClick={() => setShowFullScreen(true)}
+            unoptimized
           />
         )}
-        
+
         {/* Navigation arrows */}
         <button
           onClick={handlePrevImage}
@@ -151,9 +228,9 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
           <ChevronRight className="w-6 h-6 text-background" />
         </button>
 
-        {/* Image indicators */}
+        {/* Media indicators */}
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1">
-          {property.images.map((_, index) => (
+          {mediaItems.map((item, index) => (
             <div
               key={index}
               className={cn(
@@ -163,6 +240,14 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
             />
           ))}
         </div>
+
+        {/* Maximize button */}
+        <button
+          onClick={() => setShowFullScreen(true)}
+          className="absolute bottom-4 right-4 w-9 h-9 rounded-full bg-black/50 flex items-center justify-center backdrop-blur-sm"
+        >
+          <Maximize2 className="w-4 h-4 text-white" />
+        </button>
       </div>
 
       {/* Content */}
@@ -179,10 +264,6 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
                     <span className="font-medium">{property.views}</span>
                   </div>
                 )}
-                <div className="flex items-center gap-1 text-xs bg-success/10 text-success px-2 py-1 rounded-lg" title="Active conversations">
-                  <MessageSquare className="w-3 h-3" />
-                  <span className="font-medium">{propertyConversations}</span>
-                </div>
               </div>
               {property.createdAt && (
                 <span className="text-xs text-muted-foreground">
@@ -235,26 +316,21 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
               </>
             ) : (
               <>
-                {property.type === 'connect' && property.connectRole && (
-                  <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-background border border-border">
-                    <Users className="w-4 h-4 text-primary" />
-                    <span className="text-sm">{property.connectRole}</span>
-                  </div>
-                )}
-                {property.type === 'agent' && (
-                  <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-background border border-border">
-                    <Users className="w-4 h-4 text-primary" />
-                    <span className="text-sm">Agent</span>
-                  </div>
-                )}
+                {/* Role — always shown */}
                 <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-background border border-border">
                   <Users className="w-4 h-4 text-primary" />
-                  <span className="text-sm capitalize">
-                    {property.condition === 'rent' && property.connectRole === 'Tenant' 
-                      ? 'Vacating' 
-                      : property.condition}
+                  <span className="text-sm">
+                    {property.type === 'agent' ? 'Agent' : (property.connectRole ?? 'Landlord')}
                   </span>
                 </div>
+                {/* Condition */}
+                <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-background border border-border">
+                  <Tag className="w-4 h-4 text-primary" />
+                  <span className="text-sm capitalize">
+                    {property.condition === 'vacating' ? 'Vacating' : property.condition}
+                  </span>
+                </div>
+                {/* Category */}
                 <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-background border border-border">
                   <Building2 className="w-4 h-4 text-primary" />
                   <span className="text-sm capitalize">{property.category}</span>
@@ -449,79 +525,111 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
         )}
 
         {/* CTA Button */}
-        {hasExistingConversation ? (
-          <Button
-            onClick={() => router.push(`/chat/${userConversation!.id}`)}
-            className="w-full h-14 rounded-xl bg-success text-success-foreground font-semibold text-base hover:bg-success/90"
-          >
-            Open Conversation
-          </Button>
-        ) : (
-          <Button
-            onClick={handleInterested}
-            className="w-full h-14 rounded-xl bg-primary text-primary-foreground font-semibold text-base"
-          >
-            {property.isFreeConnect ? 'Connect' : (user?.isPremium || (user?.connectsRemaining && user.connectsRemaining > 0) 
-              ? 'Connect' 
-              : 'Interested')
-            }
-          </Button>
-        )}
+        <Button
+          onClick={handleInterested}
+          className="w-full h-14 rounded-xl font-semibold text-base"
+        >
+          {existingChatId ? 'Open Conversation' : 'Connect'}
+        </Button>
       </div>
 
-      {/* Fullscreen image/video modal */}
-      {showFullScreen && property.images && property.images.length > 0 && (
-        <div 
-          className="fixed inset-0 z-50 bg-black flex items-center justify-center"
-          onClick={() => setShowFullScreen(false)}
-        >
-          <button
-            onClick={() => setShowFullScreen(false)}
-            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center z-10"
-          >
-            <X className="w-5 h-5 text-white" />
-          </button>
-          <div className="relative w-full h-full flex items-center justify-center">
-            {property.images[currentImageIndex]?.startsWith('data:video') ? (
+      {/* Fullscreen modal */}
+      {showFullScreen && mediaItems.length > 0 && (
+        <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
+
+          {isVideoItem(mediaItems[currentImageIndex]) ? (
+            /* ── Video fullscreen ── */
+            <div className="relative w-full h-full flex items-center justify-center">
               <video
-                src={property.images[currentImageIndex]}
+                ref={fullscreenVideoRef}
+                src={mediaItems[currentImageIndex]}
                 className="max-w-full max-h-full object-contain"
-                controls
                 loop
-                muted
                 playsInline
-                poster={property.images.find(img => !img.startsWith('data:video')) || ''}
-                onClick={(e) => e.stopPropagation()}
+                autoPlay
+                poster={property.images[0] || ''}
+                onPlay={() => setIsFullscreenVideoPlaying(true)}
+                onPause={() => setIsFullscreenVideoPlaying(false)}
               />
-            ) : (
+
+              {/* Minimize */}
+              <button
+                onClick={() => setShowFullScreen(false)}
+                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center"
+              >
+                <Minimize2 className="w-5 h-5 text-white" />
+              </button>
+
+              {/* Video controls bar */}
+              <div className="absolute bottom-0 left-0 right-0 px-6 pb-10 pt-16 bg-gradient-to-t from-black/80 to-transparent">
+                <div className="flex items-center justify-center gap-10">
+                  <button onClick={handleSkipBackward} className="flex flex-col items-center gap-1">
+                    <SkipBack className="w-7 h-7 text-white" fill="white" />
+                    <span className="text-white text-xs">10s</span>
+                  </button>
+                  <button
+                    onClick={handleFullscreenPlayPause}
+                    className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center border border-white/30"
+                  >
+                    {isFullscreenVideoPlaying
+                      ? <Pause className="w-8 h-8 text-white" fill="white" />
+                      : <Play className="w-8 h-8 text-white ml-1" fill="white" />
+                    }
+                  </button>
+                  <button onClick={handleSkipForward} className="flex flex-col items-center gap-1">
+                    <SkipForward className="w-7 h-7 text-white" fill="white" />
+                    <span className="text-white text-xs">10s</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* ── Image fullscreen ── */
+            <div
+              className="relative w-full h-full flex items-center justify-center"
+              onClick={() => setShowFullScreen(false)}
+            >
               <Image
-                src={property.images[currentImageIndex]}
+                src={mediaItems[currentImageIndex]}
                 alt={property.title}
                 fill
                 className="object-contain"
+                unoptimized
                 onClick={(e) => e.stopPropagation()}
               />
-            )}
-          </div>
-          {property.images.length > 1 && (
-            <>
+
+              {/* Minimize */}
               <button
-                onClick={(e) => { e.stopPropagation(); handlePrevImage(); }}
-                className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center z-10"
+                onClick={() => setShowFullScreen(false)}
+                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center z-10"
               >
-                <ChevronLeft className="w-6 h-6 text-white" />
+                <Minimize2 className="w-5 h-5 text-white" />
               </button>
-              <button
-                onClick={(e) => { e.stopPropagation(); handleNextImage(); }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center z-10"
-              >
-                <ChevronRight className="w-6 h-6 text-white" />
-              </button>
-            </>
+
+              {/* Prev / Next */}
+              {mediaItems.length > 1 && (
+                <>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handlePrevImage() }}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center z-10"
+                  >
+                    <ChevronLeft className="w-6 h-6 text-white" />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleNextImage() }}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center z-10"
+                  >
+                    <ChevronRight className="w-6 h-6 text-white" />
+                  </button>
+                </>
+              )}
+
+              {/* Counter */}
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/50 px-3 py-1 rounded-full text-white text-sm">
+                {currentImageIndex + 1} / {mediaItems.length}
+              </div>
+            </div>
           )}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/50 px-3 py-1 rounded-full text-white text-sm">
-            {currentImageIndex + 1} / {property.images.length}
-          </div>
         </div>
       )}
 
@@ -529,7 +637,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
 
       {/* Suggested Apartments */}
       <div className="px-4 pb-8">
-        <SuggestedApartments apartments={properties} currentPropertyId={id} />
+        <SuggestedApartments apartments={[]} currentPropertyId={id} />
       </div>
 
       {/* Connect Cost Modal */}
@@ -538,7 +646,6 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
         onClose={() => setShowConnectModal(false)}
         onConfirm={handleConnectConfirm}
         propertyTitle={property.title}
-        agentId={property.agent.id}
         propertyId={property.id}
         isFreeConnect={property.isFreeConnect}
       />

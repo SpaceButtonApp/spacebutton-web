@@ -1,21 +1,25 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+export const dynamic = 'force-dynamic'
+
+import { useState, useRef, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { BackButton } from '@/components/back-button'
+import { authApi, getAuthErrorMessage } from '@/lib/api/auth'
 
-export default function ForgotPasswordVerifyPage() {
+function ForgotPasswordVerifyPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const email = searchParams.get('email') || ''
   const [codes, setCodes] = useState<string[]>(['', '', '', '', '', ''])
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
-  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png'
+  const logoUrl = '/logo.png'
 
   useEffect(() => {
     inputRefs.current[0]?.focus()
@@ -56,20 +60,28 @@ export default function ForgotPasswordVerifyPage() {
 
   const handleContinue = async () => {
     const verificationCode = codes.join('')
-    if (verificationCode.length !== 6) {
-      return
-    }
+    if (verificationCode.length !== 6) return
 
     setIsLoading(true)
-    // Mock verification
-    setTimeout(() => {
-      localStorage.setItem('resetEmail', email)
-      router.push(`/forgot-password/reset?email=${encodeURIComponent(email)}`)
-    }, 1000)
+    setError('')
+    try {
+      await authApi.verifyResetOtp(email, verificationCode)
+      // Pass OTP to reset page so it can include it in the final request
+      router.push(`/forgot-password/reset?email=${encodeURIComponent(email)}&otp=${verificationCode}`)
+    } catch (err) {
+      setError(getAuthErrorMessage(err))
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const handleResendOTP = () => {
+  const handleResendOTP = async () => {
     setCodes(['', '', '', '', '', ''])
+    try {
+      await authApi.forgotPassword(email)
+    } catch {
+      // silently ignore
+    }
     inputRefs.current[0]?.focus()
   }
 
@@ -99,9 +111,10 @@ export default function ForgotPasswordVerifyPage() {
             <Image
               src={logoUrl}
               alt="SpaceButton"
-              width={32}
-              height={32}
-              className="h-8 w-8"
+              width={40}
+              height={69}
+              className="h-7 w-auto"
+              style={{ width: 'auto' }}
             />
             <span className="text-lg font-bold text-foreground">SpaceButton</span>
           </div>
@@ -128,6 +141,12 @@ export default function ForgotPasswordVerifyPage() {
             />
           ))}
         </div>
+
+        {error && (
+          <div className="mb-4 p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm text-center">
+            {error}
+          </div>
+        )}
 
         <Button
           onClick={handleContinue}
@@ -156,4 +175,8 @@ export default function ForgotPasswordVerifyPage() {
       </div>
     </div>
   )
+}
+
+export default function ForgotPasswordVerifyPageWrapper() {
+  return <Suspense><ForgotPasswordVerifyPage /></Suspense>
 }

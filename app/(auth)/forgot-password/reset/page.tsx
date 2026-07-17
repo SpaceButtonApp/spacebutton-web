@@ -1,11 +1,14 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+export const dynamic = 'force-dynamic'
+
+import { useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { Eye, EyeOff, Check, X, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { BackButton } from '@/components/back-button'
+import { authApi, getAuthErrorMessage } from '@/lib/api/auth'
 
 interface PasswordRequirement {
   label: string
@@ -19,29 +22,42 @@ const requirements: PasswordRequirement[] = [
   { label: 'One special character', test: (p) => /[!@#$%^&*(),.?":{}|<>]/.test(p) },
 ]
 
-export default function ResetPasswordPage() {
+function ResetPasswordPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [formData, setFormData] = useState({
-    password: '',
-    confirmPassword: '',
-  })
+  const [formData, setFormData] = useState({ password: '', confirmPassword: '' })
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png'
+  const logoUrl = '/logo.png'
 
   const allRequirementsMet = requirements.every((req) => req.test(formData.password))
   const passwordsMatch = formData.password === formData.confirmPassword && formData.confirmPassword.length > 0
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    if (!allRequirementsMet || !passwordsMatch) {
-      return
+    if (!allRequirementsMet || !passwordsMatch) return
+
+    const email = searchParams.get('email') || ''
+    const otp = searchParams.get('otp') || ''
+
+    setLoading(true)
+    setError('')
+    try {
+      await authApi.resetPassword({
+        email,
+        otp_code: otp,
+        new_password: formData.password,
+        confirm_password: formData.confirmPassword,
+      })
+      router.push('/login')
+    } catch (err) {
+      setError(getAuthErrorMessage(err))
+    } finally {
+      setLoading(false)
     }
-    
-    localStorage.removeItem('resetEmail')
-    router.push('/login')
   }
 
   return (
@@ -66,9 +82,10 @@ export default function ResetPasswordPage() {
             <Image
               src={logoUrl}
               alt="SpaceButton"
-              width={32}
-              height={32}
-              className="h-8 w-8"
+              width={40}
+              height={69}
+              className="h-7 w-auto"
+              style={{ width: 'auto' }}
             />
             <span className="text-lg font-bold text-foreground">SpaceButton</span>
           </div>
@@ -139,15 +156,25 @@ export default function ResetPasswordPage() {
             })}
           </div>
 
+          {error && (
+            <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm text-center">
+              {error}
+            </div>
+          )}
+
           <Button
             type="submit"
-            disabled={!allRequirementsMet || !passwordsMatch}
+            disabled={!allRequirementsMet || !passwordsMatch || loading}
             className="w-full h-14 rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-primary-foreground font-semibold text-base disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/20"
           >
-            Reset Password
+            {loading ? 'Resetting...' : 'Reset Password'}
           </Button>
         </form>
       </div>
     </div>
   )
+}
+
+export default function ResetPasswordPageWrapper() {
+  return <Suspense><ResetPasswordPage /></Suspense>
 }

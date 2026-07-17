@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -14,7 +14,7 @@ export default function VerificationPage() {
   const [resendTimer, setResendTimer] = useState(0)
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
-  const logoUrl = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png'
+  const logoUrl = '/logo.png'
 
   const [email, setEmail] = useState('')
   
@@ -102,7 +102,7 @@ export default function VerificationPage() {
       {/* Header */}
       <div className="px-4 pt-6 pb-4">
         <button
-          onClick={() => router.back()}
+          onClick={() => window.history.back()}
           className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors"
         >
           <ArrowLeft className="w-5 h-5 text-muted-foreground" />
@@ -124,9 +124,10 @@ export default function VerificationPage() {
             <Image
               src={logoUrl}
               alt="SpaceButton"
-              width={32}
-              height={32}
-              className="h-8 w-8"
+              width={40}
+              height={69}
+              className="h-7 w-auto"
+              style={{ width: 'auto' }}
             />
             <span className="text-lg font-bold text-foreground">SpaceButton</span>
           </div>

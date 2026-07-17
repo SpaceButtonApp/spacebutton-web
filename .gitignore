@@ -8,3 +8,8 @@ node_modules/
 .next/
 .env*.local
 .DS_Store
+tsconfig.tsbuildinfo
+
+# Local planning files
+_PLAN.md
+_UPDATE.md

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState } from "react"
 import { useRouter } from "next/navigation"
 import { FileText, Shield, ScrollText, Headphones, Mail, ChevronDown, ChevronRight, HelpCircle } from "lucide-react"
 import { BottomNav } from "@/components/bottom-nav"
@@ -248,11 +248,7 @@ export default function HelpPage() {
                 className="w-full flex items-center gap-4 p-4 rounded-xl bg-card border border-border hover:border-primary/30 transition-all"
               >
                 <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
-                  {typeof item.icon === "function" ? (
-                    <item.icon />
-                  ) : (
-                    <item.icon className="w-5 h-5" />
-                  )}
+                  {(() => { const I = item.icon as React.ComponentType<{ className?: string }>; return <I className="w-5 h-5" /> })()}
                 </div>
                 <span className="font-medium text-foreground">{item.title}</span>
               </button>

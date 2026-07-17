@@ -649,27 +649,27 @@ export default function LandingPage() {
                 </div>
               </div>
               <div className="border-t border-border pt-6 flex flex-col sm:flex-row items-center justify-center gap-8">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <Image
                     src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/CAC-DbDwrt0HNLVQxjrq5uqfjfVo0vSkFU.png"
                     alt="CAC Logo"
-                    width={48}
-                    height={48}
-                    className="h-12 w-12 object-contain"
+                    width={32}
+                    height={32}
+                    className="h-8 w-8 object-contain"
                   />
-                  <p className="text-sm text-muted-foreground text-center">
+                  <p className="text-xs text-muted-foreground text-center">
                     Registered with CAC<br />(RC: 9510448)
                   </p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <Image
                     src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/NDPC-dw3AsaZsvSJjEgnk7c2uVxcqzRwtLf.png"
                     alt="NDPC Logo"
-                    width={48}
-                    height={48}
-                    className="h-12 w-12 object-contain"
+                    width={32}
+                    height={32}
+                    className="h-8 w-8 object-contain"
                   />
-                  <p className="text-sm text-muted-foreground text-center">
+                  <p className="text-xs text-muted-foreground text-center">
                     Protected by NDPC
                   </p>
                 </div>

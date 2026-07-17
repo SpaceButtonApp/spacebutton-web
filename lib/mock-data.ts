@@ -39,6 +39,9 @@ export interface Property {
   locationCategory?: 'open' | 'estate'
   propertySize?: number
   buildingYear?: number
+  // Admin approval fields
+  approvalStatus?: 'pending' | 'approved' | 'rejected'
+  rejectionReason?: string
 }
 
 export interface Agent {

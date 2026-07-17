@@ -15,7 +15,11 @@ import {
   ChevronRight,
   Bell,
   Flag,
+<<<<<<< HEAD
+  Shield
+=======
   ShieldCheck,
+>>>>>>> main
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState, useEffect } from 'react'
@@ -24,7 +28,12 @@ import { useState, useEffect } from 'react'
 const menuItems = [
   { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
   { label: 'Users', href: '/admin/users', icon: Users },
+<<<<<<< HEAD
+  { label: 'Verification', href: '/admin/verification', icon: Shield },
+  { label: 'User Reports', href: '/admin/reports', icon: Flag },
+=======
   { label: 'Verifications', href: '/admin/verification', icon: ShieldCheck },
+>>>>>>> main
   { label: 'Listings', href: '/admin/listings', icon: Building2 },
   { label: 'Messages', href: '/admin/messages', icon: MessageSquare },
   { label: 'Transactions', href: '/admin/transactions', icon: CreditCard },

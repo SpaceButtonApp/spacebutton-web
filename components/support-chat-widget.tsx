@@ -21,11 +21,12 @@ export function SupportChatWidget() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const lastMsgCountRef = useRef(0)
 
-  // Hide on admin and auth routes
+  // Hide on admin, auth, and support chat routes
   const hidden = pathname.startsWith('/admin') ||
     pathname === '/login' || pathname === '/signup' ||
     pathname.startsWith('/forgot') || pathname.startsWith('/verify') ||
-    pathname === '/welcome' || pathname === '/get-started'
+    pathname === '/welcome' || pathname === '/get-started' ||
+    pathname === '/chat/admin-support'
 
   const loadMessages = useCallback(async () => {
     try {

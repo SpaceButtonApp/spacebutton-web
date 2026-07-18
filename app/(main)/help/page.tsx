@@ -148,7 +148,7 @@ export default function HelpPage() {
       // Navigate to admin messages page for customer service chat
       router.push(item.href)
     } else if (item.action === 'email') {
-      window.open(item.href, '_blank')
+      window.location.href = item.href
     } else {
       window.open(item.href, '_blank', 'noopener,noreferrer')
     }

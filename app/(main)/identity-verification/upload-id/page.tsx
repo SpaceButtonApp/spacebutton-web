@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft, Upload, Camera } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -11,6 +11,11 @@ export default function UploadIDPage() {
   const router = useRouter()
   const [ninNumber, setNinNumber] = useState('')
   const [idImage, setIdImage] = useState<string | null>(null)
+  const [selectedIDType, setSelectedIDType] = useState('')
+
+  useEffect(() => {
+    setSelectedIDType(sessionStorage.getItem('selectedIDType') ?? '')
+  }, [])
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -60,7 +65,7 @@ export default function UploadIDPage() {
       <div className="px-4 flex-1">
         <h2 className="text-2xl font-bold text-foreground mb-2">Upload Your ID</h2>
         <p className="text-muted-foreground text-sm mb-6">
-          Take a clear photo of your {sessionStorage.getItem('selectedIDType') === 'nin' ? 'National Identification Number (NIN)' : 'government-issued ID'}. Make sure all details are readable.
+          Take a clear photo of your {selectedIDType === 'nin' ? 'National Identification Number (NIN)' : 'government-issued ID'}. Make sure all details are readable.
         </p>
 
         {/* NIN Input */}

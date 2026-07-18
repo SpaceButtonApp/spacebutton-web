@@ -88,7 +88,7 @@ const contactItems = [
     icon: Mail,
     title: "Mail",
     action: "email",
-    href: "mailto:support@spacebutton.com",
+    href: "mailto:info@spacebutton.net",
   },
   {
     id: 3,
@@ -148,7 +148,7 @@ export default function HelpPage() {
       // Navigate to admin messages page for customer service chat
       router.push(item.href)
     } else if (item.action === 'email') {
-      window.location.href = item.href
+      window.open(item.href, '_blank')
     } else {
       window.open(item.href, '_blank', 'noopener,noreferrer')
     }

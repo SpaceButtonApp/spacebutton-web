@@ -75,7 +75,15 @@ const faqItems = [
   },
 ]
 
-const contactItems = [
+type ContactItem = {
+  id: number
+  icon: React.ElementType
+  title: string
+  action: string
+  href: string
+}
+
+const contactItems: ContactItem[] = [
   {
     id: 1,
     icon: Headphones,
@@ -142,13 +150,18 @@ export default function HelpPage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<"faq" | "contact" | "docs">("faq")
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null)
+  const [emailCopied, setEmailCopied] = useState(false)
 
-  const handleContactClick = (item: typeof contactItems[0]) => {
+  const handleContactClick = (item: ContactItem) => {
     if (item.action === 'chat') {
-      // Navigate to admin messages page for customer service chat
       router.push(item.href)
     } else if (item.action === 'email') {
       window.location.href = item.href
+      const address = item.href.replace('mailto:', '')
+      navigator.clipboard.writeText(address).then(() => {
+        setEmailCopied(true)
+        setTimeout(() => setEmailCopied(false), 3000)
+      }).catch(() => {})
     } else {
       window.open(item.href, '_blank', 'noopener,noreferrer')
     }
@@ -256,6 +269,12 @@ export default function HelpPage() {
           </div>
         )}
       </div>
+
+      {emailCopied && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-green-600 text-white text-sm px-5 py-2.5 rounded-full shadow-lg whitespace-nowrap animate-in fade-in slide-in-from-bottom-2">
+          Email address copied to clipboard!
+        </div>
+      )}
 
       <BottomNav />
     </div>

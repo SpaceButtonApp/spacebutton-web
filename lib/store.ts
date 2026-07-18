@@ -183,17 +183,14 @@ interface AppState {
   // Connects
   connectsRemaining: number
   deductConnect: () => boolean
-<<<<<<< HEAD
   addConnects: (count: number) => void
-  
+
   // Identity Verification
   updateIdentityVerification: (status: 'not-started' | 'in-progress' | 'approved' | 'rejected') => void
-=======
 
   // Chat unread count (driven by messages page on load)
   unreadChatsCount: number
   setUnreadChatsCount: (n: number) => void
->>>>>>> main
 }
 
 export const useAppStore = create<AppState>()(
@@ -531,25 +528,22 @@ export const useAppStore = create<AppState>()(
         })
         return true
       },
-<<<<<<< HEAD
       addConnects: (count) => set((state) => ({
-        user: state.user 
+        user: state.user
           ? { ...state.user, connectsRemaining: state.user.connectsRemaining + count }
           : null
       })),
-      
+
       // Identity Verification
       updateIdentityVerification: (status) => set((state) => ({
-        user: state.user 
+        user: state.user
           ? { ...state.user, verificationStatus: status }
           : null
-      }))
-=======
+      })),
 
       // Chat unread count
       unreadChatsCount: 0,
       setUnreadChatsCount: (n) => set({ unreadChatsCount: n }),
->>>>>>> main
     }),
     {
       name: 'spacebutton-storage',

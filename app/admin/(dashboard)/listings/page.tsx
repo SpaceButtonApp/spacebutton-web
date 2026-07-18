@@ -25,43 +25,13 @@ export default function ListingsPage() {
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
-<<<<<<< HEAD
-  const [typeFilter, setTypeFilter] = useState<'all' | 'connect' | 'agent'>('all')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'closed'>('all')
-  const [approvalFilter, setApprovalFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all')
-=======
   const [statusFilter, setStatusFilter] = useState<string>('all')
->>>>>>> main
   const [showActionMenu, setShowActionMenu] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [rejectModal, setRejectModal] = useState<string | null>(null)
   const [rejectReason, setRejectReason] = useState('')
   const [deleteModal, setDeleteModal] = useState<string | null>(null)
 
-<<<<<<< HEAD
-  const filteredListings = properties.filter(listing => {
-    const matchesSearch = listing.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         listing.location.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesType = typeFilter === 'all' || listing.type === typeFilter
-    const isClosed = closedProperties.includes(listing.id)
-    const matchesStatus = statusFilter === 'all' || 
-                         (statusFilter === 'active' && !isClosed) ||
-                         (statusFilter === 'closed' && isClosed)
-    const matchesApproval = approvalFilter === 'all' || 
-                           listing.approvalStatus === approvalFilter
-    return matchesSearch && matchesType && matchesStatus && matchesApproval
-  })
-
-  const activeCount = properties.filter(p => !closedProperties.includes(p.id)).length
-  const closedCount = closedProperties.length
-  const pendingApprovalCount = properties.filter(p => p.approvalStatus === 'pending').length
-  const approvedCount = properties.filter(p => p.approvalStatus === 'approved').length
-  const rejectedCount = properties.filter(p => p.approvalStatus === 'rejected').length
-
-  const handleCloseListing = (id: string) => {
-    closeProperty(id)
-    setShowActionMenu(null)
-=======
   const PAGE_SIZE = 20
 
   const load = useCallback(async (p = page, status = statusFilter) => {
@@ -89,7 +59,6 @@ export default function ListingsPage() {
       setListings((prev) => prev.map((l) => l.id === id ? { ...l, status: 'active' } : l))
     } catch { /* ignore */ }
     finally { setActionLoading(null); setShowActionMenu(null) }
->>>>>>> main
   }
 
   const handleReject = async () => {
@@ -123,29 +92,6 @@ export default function ListingsPage() {
 
       <div className="p-6 space-y-6">
         {/* Stats */}
-<<<<<<< HEAD
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
-            <p className="text-sm text-gray-400 mb-1">Total Listings</p>
-            <p className="text-2xl font-bold text-white">{properties.length}</p>
-          </div>
-          <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
-            <p className="text-sm text-gray-400 mb-1">Active</p>
-            <p className="text-2xl font-bold text-green-400">{activeCount}</p>
-          </div>
-          <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
-            <p className="text-sm text-gray-400 mb-1">Closed</p>
-            <p className="text-2xl font-bold text-gray-400">{closedCount}</p>
-          </div>
-          <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
-            <p className="text-sm text-gray-400 mb-1">Pending Approval</p>
-            <p className="text-2xl font-bold text-yellow-400">{pendingApprovalCount}</p>
-          </div>
-          <div className="bg-[#12121a] border border-gray-800/50 rounded-xl p-5">
-            <p className="text-sm text-gray-400 mb-1">Connect Listings</p>
-            <p className="text-2xl font-bold text-purple-400">{properties.filter(p => p.type === 'connect').length}</p>
-          </div>
-=======
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { label: 'Total Listings', value: total, color: 'text-white' },
@@ -160,7 +106,6 @@ export default function ListingsPage() {
               </p>
             </div>
           ))}
->>>>>>> main
         </div>
 
         {/* Filters */}
@@ -175,82 +120,6 @@ export default function ListingsPage() {
               className="w-full pl-10 pr-4 py-2.5 bg-[#12121a] border border-gray-800 rounded-xl text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
             />
           </div>
-<<<<<<< HEAD
-          <div className="flex gap-3">
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value as any)}
-              className="px-4 py-2.5 bg-[#12121a] border border-gray-800 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-            >
-              <option value="all">All Types</option>
-              <option value="connect">Connect</option>
-              <option value="agent">Agent</option>
-            </select>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="px-4 py-2.5 bg-[#12121a] border border-gray-800 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-            >
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="closed">Closed</option>
-            </select>
-            <select
-              value={approvalFilter}
-              onChange={(e) => setApprovalFilter(e.target.value as any)}
-              className="px-4 py-2.5 bg-[#12121a] border border-gray-800 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500/50"
-            >
-              <option value="all">All Approval</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-            </select>
-            <div className="flex bg-[#12121a] border border-gray-800 rounded-xl overflow-hidden">
-              <button 
-                onClick={() => setViewMode('table')}
-                className={`px-3 py-2 text-sm ${viewMode === 'table' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'}`}
-              >
-                Table
-              </button>
-              <button 
-                onClick={() => setViewMode('grid')}
-                className={`px-3 py-2 text-sm ${viewMode === 'grid' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'}`}
-              >
-                Grid
-              </button>
-            </div>
-            <button 
-              onClick={() => router.push('/admin/listings/add')}
-              className="px-4 py-2.5 bg-purple-600 hover:bg-purple-500 border border-purple-500 rounded-xl text-sm text-white transition-colors flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" />
-              Add Post
-            </button>
-          </div>
-        </div>
-
-        {/* Table View */}
-        {viewMode === 'table' && (
-          <div className="bg-[#12121a] border border-gray-800/50 rounded-xl overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-800/50">
-                    <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">Property</th>
-                    <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">Posted By</th>
-                    <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">Location</th>
-                    <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">Type</th>
-                    <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">Price</th>
-                    <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">Status</th>
-                    <th className="text-left text-xs font-medium text-gray-400 uppercase px-5 py-4">Approval</th>
-                    <th className="text-right text-xs font-medium text-gray-400 uppercase px-5 py-4">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredListings.map((listing) => {
-                    const isClosed = closedProperties.includes(listing.id)
-                    return (
-=======
           <select
             value={statusFilter}
             onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }}
@@ -284,7 +153,6 @@ export default function ListingsPage() {
                   </thead>
                   <tbody>
                     {filtered.map((listing) => (
->>>>>>> main
                       <tr key={listing.id} className="border-b border-gray-800/30 hover:bg-gray-800/20">
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-3">
@@ -328,17 +196,6 @@ export default function ListingsPage() {
                               listing.status === 'rejected' ? 'bg-red-400' : 'bg-gray-400'
                             }`} />
                             {(listing.status ?? 'unknown').charAt(0).toUpperCase() + (listing.status ?? 'unknown').slice(1)}
-                          </span>
-                        </td>
-                        <td className="px-5 py-4">
-                          <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${
-                            listing.approvalStatus === 'pending' 
-                              ? 'bg-yellow-500/20 text-yellow-400' 
-                              : listing.approvalStatus === 'approved'
-                              ? 'bg-green-500/20 text-green-400'
-                              : 'bg-red-500/20 text-red-400'
-                          }`}>
-                            {listing.approvalStatus ? listing.approvalStatus.charAt(0).toUpperCase() + listing.approvalStatus.slice(1) : 'Approved'}
                           </span>
                         </td>
                         <td className="px-5 py-4 text-right">

@@ -3,15 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-<<<<<<< HEAD
-import { 
-  User, Wallet, Zap, Shield, Bell, 
-  HelpCircle, LogOut, ChevronRight 
-=======
 import {
   User, Wallet, Zap, Bell,
   HelpCircle, LogOut, ChevronRight, ShieldCheck
->>>>>>> main
 } from 'lucide-react'
 import { BottomNav } from '@/components/bottom-nav'
 import { LogoutModal } from '@/components/logout-modal'
@@ -20,19 +14,6 @@ import { useAppStore } from '@/lib/store'
 import { notificationsApi } from '@/lib/api/notifications'
 import { cn } from '@/lib/utils'
 
-<<<<<<< HEAD
-const menuItems = [
-  { icon: User, label: 'Profile', href: '/profile', color: 'text-foreground', bg: 'bg-primary/20' },
-  { icon: Wallet, label: 'My Wallet', href: '/wallet', color: 'text-foreground', bg: 'bg-blue-500/20' },
-  { icon: Zap, label: 'Get Connects', href: '/get-connects', color: 'text-foreground', bg: 'bg-yellow-500/20' },
-  { icon: Shield, label: 'Identity Verification', href: '/identity-verification', color: 'text-foreground', bg: 'bg-purple-500/20' },
-  { icon: Bell, label: 'Notifications', href: '/notifications', badge: 1, color: 'text-foreground', bg: 'bg-green-500/20' },
-  { icon: HelpCircle, label: 'Help & Support', href: '/help', color: 'text-foreground', bg: 'bg-cyan-500/20' },
-  { icon: LogOut, label: 'Log Out', href: '/logout', color: 'text-destructive', bg: 'bg-destructive/20' },
-]
-
-=======
->>>>>>> main
 export default function SettingsPage() {
   const router = useRouter()
   const { user } = useAppStore()

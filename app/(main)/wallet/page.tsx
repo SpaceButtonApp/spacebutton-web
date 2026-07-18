@@ -1,18 +1,5 @@
 ﻿'use client'
 
-<<<<<<< HEAD
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { ChevronLeft, Zap, ArrowDownLeft, ArrowUpRight, MoreVertical } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { BottomNav } from "@/components/bottom-nav"
-import { useAppStore } from "@/lib/store"
-
-export default function WalletPage() {
-  const router = useRouter()
-  const user = useAppStore((state) => state.user)
-  const transactions = useAppStore((state) => state.transactions)
-=======
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronLeft, Zap, ArrowDownLeft, ArrowUpRight, Gift } from 'lucide-react'
@@ -62,7 +49,6 @@ export default function WalletPage() {
   }, [updateUser])
 
   useEffect(() => { load() }, [load])
->>>>>>> main
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -80,17 +66,6 @@ export default function WalletPage() {
       <div className="px-4 pt-4">
         {/* Balance card */}
         <div className="bg-primary rounded-3xl p-6 text-primary-foreground mb-8">
-<<<<<<< HEAD
-          <p className="text-sm opacity-80 mb-1">Connects Balance</p>
-          <h2 className="text-4xl font-bold mb-6">{user?.connectsRemaining || 0}</h2>
-          <p className="text-xs opacity-75 mb-4">Each connect unlocks a new chat</p>
-          <Button
-            className="w-full bg-white/20 hover:bg-white/30 text-white border-0"
-            onClick={() => router.push('/get-connects')}
-          >
-            <Zap className="w-4 h-4 mr-2" />
-            Get Connects
-=======
           <div className="flex items-center gap-2 mb-1">
             <Zap className="w-4 h-4 opacity-80" />
             <p className="text-sm opacity-80">Connects Balance</p>
@@ -103,7 +78,6 @@ export default function WalletPage() {
           >
             <Zap className="w-4 h-4 mr-2" />
             Buy More Connects
->>>>>>> main
           </Button>
         </div>
 

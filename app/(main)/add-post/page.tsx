@@ -702,67 +702,6 @@ export default function AddPostPage() {
                   Edit Post
                 </Button>
                 <Button
-<<<<<<< HEAD
-                  className="flex-1 rounded-xl bg-primary hover:bg-primary/90 text-foreground"
-                  onClick={() => {
-                    const propertyType = listingType.toLowerCase() as 'connect' | 'agent'
-                    const propertyCondition = selectedCondition.toLowerCase() as 'rent' | 'roommate' | 'flatmate'
-                    const newProperty = {
-                      id: Date.now().toString(),
-                      title: listingTitle,
-                      location: `${location.nearestBusStop}, ${location.lga}, ${location.state}`,
-                      price: parseInt(rentPrice.replace(/,/g, '') || '0'),
-                      rentPeriod: rentPeriod,
-                      images: photos,
-                      bedrooms,
-                      bathrooms,
-                      beds: bedrooms,
-                      baths: bathrooms,
-                      reception: sittingRooms,
-                      size: bedrooms * 400,
-                      category: selectedCategory.toLowerCase() as 'flat' | 'self-con' | 'duplex' | 'storey' | 'penthouse',
-                      type: propertyType,
-                      listingType: propertyType,
-                      condition: propertyCondition,
-                      rating: 5.0,
-                      reviews: 0,
-                      description: descriptions || `Beautiful ${bedrooms} bedroom ${selectedCategory.toLowerCase()} available for ${selectedCondition.toLowerCase()}.`,
-                      amenities: selectedFacilities,
-                      features: selectedFacilities,
-                      agent: {
-                        id: user?.id || '1',
-                        name: user?.name || 'Anonymous User',
-                        avatar: user?.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=user',
-                        type: user?.type || 'individual',
-                        listings: 1,
-                        closed: 0,
-                        rating: 5.0,
-                        online: true,
-                        gender: user?.gender,
-                        bio: user?.bio,
-                        state: user?.state,
-                        city: user?.city,
-                      },
-                      ownerId: user?.id || '1',
-                      verified: false,
-                      isVerified: false,
-                      isAdminPost: false,
-                      isFeatured: false,
-                      saved: false,
-                      photoCount: photos.length,
-                      bonus: listingType === 'Connect' && connectRole === 'Tenant' ? `₦${calculatedReward.toLocaleString()} Reward` : undefined,
-                      totalPackage: (listingType === 'Agent' || (listingType === 'Connect' && connectRole === 'Landlord')) ? parseInt(totalPackage.replace(/,/g, '') || '0') : undefined,
-                      rentDueDate: listingType === 'Connect' && connectRole === 'Tenant' && selectedDate ? selectedDate.toISOString() : undefined,
-                      connectRole: listingType === 'Connect' ? connectRole : undefined,
-                      landlordPresence: landlordPresence,
-                      balconies: balconies,
-                      genderNeeded: selectedGender.toLowerCase() as 'male' | 'female' | 'both',
-                      createdAt: new Date().toISOString(),
-                      approvalStatus: 'pending',
-                    }
-                    addProperty(newProperty)
-                    router.push('/listing-pending-approval')
-=======
                   className="flex-1 rounded-xl bg-primary hover:bg-primary/90 text-foreground disabled:opacity-60"
                   disabled={isSubmitting}
                   onClick={async () => {
@@ -820,7 +759,6 @@ export default function AddPostPage() {
                       setSubmitError('Failed to submit. Please try again.')
                       setIsSubmitting(false)
                     }
->>>>>>> main
                   }}
                 >
                   {isSubmitting ? 'Submitting…' : 'Finish'}

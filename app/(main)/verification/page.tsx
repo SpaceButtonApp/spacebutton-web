@@ -44,12 +44,14 @@ function StatusBadge({ status }: { status: string }) {
 function FileDropZone({
   preview,
   accept,
+  capture,
   label,
   icon: Icon,
   onChange,
 }: {
   preview: string | null
   accept: string
+  capture?: 'user' | 'environment'
   label: string
   icon: React.ElementType
   onChange: (file: File) => void
@@ -87,6 +89,7 @@ function FileDropZone({
         ref={inputRef}
         type="file"
         accept={accept}
+        {...(capture ? { capture } : {})}
         className="hidden"
         onChange={handleChange}
       />
@@ -396,7 +399,8 @@ export default function VerificationPage() {
                     <FileDropZone
                       preview={selfiePreview}
                       accept="image/*"
-                      label="Tap to take or upload a selfie"
+                      capture="user"
+                      label="Tap to take a selfie with your front camera"
                       icon={Camera}
                       onChange={handleSelfieFileChange}
                     />

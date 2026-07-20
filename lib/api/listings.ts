@@ -96,6 +96,7 @@ export function mapListing(l: ListingResponse, savedIds: Set<string> = new Set()
     totalPackage: l.total_package ? Number(l.total_package) : undefined,
     landlordPresence: (l.landlord_presence as Property['landlordPresence']) ?? undefined,
     connectRole: (l.connect_role as Property['connectRole']) ?? undefined,
+    status: l.status,
   }
 }
 

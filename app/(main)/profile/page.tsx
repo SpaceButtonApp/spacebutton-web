@@ -21,7 +21,9 @@ type Tab = typeof tabs[number]
 
 export default function ProfilePage() {
   const router = useRouter()
-  const { user, closedProperties, deleteProperty, closeProperty } = useAppStore()
+  const { user, deleteProperty } = useAppStore()
+  const [closingId, setClosingId] = useState<string | null>(null)
+  const [closeError, setCloseError] = useState('')
   const [activeTab, setActiveTab] = useState<Tab>('Listings')
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [propertyToDelete, setPropertyToDelete] = useState<string | null>(null)
@@ -49,8 +51,8 @@ export default function ProfilePage() {
       .then((data) => {
         const savedSet = new Set<string>()
         const allMapped = data.listings.map((l) => mapListing(l, savedSet))
-        setListings(allMapped.filter((p) => !closedProperties.includes(p.id)))
-        setClosedListings(allMapped.filter((p) => closedProperties.includes(p.id)))
+        setListings(allMapped.filter((p) => p.status !== 'sold'))
+        setClosedListings(allMapped.filter((p) => p.status === 'sold'))
       })
       .catch(() => {})
 
@@ -148,6 +150,9 @@ export default function ProfilePage() {
 
       {/* Content */}
       <div className="px-4">
+        {closeError && (
+          <p className="text-sm text-destructive text-center mb-3">{closeError}</p>
+        )}
         {activeTab === 'Reviews' && (
           <div className="space-y-4">
             {!reviewData || reviewData.reviews.length === 0 ? (
@@ -214,10 +219,23 @@ export default function ProfilePage() {
                       Edit
                     </button>
                     <button
-                      onClick={() => closeProperty(property.id)}
-                      className="px-3 py-1 bg-destructive text-destructive-foreground rounded-full text-xs font-medium"
+                      disabled={closingId === property.id}
+                      onClick={async () => {
+                        setClosingId(property.id)
+                        setCloseError('')
+                        try {
+                          await listingsApi.closeDeal(property.id)
+                          setListings((prev) => prev.filter((p) => p.id !== property.id))
+                          setClosedListings((prev) => [...prev, { ...property, status: 'sold' as const }])
+                        } catch {
+                          setCloseError('Failed to close listing. Please try again.')
+                        } finally {
+                          setClosingId(null)
+                        }
+                      }}
+                      className="px-3 py-1 bg-destructive text-destructive-foreground rounded-full text-xs font-medium disabled:opacity-50"
                     >
-                      Close
+                      {closingId === property.id ? '...' : 'Close'}
                     </button>
                   </div>
                 </div>

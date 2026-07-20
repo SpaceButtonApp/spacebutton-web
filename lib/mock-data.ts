@@ -42,6 +42,7 @@ export interface Property {
   // Admin approval fields
   approvalStatus?: 'pending' | 'approved' | 'rejected'
   rejectionReason?: string
+  status?: 'active' | 'inactive' | 'pending' | 'rejected' | 'sold'
 }
 
 export interface Agent {

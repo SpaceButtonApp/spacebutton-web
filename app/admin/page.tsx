@@ -1,23 +1,28 @@
 'use client'
-
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { AdminApp } from '@/components/admin/AdminApp'
 
 export default function AdminPage() {
   const router = useRouter()
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
     const auth = localStorage.getItem('admin-auth')
-    if (auth) {
-      router.push('/admin/dashboard')
+    if (!auth) {
+      router.replace('/admin/login')
     } else {
-      router.push('/admin/login')
+      setReady(true)
     }
   }, [router])
 
-  return (
-    <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
-    </div>
-  )
+  if (!ready) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-violet-500/30 border-t-violet-500 rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  return <AdminApp />
 }

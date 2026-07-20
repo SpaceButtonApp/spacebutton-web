@@ -1,7 +1,9 @@
 'use client'
-import React, { useMemo, useState } from "react";
-import { Users as UsersIcon, UserCheck, Briefcase, Ban, Eye, MessageCircle, Mail, UserX, Trash2, Star, Flag, Building2, Gift } from "lucide-react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Users as UsersIcon, UserCheck, Briefcase, Ban, Eye, MessageCircle, Mail, UserX, Trash2, Star, Flag, Building2, Gift, RefreshCw, AlertCircle } from "lucide-react";
 import { useAdminStore, getReferralCount } from "@/lib/admin-store";
+import { adminApi } from "@/lib/api/admin";
+import type { AdminUser } from "@/lib/api/admin";
 import { StatCard } from "@/components/admin/shared/StatCard";
 import { SearchInput, ExportButton, ActionMenu, FilterPill, Avatar, EmptyState } from "@/components/admin/shared/Atoms";
 import { StatusBadge } from "@/components/admin/shared/Badge";
@@ -16,16 +18,66 @@ interface UsersPageProps {
   onMailUser?: (user: AppUser) => void;
 }
 
+const AVATAR_COLORS = ["#7c3aed","#a855f7","#8b5cf6","#6366f1","#c026d3","#9333ea"];
+function avatarColorForId(id: string) {
+  const n = id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  return AVATAR_COLORS[n % AVATAR_COLORS.length];
+}
+
+function mapApiUser(u: AdminUser): AppUser {
+  return {
+    id: u.id,
+    userId: u.id.slice(-8).toUpperCase(),
+    name: `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim() || u.email,
+    email: u.email,
+    phone: u.phone_number ?? "",
+    role: u.role === "agent" ? "agent" : "individual",
+    status: (u.status ?? "active").toLowerCase() === "suspended" ? "suspended" : "active",
+    joinDate: u.created_at,
+    avatarColor: avatarColorForId(u.id),
+    referralCode: "",
+    connects: 0,
+  };
+}
+
 export function UsersPage({ onMessageUser, onMailUser }: UsersPageProps) {
-  const users = useAdminStore((s) => s.users);
-  const suspendUser = useAdminStore((s) => s.suspendUser);
-  const reinstateUser = useAdminStore((s) => s.reinstateUser);
-  const deleteUser = useAdminStore((s) => s.deleteUser);
+  const listings = useAdminStore((s) => s.listings);
+  const reports = useAdminStore((s) => s.reports);
+  const reviews = useAdminStore((s) => s.reviews);
+
+  const [users, setUsers] = useState<AppUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [filter, setFilter] = useState<UserFilter>("all");
   const [search, setSearch] = useState("");
   const [profileUser, setProfileUser] = useState<AppUser | null>(null);
   const [confirmAction, setConfirmAction] = useState<{ type: "suspend" | "delete" | "reinstate"; user: AppUser } | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const loadUsers = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      let all: AdminUser[] = [];
+      let page = 1;
+      const pageSize = 100;
+      while (true) {
+        const res = await adminApi.getUsers(page, pageSize);
+        const batch = res.users ?? [];
+        all = [...all, ...batch];
+        if (all.length >= (res.total ?? 0) || batch.length < pageSize) break;
+        page++;
+      }
+      setUsers(all.map(mapApiUser));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to load users");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadUsers(); }, [loadUsers]);
 
   const individualCount = users.filter((u) => u.role === "individual").length;
   const agentCount = users.filter((u) => u.role === "agent").length;
@@ -41,7 +93,7 @@ export function UsersPage({ onMessageUser, onMailUser }: UsersPageProps) {
         (u) =>
           u.name.toLowerCase().includes(q) ||
           u.email.toLowerCase().includes(q) ||
-          u.userId.toLowerCase().includes(q)
+          u.userId.toLowerCase().includes(q),
       );
     }
     return [...list].sort((a, b) => new Date(b.joinDate).getTime() - new Date(a.joinDate).getTime());
@@ -53,16 +105,55 @@ export function UsersPage({ onMessageUser, onMailUser }: UsersPageProps) {
       filtered.map((u) => ({
         UserID: u.userId, Name: u.name, Email: u.email, Phone: u.phone, Role: u.role,
         Status: u.status, Joined: formatDate(u.joinDate),
-      }))
+      })),
     );
   }
 
-  function handleConfirm() {
+  async function handleConfirm() {
     if (!confirmAction) return;
-    if (confirmAction.type === "suspend") suspendUser(confirmAction.user.id);
-    if (confirmAction.type === "reinstate") reinstateUser(confirmAction.user.id);
-    if (confirmAction.type === "delete") deleteUser(confirmAction.user.id);
-    setConfirmAction(null);
+    setActionLoading(true);
+    try {
+      if (confirmAction.type === "suspend") {
+        await adminApi.suspendUser(confirmAction.user.id);
+        setUsers((prev) => prev.map((u) => u.id === confirmAction.user.id ? { ...u, status: "suspended" } : u));
+      }
+      if (confirmAction.type === "reinstate") {
+        await adminApi.activateUser(confirmAction.user.id);
+        setUsers((prev) => prev.map((u) => u.id === confirmAction.user.id ? { ...u, status: "active" } : u));
+      }
+      if (confirmAction.type === "delete") {
+        setUsers((prev) => prev.filter((u) => u.id !== confirmAction.user.id));
+      }
+    } catch {
+      // action failed — do nothing, keep current state
+    } finally {
+      setActionLoading(false);
+      setConfirmAction(null);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="p-8 flex flex-col items-center justify-center min-h-[300px] gap-3">
+        <div className="w-8 h-8 border-2 border-violet-500/30 border-t-violet-500 rounded-full animate-spin" />
+        <span className="text-sm text-[var(--text-secondary)]">Loading users…</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 flex flex-col items-center justify-center min-h-[300px] gap-4">
+        <AlertCircle className="w-10 h-10 text-red-400" />
+        <p className="text-sm text-[var(--text-secondary)] text-center max-w-xs">{error}</p>
+        <button
+          onClick={loadUsers}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm transition-colors"
+        >
+          <RefreshCw className="w-4 h-4" /> Retry
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -83,6 +174,9 @@ export function UsersPage({ onMessageUser, onMailUser }: UsersPageProps) {
       <div className="flex gap-3 mb-5">
         <SearchInput value={search} onChange={setSearch} placeholder="Search by name, email, or ID..." />
         <ExportButton onClick={handleExport} />
+        <button onClick={loadUsers} className="p-2.5 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-subtle-strong)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Refresh">
+          <RefreshCw className="w-4 h-4" />
+        </button>
       </div>
 
       <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl overflow-hidden shadow-[var(--shadow-card)]">
@@ -112,7 +206,7 @@ export function UsersPage({ onMessageUser, onMailUser }: UsersPageProps) {
                     </div>
                   </td>
                   <td className="px-6 py-3.5 text-[var(--text-secondary)]">{u.email}</td>
-                  <td className="px-6 py-3.5 text-[var(--text-secondary)]">{u.phone}</td>
+                  <td className="px-6 py-3.5 text-[var(--text-secondary)]">{u.phone || "—"}</td>
                   <td className="px-6 py-3.5">
                     <span className="text-xs font-medium capitalize px-2.5 py-1 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/20">
                       {u.role}
@@ -141,11 +235,14 @@ export function UsersPage({ onMessageUser, onMailUser }: UsersPageProps) {
         </div>
       </div>
 
-      {/* User profile modal */}
       <Modal open={!!profileUser} onClose={() => setProfileUser(null)} title="User Profile" maxWidth="max-w-xl">
         {profileUser && (
           <UserProfileContent
             user={profileUser}
+            listings={listings}
+            reports={reports}
+            reviews={reviews}
+            users={users}
             onMessage={() => { onMessageUser?.(profileUser); setProfileUser(null); }}
             onMail={() => { onMailUser?.(profileUser); setProfileUser(null); }}
           />
@@ -175,12 +272,17 @@ export function UsersPage({ onMessageUser, onMailUser }: UsersPageProps) {
   );
 }
 
-function UserProfileContent({ user, onMessage, onMail }: { user: AppUser; onMessage: () => void; onMail: () => void }) {
-  const users = useAdminStore((s) => s.users);
-  const listings = useAdminStore((s) => s.listings);
-  const reports = useAdminStore((s) => s.reports);
-  const reviews = useAdminStore((s) => s.reviews);
-
+function UserProfileContent({
+  user, listings, reports, reviews, users, onMessage, onMail,
+}: {
+  user: AppUser;
+  listings: ReturnType<typeof useAdminStore.getState>["listings"];
+  reports: ReturnType<typeof useAdminStore.getState>["reports"];
+  reviews: ReturnType<typeof useAdminStore.getState>["reviews"];
+  users: AppUser[];
+  onMessage: () => void;
+  onMail: () => void;
+}) {
   const userListings = listings.filter((l) => l.ownerId === user.id);
   const closedListings = userListings.filter((l) => l.status === "closed");
   const userReports = reports.filter((r) => r.reportedUserId === user.id);
@@ -224,20 +326,20 @@ function UserProfileContent({ user, onMessage, onMail }: { user: AppUser; onMess
       </div>
 
       <div className="space-y-2 text-sm">
-        <Row label="Phone" value={user.phone} />
+        <Row label="Phone" value={user.phone || "—"} />
         <Row label="Joined" value={formatDate(user.joinDate)} />
         <Row label="User ID" value={user.userId} />
-        <Row label="Referral Code" value={user.referralCode} />
+        <Row label="Referral Code" value={user.referralCode || "—"} />
       </div>
     </div>
   );
 }
 
-function MiniStat({ icon: Icon, label, value, small }: { icon: React.ElementType; label: string; value: string | number; small?: boolean }) {
+function MiniStat({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string | number }) {
   return (
     <div className="bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-xl p-3.5">
       <Icon className="w-4 h-4 text-violet-400 mb-2" />
-      <div className={`font-bold text-[var(--text-primary)] ${small ? "text-sm" : "text-lg"} truncate`}>{value}</div>
+      <div className="font-bold text-[var(--text-primary)] text-lg truncate">{value}</div>
       <div className="text-xs text-[var(--text-muted)]">{label}</div>
     </div>
   );

@@ -41,14 +41,14 @@ export function proxy(request: NextRequest) {
 
   // ─── Admin routes ──────────────────────────────────────────────
   if (pathname.startsWith('/admin')) {
-    if (pathname === '/admin/login' || pathname === '/admin') {
+    // Login page requires the secret key in ?key= to prevent enumeration
+    if (pathname === '/admin/login') {
       const secret = process.env.ADMIN_SECRET
       if (!secret || request.nextUrl.searchParams.get('key') !== secret) {
         return new NextResponse(null, { status: 404 })
       }
-      return NextResponse.next()
     }
-    // Other admin pages: admin auth is localStorage-based (client handles redirects)
+    // All other admin pages: auth is localStorage-based (client handles redirects)
     return NextResponse.next()
   }
 

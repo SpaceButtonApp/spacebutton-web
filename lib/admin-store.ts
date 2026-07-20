@@ -82,13 +82,13 @@ function mapApiListing(l: AdminListing): Listing {
 
   if (apiStatus === "pending") {
     approval = "pending";
-    listingStatus = "inactive";
+    listingStatus = "closed";
   } else if (apiStatus === "rejected") {
     approval = "rejected";
-    listingStatus = "inactive";
+    listingStatus = "closed";
   } else if (apiStatus === "inactive" || apiStatus === "closed") {
     approval = "approved";
-    listingStatus = apiStatus === "closed" ? "closed" : "inactive";
+    listingStatus = "closed";
   } else {
     approval = "approved";
     listingStatus = "active";
@@ -140,7 +140,7 @@ function mapPendingVerification(v: PendingVerification): Verification {
 function mapUserReport(r: AdminUserReport): Report {
   const status: Report["status"] =
     r.status === "actioned" ? "resolved"
-    : r.status === "dismissed" ? "dismissed"
+    : r.status === "dismissed" ? "reviewed"
     : "pending";
   return {
     id: r.id,
@@ -158,7 +158,7 @@ function mapUserReport(r: AdminUserReport): Report {
 function mapListingReport(r: AdminListingReport): Report {
   const status: Report["status"] =
     r.status === "actioned" ? "resolved"
-    : r.status === "dismissed" ? "dismissed"
+    : r.status === "dismissed" ? "reviewed"
     : "pending";
   return {
     id: r.id,

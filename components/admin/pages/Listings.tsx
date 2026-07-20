@@ -58,7 +58,7 @@ export function ListingsPage({ onMessageUser, onMailUser, focusListingId, onFocu
       const q = search.toLowerCase();
       list = list.filter((l) => l.title.toLowerCase().includes(q) || l.location.toLowerCase().includes(q));
     }
-    return [...list].sort((a, b) => new Date(b.listedDate).getTime() - new Date(a.listedDate).getTime());
+    return [...list].sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime());
   }, [listings, filter, search]);
 
   function handleExport() {

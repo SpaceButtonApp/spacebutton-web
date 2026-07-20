@@ -21,7 +21,7 @@ import type { Property } from '@/lib/mock-data'
 const DEFAULT_AVATAR = '/placeholder-user.jpg'
 const DEFAULT_PROPERTY_IMG = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=400&h=300&fit=crop'
 
-interface DisplayInfo { name: string; avatar: string | null }
+interface DisplayInfo { name: string; avatar: string | null; isAvailable: boolean; role: string }
 
 function formatMsgTime(iso: string) {
   const d = new Date(iso)
@@ -168,6 +168,9 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     } catch {}
   }
 
+  const [reviewSubmitted, setReviewSubmitted] = useState(false)
+  const [reviewError, setReviewError] = useState('')
+
   const handleSubmitFeedback = async () => {
     if (rating === 0 || !feedbackText.trim() || !chat) return
     const otherId = chat.user_id === myId ? chat.agent_id : chat.user_id
@@ -178,11 +181,18 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         is_verified_deal: doneDeal?.deal_locked ?? false,
         chat_id: chatId,
       })
-    } catch {}
-    setShowFeedback(false)
-    setShowMenu(false)
-    setRating(0)
-    setFeedbackText('')
+      setReviewSubmitted(true)
+      setReviewError('')
+      setTimeout(() => {
+        setShowFeedback(false)
+        setShowMenu(false)
+        setRating(0)
+        setFeedbackText('')
+        setReviewSubmitted(false)
+      }, 1500)
+    } catch {
+      setReviewError('Failed to submit review. Please try again.')
+    }
   }
 
   const handleOpenUserPopup = async () => {
@@ -424,6 +434,10 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
           <p className="text-center text-sm text-muted-foreground py-2">
             This user&apos;s account is no longer available
           </p>
+        ) : doneDeal?.deal_locked ? (
+          <p className="text-center text-sm text-green-600 py-2 font-medium">
+            ✓ Deal completed — this chat is now closed
+          </p>
         ) : (
           <div className="flex items-center gap-2">
             <Input
@@ -470,10 +484,22 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               <CheckSquare className="w-10 h-10 text-green-500" />
             </div>
             <h2 className="text-2xl font-bold mb-2">Congratulations!</h2>
-            <p className="text-muted-foreground mb-6">Both parties confirmed the deal. This chat has been archived.</p>
-            <Button onClick={() => { setShowCongrats(false); router.push('/messages') }} className="w-full rounded-xl">
-              Back to Messages
-            </Button>
+            <p className="text-muted-foreground mb-6">Both parties confirmed the deal. This chat has been closed.</p>
+            <div className="space-y-3">
+              <Button
+                onClick={() => { setShowCongrats(false); setShowFeedback(true) }}
+                className="w-full rounded-xl"
+              >
+                Leave a Review
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => { setShowCongrats(false); router.push('/messages') }}
+                className="w-full rounded-xl"
+              >
+                Back to Messages
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -483,29 +509,47 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
         <div className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center">
           <div className="w-full max-w-md rounded-t-3xl bg-background p-6 pb-8">
             <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-muted" />
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="font-bold text-lg">Leave a Review</h3>
-              <button onClick={() => { setShowFeedback(false); setShowMenu(false) }} className="w-8 h-8 flex items-center justify-center rounded-full bg-secondary">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <p className="text-sm text-muted-foreground mb-3">Rate your experience</p>
-            <div className="flex gap-2 mb-5">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button key={star} onClick={() => setRating(star)} className="p-1">
-                  <Star className={cn('w-8 h-8 transition-colors', star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground')} />
-                </button>
-              ))}
-            </div>
-            <textarea
-              placeholder="Write your review…"
-              value={feedbackText}
-              onChange={(e) => setFeedbackText(e.target.value)}
-              className="w-full h-24 p-3 rounded-xl border border-border bg-background resize-none text-sm mb-4"
-            />
-            <Button onClick={handleSubmitFeedback} disabled={rating === 0 || !feedbackText.trim()} className="w-full h-12 rounded-xl">
-              Submit Review
-            </Button>
+            {reviewSubmitted ? (
+              <div className="flex flex-col items-center gap-4 py-6">
+                <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center">
+                  <Check className="w-8 h-8 text-green-500" />
+                </div>
+                <p className="font-bold text-lg text-green-600">Review Submitted!</p>
+                <p className="text-sm text-muted-foreground">Thank you for your feedback.</p>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-5">
+                  <h3 className="font-bold text-lg">Leave a Review</h3>
+                  <button
+                    onClick={() => { setShowFeedback(false); setShowMenu(false); setReviewError('') }}
+                    className="w-8 h-8 flex items-center justify-center rounded-full bg-secondary"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">Rate your experience</p>
+                <div className="flex gap-2 mb-5">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button key={star} onClick={() => setRating(star)} className="p-1">
+                      <Star className={cn('w-8 h-8 transition-colors', star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground')} />
+                    </button>
+                  ))}
+                </div>
+                <textarea
+                  placeholder="Write your review…"
+                  value={feedbackText}
+                  onChange={(e) => setFeedbackText(e.target.value)}
+                  className="w-full h-24 p-3 rounded-xl border border-border bg-background resize-none text-sm mb-4"
+                />
+                {reviewError && (
+                  <p className="text-sm text-destructive mb-3 text-center">{reviewError}</p>
+                )}
+                <Button onClick={handleSubmitFeedback} disabled={rating === 0 || !feedbackText.trim()} className="w-full h-12 rounded-xl">
+                  Submit Review
+                </Button>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -570,6 +614,13 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                     {popupProfile.bio}
                   </p>
                 )}
+
+                <button
+                  onClick={() => { setShowUserPopup(false); router.push(`/user/${otherId}`) }}
+                  className="w-full h-11 rounded-xl bg-secondary text-foreground text-sm font-medium hover:bg-secondary/80 transition-colors"
+                >
+                  View Full Profile
+                </button>
               </>
             )}
           </div>

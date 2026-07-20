@@ -100,9 +100,10 @@ export function AdminApp() {
           )}
           {route === "listings" && (
             <ListingsPage
-              openListingId={viewListingId}
-              onOpenListingConsumed={() => setViewListingId(null)}
-              onMessageOwner={(userId) => goToUserThread(userId)}
+              focusListingId={viewListingId}
+              onFocusConsumed={() => setViewListingId(null)}
+              onMessageUser={(u) => goToUserThread(u.id)}
+              onMailUser={(u) => setComposeMailTo({ name: u.name, email: u.email })}
             />
           )}
           {route === "messages" && (

@@ -122,14 +122,16 @@ export function ListingsPage({ onMessageUser, onMailUser, focusListingId, onFocu
     setLoading(true);
     setError(null);
     try {
-      const [firstPage, agentsRes] = await Promise.all([
+      const [firstPage, agentsResult] = await Promise.allSettled([
         adminApi.getListings(1, 100),
         adminApi.getAgents(1, 200),
       ]);
 
-      let all: AdminListing[] = firstPage.listings ?? [];
+      if (firstPage.status === "rejected") throw firstPage.reason;
+
+      let all: AdminListing[] = firstPage.value.listings ?? [];
       let page = 2;
-      while (all.length < (firstPage.total ?? 0) && (firstPage.listings?.length ?? 0) >= 100) {
+      while (all.length < (firstPage.value.total ?? 0) && (firstPage.value.listings?.length ?? 0) >= 100) {
         const next = await adminApi.getListings(page, 100);
         const batch = next.listings ?? [];
         all = [...all, ...batch];
@@ -138,14 +140,17 @@ export function ListingsPage({ onMessageUser, onMailUser, focusListingId, onFocu
       }
 
       const agentMap = new Map<string, AdminAgent>();
-      for (const a of (agentsRes.agents ?? [])) {
-        agentMap.set(a.id, a);
-        agentMap.set(a.user_id, a);
+      if (agentsResult.status === "fulfilled") {
+        for (const a of (agentsResult.value.agents ?? [])) {
+          agentMap.set(a.id, a);
+          agentMap.set(a.user_id, a);
+        }
       }
 
       setListings(all.map((l) => mapListing(l, agentMap)));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load listings");
+      const msg = e instanceof Error ? e.message : typeof e === "string" ? e : "Failed to load listings";
+      setError(msg);
     } finally {
       setLoading(false);
     }

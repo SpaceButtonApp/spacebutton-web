@@ -17,7 +17,9 @@ async function adminFetch<T>(path: string, options: RequestInit = {}): Promise<T
   })
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
-    throw new Error(body?.detail || body?.message || `Request failed (${res.status})`)
+    const raw = body?.detail ?? body?.message
+    const msg = typeof raw === 'string' ? raw : raw != null ? JSON.stringify(raw) : `Request failed (${res.status})`
+    throw new Error(msg)
   }
   return res.json()
 }

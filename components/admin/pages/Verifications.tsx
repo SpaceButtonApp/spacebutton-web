@@ -69,25 +69,36 @@ export function VerificationsPage({ onMessageUser, onMailUser }: VerificationsPa
     setLoading(true);
     setError(null);
     try {
-      const [pending, usersRes] = await Promise.all([
+      const [pendingResult, usersResult] = await Promise.allSettled([
         adminApi.getPendingVerifications(),
         adminApi.getUsers(1, 200),
       ]);
 
+      if (pendingResult.status === "rejected" && usersResult.status === "rejected") {
+        throw pendingResult.reason;
+      }
+
+      const pending = pendingResult.status === "fulfilled" ? (pendingResult.value as PendingVerification[]) : [];
+      const usersRes = usersResult.status === "fulfilled" ? usersResult.value : { users: [], total: 0, page: 1, page_size: 200 };
+
       let allVerified: VerifiedUser[] = [];
-      let vPage = 1;
-      while (true) {
-        const vRes = await adminApi.getVerifiedUsers(vPage, 100);
-        const batch = vRes.users ?? [];
-        allVerified = [...allVerified, ...batch];
-        if (allVerified.length >= (vRes.total ?? 0) || batch.length < 100) break;
-        vPage++;
+      try {
+        let vPage = 1;
+        while (true) {
+          const vRes = await adminApi.getVerifiedUsers(vPage, 100);
+          const batch = vRes.users ?? [];
+          allVerified = [...allVerified, ...batch];
+          if (allVerified.length >= (vRes.total ?? 0) || batch.length < 100) break;
+          vPage++;
+        }
+      } catch {
+        // verified users endpoint unavailable — show pending only
       }
 
       const userMap = new Map<string, AdminUser>();
       for (const u of (usersRes.users ?? [])) userMap.set(u.id, u);
 
-      const pendingRows: VerRow[] = (pending as PendingVerification[]).map((p) => {
+      const pendingRows: VerRow[] = pending.map((p) => {
         const u = userMap.get(p.user_id);
         const name = u
           ? [u.first_name, u.last_name].filter(Boolean).join(" ") || p.user_id
@@ -120,7 +131,8 @@ export function VerificationsPage({ onMessageUser, onMailUser }: VerificationsPa
 
       setRows([...pendingRows, ...verifiedRows]);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load verifications");
+      const msg = e instanceof Error ? e.message : typeof e === "string" ? e : "Failed to load verifications";
+      setError(msg);
     } finally {
       setLoading(false);
     }

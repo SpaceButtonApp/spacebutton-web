@@ -6,7 +6,7 @@ import { StatCard } from "@/components/admin/shared/StatCard";
 import { SearchInput, ExportButton, ActionMenu, FilterPill, Avatar, EmptyState } from "@/components/admin/shared/Atoms";
 import { StatusBadge } from "@/components/admin/shared/Badge";
 import { Modal, ConfirmModal } from "@/components/admin/shared/Modal";
-import { formatDate, exportToCsv, formatNaira, truncateId } from "@/lib/utils/admin-format";
+import { formatDate, exportToExcel, formatNaira, truncateId } from "@/lib/utils/admin-format";
 import type { Listing, AppUser } from "@/lib/types/admin";
 
 type ApprovalFilter = "all" | "pending" | "approved" | "rejected";
@@ -62,8 +62,8 @@ export function ListingsPage({ onMessageUser, onMailUser, focusListingId, onFocu
   }, [listings, filter, search]);
 
   function handleExport() {
-    exportToCsv(
-      "listings.csv",
+    exportToExcel(
+      "listings",
       filtered.map((l) => {
         const owner = getUserById(users, l.ownerId);
         return {

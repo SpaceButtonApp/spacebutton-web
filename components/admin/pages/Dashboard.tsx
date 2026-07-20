@@ -4,7 +4,7 @@ import { Users, Building2, ShieldCheck, Ban, Mail } from "lucide-react";
 import { useAdminStore } from "@/lib/admin-store";
 import { StatCard } from "@/components/admin/shared/StatCard";
 import { ExportButton } from "@/components/admin/shared/Atoms";
-import { formatDate, exportToCsv } from "@/lib/utils/admin-format";
+import { formatDate, exportToExcel } from "@/lib/utils/admin-format";
 import type { AdminRoute } from "@/components/admin/shared/Sidebar";
 
 export function Dashboard({ onNavigate }: { onNavigate: (r: AdminRoute) => void }) {
@@ -99,8 +99,8 @@ export function Dashboard({ onNavigate }: { onNavigate: (r: AdminRoute) => void 
           </div>
           <ExportButton
             onClick={() =>
-              exportToCsv(
-                "waitlist.csv",
+              exportToExcel(
+                "waitlist",
                 waitlist.map((w) => ({
                   Name: w.name, Email: w.email, Phone: w.phone, Date: formatDate(w.date),
                 }))

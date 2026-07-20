@@ -37,32 +37,71 @@ export function truncateId(id: string, len = 8): string {
 }
 
 /**
- * Converts an array of flat objects into a downloadable CSV file.
+ * Downloads an array of flat objects as an Excel (.xls) file using
+ * SpreadsheetML format — no external library required.
  */
-export function exportToCsv(filename: string, rows: Record<string, unknown>[]) {
+export function exportToExcel(filename: string, rows: Record<string, unknown>[]) {
   if (!rows.length) return;
   const headers = Object.keys(rows[0]);
-  const escapeCell = (val: unknown) => {
-    const s = String(val ?? "");
-    if (s.includes(",") || s.includes('"') || s.includes("\n")) {
-      return `"${s.replace(/"/g, '""')}"`;
-    }
-    return s;
-  };
-  const lines = [
-    headers.join(","),
-    ...rows.map((row) => headers.map((h) => escapeCell(row[h])).join(",")),
-  ];
-  const csv = lines.join("\n");
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+
+  function esc(val: unknown): string {
+    return String(val ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  const headerCells = headers
+    .map((h) => `<Cell ss:StyleID="h"><Data ss:Type="String">${esc(h)}</Data></Cell>`)
+    .join("");
+
+  const dataRows = rows
+    .map((row) => {
+      const cells = headers
+        .map((h) => {
+          const v = row[h];
+          const type = typeof v === "number" ? "Number" : "String";
+          return `<Cell><Data ss:Type="${type}">${esc(v)}</Data></Cell>`;
+        })
+        .join("");
+      return `<Row>${cells}</Row>`;
+    })
+    .join("");
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+  <Styles>
+    <Style ss:ID="h">
+      <Font ss:Bold="1" ss:Color="#FFFFFF"/>
+      <Interior ss:Color="#6D28D9" ss:Pattern="Solid"/>
+    </Style>
+  </Styles>
+  <Worksheet ss:Name="Data">
+    <Table>
+      <Row>${headerCells}</Row>
+      ${dataRows}
+    </Table>
+  </Worksheet>
+</Workbook>`;
+
+  const blob = new Blob([xml], { type: "application/vnd.ms-excel;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.setAttribute("download", filename.endsWith(".csv") ? filename : `${filename}.csv`);
+  const name = filename.replace(/\.(csv|xlsx?|xls)$/i, "");
+  link.setAttribute("download", `${name}.xls`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+}
+
+/** @deprecated Use exportToExcel instead */
+export function exportToCsv(filename: string, rows: Record<string, unknown>[]) {
+  exportToExcel(filename, rows);
 }
 
 export function initials(name: string): string {

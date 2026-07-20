@@ -5,7 +5,7 @@ import { useAdminStore, getUserById } from "@/lib/admin-store";
 import { StatCard } from "@/components/admin/shared/StatCard";
 import { SearchInput, ExportButton, EmptyState } from "@/components/admin/shared/Atoms";
 import { StatusBadge, Badge } from "@/components/admin/shared/Badge";
-import { formatDate, formatNaira, exportToCsv, truncateId } from "@/lib/utils/admin-format";
+import { formatDate, formatNaira, exportToExcel, truncateId } from "@/lib/utils/admin-format";
 
 type TypeFilter = "all" | "paystack" | "apple_iap";
 type StatusFilter = "all" | "success" | "pending" | "failed";
@@ -38,8 +38,8 @@ export function TransactionsPage() {
   }, [transactions, typeFilter, statusFilter, search, users]);
 
   function handleExport() {
-    exportToCsv(
-      "transactions.csv",
+    exportToExcel(
+      "transactions",
       filtered.map((t) => {
         const u = getUserById(users, t.userId);
         return {

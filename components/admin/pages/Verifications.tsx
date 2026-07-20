@@ -6,7 +6,7 @@ import { StatCard } from "@/components/admin/shared/StatCard";
 import { SearchInput, ExportButton, FilterPill, Avatar, ActionMenu, EmptyState } from "@/components/admin/shared/Atoms";
 import { StatusBadge } from "@/components/admin/shared/Badge";
 import { Modal, ReasonModal, ImageLightbox } from "@/components/admin/shared/Modal";
-import { formatDate, exportToCsv, truncateId } from "@/lib/utils/admin-format";
+import { formatDate, exportToExcel, truncateId } from "@/lib/utils/admin-format";
 import type { Verification, AppUser } from "@/lib/types/admin";
 
 type VerFilter = "pending" | "verified";
@@ -50,8 +50,8 @@ export function VerificationsPage({ onMessageUser, onMailUser }: VerificationsPa
   }, [verifications, filter, search, users]);
 
   function handleExport() {
-    exportToCsv(
-      "verifications.csv",
+    exportToExcel(
+      "verifications",
       filtered.map((v) => {
         const u = getUserById(users, v.userId);
         return {

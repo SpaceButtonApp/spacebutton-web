@@ -8,7 +8,7 @@ import { StatCard } from "@/components/admin/shared/StatCard";
 import { SearchInput, ExportButton, ActionMenu, FilterPill, Avatar, EmptyState } from "@/components/admin/shared/Atoms";
 import { StatusBadge } from "@/components/admin/shared/Badge";
 import { Modal, ConfirmModal } from "@/components/admin/shared/Modal";
-import { formatDate, exportToCsv, truncateId } from "@/lib/utils/admin-format";
+import { formatDate, exportToExcel, truncateId } from "@/lib/utils/admin-format";
 import type { AppUser } from "@/lib/types/admin";
 
 type UserFilter = "all" | "individual" | "agent";
@@ -100,8 +100,8 @@ export function UsersPage({ onMessageUser, onMailUser }: UsersPageProps) {
   }, [users, filter, search]);
 
   function handleExport() {
-    exportToCsv(
-      "users.csv",
+    exportToExcel(
+      "users",
       filtered.map((u) => ({
         UserID: u.userId, Name: u.name, Email: u.email, Phone: u.phone, Role: u.role,
         Status: u.status, Joined: formatDate(u.joinDate),

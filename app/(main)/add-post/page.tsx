@@ -694,18 +694,23 @@ export default function AddPostPage() {
             className="w-full px-4 py-3 bg-secondary border border-border text-foreground rounded-xl placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
             rows={4}
           />
-          {/* Disclaimer based on listing type */}
-          {listingType === "Agent" && (
-            <p className="mt-3 text-sm text-amber-500 bg-amber-500/10 p-3 rounded-lg">
-              Agent must not collect inspection fee.
-            </p>
-          )}
-          {listingType === "Connect" && connectRole === "Tenant" && selectedCondition === "Rent" && (
-            <p className="mt-3 text-sm text-amber-500 bg-amber-500/10 p-3 rounded-lg">
-              Individual must not request for more than 5% of the annual rent.
-            </p>
-          )}
         </div>
+
+        {/* Warning notice */}
+        {(selectedCondition === "Rent" || selectedCondition === "Flatmate" || selectedCondition === "Roommate") && (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
+            <p className="text-sm font-bold text-amber-400 text-center tracking-wide">
+              AGENT MUST NOT COLLECT INSPECTION FEE
+            </p>
+          </div>
+        )}
+        {selectedCondition === "Vacating" && (
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
+            <p className="text-sm font-bold text-amber-400 text-center tracking-wide">
+              INDIVIDUAL MUST NOT REQUEST FOR MORE THAN 5% OF THE ANNUAL RENT AS REWARD FROM THE RENTER
+            </p>
+          </div>
+        )}
 
         {/* Submit Button */}
         <Button
@@ -738,7 +743,14 @@ export default function AddPostPage() {
           <div className="w-full max-w-md rounded-t-3xl bg-card border-t border-border p-6 pb-8">
             <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-gray-700" />
 
-            {submitSuccess ? (
+            {isSubmitting ? (
+              /* Loading state */
+              <div className="flex flex-col items-center text-center py-4">
+                <div className="mb-5 w-16 h-16 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+                <h2 className="text-xl font-bold text-foreground mb-2">Submitting your post…</h2>
+                <p className="text-sm text-muted-foreground">Please wait, do not close this page.</p>
+              </div>
+            ) : submitSuccess ? (
               /* Success state */
               <div className="flex flex-col items-center text-center">
                 <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-green-500/20">

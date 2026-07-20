@@ -13,7 +13,7 @@ import type { ListingCategory, PropertyType } from "@/lib/types/listing"
 
 const listingConditionsLandlord = ["Rent", "Roommate", "Flatmate"]
 const listingConditionsTenant = ["Vacating", "Roommate", "Flatmate"]
-const listingConditionsAgent = ["Rent", "Vacating", "Roommate", "Flatmate"]
+const listingConditionsAgent = ["Rent", "Roommate", "Flatmate", "Vacating"]
 const genderOptions = ["Male", "Female", "Both"]
 const propertyCategories = ["Flat", "Self Con", "Duplex", "Storey", "Penthouse"]
 const facilities = ["Parking Lot", "Pet Allowed", "Park", "Garden", "Estate", "Kid's Friendly", "Home theatre", "Other"]

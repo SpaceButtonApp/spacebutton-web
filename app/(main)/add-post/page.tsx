@@ -13,7 +13,7 @@ import type { ListingCategory, PropertyType } from "@/lib/types/listing"
 
 const listingConditionsLandlord = ["Rent", "Roommate", "Flatmate"]
 const listingConditionsTenant = ["Vacating", "Roommate", "Flatmate"]
-const listingConditionsAgent = ["Vacating", "Rent", "Roommate", "Flatmate"]
+const listingConditionsAgent = ["Rent", "Vacating", "Roommate", "Flatmate"]
 const genderOptions = ["Male", "Female", "Both"]
 const propertyCategories = ["Flat", "Self Con", "Duplex", "Storey", "Penthouse"]
 const facilities = ["Parking Lot", "Pet Allowed", "Park", "Garden", "Estate", "Kid's Friendly", "Home theatre", "Other"]
@@ -46,6 +46,7 @@ export default function AddPostPage() {
   const [mediaFiles, setMediaFiles] = useState<File[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
+  const [submitSuccess, setSubmitSuccess] = useState(false)
   const [rentPrice, setRentPrice] = useState("")
   const [rentPeriod, setRentPeriod] = useState<'monthly' | 'yearly'>('yearly')
   const [showRentPeriodDropdown, setShowRentPeriodDropdown] = useState(false)
@@ -207,6 +208,66 @@ export default function AddPostPage() {
   const handleFinishClick = () => {
     if (validateForm()) {
       setShowReviewModal(true)
+    }
+  }
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true)
+    setSubmitError('')
+    try {
+      const category: ListingCategory =
+        selectedCondition === 'Vacating' ? 'subletting' :
+        selectedCondition === 'Roommate' ? 'need_roommate' :
+        selectedCondition === 'Flatmate' ? 'flatmate' :
+        'for_rent'
+
+      const property_type: PropertyType =
+        selectedCategory === 'Self Con' ? 'self_contain' :
+        selectedCategory === 'Duplex' ? 'duplex' :
+        selectedCategory === 'Storey' ? 'storey' :
+        selectedCategory === 'Penthouse' ? 'penthouse' :
+        'apartment'
+
+      const listing = await listingsApi.createListing({
+        title: listingTitle,
+        description: descriptions || `Beautiful ${bedrooms} bedroom ${selectedCategory.toLowerCase()} available for ${selectedCondition.toLowerCase()}.`,
+        property_type,
+        category,
+        price: parseInt(rentPrice.replace(/,/g, '') || '0'),
+        state: location.state,
+        city: location.lga,
+        address: location.nearestBusStop,
+        bedrooms,
+        bathrooms,
+        rent_period: rentPeriod,
+        total_package: (listingType === 'Agent' || (listingType === 'Connect' && connectRole === 'Landlord'))
+          ? parseInt(totalPackage.replace(/,/g, '') || '0') : undefined,
+        rent_due_date: ((listingType === 'Connect' && connectRole === 'Tenant') || (isAgent && selectedCondition === 'Vacating')) && selectedDate
+          ? selectedDate.toISOString() : undefined,
+        gender_needed: selectedGender.toLowerCase(),
+        landlord_presence: landlordPresence,
+        balconies,
+        sitting_rooms: sittingRooms,
+        facilities: selectedFacilities.join(','),
+        connect_role: listingType === 'Connect' ? connectRole : undefined,
+      })
+
+      const imageFiles = mediaFiles.filter(f => !f.type.startsWith('video/'))
+      const videoFile = mediaFiles.find(f => f.type.startsWith('video/'))
+      if (imageFiles.length > 0) {
+        await listingsApi.uploadImages(listing.id, imageFiles)
+      }
+      if (videoFile) {
+        await listingsApi.uploadVideo(listing.id, videoFile)
+      }
+
+      setSubmitSuccess(true)
+    } catch (err: unknown) {
+      const e = err as any
+      const reason = e?.response?.data?.message || e?.response?.data?.detail || e?.message || 'Something went wrong. Please try again.'
+      setSubmitError(reason)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -676,95 +737,83 @@ export default function AddPostPage() {
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70">
           <div className="w-full max-w-md rounded-t-3xl bg-card border-t border-border p-6 pb-8">
             <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-gray-700" />
-            
-            <div className="flex flex-col items-center text-center">
-              <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-b from-[#703BF7]/30 to-[#703BF7]/60">
-                <div className="h-16 w-16 rounded-full bg-primary" />
-              </div>
-              
-              <h2 className="mb-1 text-2xl text-foreground">Your listing is now</h2>
-              <h3 className="mb-4 text-2xl font-bold text-foreground">Under Review</h3>
-              <p className="mb-6 text-muted-foreground">
-                Your property will be visible on the home page shortly.
-              </p>
 
-              {submitError && (
-                <p className="text-sm text-destructive text-center mb-2">{submitError}</p>
-              )}
-
-              <div className="flex w-full gap-3">
+            {submitSuccess ? (
+              /* Success state */
+              <div className="flex flex-col items-center text-center">
+                <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-green-500/20">
+                  <svg className="w-12 h-12 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h2 className="mb-1 text-2xl font-bold text-foreground">Post Submitted!</h2>
+                <p className="mb-6 text-muted-foreground">
+                  Your listing has been sent successfully and is now awaiting admin approval. It will appear on the home page once approved.
+                </p>
                 <Button
-                  variant="outline"
-                  className="flex-1 rounded-xl bg-secondary border-border text-foreground hover:bg-secondary/80"
-                  disabled={isSubmitting}
-                  onClick={() => setShowReviewModal(false)}
+                  className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 text-foreground"
+                  onClick={() => router.push('/home')}
                 >
-                  Edit Post
-                </Button>
-                <Button
-                  className="flex-1 rounded-xl bg-primary hover:bg-primary/90 text-foreground disabled:opacity-60"
-                  disabled={isSubmitting}
-                  onClick={async () => {
-                    setIsSubmitting(true)
-                    setSubmitError('')
-                    try {
-                      const category: ListingCategory =
-                        selectedCondition === 'Vacating' ? 'subletting' :
-                        selectedCondition === 'Roommate' ? 'need_roommate' :
-                        selectedCondition === 'Flatmate' ? 'flatmate' :
-                        'for_rent'
-
-                      const property_type: PropertyType =
-                        selectedCategory === 'Self Con' ? 'self_contain' :
-                        selectedCategory === 'Duplex' ? 'duplex' :
-                        selectedCategory === 'Storey' ? 'storey' :
-                        selectedCategory === 'Penthouse' ? 'penthouse' :
-                        'apartment'
-
-                      const listing = await listingsApi.createListing({
-                        title: listingTitle,
-                        description: descriptions || `Beautiful ${bedrooms} bedroom ${selectedCategory.toLowerCase()} available for ${selectedCondition.toLowerCase()}.`,
-                        property_type,
-                        category,
-                        price: parseInt(rentPrice.replace(/,/g, '') || '0'),
-                        state: location.state,
-                        city: location.lga,
-                        address: location.nearestBusStop,
-                        bedrooms,
-                        bathrooms,
-                        rent_period: rentPeriod,
-                        total_package: (listingType === 'Agent' || (listingType === 'Connect' && connectRole === 'Landlord'))
-                          ? parseInt(totalPackage.replace(/,/g, '') || '0') : undefined,
-                        rent_due_date: ((listingType === 'Connect' && connectRole === 'Tenant') || (isAgent && selectedCondition === 'Vacating')) && selectedDate
-                          ? selectedDate.toISOString() : undefined,
-                        gender_needed: selectedGender.toLowerCase(),
-                        landlord_presence: landlordPresence,
-                        balconies,
-                        sitting_rooms: sittingRooms,
-                        facilities: selectedFacilities.join(','),
-                        connect_role: listingType === 'Connect' ? connectRole : undefined,
-                      })
-
-                      const imageFiles = mediaFiles.filter(f => !f.type.startsWith('video/'))
-                      const videoFile = mediaFiles.find(f => f.type.startsWith('video/'))
-                      if (imageFiles.length > 0) {
-                        await listingsApi.uploadImages(listing.id, imageFiles)
-                      }
-                      if (videoFile) {
-                        await listingsApi.uploadVideo(listing.id, videoFile)
-                      }
-
-                      router.push('/home')
-                    } catch {
-                      setSubmitError('Failed to submit. Please try again.')
-                      setIsSubmitting(false)
-                    }
-                  }}
-                >
-                  {isSubmitting ? 'Submitting…' : 'Finish'}
+                  Go to Home
                 </Button>
               </div>
-            </div>
+            ) : submitError ? (
+              /* Error state */
+              <div className="flex flex-col items-center text-center">
+                <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-red-500/20">
+                  <svg className="w-12 h-12 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </div>
+                <h2 className="mb-2 text-2xl font-bold text-foreground">Submission Failed</h2>
+                <p className="mb-6 text-sm text-muted-foreground leading-relaxed">{submitError}</p>
+                <div className="flex w-full gap-3">
+                  <Button
+                    variant="outline"
+                    className="flex-1 rounded-xl bg-secondary border-border text-foreground hover:bg-secondary/80"
+                    onClick={() => { setShowReviewModal(false); setSubmitError('') }}
+                  >
+                    Edit Post
+                  </Button>
+                  <Button
+                    className="flex-1 rounded-xl bg-primary hover:bg-primary/90 text-foreground disabled:opacity-60"
+                    disabled={isSubmitting}
+                    onClick={handleSubmit}
+                  >
+                    {isSubmitting ? 'Submitting…' : 'Try Again'}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              /* Default confirmation state */
+              <div className="flex flex-col items-center text-center">
+                <div className="mb-4 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-b from-[#703BF7]/30 to-[#703BF7]/60">
+                  <div className="h-16 w-16 rounded-full bg-primary" />
+                </div>
+                <h2 className="mb-1 text-2xl text-foreground">Your listing is now</h2>
+                <h3 className="mb-4 text-2xl font-bold text-foreground">Under Review</h3>
+                <p className="mb-6 text-muted-foreground">
+                  Your property will be visible on the home page once approved by our team.
+                </p>
+                <div className="flex w-full gap-3">
+                  <Button
+                    variant="outline"
+                    className="flex-1 rounded-xl bg-secondary border-border text-foreground hover:bg-secondary/80"
+                    disabled={isSubmitting}
+                    onClick={() => setShowReviewModal(false)}
+                  >
+                    Edit Post
+                  </Button>
+                  <Button
+                    className="flex-1 rounded-xl bg-primary hover:bg-primary/90 text-foreground disabled:opacity-60"
+                    disabled={isSubmitting}
+                    onClick={handleSubmit}
+                  >
+                    {isSubmitting ? 'Submitting…' : 'Finish'}
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

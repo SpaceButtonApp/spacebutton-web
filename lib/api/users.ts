@@ -108,7 +108,7 @@ export const verificationApi = {
 
 // ─── Display info helper (name from auth svc + avatar from user svc) ─────────
 
-interface UserDisplayInfo { name: string; avatar: string | null; role: string }
+interface UserDisplayInfo { name: string; avatar: string | null; role: string; isAvailable: boolean }
 
 export async function getUserDisplayInfo(userId: string): Promise<UserDisplayInfo> {
   const [authRes, profileRes] = await Promise.allSettled([
@@ -118,20 +118,20 @@ export async function getUserDisplayInfo(userId: string): Promise<UserDisplayInf
     api.get<UserProfile>(`/users/${userId}`, { skipAuth: true }),
   ])
 
-  const name =
-    authRes.status === 'fulfilled'
-      ? `${authRes.value.data.first_name} ${authRes.value.data.last_name}`.trim() || 'User'
-      : 'User'
+  const isAvailable = authRes.status === 'fulfilled'
+
+  const name = isAvailable
+    ? `${authRes.value.data.first_name} ${authRes.value.data.last_name}`.trim() || 'User'
+    : 'User'
 
   const avatar =
     profileRes.status === 'fulfilled'
       ? profileRes.value.profile_photo_url ?? null
       : null
 
-  const role =
-    authRes.status === 'fulfilled' ? authRes.value.data.role : 'user'
+  const role = isAvailable ? authRes.value.data.role : 'user'
 
-  return { name, avatar, role }
+  return { name, avatar, role, isAvailable }
 }
 
 // ─── Sync profile to Zustand store ───────────────────────────────────────────

@@ -225,7 +225,8 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   }
 
   const otherId = chat.user_id === myId ? chat.agent_id : chat.user_id
-  const otherName = otherInfo?.name ?? 'User'
+  const isOtherAvailable = otherInfo?.isAvailable ?? true
+  const otherName = isOtherAvailable ? (otherInfo?.name ?? 'User') : 'User not available'
   const otherAvatar = otherInfo?.avatar ?? DEFAULT_AVATAR
 
   return (
@@ -249,11 +250,15 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
               className="rounded-full object-cover w-[42px] h-[42px] border-2 border-border"
               unoptimized
             />
-            <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-green-500 border-2 border-background" />
+            {isOtherAvailable && (
+              <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-green-500 border-2 border-background" />
+            )}
           </div>
           <div className="text-left min-w-0">
             <h2 className="font-semibold text-foreground text-sm truncate">{otherName}</h2>
-            {isTyping ? (
+            {!isOtherAvailable ? (
+              <p className="text-xs text-muted-foreground">Account no longer available</p>
+            ) : isTyping ? (
               <p className="text-xs text-primary animate-pulse">typing…</p>
             ) : (
               <p className="text-xs text-muted-foreground">Online</p>
@@ -415,23 +420,29 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
       {/* ── Input ── */}
       <div className="flex-shrink-0 px-4 py-3 bg-background border-t border-border">
-        <div className="flex items-center gap-2">
-          <Input
-            type="text"
-            placeholder="Type a message…"
-            value={input}
-            onChange={(e) => handleInputChange(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-            className="flex-1 h-11 rounded-full border-border bg-secondary px-4 text-sm focus-visible:ring-1 focus-visible:ring-primary"
-          />
-          <button
-            onClick={handleSend}
-            disabled={!input.trim() || sending}
-            className="w-11 h-11 rounded-full bg-primary flex items-center justify-center hover:bg-primary/90 transition-all disabled:opacity-40 active:scale-95"
-          >
-            <Send className="w-4.5 h-4.5 w-[18px] h-[18px] text-primary-foreground" />
-          </button>
-        </div>
+        {!isOtherAvailable ? (
+          <p className="text-center text-sm text-muted-foreground py-2">
+            This user&apos;s account is no longer available
+          </p>
+        ) : (
+          <div className="flex items-center gap-2">
+            <Input
+              type="text"
+              placeholder="Type a message…"
+              value={input}
+              onChange={(e) => handleInputChange(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
+              className="flex-1 h-11 rounded-full border-border bg-secondary px-4 text-sm focus-visible:ring-1 focus-visible:ring-primary"
+            />
+            <button
+              onClick={handleSend}
+              disabled={!input.trim() || sending}
+              className="w-11 h-11 rounded-full bg-primary flex items-center justify-center hover:bg-primary/90 transition-all disabled:opacity-40 active:scale-95"
+            >
+              <Send className="w-4.5 h-4.5 w-[18px] h-[18px] text-primary-foreground" />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ── Done deal info modal ── */}

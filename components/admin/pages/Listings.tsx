@@ -1,6 +1,6 @@
 'use client'
 import React, { useMemo, useState } from "react";
-import { Building2, CheckCircle2, Clock, XCircle, List, LayoutGrid, Eye, Trash2, MessageCircle, Mail, MapPin, Bed, Bath, Car, Wifi, CheckCheck, X } from "lucide-react";
+import { Building2, CheckCircle2, Clock, XCircle, List, LayoutGrid, Eye, Trash2, MessageCircle, Mail, MapPin, Bed, Bath, Car, CheckCheck, X } from "lucide-react";
 import { useAdminStore, getUserById } from "@/lib/admin-store";
 import { StatCard } from "@/components/admin/shared/StatCard";
 import { SearchInput, ExportButton, ActionMenu, FilterPill, Avatar, EmptyState } from "@/components/admin/shared/Atoms";
@@ -67,8 +67,8 @@ export function ListingsPage({ onMessageUser, onMailUser, focusListingId, onFocu
       filtered.map((l) => {
         const owner = getUserById(users, l.ownerId);
         return {
-          Title: l.title, Location: l.location, Price: l.price, Type: l.listingType,
-          Status: l.status, Approval: l.approval, Owner: owner?.name ?? "—", Listed: formatDate(l.listedDate),
+          Title: l.title, Location: l.location, Price: l.price, Type: l.type,
+          Status: l.status, Approval: l.approval, Owner: owner?.name ?? "—", Listed: formatDate(l.createdDate),
         };
       })
     );
@@ -161,11 +161,11 @@ export function ListingsPage({ onMessageUser, onMailUser, focusListingId, onFocu
                           <span className="text-[var(--text-muted)]">—</span>
                         )}
                       </td>
-                      <td className="px-6 py-3.5 text-[var(--text-secondary)] capitalize">{l.listingType}</td>
+                      <td className="px-6 py-3.5 text-[var(--text-secondary)] capitalize">{l.type}</td>
                       <td className="px-6 py-3.5 text-[var(--text-primary)]">{formatNaira(l.price)}</td>
                       <td className="px-6 py-3.5"><StatusBadge status={l.status} /></td>
                       <td className="px-6 py-3.5"><StatusBadge status={l.approval} /></td>
-                      <td className="px-6 py-3.5 text-[var(--text-secondary)]">{formatDate(l.listedDate)}</td>
+                      <td className="px-6 py-3.5 text-[var(--text-secondary)]">{formatDate(l.createdDate)}</td>
                       <td className="px-6 py-3.5 text-right">
                         <ActionMenu
                           items={[
@@ -310,8 +310,7 @@ function ListingDetail({
       <div className="flex flex-wrap gap-2 mb-5">
         {listing.bedrooms !== undefined && <FeatureBox icon={Bed} label={`${listing.bedrooms} Bed${listing.bedrooms !== 1 ? "s" : ""}`} />}
         {listing.bathrooms !== undefined && <FeatureBox icon={Bath} label={`${listing.bathrooms} Bath${listing.bathrooms !== 1 ? "s" : ""}`} />}
-        {listing.parkingSpaces !== undefined && <FeatureBox icon={Car} label={`${listing.parkingSpaces} Parking`} />}
-        {listing.amenities?.includes("WiFi") && <FeatureBox icon={Wifi} label="WiFi" />}
+        {listing.balconies > 0 && <FeatureBox icon={Car} label={`${listing.balconies} Balcon${listing.balconies !== 1 ? "ies" : "y"}`} />}
       </div>
 
       {owner && (

@@ -1,5 +1,5 @@
 'use client'
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { LogOut } from "lucide-react";
 import { useAdminStore } from "@/lib/admin-store";
 import { Sidebar } from "@/components/admin/shared/Sidebar";
@@ -33,7 +33,13 @@ const PAGE_TITLES: Record<AdminRoute, string> = {
 
 export function AdminApp() {
   const theme = useAdminStore((s) => s.theme);
+  const isLoading = useAdminStore((s) => s.isLoading);
+  const initFromApi = useAdminStore((s) => s.initFromApi);
   const verifications = useAdminStore((s) => s.verifications);
+
+  useEffect(() => {
+    initFromApi();
+  }, [initFromApi]);
   const listings = useAdminStore((s) => s.listings);
   const reports = useAdminStore((s) => s.reports);
   const messages = useAdminStore((s) => s.messages);
@@ -72,6 +78,14 @@ export function AdminApp() {
 
   return (
     <div className={`admin-root flex h-screen overflow-hidden bg-[var(--bg-page)] text-[var(--text-primary)] font-sans ${theme === "dark" ? "dark" : ""}`}>
+      {isLoading && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-[var(--bg-page)]/80 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border-2 border-violet-500/30 border-t-violet-500 rounded-full animate-spin" />
+            <span className="text-sm text-[var(--text-secondary)]">Loading data…</span>
+          </div>
+        </div>
+      )}
       <Sidebar
         active={route}
         onNavigate={setRoute}

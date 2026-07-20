@@ -59,9 +59,7 @@ function avatarColorForId(id: string): string {
 function mapApiUser(u: AdminUser): AppUser {
   const statusRaw = (u.status ?? "active").toLowerCase();
   const status: AppUser["status"] =
-    statusRaw === "suspended" ? "suspended"
-    : statusRaw === "inactive" ? "inactive"
-    : "active";
+    statusRaw === "suspended" ? "suspended" : "active";
   return {
     id: u.id,
     userId: u.id.slice(-8).toUpperCase(),

@@ -173,7 +173,7 @@ export function ListingsPage({ onMessageUser, onMailUser, focusListingId, onFocu
                             owner ? { label: "Message owner", icon: <MessageCircle className="w-4 h-4" />, onClick: () => onMessageUser?.(owner) } : null,
                             owner ? { label: "Email owner", icon: <Mail className="w-4 h-4" />, onClick: () => onMailUser?.(owner) } : null,
                             l.approval === "pending" ? { label: "Approve", icon: <CheckCheck className="w-4 h-4" />, onClick: () => approveListing(l.id) } : null,
-                            l.approval === "pending" ? { label: "Reject", icon: <X className="w-4 h-4" />, onClick: () => rejectListing(l.id), danger: true } : null,
+                            l.approval === "pending" ? { label: "Reject", icon: <X className="w-4 h-4" />, onClick: () => rejectListing(l.id, ""), danger: true } : null,
                             { label: "Delete", icon: <Trash2 className="w-4 h-4" />, onClick: () => setConfirmDel(l), danger: true },
                           ].filter(Boolean) as Parameters<typeof ActionMenu>[0]["items"]}
                         />
@@ -202,7 +202,7 @@ export function ListingsPage({ onMessageUser, onMailUser, focusListingId, onFocu
             listing={detailListing}
             owner={getUserById(users, detailListing.ownerId)}
             onApprove={() => { approveListing(detailListing.id); setDetailListing(null); }}
-            onReject={() => { rejectListing(detailListing.id); setDetailListing(null); }}
+            onReject={() => { rejectListing(detailListing.id, ""); setDetailListing(null); }}
             onDelete={() => { setDetailListing(null); setConfirmDel(detailListing); }}
             onMessage={(u) => { onMessageUser?.(u); setDetailListing(null); }}
             onMail={(u) => { onMailUser?.(u); setDetailListing(null); }}

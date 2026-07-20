@@ -77,7 +77,7 @@ export function AdminApp() {
   }
 
   return (
-    <div className={`admin-root flex h-screen overflow-hidden bg-[var(--bg-page)] text-[var(--text-primary)] font-sans ${theme === "dark" ? "dark" : ""}`}>
+    <div className={`admin-root fixed inset-0 flex overflow-hidden bg-[var(--bg-page)] text-[var(--text-primary)] font-sans ${theme === "dark" ? "dark" : ""}`}>
       {isLoading && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-[var(--bg-page)]/80 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-3">

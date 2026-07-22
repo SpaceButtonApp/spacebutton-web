@@ -108,7 +108,10 @@ function mapListing(l: AdminListing, agentMap: Map<string, AdminAgent>): Listing
     ownerType: l.owner_type ?? "user",
     connectRole: l.connect_role ?? undefined,
     totalPackage: l.total_package ? parseFloat(l.total_package) : undefined,
-    images: (l.images ?? []).map((img) => img.url),
+    images: (l.images ?? [])
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+      .map((img) => img.image_url)
+      .filter(Boolean),
     videoUrl: l.video_tour_url,
     agentId: l.agent_id,
     agentName,
@@ -449,12 +452,76 @@ function ListingDetailPage({
 }) {
   const [imgIdx, setImgIdx] = useState(0);
   const [lightbox, setLightbox] = useState<string | null>(null);
-  const ownerLabel = listing.ownerType === "agent" ? "Agent" : (listing.connectRole ?? "User");
+  // full data starts from what the list gave us; enriched below
+  const [data, setData] = useState<ListingRow>(listing);
+  const [fetching, setFetching] = useState(true);
+
+  // keep approval/status in sync when parent updates them (approve/reject)
+  useEffect(() => {
+    setData((prev) => ({ ...prev, approval: listing.approval, status: listing.status }));
+  }, [listing.approval, listing.status]);
+
+  // fetch the full listing + poster details on mount
+  useEffect(() => {
+    let cancelled = false;
+    setFetching(true);
+
+    Promise.allSettled([
+      adminApi.getListing(listing.id),
+      adminApi.getUser(listing.agentId),
+    ]).then(([listingRes, userRes]) => {
+      if (cancelled) return;
+      setData((prev) => {
+        let updated = { ...prev };
+
+        if (listingRes.status === "fulfilled") {
+          const l = listingRes.value;
+          let facilities: string[] = [];
+          try { if (l.facilities) facilities = JSON.parse(l.facilities) as string[]; } catch { /* ignore */ }
+          const freshImages = (l.images ?? [])
+            .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+            .map((img) => img.image_url)
+            .filter(Boolean);
+          updated = {
+            ...updated,
+            images: freshImages.length > 0 ? freshImages : updated.images,
+            videoUrl: l.video_tour_url ?? updated.videoUrl,
+            sittingRooms: l.sitting_rooms ?? updated.sittingRooms,
+            balconies: l.balconies ?? updated.balconies,
+            rentDueDate: l.rent_due_date ?? updated.rentDueDate,
+            landlordPresence: l.landlord_presence
+              ? (LANDLORD_LABELS[l.landlord_presence] ?? l.landlord_presence)
+              : updated.landlordPresence,
+            facilities: facilities.length > 0 ? facilities : updated.facilities,
+            condition: l.category ? (CONDITION_LABELS[l.category] ?? updated.condition) : updated.condition,
+            totalPackage: l.total_package ? parseFloat(String(l.total_package)) : updated.totalPackage,
+            categoryDisplay: l.property_type
+              ? (PROP_TYPE_LABELS[l.property_type] ?? l.property_type)
+              : updated.categoryDisplay,
+            description: l.description ?? updated.description,
+          };
+        }
+
+        if (userRes.status === "fulfilled") {
+          const u = userRes.value;
+          const name = [u.first_name, u.last_name].filter(Boolean).join(" ");
+          if (name) updated = { ...updated, agentName: name, agentEmail: u.email ?? updated.agentEmail };
+        }
+
+        return updated;
+      });
+    }).finally(() => { if (!cancelled) setFetching(false); });
+
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listing.id, listing.agentId]);
+
+  const ownerLabel = data.ownerType === "agent" ? "Agent" : (data.connectRole ?? "User");
 
   return (
     <div>
       {/* ── Back bar ── */}
-      <div className="px-6 py-3.5 border-b border-[var(--border-color)]">
+      <div className="px-6 py-3.5 border-b border-[var(--border-color)] flex items-center justify-between">
         <button
           onClick={onBack}
           className="flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
@@ -462,6 +529,12 @@ function ListingDetailPage({
           <ArrowLeft className="w-4 h-4" />
           Back to listings
         </button>
+        {fetching && (
+          <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
+            <div className="w-3.5 h-3.5 border-2 border-violet-500/30 border-t-violet-500 rounded-full animate-spin" />
+            Loading full details…
+          </div>
+        )}
       </div>
 
       {/* ── Two-column layout ── */}
@@ -474,34 +547,38 @@ function ListingDetailPage({
           <div
             className="relative rounded-2xl overflow-hidden bg-black cursor-zoom-in group"
             style={{ aspectRatio: "4/3" }}
-            onClick={() => listing.images[imgIdx] && setLightbox(listing.images[imgIdx])}
+            onClick={() => data.images[imgIdx] && setLightbox(data.images[imgIdx])}
           >
-            {listing.images[imgIdx] ? (
+            {data.images[imgIdx] ? (
               <img
-                src={listing.images[imgIdx]}
-                alt={listing.title}
+                src={data.images[imgIdx]}
+                alt={data.title}
                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-[var(--bg-sunken)]">
-                <Building2 className="w-16 h-16 text-[var(--text-muted)]" />
+                {fetching ? (
+                  <div className="w-8 h-8 border-2 border-violet-500/30 border-t-violet-500 rounded-full animate-spin" />
+                ) : (
+                  <Building2 className="w-16 h-16 text-[var(--text-muted)]" />
+                )}
               </div>
             )}
 
             {/* Status badge */}
             <div className="absolute top-3 left-3">
-              <StatusBadge status={listing.approval === "approved" ? listing.status : listing.approval} />
+              <StatusBadge status={data.approval === "approved" ? data.status : data.approval} />
             </div>
 
             {/* Counter */}
-            {listing.images.length > 1 && (
+            {data.images.length > 1 && (
               <div className="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-2.5 py-0.5 rounded-full font-medium">
-                {imgIdx + 1} / {listing.images.length}
+                {imgIdx + 1} / {data.images.length}
               </div>
             )}
 
             {/* Zoom hint */}
-            {listing.images[imgIdx] && (
+            {data.images[imgIdx] && (
               <div className="absolute top-3 right-3 w-8 h-8 rounded-lg bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                   <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
@@ -510,17 +587,17 @@ function ListingDetailPage({
             )}
 
             {/* Prev/Next arrows */}
-            {listing.images.length > 1 && (
+            {data.images.length > 1 && (
               <>
                 <button
-                  onClick={(e) => { e.stopPropagation(); setImgIdx((i) => (i - 1 + listing.images.length) % listing.images.length); }}
+                  onClick={(e) => { e.stopPropagation(); setImgIdx((i) => (i - 1 + data.images.length) % data.images.length); }}
                   className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors"
                   aria-label="Previous image"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
                 <button
-                  onClick={(e) => { e.stopPropagation(); setImgIdx((i) => (i + 1) % listing.images.length); }}
+                  onClick={(e) => { e.stopPropagation(); setImgIdx((i) => (i + 1) % data.images.length); }}
                   className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors"
                   aria-label="Next image"
                 >
@@ -531,16 +608,14 @@ function ListingDetailPage({
           </div>
 
           {/* Thumbnails */}
-          {listing.images.length > 1 && (
+          {data.images.length > 1 && (
             <div className="grid grid-cols-4 gap-2">
-              {listing.images.map((src, i) => (
+              {data.images.map((src, i) => (
                 <button
                   key={i}
                   onClick={() => setImgIdx(i)}
                   className={`aspect-square rounded-xl overflow-hidden border-2 transition-all ${
-                    i === imgIdx
-                      ? "border-violet-500 opacity-100"
-                      : "border-transparent opacity-50 hover:opacity-80"
+                    i === imgIdx ? "border-violet-500 opacity-100" : "border-transparent opacity-50 hover:opacity-80"
                   }`}
                 >
                   <img src={src} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
@@ -550,10 +625,10 @@ function ListingDetailPage({
           )}
 
           {/* Video */}
-          {listing.videoUrl && (
+          {data.videoUrl && (
             <div className="mt-1">
               <p className="text-xs text-[var(--text-muted)] uppercase tracking-wide font-semibold mb-2">Video Tour</p>
-              <VideoEmbed url={listing.videoUrl} />
+              <VideoEmbed url={data.videoUrl} />
             </div>
           )}
         </div>
@@ -568,10 +643,10 @@ function ListingDetailPage({
 
           {/* Title + location */}
           <div>
-            <h2 className="text-2xl font-bold text-[var(--text-primary)] leading-tight">{listing.title}</h2>
+            <h2 className="text-2xl font-bold text-[var(--text-primary)] leading-tight">{data.title}</h2>
             <div className="flex items-start gap-1.5 mt-2 text-sm text-[var(--text-muted)]">
               <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-              <span>{listing.location}</span>
+              <span>{data.location}</span>
             </div>
           </div>
 
@@ -580,30 +655,30 @@ function ListingDetailPage({
             <div>
               <p className="text-[10px] uppercase tracking-widest font-bold text-[var(--text-muted)] mb-1">Rent</p>
               <p className="text-3xl font-bold text-violet-400 leading-none">
-                {listing.price ? formatNaira(listing.price) : "—"}
-                {listing.rentPeriod && (
-                  <span className="text-base font-normal text-[var(--text-muted)] ml-0.5">/{listing.rentPeriod}</span>
+                {data.price ? formatNaira(data.price) : "—"}
+                {data.rentPeriod && (
+                  <span className="text-base font-normal text-[var(--text-muted)] ml-0.5">/{data.rentPeriod}</span>
                 )}
               </p>
             </div>
-            {listing.totalPackage ? (
+            {data.totalPackage ? (
               <div>
                 <p className="text-[10px] uppercase tracking-widest font-bold text-[var(--text-muted)] mb-1">Total Package</p>
-                <p className="text-2xl font-bold text-[var(--text-primary)] leading-none">{formatNaira(listing.totalPackage)}</p>
+                <p className="text-2xl font-bold text-[var(--text-primary)] leading-none">{formatNaira(data.totalPackage)}</p>
               </div>
             ) : null}
           </div>
 
           {/* Property Features */}
-          {(listing.bedrooms !== undefined || listing.bathrooms !== undefined ||
-            listing.sittingRooms !== undefined || listing.balconies !== undefined) && (
+          {(data.bedrooms !== undefined || data.bathrooms !== undefined ||
+            data.sittingRooms !== undefined || data.balconies !== undefined) && (
             <section className="bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-2xl p-4">
               <h4 className="font-semibold text-[var(--text-primary)] mb-3">Property Features</h4>
               <div className="grid grid-cols-2 gap-3">
-                {listing.bedrooms !== undefined && <FeatureBox icon={Bed} label="Bedrooms" value={listing.bedrooms} />}
-                {listing.bathrooms !== undefined && <FeatureBox icon={Bath} label="Bathrooms" value={listing.bathrooms} />}
-                {listing.sittingRooms !== undefined && <FeatureBox icon={Sofa} label="Sitting Rooms" value={listing.sittingRooms} />}
-                {listing.balconies !== undefined && <FeatureBox icon={Building2} label="Balconies" value={listing.balconies} />}
+                {data.bedrooms !== undefined && <FeatureBox icon={Bed} label="Bedrooms" value={data.bedrooms} />}
+                {data.bathrooms !== undefined && <FeatureBox icon={Bath} label="Bathrooms" value={data.bathrooms} />}
+                {data.sittingRooms !== undefined && <FeatureBox icon={Sofa} label="Sitting Rooms" value={data.sittingRooms} />}
+                {data.balconies !== undefined && <FeatureBox icon={Building2} label="Balconies" value={data.balconies} />}
               </div>
             </section>
           )}
@@ -612,19 +687,19 @@ function ListingDetailPage({
           <section className="bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-2xl p-4">
             <h4 className="font-semibold text-[var(--text-primary)] mb-1">Additional Information</h4>
             <div className="divide-y divide-[var(--border-color)]">
-              <InfoRow icon={Tag} label="Category" value={listing.categoryDisplay} />
-              {listing.condition && <InfoRow icon={Users} label="Condition" value={listing.condition} />}
-              {listing.landlordPresence && <InfoRow icon={Home} label="Landlord Presence" value={listing.landlordPresence} />}
-              <InfoRow icon={Calendar} label="Rent Due Date" value={listing.rentDueDate ? formatDate(listing.rentDueDate) : "—"} />
+              <InfoRow icon={Tag} label="Category" value={data.categoryDisplay} />
+              {data.condition && <InfoRow icon={Users} label="Condition" value={data.condition} />}
+              {data.landlordPresence && <InfoRow icon={Home} label="Landlord Presence" value={data.landlordPresence} />}
+              <InfoRow icon={Calendar} label="Rent Due Date" value={data.rentDueDate ? formatDate(data.rentDueDate) : "—"} />
             </div>
           </section>
 
           {/* Facilities & Environment */}
-          {listing.facilities.length > 0 && (
+          {data.facilities.length > 0 && (
             <section className="bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-2xl p-4">
               <h4 className="font-semibold text-[var(--text-primary)] mb-3">Facilities & Environment</h4>
               <div className="flex flex-wrap gap-2">
-                {listing.facilities.map((f, i) => (
+                {data.facilities.map((f, i) => (
                   <span key={i} className="px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-xs text-violet-400">{f}</span>
                 ))}
               </div>
@@ -632,10 +707,10 @@ function ListingDetailPage({
           )}
 
           {/* Description */}
-          {listing.description && (
+          {data.description && (
             <section className="bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-2xl p-4">
               <h4 className="font-semibold text-[var(--text-primary)] mb-2">Description</h4>
-              <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{listing.description}</p>
+              <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{data.description}</p>
             </section>
           )}
 
@@ -644,9 +719,9 @@ function ListingDetailPage({
             <h4 className="font-semibold text-[var(--text-primary)] mb-3">Posted By</h4>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Avatar name={listing.agentName} color={listing.agentAvatarColor} size={44} />
+                <Avatar name={data.agentName} color={data.agentAvatarColor} size={44} />
                 <div>
-                  <div className="font-semibold text-[var(--text-primary)] text-base">{listing.agentName}</div>
+                  <div className="font-semibold text-[var(--text-primary)] text-base">{data.agentName}</div>
                   <span className="inline-block mt-0.5 px-2.5 py-0.5 rounded-full bg-[var(--bg-raised)] border border-[var(--border-color)] text-[11px] text-[var(--text-muted)]">
                     {ownerLabel}
                   </span>
@@ -663,7 +738,7 @@ function ListingDetailPage({
           </section>
 
           {/* Approve / Reject */}
-          {listing.approval === "pending" && (
+          {data.approval === "pending" && (
             <div className="flex gap-3">
               <button
                 onClick={onReject}
@@ -702,7 +777,7 @@ function ListingDetailPage({
       {/* Fullscreen image lightbox */}
       <ImageLightbox
         src={lightbox ?? ""}
-        alt={listing.title}
+        alt={data.title}
         open={!!lightbox}
         onClose={() => setLightbox(null)}
       />

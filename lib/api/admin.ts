@@ -145,7 +145,7 @@ export interface AdminListing {
   connect_role?: string | null
   agent_id: string
   video_tour_url?: string
-  images?: Array<{ url: string; is_cover: boolean }>
+  images?: Array<{ image_url: string; is_cover: boolean; order?: number }>
   created_at: string
 }
 

@@ -106,7 +106,7 @@ export default function VerificationDetailPage() {
 
   return (
     <div className="admin-root flex flex-col h-screen overflow-hidden bg-[var(--bg-base)]">
-      <AdminHeader />
+      <AdminHeader title="Verification Review" />
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-6 py-8">
 

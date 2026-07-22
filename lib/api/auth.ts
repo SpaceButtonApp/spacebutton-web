@@ -149,9 +149,10 @@ export function getAuthErrorMessage(err: unknown): string {
     if (Array.isArray(detail) && detail.length > 0) {
       return (detail[0] as { msg: string }).msg ?? 'Validation error'
     }
-    // Generic fallback — add network hint since slow connections often cause this
+    // Generic fallback — use status to distinguish server vs network
     if (!err.message || err.message === 'Request failed') {
-      return 'Request failed. This may be a network issue — please try again.'
+      if (err.status >= 500) return 'Server error. Please try again in a moment.'
+      return 'Request failed. Please try again.'
     }
     return err.message
   }

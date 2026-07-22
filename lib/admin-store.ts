@@ -107,7 +107,7 @@ function mapApiListing(l: AdminListing): Listing {
     status: listingStatus,
     approval,
     createdDate: l.created_at,
-    images: l.images?.map((img) => img.url) ?? [],
+    images: l.images?.map((img) => img.image_url) ?? [],
     bedrooms: l.bedrooms ?? 0,
     bathrooms: l.bathrooms ?? 0,
     sittingRooms: 0,

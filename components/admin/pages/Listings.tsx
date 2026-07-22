@@ -140,6 +140,7 @@ export function ListingsPage({ onMessageUser, onMailUser, focusListingId, onFocu
   const [listings, setListings] = useState<ListingRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [ownerTab, setOwnerTab] = useState<"all" | "agents" | "users">("all");
   const [filter, setFilter] = useState<ApprovalFilter>("all");
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("table");
@@ -274,13 +275,21 @@ export function ListingsPage({ onMessageUser, onMailUser, focusListingId, onFocu
   }
 
   // ── listings table / grid ─────────────────────────────────────────────────
-  const totalActive = listings.filter((l) => l.status === "active").length;
-  const pendingCount = listings.filter((l) => l.approval === "pending").length;
-  const approvedCount = listings.filter((l) => l.approval === "approved").length;
-  const rejectedCount = listings.filter((l) => l.approval === "rejected").length;
+  const tabBase = ownerTab === "agents" ? listings.filter((l) => l.ownerType === "agent")
+    : ownerTab === "users" ? listings.filter((l) => l.ownerType !== "agent")
+    : listings;
+  const totalActive = tabBase.filter((l) => l.status === "active").length;
+  const pendingCount = tabBase.filter((l) => l.approval === "pending").length;
+  const approvedCount = tabBase.filter((l) => l.approval === "approved").length;
+  const rejectedCount = tabBase.filter((l) => l.approval === "rejected").length;
+
+  const agentCount = listings.filter((l) => l.ownerType === "agent").length;
+  const userCount = listings.filter((l) => l.ownerType !== "agent").length;
 
   const filtered = useMemo(() => {
     let list = listings;
+    if (ownerTab === "agents") list = list.filter((l) => l.ownerType === "agent");
+    else if (ownerTab === "users") list = list.filter((l) => l.ownerType !== "agent");
     if (filter === "pending") list = list.filter((l) => l.approval === "pending");
     else if (filter === "approved") list = list.filter((l) => l.approval === "approved");
     else if (filter === "rejected") list = list.filter((l) => l.approval === "rejected");
@@ -291,7 +300,7 @@ export function ListingsPage({ onMessageUser, onMailUser, focusListingId, onFocu
       );
     }
     return [...list].sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime());
-  }, [listings, filter, search]);
+  }, [listings, ownerTab, filter, search]);
 
   function handleExport() {
     exportToExcel("listings", filtered.map((l) => ({
@@ -309,6 +318,25 @@ export function ListingsPage({ onMessageUser, onMailUser, focusListingId, onFocu
           <StatCard label="Pending Approval" value={pendingCount} icon={Clock} iconBg="bg-amber-500/15" iconColor="text-amber-400" valueColor="text-amber-400" />
           <StatCard label="Approved" value={approvedCount} icon={CheckCircle2} iconBg="bg-emerald-500/15" iconColor="text-emerald-400" valueColor="text-emerald-400" />
           <StatCard label="Rejected" value={rejectedCount} icon={XCircle} iconBg="bg-red-500/15" iconColor="text-red-400" valueColor="text-red-400" />
+        </div>
+
+        <div className="flex gap-1 border-b border-[var(--border-color)] mb-5">
+          {(["all", "agents", "users"] as const).map((tab) => {
+            const label = tab === "all" ? `All (${listings.length})` : tab === "agents" ? `Agent Listings (${agentCount})` : `User Listings (${userCount})`;
+            return (
+              <button
+                key={tab}
+                onClick={() => { setOwnerTab(tab); setFilter("all"); }}
+                className={`px-5 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
+                  ownerTab === tab
+                    ? "border-violet-500 text-violet-400"
+                    : "border-transparent text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
 
         <div className="flex gap-2 mb-4">

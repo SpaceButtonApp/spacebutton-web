@@ -153,7 +153,7 @@ export function ListingsPage({ onMessageUser, onMailUser, focusListingId, onFocu
     try {
       const [firstPage, agentsResult] = await Promise.allSettled([
         adminApi.getListings(1, 100),
-        adminApi.getAgents(1, 200),
+        adminApi.getAgents(1, 100),
       ]);
       if (firstPage.status === "rejected") throw firstPage.reason;
       let all: AdminListing[] = firstPage.value.listings ?? [];
@@ -215,6 +215,23 @@ export function ListingsPage({ onMessageUser, onMailUser, focusListingId, onFocu
       setConfirmDel(null);
     } catch (e) { alert(e instanceof Error ? e.message : "Failed to delete"); }
   }
+
+  // ── filtered list (must be before any early returns — Rules of Hooks) ──────
+  const filtered = useMemo(() => {
+    let list = listings;
+    if (ownerTab === "agents") list = list.filter((l) => l.ownerType === "agent");
+    else if (ownerTab === "users") list = list.filter((l) => l.ownerType !== "agent");
+    if (filter === "pending") list = list.filter((l) => l.approval === "pending");
+    else if (filter === "approved") list = list.filter((l) => l.approval === "approved");
+    else if (filter === "rejected") list = list.filter((l) => l.approval === "rejected");
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter((l) =>
+        l.title.toLowerCase().includes(q) || l.location.toLowerCase().includes(q) || l.agentName.toLowerCase().includes(q)
+      );
+    }
+    return [...list].sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime());
+  }, [listings, ownerTab, filter, search]);
 
   // ── shared modals (render in both views) ──────────────────────────────────
   const sharedModals = (
@@ -285,22 +302,6 @@ export function ListingsPage({ onMessageUser, onMailUser, focusListingId, onFocu
 
   const agentCount = listings.filter((l) => l.ownerType === "agent").length;
   const userCount = listings.filter((l) => l.ownerType !== "agent").length;
-
-  const filtered = useMemo(() => {
-    let list = listings;
-    if (ownerTab === "agents") list = list.filter((l) => l.ownerType === "agent");
-    else if (ownerTab === "users") list = list.filter((l) => l.ownerType !== "agent");
-    if (filter === "pending") list = list.filter((l) => l.approval === "pending");
-    else if (filter === "approved") list = list.filter((l) => l.approval === "approved");
-    else if (filter === "rejected") list = list.filter((l) => l.approval === "rejected");
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      list = list.filter((l) =>
-        l.title.toLowerCase().includes(q) || l.location.toLowerCase().includes(q) || l.agentName.toLowerCase().includes(q)
-      );
-    }
-    return [...list].sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime());
-  }, [listings, ownerTab, filter, search]);
 
   function handleExport() {
     exportToExcel("listings", filtered.map((l) => ({

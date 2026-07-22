@@ -211,8 +211,8 @@ export function UsersPage({ onMessageUser, onMailUser }: UsersPageProps) {
                     <div className="flex items-center gap-1.5">
                       <span className="text-[var(--text-secondary)]">{u.email}</span>
                       {emailVerifiedMap.get(u.id)
-                        ? <MailCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" title="Email verified" />
-                        : <MailX className="w-3.5 h-3.5 text-amber-400 shrink-0" title="Email not verified" />
+                        ? <MailCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" aria-label="Email verified" />
+                        : <MailX className="w-3.5 h-3.5 text-amber-400 shrink-0" aria-label="Email not verified" />
                       }
                     </div>
                   </td>

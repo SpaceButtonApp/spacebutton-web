@@ -139,11 +139,19 @@ export const authApi = {
 // ─── Error message extractor ──────────────────────────────────
 
 export function getAuthErrorMessage(err: unknown): string {
+  // No connection / request never left the device
+  if (err instanceof TypeError || (err instanceof Error && err.message.toLowerCase().includes('fetch'))) {
+    return 'Connection failed. Please check your internet and try again.'
+  }
   if (err instanceof ApiError) {
-    // FastAPI validation error
+    // FastAPI validation error array
     const detail = (err.body as { detail?: unknown }).detail
     if (Array.isArray(detail) && detail.length > 0) {
       return (detail[0] as { msg: string }).msg ?? 'Validation error'
+    }
+    // Generic fallback — add network hint since slow connections often cause this
+    if (!err.message || err.message === 'Request failed') {
+      return 'Request failed. This may be a network issue — please try again.'
     }
     return err.message
   }

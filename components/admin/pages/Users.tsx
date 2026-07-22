@@ -1,6 +1,6 @@
 'use client'
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Users as UsersIcon, UserCheck, Briefcase, Ban, Eye, MessageCircle, Mail, UserX, Trash2, Star, Flag, Building2, Gift, RefreshCw, AlertCircle } from "lucide-react";
+import { Users as UsersIcon, UserCheck, Briefcase, Ban, Eye, MessageCircle, Mail, UserX, Trash2, Star, Flag, Building2, Gift, RefreshCw, AlertCircle, MailCheck, MailX } from "lucide-react";
 import { useAdminStore, getReferralCount } from "@/lib/admin-store";
 import { adminApi } from "@/lib/api/admin";
 import type { AdminUser } from "@/lib/api/admin";
@@ -46,6 +46,7 @@ export function UsersPage({ onMessageUser, onMailUser }: UsersPageProps) {
   const reviews = useAdminStore((s) => s.reviews);
 
   const [users, setUsers] = useState<AppUser[]>([]);
+  const [emailVerifiedMap, setEmailVerifiedMap] = useState<Map<string, boolean>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -70,6 +71,7 @@ export function UsersPage({ onMessageUser, onMailUser }: UsersPageProps) {
         page++;
       }
       setUsers(all.map(mapApiUser));
+      setEmailVerifiedMap(new Map(all.map((u) => [u.id, u.is_email_verified])));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load users");
     } finally {
@@ -205,7 +207,15 @@ export function UsersPage({ onMessageUser, onMailUser }: UsersPageProps) {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-3.5 text-[var(--text-secondary)]">{u.email}</td>
+                  <td className="px-6 py-3.5">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[var(--text-secondary)]">{u.email}</span>
+                      {emailVerifiedMap.get(u.id)
+                        ? <MailCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" title="Email verified" />
+                        : <MailX className="w-3.5 h-3.5 text-amber-400 shrink-0" title="Email not verified" />
+                      }
+                    </div>
+                  </td>
                   <td className="px-6 py-3.5 text-[var(--text-secondary)]">{u.phone || "—"}</td>
                   <td className="px-6 py-3.5">
                     <span className="text-xs font-medium capitalize px-2.5 py-1 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/20">

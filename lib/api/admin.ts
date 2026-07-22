@@ -126,6 +126,8 @@ export interface AdminListing {
   title: string
   description?: string
   property_type?: string
+  category?: string
+  owner_type?: string
   status?: string
   price?: string
   total_package?: string
@@ -135,6 +137,12 @@ export interface AdminListing {
   address?: string
   bedrooms?: number
   bathrooms?: number
+  sitting_rooms?: number
+  balconies?: number
+  rent_due_date?: string | null
+  landlord_presence?: string | null
+  facilities?: string | null
+  connect_role?: string | null
   agent_id: string
   video_tour_url?: string
   images?: Array<{ url: string; is_cover: boolean }>

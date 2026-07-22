@@ -122,7 +122,7 @@ export default function AdminListingDetailPage() {
 
   // Build unified media list: images first, then video
   const media: MediaItem[] = [
-    ...(listing?.images ?? []).map((img) => ({ kind: 'image' as const, url: img.url })),
+    ...(listing?.images ?? []).map((img) => ({ kind: 'image' as const, url: img.image_url })),
     ...(listing?.video_tour_url ? [{ kind: 'video' as const, url: listing.video_tour_url }] : []),
   ]
 

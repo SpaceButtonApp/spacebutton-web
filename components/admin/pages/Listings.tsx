@@ -4,14 +4,15 @@ import {
   Building2, CheckCircle2, Clock, XCircle, List, LayoutGrid, Eye, Trash2,
   MessageCircle, Mail, MapPin, Bed, Bath, CheckCheck, X, RefreshCw, AlertCircle,
   Video, ExternalLink, ChevronLeft, ChevronRight, Sofa, Tag, Users, Home, Calendar,
+  ArrowLeft,
 } from "lucide-react";
 import { adminApi } from "@/lib/api/admin";
 import type { AdminListing, AdminAgent } from "@/lib/api/admin";
 import { StatCard } from "@/components/admin/shared/StatCard";
 import { SearchInput, ExportButton, ActionMenu, FilterPill, Avatar, EmptyState } from "@/components/admin/shared/Atoms";
 import { StatusBadge } from "@/components/admin/shared/Badge";
-import { Modal, ConfirmModal, ReasonModal } from "@/components/admin/shared/Modal";
-import { formatDate, exportToExcel, formatNaira, truncateId } from "@/lib/utils/admin-format";
+import { ConfirmModal, ReasonModal, ImageLightbox } from "@/components/admin/shared/Modal";
+import { formatDate, exportToExcel, formatNaira } from "@/lib/utils/admin-format";
 import type { AppUser, ApprovalStatus, ListingStatus, UserRole } from "@/lib/types/admin";
 
 type ApprovalFilter = "all" | "pending" | "approved" | "rejected";
@@ -76,27 +77,20 @@ function mapListing(l: AdminListing, agentMap: Map<string, AdminAgent>): Listing
   const statusRaw = (l.status ?? "").toLowerCase();
   let approval: ApprovalStatus;
   let status: ListingStatus;
-  if (statusRaw === "pending") {
-    approval = "pending"; status = "closed";
-  } else if (statusRaw === "rejected") {
-    approval = "rejected"; status = "closed";
-  } else if (statusRaw === "active") {
-    approval = "approved"; status = "active";
-  } else if (statusRaw === "closed") {
-    approval = "approved"; status = "closed";
-  } else {
-    approval = "pending"; status = "closed";
-  }
+  if (statusRaw === "pending") { approval = "pending"; status = "closed"; }
+  else if (statusRaw === "rejected") { approval = "rejected"; status = "closed"; }
+  else if (statusRaw === "active") { approval = "approved"; status = "active"; }
+  else if (statusRaw === "closed") { approval = "approved"; status = "closed"; }
+  else { approval = "pending"; status = "closed"; }
 
   let facilities: string[] = [];
   try { if (l.facilities) facilities = JSON.parse(l.facilities) as string[]; } catch { /* ignore */ }
 
-  const location = [l.address, l.city, l.state].filter(Boolean).join(", ") || "—";
   return {
     id: l.id,
     title: l.title,
     description: l.description ?? "",
-    location,
+    location: [l.address, l.city, l.state].filter(Boolean).join(", ") || "—",
     price,
     rentPeriod: l.rent_period ?? "",
     propertyType: l.property_type ?? "",
@@ -126,17 +120,9 @@ function mapListing(l: AdminListing, agentMap: Map<string, AdminAgent>): Listing
 
 function toAppUser(row: ListingRow): AppUser {
   return {
-    id: row.agentId,
-    userId: row.agentId,
-    name: row.agentName,
-    email: row.agentEmail,
-    phone: "",
-    role: "agent" as UserRole,
-    status: "active",
-    joinDate: "",
-    avatarColor: row.agentAvatarColor,
-    referralCode: "",
-    connects: 0,
+    id: row.agentId, userId: row.agentId, name: row.agentName, email: row.agentEmail,
+    phone: "", role: "agent" as UserRole, status: "active", joinDate: "",
+    avatarColor: row.agentAvatarColor, referralCode: "", connects: 0,
   };
 }
 
@@ -159,16 +145,13 @@ export function ListingsPage({ onMessageUser, onMailUser, focusListingId, onFocu
   const [rejectingListing, setRejectingListing] = useState<ListingRow | null>(null);
 
   const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+    setLoading(true); setError(null);
     try {
       const [firstPage, agentsResult] = await Promise.allSettled([
         adminApi.getListings(1, 100),
         adminApi.getAgents(1, 200),
       ]);
-
       if (firstPage.status === "rejected") throw firstPage.reason;
-
       let all: AdminListing[] = firstPage.value.listings ?? [];
       let page = 2;
       while (all.length < (firstPage.value.total ?? 0) && (firstPage.value.listings?.length ?? 0) >= 100) {
@@ -178,22 +161,16 @@ export function ListingsPage({ onMessageUser, onMailUser, focusListingId, onFocu
         if (batch.length < 100) break;
         page++;
       }
-
       const agentMap = new Map<string, AdminAgent>();
       if (agentsResult.status === "fulfilled") {
         for (const a of (agentsResult.value.agents ?? [])) {
-          agentMap.set(a.id, a);
-          agentMap.set(a.user_id, a);
+          agentMap.set(a.id, a); agentMap.set(a.user_id, a);
         }
       }
-
       setListings(all.map((l) => mapListing(l, agentMap)));
     } catch (e) {
-      const msg = e instanceof Error ? e.message : typeof e === "string" ? e : "Failed to load listings";
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
+      setError(e instanceof Error ? e.message : typeof e === "string" ? e : "Failed to load listings");
+    } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -207,6 +184,93 @@ export function ListingsPage({ onMessageUser, onMailUser, focusListingId, onFocu
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusListingId, listings]);
 
+  async function handleApprove(id: string) {
+    try {
+      await adminApi.approveListing(id);
+      const upd = (l: ListingRow) => l.id === id ? { ...l, approval: "approved" as const, status: "active" as const } : l;
+      setListings((p) => p.map(upd));
+      setDetailListing((p) => p ? upd(p) : p);
+    } catch (e) { alert(e instanceof Error ? e.message : "Failed to approve"); }
+  }
+
+  async function handleReject(id: string, reason: string) {
+    try {
+      await adminApi.rejectListing(id, reason);
+      const upd = (l: ListingRow) => l.id === id ? { ...l, approval: "rejected" as const, status: "closed" as const } : l;
+      setListings((p) => p.map(upd));
+      setDetailListing((p) => p ? upd(p) : p);
+      setRejectingListing(null);
+    } catch (e) { alert(e instanceof Error ? e.message : "Failed to reject"); }
+  }
+
+  async function handleDelete(id: string) {
+    try {
+      await adminApi.deleteListing(id);
+      setListings((p) => p.filter((l) => l.id !== id));
+      setDetailListing((p) => p?.id === id ? null : p);
+      setConfirmDel(null);
+    } catch (e) { alert(e instanceof Error ? e.message : "Failed to delete"); }
+  }
+
+  // ── shared modals (render in both views) ──────────────────────────────────
+  const sharedModals = (
+    <>
+      <ConfirmModal
+        open={!!confirmDel}
+        title="Delete listing?"
+        description={`"${confirmDel?.title}" will be permanently removed from the platform.`}
+        confirmLabel="Delete"
+        icon={<Trash2 className="w-6 h-6 text-red-400" />}
+        onConfirm={() => { if (confirmDel) handleDelete(confirmDel.id); }}
+        onCancel={() => setConfirmDel(null)}
+      />
+      <ReasonModal
+        open={!!rejectingListing}
+        title="Reason for rejection"
+        onSubmit={(reason) => { if (rejectingListing) handleReject(rejectingListing.id, reason); }}
+        onCancel={() => setRejectingListing(null)}
+      />
+    </>
+  );
+
+  // ── full-page detail view ────────────────────────────────────────────────
+  if (detailListing) {
+    return (
+      <>
+        <ListingDetailPage
+          listing={detailListing}
+          onBack={() => setDetailListing(null)}
+          onApprove={() => handleApprove(detailListing.id)}
+          onReject={() => setRejectingListing(detailListing)}
+          onDelete={() => setConfirmDel(detailListing)}
+          onMessage={() => onMessageUser?.(toAppUser(detailListing))}
+          onMail={() => onMailUser?.(toAppUser(detailListing))}
+        />
+        {sharedModals}
+      </>
+    );
+  }
+
+  // ── loading / error ───────────────────────────────────────────────────────
+  if (loading) {
+    return (
+      <div className="p-8 flex flex-col items-center justify-center min-h-[400px] gap-3">
+        <div className="w-8 h-8 border-2 border-violet-500/30 border-t-violet-500 rounded-full animate-spin" />
+        <span className="text-sm text-[var(--text-secondary)]">Loading listings…</span>
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="p-8 flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <AlertCircle className="w-10 h-10 text-red-400" />
+        <p className="text-[var(--text-secondary)] text-sm">{error}</p>
+        <button onClick={load} className="px-4 py-2 rounded-xl bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-colors">Retry</button>
+      </div>
+    );
+  }
+
+  // ── listings table / grid ─────────────────────────────────────────────────
   const totalActive = listings.filter((l) => l.status === "active").length;
   const pendingCount = listings.filter((l) => l.approval === "pending").length;
   const approvedCount = listings.filter((l) => l.approval === "approved").length;
@@ -220,246 +284,128 @@ export function ListingsPage({ onMessageUser, onMailUser, focusListingId, onFocu
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter((l) =>
-        l.title.toLowerCase().includes(q) ||
-        l.location.toLowerCase().includes(q) ||
-        l.agentName.toLowerCase().includes(q)
+        l.title.toLowerCase().includes(q) || l.location.toLowerCase().includes(q) || l.agentName.toLowerCase().includes(q)
       );
     }
     return [...list].sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime());
   }, [listings, filter, search]);
 
-  async function handleApprove(id: string) {
-    try {
-      await adminApi.approveListing(id);
-      const update = (l: ListingRow) => l.id === id ? { ...l, approval: "approved" as const, status: "active" as const } : l;
-      setListings((prev) => prev.map(update));
-      setDetailListing((prev) => prev ? update(prev) : prev);
-    } catch (e) {
-      alert(e instanceof Error ? e.message : "Failed to approve listing");
-    }
-  }
-
-  async function handleReject(id: string, reason: string) {
-    try {
-      await adminApi.rejectListing(id, reason);
-      const update = (l: ListingRow) => l.id === id ? { ...l, approval: "rejected" as const, status: "closed" as const } : l;
-      setListings((prev) => prev.map(update));
-      setDetailListing((prev) => prev ? update(prev) : prev);
-      setRejectingListing(null);
-    } catch (e) {
-      alert(e instanceof Error ? e.message : "Failed to reject listing");
-    }
-  }
-
-  async function handleDelete(id: string) {
-    try {
-      await adminApi.deleteListing(id);
-      setListings((prev) => prev.filter((l) => l.id !== id));
-      setDetailListing((prev) => (prev?.id === id ? null : prev));
-      setConfirmDel(null);
-    } catch (e) {
-      alert(e instanceof Error ? e.message : "Failed to delete listing");
-    }
-  }
-
   function handleExport() {
-    exportToExcel(
-      "listings",
-      filtered.map((l) => ({
-        Title: l.title,
-        Location: l.location,
-        Price: l.price,
-        PropertyType: l.propertyType,
-        Status: l.status,
-        Approval: l.approval,
-        Agent: l.agentName,
-        Listed: formatDate(l.createdDate),
-      }))
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="p-8 flex flex-col items-center justify-center min-h-[400px] gap-3">
-        <div className="w-8 h-8 border-2 border-violet-500/30 border-t-violet-500 rounded-full animate-spin" />
-        <span className="text-sm text-[var(--text-secondary)]">Loading listings…</span>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-8 flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <AlertCircle className="w-10 h-10 text-red-400" />
-        <p className="text-[var(--text-secondary)] text-sm">{error}</p>
-        <button
-          onClick={load}
-          className="px-4 py-2 rounded-xl bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-colors"
-        >
-          Retry
-        </button>
-      </div>
-    );
+    exportToExcel("listings", filtered.map((l) => ({
+      Title: l.title, Location: l.location, Price: l.price,
+      PropertyType: l.propertyType, Status: l.status, Approval: l.approval,
+      Agent: l.agentName, Listed: formatDate(l.createdDate),
+    })));
   }
 
   return (
-    <div className="p-8">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <StatCard label="Active Listings" value={totalActive} icon={Building2} iconBg="bg-blue-500/15" iconColor="text-blue-400" />
-        <StatCard label="Pending Approval" value={pendingCount} icon={Clock} iconBg="bg-amber-500/15" iconColor="text-amber-400" valueColor="text-amber-400" />
-        <StatCard label="Approved" value={approvedCount} icon={CheckCircle2} iconBg="bg-emerald-500/15" iconColor="text-emerald-400" valueColor="text-emerald-400" />
-        <StatCard label="Rejected" value={rejectedCount} icon={XCircle} iconBg="bg-red-500/15" iconColor="text-red-400" valueColor="text-red-400" />
-      </div>
-
-      <div className="flex gap-2 mb-4">
-        <FilterPill active={filter === "all"} onClick={() => setFilter("all")}>All</FilterPill>
-        <FilterPill active={filter === "pending"} onClick={() => setFilter("pending")}>Pending</FilterPill>
-        <FilterPill active={filter === "approved"} onClick={() => setFilter("approved")}>Approved</FilterPill>
-        <FilterPill active={filter === "rejected"} onClick={() => setFilter("rejected")}>Rejected</FilterPill>
-      </div>
-
-      <div className="flex gap-3 mb-5 items-center">
-        <SearchInput value={search} onChange={setSearch} placeholder="Search by title, location or agent..." />
-        <div className="flex gap-1 bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-xl p-1 shrink-0">
-          <button
-            onClick={() => setViewMode("table")}
-            className={`p-2 rounded-lg transition-colors ${viewMode === "table" ? "bg-violet-600 text-white" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"}`}
-            aria-label="Table view"
-          >
-            <List className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setViewMode("grid")}
-            className={`p-2 rounded-lg transition-colors ${viewMode === "grid" ? "bg-violet-600 text-white" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"}`}
-            aria-label="Grid view"
-          >
-            <LayoutGrid className="w-4 h-4" />
-          </button>
+    <>
+      <div className="p-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <StatCard label="Active Listings" value={totalActive} icon={Building2} iconBg="bg-blue-500/15" iconColor="text-blue-400" />
+          <StatCard label="Pending Approval" value={pendingCount} icon={Clock} iconBg="bg-amber-500/15" iconColor="text-amber-400" valueColor="text-amber-400" />
+          <StatCard label="Approved" value={approvedCount} icon={CheckCircle2} iconBg="bg-emerald-500/15" iconColor="text-emerald-400" valueColor="text-emerald-400" />
+          <StatCard label="Rejected" value={rejectedCount} icon={XCircle} iconBg="bg-red-500/15" iconColor="text-red-400" valueColor="text-red-400" />
         </div>
-        <button
-          onClick={load}
-          className="p-3 rounded-xl bg-[var(--bg-raised)] border border-[var(--border-color)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors shrink-0"
-          title="Refresh"
-        >
-          <RefreshCw className="w-4 h-4" />
-        </button>
-        <ExportButton onClick={handleExport} />
-      </div>
 
-      {viewMode === "table" ? (
-        <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl overflow-hidden shadow-[var(--shadow-card)]">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-[var(--text-muted)] text-xs uppercase tracking-wide border-b border-[var(--border-color)]">
-                  <th className="px-6 py-4 font-medium">Listing</th>
-                  <th className="px-6 py-4 font-medium">Agent</th>
-                  <th className="px-6 py-4 font-medium">Type</th>
-                  <th className="px-6 py-4 font-medium">Price</th>
-                  <th className="px-6 py-4 font-medium">Status</th>
-                  <th className="px-6 py-4 font-medium">Approval</th>
-                  <th className="px-6 py-4 font-medium">Listed</th>
-                  <th className="px-6 py-4 font-medium text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((l) => (
-                  <tr key={l.id} className="border-b border-[var(--border-color)] last:border-0 hover:bg-[var(--bg-hover)]">
-                    <td className="px-6 py-3.5">
-                      <div className="flex items-center gap-3">
-                        {l.images[0] ? (
-                          <img src={l.images[0]} alt={l.title} className="w-10 h-10 rounded-lg object-cover shrink-0 border border-[var(--border-color)]" />
-                        ) : (
-                          <div className="w-10 h-10 rounded-lg bg-[var(--bg-sunken)] border border-[var(--border-color)] flex items-center justify-center shrink-0">
-                            <Building2 className="w-4 h-4 text-[var(--text-muted)]" />
-                          </div>
-                        )}
-                        <div>
-                          <div className="text-[var(--text-primary)] font-medium">{l.title}</div>
-                          <div className="text-xs text-[var(--text-muted)] flex items-center gap-1">
-                            <MapPin className="w-3 h-3" />{l.location}
+        <div className="flex gap-2 mb-4">
+          <FilterPill active={filter === "all"} onClick={() => setFilter("all")}>All</FilterPill>
+          <FilterPill active={filter === "pending"} onClick={() => setFilter("pending")}>Pending</FilterPill>
+          <FilterPill active={filter === "approved"} onClick={() => setFilter("approved")}>Approved</FilterPill>
+          <FilterPill active={filter === "rejected"} onClick={() => setFilter("rejected")}>Rejected</FilterPill>
+        </div>
+
+        <div className="flex gap-3 mb-5 items-center">
+          <SearchInput value={search} onChange={setSearch} placeholder="Search by title, location or agent..." />
+          <div className="flex gap-1 bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-xl p-1 shrink-0">
+            <button onClick={() => setViewMode("table")} className={`p-2 rounded-lg transition-colors ${viewMode === "table" ? "bg-violet-600 text-white" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"}`} aria-label="Table view"><List className="w-4 h-4" /></button>
+            <button onClick={() => setViewMode("grid")} className={`p-2 rounded-lg transition-colors ${viewMode === "grid" ? "bg-violet-600 text-white" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"}`} aria-label="Grid view"><LayoutGrid className="w-4 h-4" /></button>
+          </div>
+          <button onClick={load} className="p-3 rounded-xl bg-[var(--bg-raised)] border border-[var(--border-color)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors shrink-0" title="Refresh"><RefreshCw className="w-4 h-4" /></button>
+          <ExportButton onClick={handleExport} />
+        </div>
+
+        {viewMode === "table" ? (
+          <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl overflow-hidden shadow-[var(--shadow-card)]">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-[var(--text-muted)] text-xs uppercase tracking-wide border-b border-[var(--border-color)]">
+                    <th className="px-6 py-4 font-medium">Listing</th>
+                    <th className="px-6 py-4 font-medium">Agent</th>
+                    <th className="px-6 py-4 font-medium">Type</th>
+                    <th className="px-6 py-4 font-medium">Price</th>
+                    <th className="px-6 py-4 font-medium">Status</th>
+                    <th className="px-6 py-4 font-medium">Approval</th>
+                    <th className="px-6 py-4 font-medium">Listed</th>
+                    <th className="px-6 py-4 font-medium text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((l) => (
+                    <tr key={l.id} className="border-b border-[var(--border-color)] last:border-0 hover:bg-[var(--bg-hover)]">
+                      <td className="px-6 py-3.5">
+                        <div className="flex items-center gap-3">
+                          {l.images[0] ? (
+                            <img src={l.images[0]} alt={l.title} className="w-10 h-10 rounded-lg object-cover shrink-0 border border-[var(--border-color)]" />
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg bg-[var(--bg-sunken)] border border-[var(--border-color)] flex items-center justify-center shrink-0">
+                              <Building2 className="w-4 h-4 text-[var(--text-muted)]" />
+                            </div>
+                          )}
+                          <div>
+                            <div className="text-[var(--text-primary)] font-medium">{l.title}</div>
+                            <div className="text-xs text-[var(--text-muted)] flex items-center gap-1"><MapPin className="w-3 h-3" />{l.location}</div>
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-3.5">
-                      <div className="flex items-center gap-2">
-                        <Avatar name={l.agentName} color={l.agentAvatarColor} size={28} />
-                        <span className="text-[var(--text-secondary)]">{l.agentName}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-3.5 text-[var(--text-secondary)]">{l.categoryDisplay || "—"}</td>
-                    <td className="px-6 py-3.5 text-[var(--text-primary)]">{l.price ? formatNaira(l.price) : "—"}</td>
-                    <td className="px-6 py-3.5"><StatusBadge status={l.status} /></td>
-                    <td className="px-6 py-3.5"><StatusBadge status={l.approval} /></td>
-                    <td className="px-6 py-3.5 text-[var(--text-secondary)]">{formatDate(l.createdDate)}</td>
-                    <td className="px-6 py-3.5 text-right">
-                      <ActionMenu
-                        items={[
-                          { label: "View details", icon: <Eye className="w-4 h-4" />, onClick: () => setDetailListing(l) },
+                      </td>
+                      <td className="px-6 py-3.5">
+                        <div className="flex items-center gap-2">
+                          <Avatar name={l.agentName} color={l.agentAvatarColor} size={28} />
+                          <span className="text-[var(--text-secondary)]">{l.agentName}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-3.5 text-[var(--text-secondary)]">{l.categoryDisplay || "—"}</td>
+                      <td className="px-6 py-3.5 text-[var(--text-primary)]">{l.price ? formatNaira(l.price) : "—"}</td>
+                      <td className="px-6 py-3.5"><StatusBadge status={l.status} /></td>
+                      <td className="px-6 py-3.5"><StatusBadge status={l.approval} /></td>
+                      <td className="px-6 py-3.5 text-[var(--text-secondary)]">{formatDate(l.createdDate)}</td>
+                      <td className="px-6 py-3.5 text-right">
+                        <ActionMenu items={[
+                          { label: "View full details", icon: <Eye className="w-4 h-4" />, onClick: () => setDetailListing(l) },
                           { label: "Message agent", icon: <MessageCircle className="w-4 h-4" />, onClick: () => onMessageUser?.(toAppUser(l)) },
                           { label: "Email agent", icon: <Mail className="w-4 h-4" />, onClick: () => onMailUser?.(toAppUser(l)) },
                           l.approval === "pending" ? { label: "Approve", icon: <CheckCheck className="w-4 h-4" />, onClick: () => handleApprove(l.id) } : null,
                           l.approval === "pending" ? { label: "Reject", icon: <X className="w-4 h-4" />, onClick: () => setRejectingListing(l), danger: true } : null,
                           { label: "Delete", icon: <Trash2 className="w-4 h-4" />, onClick: () => setConfirmDel(l), danger: true },
-                        ].filter(Boolean) as Parameters<typeof ActionMenu>[0]["items"]}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {filtered.length === 0 && <EmptyState label="No listings found." />}
+                        ].filter(Boolean) as Parameters<typeof ActionMenu>[0]["items"]} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {filtered.length === 0 && <EmptyState label="No listings found." />}
+            </div>
           </div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((l) => (
-            <ListingCard key={l.id} listing={l} onView={() => setDetailListing(l)} />
-          ))}
-          {filtered.length === 0 && <div className="col-span-3"><EmptyState label="No listings found." /></div>}
-        </div>
-      )}
-
-      <Modal open={!!detailListing} onClose={() => setDetailListing(null)} maxWidth="max-w-5xl">
-        {detailListing && (
-          <ListingDetail
-            listing={detailListing}
-            onApprove={() => handleApprove(detailListing.id)}
-            onReject={() => setRejectingListing(detailListing)}
-            onDelete={() => { setDetailListing(null); setConfirmDel(detailListing); }}
-            onMessage={() => onMessageUser?.(toAppUser(detailListing))}
-            onMail={() => onMailUser?.(toAppUser(detailListing))}
-          />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filtered.map((l) => (
+              <ListingCard key={l.id} listing={l} onView={() => setDetailListing(l)} />
+            ))}
+            {filtered.length === 0 && <div className="col-span-3"><EmptyState label="No listings found." /></div>}
+          </div>
         )}
-      </Modal>
-
-      <ConfirmModal
-        open={!!confirmDel}
-        title="Delete listing?"
-        description={`"${confirmDel?.title}" will be permanently removed from the platform.`}
-        confirmLabel="Delete"
-        icon={<Trash2 className="w-6 h-6 text-red-400" />}
-        onConfirm={() => { if (confirmDel) handleDelete(confirmDel.id); }}
-        onCancel={() => setConfirmDel(null)}
-      />
-
-      <ReasonModal
-        open={!!rejectingListing}
-        title="Reason for rejection"
-        onSubmit={(reason) => { if (rejectingListing) handleReject(rejectingListing.id, reason); }}
-        onCancel={() => setRejectingListing(null)}
-      />
-    </div>
+      </div>
+      {sharedModals}
+    </>
   );
 }
 
+// ─── Grid card ───────────────────────────────────────────────────────────────
+
 function ListingCard({ listing, onView }: { listing: ListingRow; onView: () => void }) {
   return (
-    <div
-      onClick={onView}
-      className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl overflow-hidden cursor-pointer hover:border-violet-500/30 transition-colors"
-    >
+    <div onClick={onView} className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl overflow-hidden cursor-pointer hover:border-violet-500/30 transition-colors">
       {listing.images[0] ? (
         <img src={listing.images[0]} alt={listing.title} className="w-full h-44 object-cover" />
       ) : (
@@ -472,9 +418,7 @@ function ListingCard({ listing, onView }: { listing: ListingRow; onView: () => v
           <div className="font-semibold text-[var(--text-primary)] text-sm leading-tight">{listing.title}</div>
           <StatusBadge status={listing.approval} />
         </div>
-        <div className="text-xs text-[var(--text-muted)] flex items-center gap-1 mb-3">
-          <MapPin className="w-3 h-3" />{listing.location}
-        </div>
+        <div className="text-xs text-[var(--text-muted)] flex items-center gap-1 mb-3"><MapPin className="w-3 h-3" />{listing.location}</div>
         <div className="flex items-center justify-between">
           <div className="text-violet-400 font-bold text-sm">
             {listing.price ? formatNaira(listing.price) : "—"}
@@ -490,10 +434,13 @@ function ListingCard({ listing, onView }: { listing: ListingRow; onView: () => v
   );
 }
 
-function ListingDetail({
-  listing, onApprove, onReject, onDelete, onMessage, onMail,
+// ─── Full-page detail view ───────────────────────────────────────────────────
+
+function ListingDetailPage({
+  listing, onBack, onApprove, onReject, onDelete, onMessage, onMail,
 }: {
   listing: ListingRow;
+  onBack: () => void;
   onApprove: () => void;
   onReject: () => void;
   onDelete: () => void;
@@ -501,42 +448,80 @@ function ListingDetail({
   onMail: () => void;
 }) {
   const [imgIdx, setImgIdx] = useState(0);
+  const [lightbox, setLightbox] = useState<string | null>(null);
   const ownerLabel = listing.ownerType === "agent" ? "Agent" : (listing.connectRole ?? "User");
 
   return (
-    <div className="flex gap-5">
-      {/* ── LEFT: image carousel ──────────────────────────────────── */}
-      <div className="w-[42%] shrink-0 flex flex-col gap-2.5">
-        {listing.images.length > 0 ? (
-          <div className="relative rounded-xl overflow-hidden bg-black" style={{ aspectRatio: "4/3" }}>
-            <img
-              src={listing.images[imgIdx]}
-              alt={listing.title}
-              className="w-full h-full object-cover"
-            />
+    <div>
+      {/* ── Back bar ── */}
+      <div className="px-6 py-3.5 border-b border-[var(--border-color)]">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to listings
+        </button>
+      </div>
+
+      {/* ── Two-column layout ── */}
+      <div className="flex items-start">
+
+        {/* LEFT: images (sticky) */}
+        <div className="sticky top-0 self-start w-[46%] shrink-0 p-6 flex flex-col gap-3">
+
+          {/* Main image */}
+          <div
+            className="relative rounded-2xl overflow-hidden bg-black cursor-zoom-in group"
+            style={{ aspectRatio: "4/3" }}
+            onClick={() => listing.images[imgIdx] && setLightbox(listing.images[imgIdx])}
+          >
+            {listing.images[imgIdx] ? (
+              <img
+                src={listing.images[imgIdx]}
+                alt={listing.title}
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-[var(--bg-sunken)]">
+                <Building2 className="w-16 h-16 text-[var(--text-muted)]" />
+              </div>
+            )}
+
             {/* Status badge */}
             <div className="absolute top-3 left-3">
               <StatusBadge status={listing.approval === "approved" ? listing.status : listing.approval} />
             </div>
+
             {/* Counter */}
             {listing.images.length > 1 && (
-              <div className="absolute bottom-3 right-3 bg-black/50 text-white/90 text-xs px-2.5 py-0.5 rounded-full font-medium">
+              <div className="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-2.5 py-0.5 rounded-full font-medium">
                 {imgIdx + 1} / {listing.images.length}
               </div>
             )}
-            {/* Prev / Next */}
+
+            {/* Zoom hint */}
+            {listing.images[imgIdx] && (
+              <div className="absolute top-3 right-3 w-8 h-8 rounded-lg bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                  <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+                </svg>
+              </div>
+            )}
+
+            {/* Prev/Next arrows */}
             {listing.images.length > 1 && (
               <>
                 <button
-                  onClick={() => setImgIdx((i) => (i - 1 + listing.images.length) % listing.images.length)}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
+                  onClick={(e) => { e.stopPropagation(); setImgIdx((i) => (i - 1 + listing.images.length) % listing.images.length); }}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors"
                   aria-label="Previous image"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
                 <button
-                  onClick={() => setImgIdx((i) => (i + 1) % listing.images.length)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 transition-colors"
+                  onClick={(e) => { e.stopPropagation(); setImgIdx((i) => (i + 1) % listing.images.length); }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors"
                   aria-label="Next image"
                 >
                   <ChevronRight className="w-5 h-5" />
@@ -544,205 +529,194 @@ function ListingDetail({
               </>
             )}
           </div>
-        ) : (
-          <div
-            className="rounded-xl bg-[var(--bg-sunken)] border border-[var(--border-color)] flex items-center justify-center"
-            style={{ aspectRatio: "4/3" }}
-          >
-            <Building2 className="w-12 h-12 text-[var(--text-muted)]" />
-          </div>
-        )}
 
-        {/* Thumbnails */}
-        {listing.images.length > 1 && (
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            {listing.images.map((src, i) => (
-              <button
-                key={i}
-                onClick={() => setImgIdx(i)}
-                className={`shrink-0 w-14 h-14 rounded-lg overflow-hidden border-2 transition-colors ${
-                  i === imgIdx ? "border-violet-500" : "border-[var(--border-color)]"
-                }`}
-              >
-                <img src={src} alt={`Thumbnail ${i + 1}`} className="w-full h-full object-cover" />
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* ── RIGHT: details ────────────────────────────────────────── */}
-      <div className="flex-1 min-w-0 space-y-4">
-        {/* Owner chip */}
-        <span className="inline-block px-3 py-1 rounded-full bg-[var(--bg-sunken)] border border-[var(--border-color)] text-xs text-[var(--text-secondary)] font-medium">
-          {ownerLabel}
-        </span>
-
-        {/* Title + location */}
-        <div>
-          <h3 className="text-xl font-bold text-[var(--text-primary)] leading-tight">{listing.title}</h3>
-          <div className="flex items-start gap-1.5 mt-1.5 text-sm text-[var(--text-muted)]">
-            <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-            <span>{listing.location}</span>
-          </div>
-        </div>
-
-        {/* Price + Total Package */}
-        <div className="flex items-end gap-8">
-          <div>
-            <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-widest font-semibold mb-0.5">Rent</p>
-            <p className="text-2xl font-bold text-violet-400 leading-none">
-              {listing.price ? formatNaira(listing.price) : "—"}
-              {listing.rentPeriod && (
-                <span className="text-sm font-normal text-[var(--text-muted)]">/{listing.rentPeriod}</span>
-              )}
-            </p>
-          </div>
-          {listing.totalPackage ? (
-            <div>
-              <p className="text-[10px] text-[var(--text-muted)] uppercase tracking-widest font-semibold mb-0.5">Total Package</p>
-              <p className="text-xl font-bold text-[var(--text-primary)] leading-none">{formatNaira(listing.totalPackage)}</p>
-            </div>
-          ) : null}
-        </div>
-
-        {/* Property Features */}
-        {(listing.bedrooms !== undefined || listing.bathrooms !== undefined ||
-          listing.sittingRooms !== undefined || listing.balconies !== undefined) && (
-          <div className="bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-xl p-4">
-            <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Property Features</h4>
-            <div className="grid grid-cols-2 gap-2.5">
-              {listing.bedrooms !== undefined && (
-                <FeatureBox icon={Bed} label="Bedrooms" value={listing.bedrooms} />
-              )}
-              {listing.bathrooms !== undefined && (
-                <FeatureBox icon={Bath} label="Bathrooms" value={listing.bathrooms} />
-              )}
-              {listing.sittingRooms !== undefined && (
-                <FeatureBox icon={Sofa} label="Sitting Rooms" value={listing.sittingRooms} />
-              )}
-              {listing.balconies !== undefined && (
-                <FeatureBox icon={Building2} label="Balconies" value={listing.balconies} />
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Additional Information */}
-        <div className="bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-xl p-4">
-          <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-1">Additional Information</h4>
-          <div className="divide-y divide-[var(--border-color)]">
-            <InfoRow icon={Tag} label="Category" value={listing.categoryDisplay} />
-            {listing.condition && <InfoRow icon={Users} label="Condition" value={listing.condition} />}
-            {listing.landlordPresence && <InfoRow icon={Home} label="Landlord Presence" value={listing.landlordPresence} />}
-            <InfoRow icon={Calendar} label="Rent Due Date" value={listing.rentDueDate ? formatDate(listing.rentDueDate) : "—"} />
-          </div>
-        </div>
-
-        {/* Video Tour */}
-        {listing.videoUrl && (
-          <VideoEmbed url={listing.videoUrl} />
-        )}
-
-        {/* Facilities & Environment */}
-        {listing.facilities.length > 0 && (
-          <div className="bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-xl p-4">
-            <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Facilities & Environment</h4>
-            <div className="flex flex-wrap gap-2">
-              {listing.facilities.map((f, i) => (
-                <span
+          {/* Thumbnails */}
+          {listing.images.length > 1 && (
+            <div className="grid grid-cols-4 gap-2">
+              {listing.images.map((src, i) => (
+                <button
                   key={i}
-                  className="px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-xs text-violet-400"
+                  onClick={() => setImgIdx(i)}
+                  className={`aspect-square rounded-xl overflow-hidden border-2 transition-all ${
+                    i === imgIdx
+                      ? "border-violet-500 opacity-100"
+                      : "border-transparent opacity-50 hover:opacity-80"
+                  }`}
                 >
-                  {f}
-                </span>
+                  <img src={src} alt={`Photo ${i + 1}`} className="w-full h-full object-cover" />
+                </button>
               ))}
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Description */}
-        {listing.description && (
-          <div className="bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-xl p-4">
-            <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-2">Description</h4>
-            <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{listing.description}</p>
-          </div>
-        )}
-
-        {/* Posted By */}
-        <div className="bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-xl p-4">
-          <h4 className="text-sm font-semibold text-[var(--text-primary)] mb-3">Posted By</h4>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Avatar name={listing.agentName} color={listing.agentAvatarColor} size={40} />
-              <div>
-                <div className="font-semibold text-[var(--text-primary)]">{listing.agentName}</div>
-                <span className="inline-block mt-0.5 px-2 py-0.5 rounded-full bg-[var(--bg-raised)] border border-[var(--border-color)] text-[10px] text-[var(--text-muted)] capitalize">
-                  {ownerLabel}
-                </span>
-              </div>
+          {/* Video */}
+          {listing.videoUrl && (
+            <div className="mt-1">
+              <p className="text-xs text-[var(--text-muted)] uppercase tracking-wide font-semibold mb-2">Video Tour</p>
+              <VideoEmbed url={listing.videoUrl} />
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={onMessage}
-                className="p-2 rounded-lg bg-[var(--bg-raised)] border border-[var(--border-color)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
-                title="Message"
-              >
-                <MessageCircle className="w-4 h-4" />
-              </button>
+          )}
+        </div>
+
+        {/* RIGHT: all details (scrolls with the page) */}
+        <div className="flex-1 min-w-0 border-l border-[var(--border-color)] p-6 space-y-5">
+
+          {/* Owner chip */}
+          <span className="inline-block px-3 py-1 rounded-full bg-[var(--bg-sunken)] border border-[var(--border-color)] text-xs text-[var(--text-secondary)] font-medium">
+            {ownerLabel}
+          </span>
+
+          {/* Title + location */}
+          <div>
+            <h2 className="text-2xl font-bold text-[var(--text-primary)] leading-tight">{listing.title}</h2>
+            <div className="flex items-start gap-1.5 mt-2 text-sm text-[var(--text-muted)]">
+              <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+              <span>{listing.location}</span>
+            </div>
+          </div>
+
+          {/* Rent + Total Package */}
+          <div className="flex items-end gap-10 flex-wrap">
+            <div>
+              <p className="text-[10px] uppercase tracking-widest font-bold text-[var(--text-muted)] mb-1">Rent</p>
+              <p className="text-3xl font-bold text-violet-400 leading-none">
+                {listing.price ? formatNaira(listing.price) : "—"}
+                {listing.rentPeriod && (
+                  <span className="text-base font-normal text-[var(--text-muted)] ml-0.5">/{listing.rentPeriod}</span>
+                )}
+              </p>
+            </div>
+            {listing.totalPackage ? (
+              <div>
+                <p className="text-[10px] uppercase tracking-widest font-bold text-[var(--text-muted)] mb-1">Total Package</p>
+                <p className="text-2xl font-bold text-[var(--text-primary)] leading-none">{formatNaira(listing.totalPackage)}</p>
+              </div>
+            ) : null}
+          </div>
+
+          {/* Property Features */}
+          {(listing.bedrooms !== undefined || listing.bathrooms !== undefined ||
+            listing.sittingRooms !== undefined || listing.balconies !== undefined) && (
+            <section className="bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-2xl p-4">
+              <h4 className="font-semibold text-[var(--text-primary)] mb-3">Property Features</h4>
+              <div className="grid grid-cols-2 gap-3">
+                {listing.bedrooms !== undefined && <FeatureBox icon={Bed} label="Bedrooms" value={listing.bedrooms} />}
+                {listing.bathrooms !== undefined && <FeatureBox icon={Bath} label="Bathrooms" value={listing.bathrooms} />}
+                {listing.sittingRooms !== undefined && <FeatureBox icon={Sofa} label="Sitting Rooms" value={listing.sittingRooms} />}
+                {listing.balconies !== undefined && <FeatureBox icon={Building2} label="Balconies" value={listing.balconies} />}
+              </div>
+            </section>
+          )}
+
+          {/* Additional Information */}
+          <section className="bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-2xl p-4">
+            <h4 className="font-semibold text-[var(--text-primary)] mb-1">Additional Information</h4>
+            <div className="divide-y divide-[var(--border-color)]">
+              <InfoRow icon={Tag} label="Category" value={listing.categoryDisplay} />
+              {listing.condition && <InfoRow icon={Users} label="Condition" value={listing.condition} />}
+              {listing.landlordPresence && <InfoRow icon={Home} label="Landlord Presence" value={listing.landlordPresence} />}
+              <InfoRow icon={Calendar} label="Rent Due Date" value={listing.rentDueDate ? formatDate(listing.rentDueDate) : "—"} />
+            </div>
+          </section>
+
+          {/* Facilities & Environment */}
+          {listing.facilities.length > 0 && (
+            <section className="bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-2xl p-4">
+              <h4 className="font-semibold text-[var(--text-primary)] mb-3">Facilities & Environment</h4>
+              <div className="flex flex-wrap gap-2">
+                {listing.facilities.map((f, i) => (
+                  <span key={i} className="px-3 py-1 rounded-full bg-violet-500/10 border border-violet-500/20 text-xs text-violet-400">{f}</span>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Description */}
+          {listing.description && (
+            <section className="bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-2xl p-4">
+              <h4 className="font-semibold text-[var(--text-primary)] mb-2">Description</h4>
+              <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{listing.description}</p>
+            </section>
+          )}
+
+          {/* Posted By */}
+          <section className="bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-2xl p-4">
+            <h4 className="font-semibold text-[var(--text-primary)] mb-3">Posted By</h4>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Avatar name={listing.agentName} color={listing.agentAvatarColor} size={44} />
+                <div>
+                  <div className="font-semibold text-[var(--text-primary)] text-base">{listing.agentName}</div>
+                  <span className="inline-block mt-0.5 px-2.5 py-0.5 rounded-full bg-[var(--bg-raised)] border border-[var(--border-color)] text-[11px] text-[var(--text-muted)]">
+                    {ownerLabel}
+                  </span>
+                </div>
+              </div>
               <button
                 onClick={onMail}
-                className="p-2 rounded-lg bg-[var(--bg-raised)] border border-[var(--border-color)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+                className="p-2.5 rounded-xl bg-[var(--bg-raised)] border border-[var(--border-color)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
                 title="Email"
               >
                 <Mail className="w-4 h-4" />
               </button>
             </div>
-          </div>
+          </section>
+
+          {/* Approve / Reject */}
+          {listing.approval === "pending" && (
+            <div className="flex gap-3">
+              <button
+                onClick={onReject}
+                className="flex-1 py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-colors"
+                style={{ background: "rgba(60,10,10,0.7)", border: "1px solid rgba(153,27,27,0.4)", color: "#f87171" }}
+              >
+                <X className="w-5 h-5" /> Reject
+              </button>
+              <button
+                onClick={onApprove}
+                className="flex-1 py-4 rounded-2xl bg-emerald-500 text-white font-bold text-base flex items-center justify-center gap-2 hover:bg-emerald-600 transition-colors"
+              >
+                <CheckCheck className="w-5 h-5" /> Approve
+              </button>
+            </div>
+          )}
+
+          {/* Message Owner */}
+          <button
+            onClick={onMessage}
+            className="w-full py-3.5 rounded-2xl bg-[var(--bg-sunken)] border border-[var(--border-color)] text-[var(--text-secondary)] font-medium flex items-center justify-center gap-2 hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] transition-colors"
+          >
+            <MessageCircle className="w-4 h-4" /> Message Owner
+          </button>
+
+          {/* Delete */}
+          <button
+            onClick={onDelete}
+            className="w-full py-3 rounded-2xl bg-red-500/8 text-red-400/70 text-sm font-medium hover:bg-red-500/15 hover:text-red-400 transition-colors flex items-center justify-center gap-2"
+          >
+            <Trash2 className="w-4 h-4" /> Delete Listing
+          </button>
         </div>
-
-        {/* Approve / Reject */}
-        {listing.approval === "pending" && (
-          <div className="flex gap-3">
-            <button
-              onClick={onReject}
-              className="flex-1 py-3.5 rounded-xl bg-red-950/60 border border-red-900/40 text-red-400 font-semibold flex items-center justify-center gap-2 hover:bg-red-900/40 transition-colors"
-            >
-              <X className="w-4 h-4" /> Reject
-            </button>
-            <button
-              onClick={onApprove}
-              className="flex-1 py-3.5 rounded-xl bg-emerald-500 text-white font-semibold flex items-center justify-center gap-2 hover:bg-emerald-600 transition-colors"
-            >
-              <CheckCheck className="w-4 h-4" /> Approve
-            </button>
-          </div>
-        )}
-
-        {/* Message Owner */}
-        <button
-          onClick={onMessage}
-          className="w-full py-3 rounded-xl bg-violet-600/10 border border-violet-600/20 text-violet-400 font-medium flex items-center justify-center gap-2 hover:bg-violet-600/20 transition-colors"
-        >
-          <MessageCircle className="w-4 h-4" /> Message Owner
-        </button>
-
-        <button
-          onClick={onDelete}
-          className="w-full py-2.5 rounded-xl bg-red-500/10 text-red-400/80 text-sm font-medium hover:bg-red-500/20 hover:text-red-400 transition-colors flex items-center justify-center gap-2"
-        >
-          <Trash2 className="w-4 h-4" /> Delete Listing
-        </button>
       </div>
+
+      {/* Fullscreen image lightbox */}
+      <ImageLightbox
+        src={lightbox ?? ""}
+        alt={listing.title}
+        open={!!lightbox}
+        onClose={() => setLightbox(null)}
+      />
     </div>
   );
 }
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
 function FeatureBox({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: number }) {
   return (
-    <div className="flex flex-col gap-1.5 p-3 rounded-xl bg-[var(--bg-raised)] border border-[var(--border-color)]">
+    <div className="flex flex-col gap-1.5 p-3.5 rounded-xl bg-[var(--bg-raised)] border border-[var(--border-color)]">
       <Icon className="w-5 h-5 text-[var(--text-muted)]" />
-      <span className="text-base font-bold text-[var(--text-primary)]">{value}</span>
+      <span className="text-xl font-bold text-[var(--text-primary)]">{value}</span>
       <span className="text-xs text-[var(--text-muted)]">{label}</span>
     </div>
   );
@@ -750,9 +724,9 @@ function FeatureBox({ icon: Icon, label, value }: { icon: React.ElementType; lab
 
 function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between py-3 first:pt-1 last:pb-0">
+    <div className="flex items-center justify-between py-3 first:pt-1.5 last:pb-1.5">
       <div className="flex items-center gap-2 text-sm text-[var(--text-muted)]">
-        <Icon className="w-4 h-4" />
+        <Icon className="w-4 h-4 shrink-0" />
         <span>{label}</span>
       </div>
       <span className="text-sm text-[var(--text-primary)] font-medium text-right max-w-[55%]">{value}</span>
@@ -767,8 +741,8 @@ function VideoEmbed({ url }: { url: string }) {
       <div className="rounded-xl overflow-hidden border border-[var(--border-color)]">
         <iframe
           src={`https://www.youtube.com/embed/${ytMatch[1]}`}
-          className="w-full h-48"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          className="w-full h-52"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
           allowFullScreen
           title="Video tour"
         />
@@ -781,7 +755,7 @@ function VideoEmbed({ url }: { url: string }) {
       <video
         src={url}
         controls
-        className="w-full h-48 rounded-xl border border-[var(--border-color)] bg-black"
+        className="w-full h-52 rounded-xl border border-[var(--border-color)] bg-black"
       />
     );
   }

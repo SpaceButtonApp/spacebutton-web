@@ -71,8 +71,8 @@ function hashColor(id: string): string {
 function mapListing(l: AdminListing, agentMap: Map<string, AdminAgent>): ListingRow {
   const agent = agentMap.get(l.agent_id);
   const agentName = agent
-    ? [agent.first_name, agent.last_name].filter(Boolean).join(" ") || agent.agency_name || "Agent"
-    : "Agent";
+    ? [agent.first_name, agent.last_name].filter(Boolean).join(" ") || agent.agency_name || "Unknown"
+    : "Unknown";
   const price = parseFloat(l.price ?? "0") || 0;
   const statusRaw = (l.status ?? "").toLowerCase();
   let approval: ApprovalStatus;
@@ -297,7 +297,7 @@ export function ListingsPage({ onMessageUser, onMailUser, focusListingId, onFocu
     exportToExcel("listings", filtered.map((l) => ({
       Title: l.title, Location: l.location, Price: l.price,
       PropertyType: l.propertyType, Status: l.status, Approval: l.approval,
-      Agent: l.agentName, Listed: formatDate(l.createdDate),
+      PostedBy: l.agentName, Listed: formatDate(l.createdDate),
     })));
   }
 
@@ -335,7 +335,7 @@ export function ListingsPage({ onMessageUser, onMailUser, focusListingId, onFocu
                 <thead>
                   <tr className="text-left text-[var(--text-muted)] text-xs uppercase tracking-wide border-b border-[var(--border-color)]">
                     <th className="px-6 py-4 font-medium">Listing</th>
-                    <th className="px-6 py-4 font-medium">Agent</th>
+                    <th className="px-6 py-4 font-medium">Posted By</th>
                     <th className="px-6 py-4 font-medium">Type</th>
                     <th className="px-6 py-4 font-medium">Price</th>
                     <th className="px-6 py-4 font-medium">Status</th>
@@ -376,8 +376,8 @@ export function ListingsPage({ onMessageUser, onMailUser, focusListingId, onFocu
                       <td className="px-6 py-3.5 text-right">
                         <ActionMenu items={[
                           { label: "View full details", icon: <Eye className="w-4 h-4" />, onClick: () => setDetailListing(l) },
-                          { label: "Message agent", icon: <MessageCircle className="w-4 h-4" />, onClick: () => onMessageUser?.(toAppUser(l)) },
-                          { label: "Email agent", icon: <Mail className="w-4 h-4" />, onClick: () => onMailUser?.(toAppUser(l)) },
+                          { label: "Message poster", icon: <MessageCircle className="w-4 h-4" />, onClick: () => onMessageUser?.(toAppUser(l)) },
+                          { label: "Email poster", icon: <Mail className="w-4 h-4" />, onClick: () => onMailUser?.(toAppUser(l)) },
                           l.approval === "pending" ? { label: "Approve", icon: <CheckCheck className="w-4 h-4" />, onClick: () => handleApprove(l.id) } : null,
                           l.approval === "pending" ? { label: "Reject", icon: <X className="w-4 h-4" />, onClick: () => setRejectingListing(l), danger: true } : null,
                           { label: "Delete", icon: <Trash2 className="w-4 h-4" />, onClick: () => setConfirmDel(l), danger: true },

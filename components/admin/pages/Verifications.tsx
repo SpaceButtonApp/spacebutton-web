@@ -1,12 +1,11 @@
 'use client'
 import React, { useState, useCallback, useEffect, useMemo } from "react";
-import { FileCheck2, ShieldCheck, ShieldX, Clock, Check, X, Eye, MessageCircle, Mail, Maximize2, RefreshCw, AlertCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { FileCheck2, ShieldCheck, ShieldX, Clock, Eye, MessageCircle, Mail, RefreshCw, AlertCircle } from "lucide-react";
 import { adminApi } from "@/lib/api/admin";
 import type { AdminUser, PendingVerification, VerifiedUser } from "@/lib/api/admin";
 import { StatCard } from "@/components/admin/shared/StatCard";
 import { SearchInput, ExportButton, FilterPill, Avatar, ActionMenu, EmptyState } from "@/components/admin/shared/Atoms";
-import { StatusBadge } from "@/components/admin/shared/Badge";
-import { Modal, ReasonModal, ImageLightbox } from "@/components/admin/shared/Modal";
 import { formatDate, exportToExcel, truncateId } from "@/lib/utils/admin-format";
 import type { AppUser, UserRole } from "@/lib/types/admin";
 
@@ -22,6 +21,8 @@ interface VerRow {
   idImageUrl?: string;
   selfieImageUrl?: string;
   status: "pending" | "verified";
+  idVerificationStatus: string;
+  liveVerificationStatus: string;
   role?: string;
   submittedDate: string;
   avatarColor: string;
@@ -56,14 +57,12 @@ interface VerificationsPageProps {
 }
 
 export function VerificationsPage({ onMessageUser, onMailUser }: VerificationsPageProps) {
+  const router = useRouter();
   const [rows, setRows] = useState<VerRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<VerFilter>("pending");
   const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState<VerRow | null>(null);
-  const [rejecting, setRejecting] = useState<VerRow | null>(null);
-  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -111,6 +110,8 @@ export function VerificationsPage({ onMessageUser, onMailUser }: VerificationsPa
           idImageUrl: p.id_document_url,
           selfieImageUrl: p.selfie_url,
           status: "pending" as const,
+          idVerificationStatus: p.id_verification_status,
+          liveVerificationStatus: p.live_verification_status,
           role: u?.role,
           submittedDate: p.created_at ?? "",
           avatarColor: hashColor(p.user_id),
@@ -125,6 +126,8 @@ export function VerificationsPage({ onMessageUser, onMailUser }: VerificationsPa
         role: v.role,
         idType: v.id_type,
         status: "verified" as const,
+        idVerificationStatus: "approved",
+        liveVerificationStatus: "approved",
         submittedDate: "",
         avatarColor: hashColor(v.user_id),
       }));
@@ -155,26 +158,6 @@ export function VerificationsPage({ onMessageUser, onMailUser }: VerificationsPa
     }
     return list;
   }, [rows, filter, search]);
-
-  async function handleApprove(row: VerRow) {
-    try {
-      await adminApi.approveIdVerification(row.userId);
-      setRows((prev) => prev.filter((r) => r.userId !== row.userId));
-      setSelected(null);
-    } catch (e) {
-      alert(e instanceof Error ? e.message : "Failed to approve verification");
-    }
-  }
-
-  async function handleReject(row: VerRow, reason: string) {
-    try {
-      await adminApi.rejectIdVerification(row.userId, reason);
-      setRows((prev) => prev.filter((r) => r.userId !== row.userId));
-      setRejecting(null);
-    } catch (e) {
-      alert(e instanceof Error ? e.message : "Failed to reject verification");
-    }
-  }
 
   function handleExport() {
     exportToExcel(
@@ -258,8 +241,8 @@ export function VerificationsPage({ onMessageUser, onMailUser }: VerificationsPa
               <tr className="text-left text-[var(--text-muted)] text-xs uppercase tracking-wide border-b border-[var(--border-color)]">
                 <th className="px-6 py-4 font-medium">User</th>
                 <th className="px-6 py-4 font-medium">Email</th>
-                <th className="px-6 py-4 font-medium">Phone</th>
-                <th className="px-6 py-4 font-medium">User ID</th>
+                <th className="px-6 py-4 font-medium">ID Doc</th>
+                <th className="px-6 py-4 font-medium">Selfie</th>
                 <th className="px-6 py-4 font-medium">ID Type</th>
                 <th className="px-6 py-4 font-medium">Role</th>
                 <th className="px-6 py-4 font-medium text-right">Action</th>
@@ -282,8 +265,8 @@ export function VerificationsPage({ onMessageUser, onMailUser }: VerificationsPa
                     </div>
                   </td>
                   <td className="px-6 py-3.5 text-[var(--text-secondary)]">{r.email}</td>
-                  <td className="px-6 py-3.5 text-[var(--text-secondary)]">{r.phone ?? "—"}</td>
-                  <td className="px-6 py-3.5 text-[var(--text-muted)] font-mono text-xs">{truncateId(r.userId, 12)}</td>
+                  <td className="px-6 py-3.5"><DocStatusChip status={r.idVerificationStatus} /></td>
+                  <td className="px-6 py-3.5"><DocStatusChip status={r.liveVerificationStatus} /></td>
                   <td className="px-6 py-3.5">
                     {r.idType ? (
                       <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/20">
@@ -297,7 +280,7 @@ export function VerificationsPage({ onMessageUser, onMailUser }: VerificationsPa
                   <td className="px-6 py-3.5 text-right">
                     <ActionMenu
                       items={[
-                        { label: r.status === "pending" ? "Review" : "View", icon: <Eye className="w-4 h-4" />, onClick: () => setSelected(r) },
+                        { label: r.status === "pending" ? "Review" : "View", icon: <Eye className="w-4 h-4" />, onClick: () => router.push(`/admin/verifications/${r.userId}`) },
                         { label: "Message", icon: <MessageCircle className="w-4 h-4" />, onClick: () => onMessageUser?.(toAppUser(r)) },
                         { label: "Email", icon: <Mail className="w-4 h-4" />, onClick: () => onMailUser?.(toAppUser(r)) },
                       ]}
@@ -311,105 +294,14 @@ export function VerificationsPage({ onMessageUser, onMailUser }: VerificationsPa
         </div>
       </div>
 
-      <Modal open={!!selected} onClose={() => setSelected(null)} title="Verification Submission" maxWidth="max-w-2xl">
-        {selected && (
-          <div>
-            <div className="flex items-center gap-4 mb-6">
-              <Avatar name={selected.name} color={selected.avatarColor} size={56} />
-              <div>
-                <div className="text-lg font-bold text-[var(--text-primary)]">{selected.name}</div>
-                <div className="text-sm text-[var(--text-secondary)] capitalize">
-                  {selected.role ?? "user"} · {truncateId(selected.userId, 14)}
-                </div>
-              </div>
-              <div className="ml-auto">
-                <StatusBadge status={selected.status} />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 mb-6 text-sm">
-              <div className="bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-xl p-3.5">
-                <div className="text-xs text-[var(--text-muted)] mb-1">ID Type</div>
-                <div className="text-[var(--text-primary)] font-medium">{selected.idType ?? "—"}</div>
-              </div>
-              <div className="bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-xl p-3.5">
-                <div className="text-xs text-[var(--text-muted)] mb-1">Document No.</div>
-                <div className="text-[var(--text-primary)] font-medium font-mono">{selected.idNumber ?? "—"}</div>
-              </div>
-            </div>
-
-            {(selected.idImageUrl || selected.selfieImageUrl) && (
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                {selected.idImageUrl && (
-                  <ZoomableImage
-                    label="ID Document"
-                    src={selected.idImageUrl}
-                    onExpand={() => setLightboxSrc(selected.idImageUrl!)}
-                  />
-                )}
-                {selected.selfieImageUrl && (
-                  <ZoomableImage
-                    label="Selfie"
-                    src={selected.selfieImageUrl}
-                    onExpand={() => setLightboxSrc(selected.selfieImageUrl!)}
-                  />
-                )}
-              </div>
-            )}
-
-            {selected.status === "pending" && (
-              <div className="flex gap-3">
-                <button
-                  onClick={() => { setRejecting(selected); setSelected(null); }}
-                  className="flex-1 py-2.5 rounded-xl bg-red-500/15 text-red-400 font-medium hover:bg-red-500/25 transition-colors flex items-center justify-center gap-2"
-                >
-                  <X className="w-4 h-4" /> Reject
-                </button>
-                <button
-                  onClick={() => handleApprove(selected)}
-                  className="flex-1 py-2.5 rounded-xl bg-emerald-500 text-white font-medium hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2"
-                >
-                  <Check className="w-4 h-4" /> Approve
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-      </Modal>
-
-      {lightboxSrc && (
-        <ImageLightbox
-          src={lightboxSrc}
-          alt="Fullscreen document"
-          open={!!lightboxSrc}
-          onClose={() => setLightboxSrc(null)}
-        />
-      )}
-
-      <ReasonModal
-        open={!!rejecting}
-        title="Reason for rejection"
-        onSubmit={(reason) => { if (rejecting) handleReject(rejecting, reason); }}
-        onCancel={() => setRejecting(null)}
-      />
     </div>
   );
 }
 
-function ZoomableImage({ label, src, onExpand }: { label: string; src: string; onExpand: () => void }) {
-  return (
-    <div>
-      <div className="text-xs text-[var(--text-muted)] mb-2">{label}</div>
-      <div className="relative group">
-        <img src={src} alt={label} className="w-full h-40 object-cover rounded-xl border border-[var(--border-color)]" />
-        <button
-          onClick={onExpand}
-          className="absolute top-2 right-2 w-8 h-8 rounded-lg bg-black/60 hover:bg-black/80 text-white flex items-center justify-center transition-colors opacity-0 group-hover:opacity-100"
-          aria-label={`View ${label} fullscreen`}
-        >
-          <Maximize2 className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
-  );
+function DocStatusChip({ status }: { status: string }) {
+  if (status === "approved") return <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400"><ShieldCheck className="w-3 h-3" />Approved</span>
+  if (status === "rejected") return <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-red-500/15 text-red-400"><ShieldX className="w-3 h-3" />Rejected</span>
+  if (status === "pending") return <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400"><Clock className="w-3 h-3" />Pending</span>
+  return <span className="text-xs text-[var(--text-muted)]">—</span>
 }
+

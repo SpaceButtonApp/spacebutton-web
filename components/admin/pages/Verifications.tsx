@@ -121,6 +121,8 @@ export function VerificationsPage({ onMessageUser, onMailUser }: VerificationsPa
         userId: v.user_id,
         name: [v.first_name, v.last_name].filter(Boolean).join(" ") || v.user_id,
         email: v.email,
+        phone: v.phone_number,
+        role: v.role,
         idType: v.id_type,
         status: "verified" as const,
         submittedDate: "",

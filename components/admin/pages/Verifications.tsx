@@ -69,17 +69,18 @@ export function VerificationsPage({ onMessageUser, onMailUser }: VerificationsPa
     setLoading(true);
     setError(null);
     try {
-      const [pendingResult, usersResult] = await Promise.allSettled([
-        adminApi.getPendingVerifications(),
-        adminApi.getUsers(1, 200),
-      ]);
+      const pendingResult = await adminApi.getPendingVerifications().catch(() => [] as PendingVerification[]);
+      const pending = pendingResult as PendingVerification[];
 
-      if (pendingResult.status === "rejected" && usersResult.status === "rejected") {
-        throw pendingResult.reason;
-      }
-
-      const pending = pendingResult.status === "fulfilled" ? (pendingResult.value as PendingVerification[]) : [];
-      const usersRes = usersResult.status === "fulfilled" ? usersResult.value : { users: [], total: 0, page: 1, page_size: 200 };
+      // Fetch each pending user individually — avoids page_size limits
+      const userResults = await Promise.allSettled(
+        pending.map((p) => adminApi.getUser(p.user_id))
+      );
+      const userMap = new Map<string, AdminUser>();
+      pending.forEach((p, i) => {
+        const r = userResults[i];
+        if (r.status === "fulfilled") userMap.set(p.user_id, r.value);
+      });
 
       let allVerified: VerifiedUser[] = [];
       try {
@@ -94,9 +95,6 @@ export function VerificationsPage({ onMessageUser, onMailUser }: VerificationsPa
       } catch {
         // verified users endpoint unavailable — show pending only
       }
-
-      const userMap = new Map<string, AdminUser>();
-      for (const u of (usersRes.users ?? [])) userMap.set(u.id, u);
 
       const pendingRows: VerRow[] = pending.map((p) => {
         const u = userMap.get(p.user_id);

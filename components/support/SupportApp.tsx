@@ -15,7 +15,6 @@ import GenericListView from './views/GenericListView'
 import TicketList from './tickets/TicketList'
 import ChatPanel from './chat/ChatPanel'
 
-// These tabs use their own full-height layout instead of sp-content-body scroll wrapper
 const NO_SCROLL_WRAPPER_TABS = new Set(['messages', 'verifications'])
 
 export default function SupportApp() {
@@ -23,10 +22,21 @@ export default function SupportApp() {
   const [user, setUser] = useState<SupportUser | null>(null)
   const [activeTab, setActiveTab] = useState('dashboard')
   const [theme, setTheme] = useState('dark')
-  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null)
   const [ready, setReady] = useState(false)
 
-  const { tickets, sendMessage, sendAdminMessage, escalateTicket, resolveTicket } = useTickets()
+  const {
+    tickets,
+    loading: ticketsLoading,
+    detail,
+    detailLoading,
+    sending,
+    selectedId,
+    selectTicket,
+    sendMessage,
+    sendAdminMessage,
+    escalateTicket,
+    resolveTicket,
+  } = useTickets()
 
   useEffect(() => {
     const token = localStorage.getItem('support-token')
@@ -61,7 +71,6 @@ export default function SupportApp() {
     )
   }
 
-  const selectedTicket = tickets.find(t => t.id === selectedTicketId) ?? null
   const noScrollWrapper = NO_SCROLL_WRAPPER_TABS.has(activeTab)
 
   function renderContent() {
@@ -81,11 +90,14 @@ export default function SupportApp() {
           <div className="sp-messages-grid">
             <TicketList
               tickets={tickets}
-              selectedId={selectedTicketId}
-              onSelect={setSelectedTicketId}
+              loading={ticketsLoading}
+              selectedId={selectedId}
+              onSelect={selectTicket}
             />
             <ChatPanel
-              ticket={selectedTicket}
+              detail={detail}
+              detailLoading={detailLoading}
+              sending={sending}
               onSendMessage={sendMessage}
               onSendAdminMessage={sendAdminMessage}
               onEscalate={escalateTicket}
@@ -106,7 +118,6 @@ export default function SupportApp() {
           onLogout={handleLogout}
           user={user}
         />
-
         <div className="sp-content-area">
           <Topbar
             activeTab={activeTab}
@@ -114,13 +125,8 @@ export default function SupportApp() {
             onThemeToggle={handleThemeToggle}
             user={user}
           />
-
-          {noScrollWrapper ? (
-            renderContent()
-          ) : (
-            <div className="sp-content-body">
-              {renderContent()}
-            </div>
+          {noScrollWrapper ? renderContent() : (
+            <div className="sp-content-body">{renderContent()}</div>
           )}
         </div>
       </div>

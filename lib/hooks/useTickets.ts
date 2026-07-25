@@ -1,74 +1,160 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import { tickets as initialTickets } from '@/lib/data/supportMockData'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { supportApi, type Ticket, type TicketMessage, type TicketDetail } from '@/lib/api/support'
 
-type Message = { id: number; from: string; text: string; time: string }
-type Ticket = typeof initialTickets[0]
-
-function nowTime() {
-  return new Date().toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' })
+export interface TicketState {
+  tickets: Ticket[]
+  loading: boolean
+  error: string | null
+  detail: TicketDetail | null
+  detailLoading: boolean
+  sending: boolean
 }
 
-const USER_REPLIES = [
-  'Okay, I understand. Please get back to me soon.',
-  'Thank you for your help!',
-  'Alright, I will wait for your update.',
-  'Got it. Please sort this out quickly.',
-  'I appreciate your quick response.',
-]
-
-const ADMIN_REPLIES = [
-  'I have noted this. Will investigate and respond shortly.',
-  'Escalation received. Looking into it now.',
-  'I can see the issue. I am working on a fix.',
-  'Thanks for the escalation. Will resolve within 10 minutes.',
-]
+const POLL_INTERVAL_LIST = 10_000   // refresh ticket list every 10s
+const POLL_INTERVAL_DETAIL = 6_000  // refresh open ticket messages every 6s
 
 export function useTickets() {
-  const [tickets, setTickets] = useState<Ticket[]>(initialTickets)
+  const [state, setState] = useState<TicketState>({
+    tickets: [],
+    loading: true,
+    error: null,
+    detail: null,
+    detailLoading: false,
+    sending: false,
+  })
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const selectedIdRef = useRef<string | null>(null)
+  selectedIdRef.current = selectedId
 
-  const sendMessage = useCallback((ticketId: string, text: string) => {
-    const newMsg: Message = { id: Date.now(), from: 'agent', text, time: nowTime() }
-    setTickets(prev => prev.map(t => t.id === ticketId
-      ? { ...t, messages: [...t.messages, newMsg] }
-      : t
-    ))
-    setTimeout(() => {
-      const reply: Message = { id: Date.now() + 1, from: 'user', text: USER_REPLIES[Math.floor(Math.random() * USER_REPLIES.length)], time: nowTime() }
-      setTickets(prev => prev.map(t => t.id === ticketId
-        ? { ...t, messages: [...t.messages, reply] }
-        : t
-      ))
-    }, 1800 + Math.random() * 1200)
+  // ── Load ticket list ─────────────────────────────────────────────────────
+
+  const loadTickets = useCallback(async () => {
+    try {
+      const data = await supportApi.getTickets()
+      setState(prev => ({ ...prev, tickets: data.tickets, loading: false, error: null }))
+    } catch (err) {
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: err instanceof Error ? err.message : 'Failed to load tickets',
+      }))
+    }
   }, [])
 
-  const sendAdminMessage = useCallback((ticketId: string, text: string) => {
-    const newMsg: Message = { id: Date.now(), from: 'agent', text, time: nowTime() }
-    setTickets(prev => prev.map(t => t.id === ticketId
-      ? { ...t, adminMessages: [...t.adminMessages, newMsg] }
-      : t
-    ))
-    setTimeout(() => {
-      const reply: Message = { id: Date.now() + 1, from: 'admin', text: ADMIN_REPLIES[Math.floor(Math.random() * ADMIN_REPLIES.length)], time: nowTime() }
-      setTickets(prev => prev.map(t => t.id === ticketId
-        ? { ...t, adminMessages: [...t.adminMessages, reply] }
-        : t
-      ))
-    }, 2200 + Math.random() * 1500)
+  useEffect(() => {
+    loadTickets()
+    const t = setInterval(loadTickets, POLL_INTERVAL_LIST)
+    return () => clearInterval(t)
+  }, [loadTickets])
+
+  // ── Load ticket detail ───────────────────────────────────────────────────
+
+  const loadDetail = useCallback(async (ticketId: string) => {
+    setState(prev => ({ ...prev, detailLoading: true }))
+    try {
+      const detail = await supportApi.getTicketDetail(ticketId)
+      // Only update if this ticket is still selected
+      if (selectedIdRef.current === ticketId) {
+        setState(prev => ({ ...prev, detail, detailLoading: false }))
+      }
+    } catch {
+      setState(prev => ({ ...prev, detailLoading: false }))
+    }
   }, [])
 
-  const escalateTicket = useCallback((ticketId: string) => {
-    setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, escalated: true } : t))
+  useEffect(() => {
+    if (!selectedId) { setState(prev => ({ ...prev, detail: null })); return }
+    loadDetail(selectedId)
+    const t = setInterval(() => {
+      if (selectedIdRef.current) loadDetail(selectedIdRef.current)
+    }, POLL_INTERVAL_DETAIL)
+    return () => clearInterval(t)
+  }, [selectedId, loadDetail])
+
+  // ── Actions ──────────────────────────────────────────────────────────────
+
+  const sendMessage = useCallback(async (ticketId: string, text: string) => {
+    setState(prev => ({ ...prev, sending: true }))
+    try {
+      const msg = await supportApi.sendReply(ticketId, text)
+      setState(prev => {
+        if (!prev.detail || prev.detail.ticket.id !== ticketId) return { ...prev, sending: false }
+        return {
+          ...prev,
+          sending: false,
+          detail: { ...prev.detail, messages: [...prev.detail.messages, msg] },
+        }
+      })
+      // Also refresh ticket list so last_message updates
+      loadTickets()
+    } catch (err) {
+      setState(prev => ({ ...prev, sending: false }))
+      throw err
+    }
+  }, [loadTickets])
+
+  const sendAdminMessage = useCallback(async (ticketId: string, text: string) => {
+    setState(prev => ({ ...prev, sending: true }))
+    try {
+      const msg = await supportApi.sendAdminReply(ticketId, text)
+      setState(prev => {
+        if (!prev.detail || prev.detail.ticket.id !== ticketId) return { ...prev, sending: false }
+        return {
+          ...prev,
+          sending: false,
+          detail: { ...prev.detail, admin_messages: [...prev.detail.admin_messages, msg] },
+        }
+      })
+    } catch (err) {
+      setState(prev => ({ ...prev, sending: false }))
+      throw err
+    }
   }, [])
 
-  const resolveTicket = useCallback((ticketId: string) => {
-    setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, status: 'resolved' } : t))
+  const escalateTicket = useCallback(async (ticketId: string) => {
+    try {
+      const updated = await supportApi.escalate(ticketId)
+      setState(prev => {
+        const tickets = prev.tickets.map(t => t.id === ticketId ? updated : t)
+        const detail = prev.detail?.ticket.id === ticketId
+          ? { ...prev.detail, ticket: updated }
+          : prev.detail
+        return { ...prev, tickets, detail }
+      })
+    } catch (err) {
+      throw err
+    }
   }, [])
 
-  const resetTickets = useCallback(() => {
-    setTickets(initialTickets)
+  const resolveTicket = useCallback(async (ticketId: string) => {
+    try {
+      const updated = await supportApi.updateStatus(ticketId, 'resolved')
+      setState(prev => {
+        const tickets = prev.tickets.map(t => t.id === ticketId ? updated : t)
+        const detail = prev.detail?.ticket.id === ticketId
+          ? { ...prev.detail, ticket: updated }
+          : prev.detail
+        return { ...prev, tickets, detail }
+      })
+    } catch (err) {
+      throw err
+    }
   }, [])
 
-  return { tickets, sendMessage, sendAdminMessage, escalateTicket, resolveTicket, resetTickets }
+  const selectTicket = useCallback((id: string | null) => {
+    setSelectedId(id)
+  }, [])
+
+  return {
+    ...state,
+    selectedId,
+    selectTicket,
+    sendMessage,
+    sendAdminMessage,
+    escalateTicket,
+    resolveTicket,
+    refresh: loadTickets,
+  }
 }

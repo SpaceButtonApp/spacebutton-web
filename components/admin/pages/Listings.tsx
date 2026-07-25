@@ -515,6 +515,8 @@ function ListingDetailPage({
             ...updated,
             images: freshImages.length > 0 ? freshImages : updated.images,
             videoUrl: l.video_tour_url ?? updated.videoUrl,
+            bedrooms: l.bedrooms ?? updated.bedrooms,
+            bathrooms: l.bathrooms ?? updated.bathrooms,
             sittingRooms: l.sitting_rooms ?? updated.sittingRooms,
             balconies: l.balconies ?? updated.balconies,
             rentDueDate: l.rent_due_date ?? updated.rentDueDate,
@@ -595,8 +597,9 @@ function ListingDetailPage({
             )}
 
             {/* Status badge */}
-            <div className="absolute top-3 left-3">
-              <StatusBadge status={data.approval === "approved" ? data.status : data.approval} />
+            <div className="absolute top-3 left-3 flex gap-1.5">
+              <StatusBadge status={data.approval} />
+              {data.approval === "approved" && <StatusBadge status={data.status} />}
             </div>
 
             {/* Counter */}

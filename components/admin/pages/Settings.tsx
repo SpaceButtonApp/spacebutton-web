@@ -1,7 +1,8 @@
 'use client'
 import React, { useRef, useState } from "react";
-import { User, Shield, Bell, Camera, Save, Lock, Eye, EyeOff, UserPlus, Headset, Trash2, RotateCcw } from "lucide-react";
+import { User, Shield, Bell, Camera, Save, Lock, Eye, EyeOff, UserPlus, Headset, Trash2, RotateCcw, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useAdminStore, ADMIN_STORAGE_KEY } from "@/lib/admin-store";
+import { adminApi } from "@/lib/api/admin";
 import { Avatar } from "@/components/admin/shared/Atoms";
 import { ConfirmModal } from "@/components/admin/shared/Modal";
 import { formatDate } from "@/lib/utils/admin-format";
@@ -221,54 +222,90 @@ function SupportTab() {
   const addSupportAgent = useAdminStore((s) => s.addSupportAgent);
   const removeSupportAgent = useAdminStore((s) => s.removeSupportAgent);
 
-  const [fullName, setFullName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [created, setCreated] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
   const [removing, setRemoving] = useState<SupportAgent | null>(null);
 
-  function handleCreate() {
-    if (!fullName.trim() || !email.trim() || !password.trim()) return;
-    addSupportAgent({ fullName: fullName.trim(), email: email.trim() });
-    setFullName("");
-    setEmail("");
-    setPassword("");
-    setCreated(true);
-    setTimeout(() => setCreated(false), 2000);
+  async function handleCreate() {
+    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password.trim()) return;
+    setSubmitting(true);
+    setErrorMsg("");
+    setSuccessMsg("");
+    try {
+      const res = await adminApi.createStaff({
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        email: email.trim(),
+        password,
+      });
+      addSupportAgent({ fullName: `${firstName.trim()} ${lastName.trim()}`, email: email.trim() });
+      setSuccessMsg(res.message || "Support account created successfully.");
+      setFirstName("");
+      setLastName("");
+      setEmail("");
+      setPassword("");
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : "Failed to create account.");
+    } finally {
+      setSubmitting(false);
+    }
   }
+
+  const canSubmit = firstName.trim() && lastName.trim() && email.trim() && password.trim() && !submitting;
 
   return (
     <div className="space-y-6">
       <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl p-6">
         <h3 className="font-semibold text-[var(--text-primary)] mb-1">Create Support Account</h3>
-        <p className="text-sm text-[var(--text-secondary)] mb-6">Give a customer support agent their own login</p>
+        <p className="text-sm text-[var(--text-secondary)] mb-6">
+          Give a customer support agent their own login. Email must be a <span className="font-medium text-[var(--text-primary)]">@spacebutton.net</span> address.
+        </p>
 
         <div className="grid grid-cols-2 gap-4 mb-4">
-          <Field label="Full Name" value={fullName} onChange={setFullName} />
-          <Field label="Email Address" value={email} onChange={setEmail} />
-        </div>
-        <div className="mb-5 max-w-[calc(50%-0.5rem)]">
-          <label className="block text-sm text-[var(--text-secondary)] mb-2">Password</label>
-          <div className="relative">
-            <input
-              type={showPassword ? "text" : "password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-xl px-4 py-3 pr-11 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-            />
-            <button onClick={() => setShowPassword((s) => !s)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]">
-              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
+          <Field label="First Name" value={firstName} onChange={setFirstName} />
+          <Field label="Last Name" value={lastName} onChange={setLastName} />
+          <Field label="Email Address" value={email} onChange={setEmail} type="email" />
+          <div>
+            <label className="block text-sm text-[var(--text-secondary)] mb-2">Password</label>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Min 8 chars, 1 uppercase, 1 number"
+                className="w-full bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-xl px-4 py-3 pr-11 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+              />
+              <button onClick={() => setShowPassword((s) => !s)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]">
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
         </div>
 
+        {errorMsg && (
+          <div className="flex items-center gap-2 mb-4 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+            <AlertCircle className="w-4 h-4 shrink-0" /> {errorMsg}
+          </div>
+        )}
+        {successMsg && (
+          <div className="flex items-center gap-2 mb-4 px-4 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm">
+            <CheckCircle2 className="w-4 h-4 shrink-0" /> {successMsg}
+          </div>
+        )}
+
         <button
           onClick={handleCreate}
-          disabled={!fullName.trim() || !email.trim() || !password.trim()}
+          disabled={!canSubmit}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors"
         >
-          <UserPlus className="w-4 h-4" /> {created ? "Account Created!" : "Create Support Account"}
+          <UserPlus className="w-4 h-4" />
+          {submitting ? "Creating..." : "Create Support Account"}
         </button>
       </div>
 
@@ -303,7 +340,7 @@ function SupportTab() {
       <ConfirmModal
         open={!!removing}
         title="Remove support account?"
-        description={`${removing?.fullName} will lose access to the admin panel.`}
+        description={`${removing?.fullName} will lose access to the support panel.`}
         confirmLabel="Remove"
         icon={<Trash2 className="w-6 h-6 text-red-400" />}
         onConfirm={() => { if (removing) removeSupportAgent(removing.id); setRemoving(null); }}

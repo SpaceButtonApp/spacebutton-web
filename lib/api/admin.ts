@@ -364,6 +364,13 @@ export const adminApi = {
     return inner as VerifiedUsersResponse
   },
 
+  async createStaff(data: { first_name: string; last_name: string; email: string; password: string; role?: string }): Promise<{ message: string }> {
+    return adminFetch('/admin/create-staff', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  },
+
   // Support / Customer Service
   async getSupportChats(): Promise<SupportChat[]> {
     const res = await adminFetch<{ success: boolean; data: SupportChat[] }>('/support/admin/chats')

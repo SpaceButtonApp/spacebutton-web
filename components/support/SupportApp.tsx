@@ -36,6 +36,8 @@ export default function SupportApp() {
     sendAdminMessage,
     escalateTicket,
     resolveTicket,
+    claimTicket,
+    unclaimTicket,
   } = useTickets()
 
   useEffect(() => {
@@ -93,15 +95,19 @@ export default function SupportApp() {
               loading={ticketsLoading}
               selectedId={selectedId}
               onSelect={selectTicket}
+              currentUserId={user?.id ?? ''}
             />
             <ChatPanel
               detail={detail}
               detailLoading={detailLoading}
               sending={sending}
+              currentUserId={user?.id ?? ''}
               onSendMessage={sendMessage}
               onSendAdminMessage={sendAdminMessage}
               onEscalate={escalateTicket}
               onResolve={resolveTicket}
+              onClaim={claimTicket}
+              onUnclaim={unclaimTicket}
             />
           </div>
         )

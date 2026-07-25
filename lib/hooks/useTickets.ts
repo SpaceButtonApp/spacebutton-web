@@ -147,6 +147,30 @@ export function useTickets() {
     setSelectedId(id)
   }, [])
 
+  const claimTicket = useCallback(async (ticketId: string) => {
+    const updated = await supportApi.claimTicket(ticketId)
+    setState(prev => {
+      const tickets = prev.tickets.map(t => t.id === ticketId ? updated : t)
+      const detail = prev.detail?.ticket.id === ticketId
+        ? { ...prev.detail, ticket: updated }
+        : prev.detail
+      return { ...prev, tickets, detail }
+    })
+    return updated
+  }, [])
+
+  const unclaimTicket = useCallback(async (ticketId: string) => {
+    const updated = await supportApi.unclaimTicket(ticketId)
+    setState(prev => {
+      const tickets = prev.tickets.map(t => t.id === ticketId ? updated : t)
+      const detail = prev.detail?.ticket.id === ticketId
+        ? { ...prev.detail, ticket: updated }
+        : prev.detail
+      return { ...prev, tickets, detail }
+    })
+    return updated
+  }, [])
+
   return {
     ...state,
     selectedId,
@@ -155,6 +179,8 @@ export function useTickets() {
     sendAdminMessage,
     escalateTicket,
     resolveTicket,
+    claimTicket,
+    unclaimTicket,
     refresh: loadTickets,
   }
 }

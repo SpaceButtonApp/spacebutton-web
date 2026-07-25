@@ -15,10 +15,13 @@ interface ChatPanelProps {
   detail: TicketDetail | null
   detailLoading: boolean
   sending: boolean
+  currentUserId: string
   onSendMessage: (ticketId: string, text: string) => Promise<void>
   onSendAdminMessage: (ticketId: string, text: string) => Promise<void>
   onEscalate: (ticketId: string) => Promise<void>
   onResolve: (ticketId: string) => Promise<void>
+  onClaim: (ticketId: string) => Promise<unknown>
+  onUnclaim: (ticketId: string) => Promise<unknown>
 }
 
 function formatTime(iso: string) {
@@ -29,14 +32,18 @@ export default function ChatPanel({
   detail,
   detailLoading,
   sending,
+  currentUserId,
   onSendMessage,
   onSendAdminMessage,
   onEscalate,
   onResolve,
+  onClaim,
+  onUnclaim,
 }: ChatPanelProps) {
   const [chatTab, setChatTab] = useState<'user' | 'admin'>('user')
   const [input, setInput] = useState('')
   const [actionError, setActionError] = useState('')
+  const [claiming, setClaiming] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -72,6 +79,9 @@ export default function ChatPanel({
 
   const { ticket, messages, admin_messages } = detail!
   const resolved = ticket.status === 'resolved' || ticket.status === 'closed'
+  const claimedByMe = ticket.assigned_to === currentUserId
+  const claimedByOther = ticket.assigned_to !== null && !claimedByMe
+  const canReply = !resolved && (ticket.assigned_to === null || claimedByMe)
 
   async function send() {
     const text = input.trim()
@@ -98,6 +108,20 @@ export default function ChatPanel({
     try { await onResolve(ticket.id) } catch (err) {
       setActionError(err instanceof Error ? err.message : 'Failed to resolve')
     }
+  }
+
+  async function handleClaim() {
+    setClaiming(true); setActionError('')
+    try { await onClaim(ticket.id) } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Could not claim ticket')
+    } finally { setClaiming(false) }
+  }
+
+  async function handleUnclaim() {
+    setClaiming(true); setActionError('')
+    try { await onUnclaim(ticket.id) } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'Could not release ticket')
+    } finally { setClaiming(false) }
   }
 
   function handleKey(e: React.KeyboardEvent) {
@@ -141,6 +165,46 @@ export default function ChatPanel({
       {actionError && (
         <div style={{ padding: '6px 16px', background: 'rgba(220,38,38,0.08)', color: 'var(--sp-trend-down)', fontSize: 12 }}>
           {actionError}
+        </div>
+      )}
+
+      {/* Claim bar */}
+      {!resolved && (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '7px 16px',
+          background: claimedByOther
+            ? 'rgba(245,158,11,0.08)'
+            : claimedByMe
+              ? 'rgba(16,185,129,0.08)'
+              : 'rgba(99,102,241,0.06)',
+          borderBottom: '1px solid var(--sp-border)',
+          fontSize: 12,
+        }}>
+          {claimedByOther ? (
+            <span style={{ color: '#f59e0b', fontWeight: 600 }}>🔒 Claimed by another agent — you cannot reply</span>
+          ) : claimedByMe ? (
+            <span style={{ color: '#10b981', fontWeight: 600 }}>🔒 Claimed by you</span>
+          ) : (
+            <span style={{ color: 'var(--sp-text-muted)' }}>Unclaimed — anyone can reply. Claim it to take ownership.</span>
+          )}
+          {claimedByMe ? (
+            <button
+              onClick={handleUnclaim}
+              disabled={claiming}
+              style={{ fontSize: 11, padding: '3px 10px', borderRadius: 6, border: '1px solid rgba(16,185,129,0.3)', background: 'transparent', color: '#10b981', cursor: 'pointer', fontWeight: 600 }}
+            >
+              {claiming ? '…' : 'Release'}
+            </button>
+          ) : !claimedByOther ? (
+            <button
+              onClick={handleClaim}
+              disabled={claiming}
+              style={{ fontSize: 11, padding: '3px 10px', borderRadius: 6, border: '1px solid rgba(99,102,241,0.3)', background: 'rgba(99,102,241,0.1)', color: '#818cf8', cursor: 'pointer', fontWeight: 600 }}
+            >
+              {claiming ? '…' : 'Claim'}
+            </button>
+          ) : null}
         </div>
       )}
 
@@ -210,21 +274,27 @@ export default function ChatPanel({
       </div>
 
       {/* Input */}
-      {(!resolved && (chatTab === 'user' || ticket.escalated_to_admin)) && (
-        <div className={`sp-chat-input-area${chatTab === 'admin' ? ' sp-admin-wrapper' : ''}`}>
+      {(chatTab === 'user' || ticket.escalated_to_admin) && (
+        <div className={`sp-chat-input-area${chatTab === 'admin' ? ' sp-admin-wrapper' : ''}`}
+          style={claimedByOther ? { opacity: 0.45, pointerEvents: 'none' } : undefined}
+        >
           <button className="sp-send-btn sp-mic-btn" title="Voice">🎤</button>
           <input
             className="sp-chat-input"
-            placeholder={chatTab === 'user' ? 'Type a reply…' : 'Message admin…'}
+            placeholder={
+              claimedByOther ? 'Claimed by another agent…' :
+              resolved ? 'Ticket is resolved' :
+              chatTab === 'user' ? 'Type a reply…' : 'Message admin…'
+            }
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKey}
-            disabled={sending}
+            disabled={sending || !canReply}
           />
           <button
             className="sp-send-btn"
             onClick={send}
-            disabled={!input.trim() || sending}
+            disabled={!input.trim() || sending || !canReply}
             title="Send"
           >
             {sending ? '…' : '➤'}

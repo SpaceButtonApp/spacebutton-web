@@ -8,6 +8,7 @@ interface TicketListProps {
   loading: boolean
   selectedId: string | null
   onSelect: (id: string) => void
+  currentUserId: string
 }
 
 const COLOR_MAP: Record<string, string> = {
@@ -37,7 +38,7 @@ function timeAgo(iso: string) {
   return `${Math.floor(h / 24)}d ago`
 }
 
-export default function TicketList({ tickets, loading, selectedId, onSelect }: TicketListProps) {
+export default function TicketList({ tickets, loading, selectedId, onSelect, currentUserId }: TicketListProps) {
   const open = tickets.filter(t => t.status !== 'resolved' && t.status !== 'closed')
 
   return (
@@ -93,6 +94,15 @@ export default function TicketList({ tickets, loading, selectedId, onSelect }: T
                 {ticket.escalated_to_admin && (
                   <span className="sp-pill" style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b' }}>
                     ↑ escalated
+                  </span>
+                )}
+                {ticket.assigned_to && (
+                  <span style={{
+                    background: ticket.assigned_to === currentUserId ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)',
+                    color: ticket.assigned_to === currentUserId ? '#10b981' : '#f59e0b',
+                    borderRadius: 10, fontSize: 10, fontWeight: 700, padding: '1px 6px',
+                  }}>
+                    🔒 {ticket.assigned_to === currentUserId ? 'You' : 'Claimed'}
                   </span>
                 )}
                 {ticket.unread_count > 0 && (

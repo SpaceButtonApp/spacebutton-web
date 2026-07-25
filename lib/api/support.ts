@@ -147,4 +147,20 @@ export const supportApi = {
     )
     return res.data
   },
+
+  async claimTicket(ticketId: string): Promise<Ticket> {
+    const res = await supportFetch<{ success: boolean; data: Ticket }>(
+      `/support/tickets/admin/${ticketId}/claim`,
+      { method: 'PATCH' }
+    )
+    return res.data
+  },
+
+  async unclaimTicket(ticketId: string): Promise<Ticket> {
+    const res = await supportFetch<{ success: boolean; data: Ticket }>(
+      `/support/tickets/admin/${ticketId}/unclaim`,
+      { method: 'PATCH' }
+    )
+    return res.data
+  },
 }

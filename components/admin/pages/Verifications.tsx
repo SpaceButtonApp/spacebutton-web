@@ -318,6 +318,6 @@ function DocStatusChip({ status }: { status: string }) {
   if (status === "approved") return <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400"><ShieldCheck className="w-3 h-3" />Approved</span>
   if (status === "rejected") return <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-red-500/15 text-red-400"><ShieldX className="w-3 h-3" />Rejected</span>
   if (status === "pending") return <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400"><Clock className="w-3 h-3" />Pending</span>
-  return <span className="text-xs text-[var(--text-muted)]">—</span>
+  return <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-[var(--bg-raised)] text-[var(--text-muted)] border border-[var(--border-color)]">Not Submitted</span>
 }
 

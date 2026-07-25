@@ -1,6 +1,6 @@
 'use client'
-import React, { useRef, useState } from "react";
-import { User, Shield, Bell, Camera, Save, Lock, Eye, EyeOff, UserPlus, Headset, Trash2, RotateCcw, AlertCircle, CheckCircle2 } from "lucide-react";
+import React, { useRef, useState, useEffect, useCallback } from "react";
+import { User, Shield, Bell, Camera, Save, Lock, Eye, EyeOff, UserPlus, Headset, Trash2, RotateCcw, AlertCircle, CheckCircle2, KeyRound } from "lucide-react";
 import { useAdminStore, ADMIN_STORAGE_KEY } from "@/lib/admin-store";
 import { adminApi } from "@/lib/api/admin";
 import { Avatar } from "@/components/admin/shared/Atoms";
@@ -218,10 +218,9 @@ function PasswordField({ label, show, onToggle }: { label: string; show?: boolea
 }
 
 function SupportTab() {
-  const supportAgents = useAdminStore((s) => s.supportAgents);
   const addSupportAgent = useAdminStore((s) => s.addSupportAgent);
-  const removeSupportAgent = useAdminStore((s) => s.removeSupportAgent);
 
+  // Create form
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -230,7 +229,24 @@ function SupportTab() {
   const [submitting, setSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
-  const [removing, setRemoving] = useState<SupportAgent | null>(null);
+
+  // Agents list from API
+  const [agents, setAgents] = useState<import("@/lib/api/admin").AdminUser[]>([]);
+  const [loadingAgents, setLoadingAgents] = useState(true);
+
+  // Reset password state: { [userId]: { open, password, show, loading, error, success } }
+  const [resetState, setResetState] = useState<Record<string, { open: boolean; password: string; show: boolean; loading: boolean; error: string; success: string }>>({});
+
+  const loadAgents = useCallback(async () => {
+    setLoadingAgents(true);
+    try {
+      const data = await adminApi.getStaffAgents();
+      setAgents(data);
+    } catch { /* ignore */ }
+    finally { setLoadingAgents(false); }
+  }, []);
+
+  useEffect(() => { loadAgents(); }, [loadAgents]);
 
   async function handleCreate() {
     if (!firstName.trim() || !lastName.trim() || !email.trim() || !password.trim()) return;
@@ -246,14 +262,35 @@ function SupportTab() {
       });
       addSupportAgent({ fullName: `${firstName.trim()} ${lastName.trim()}`, email: email.trim() });
       setSuccessMsg(res.message || "Support account created successfully.");
-      setFirstName("");
-      setLastName("");
-      setEmail("");
-      setPassword("");
+      setFirstName(""); setLastName(""); setEmail(""); setPassword("");
+      loadAgents();
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : "Failed to create account.");
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  function openReset(userId: string) {
+    setResetState((s) => ({ ...s, [userId]: { open: true, password: "", show: false, loading: false, error: "", success: "" } }));
+  }
+
+  function closeReset(userId: string) {
+    setResetState((s) => ({ ...s, [userId]: { ...s[userId], open: false } }));
+  }
+
+  async function handleReset(userId: string) {
+    const state = resetState[userId];
+    if (!state?.password?.trim() || state.password.length < 8) {
+      setResetState((s) => ({ ...s, [userId]: { ...s[userId], error: "Password must be at least 8 characters." } }));
+      return;
+    }
+    setResetState((s) => ({ ...s, [userId]: { ...s[userId], loading: true, error: "", success: "" } }));
+    try {
+      await adminApi.resetStaffPassword(userId, state.password);
+      setResetState((s) => ({ ...s, [userId]: { ...s[userId], loading: false, success: "Password reset successfully.", open: false } }));
+    } catch (e) {
+      setResetState((s) => ({ ...s, [userId]: { ...s[userId], loading: false, error: e instanceof Error ? e.message : "Failed to reset password." } }));
     }
   }
 
@@ -311,41 +348,78 @@ function SupportTab() {
 
       <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl p-6">
         <h3 className="font-semibold text-[var(--text-primary)] mb-1">Customer Support Team</h3>
-        <p className="text-sm text-[var(--text-secondary)] mb-5">{supportAgents.length} support account{supportAgents.length === 1 ? "" : "s"}</p>
+        <p className="text-sm text-[var(--text-secondary)] mb-5">
+          {loadingAgents ? "Loading…" : `${agents.length} support account${agents.length === 1 ? "" : "s"}`}
+        </p>
 
         <div className="space-y-1">
-          {supportAgents.map((agent) => (
-            <div key={agent.id} className="flex items-center gap-3 py-3 border-b border-[var(--border-color)] last:border-0">
-              <Avatar name={agent.fullName} color={agent.avatarColor} size={40} />
-              <div className="flex-1 min-w-0">
-                <div className="text-[var(--text-primary)] font-medium text-sm truncate">{agent.fullName}</div>
-                <div className="text-xs text-[var(--text-muted)] truncate">{agent.email}</div>
+          {agents.map((agent) => {
+            const rs = resetState[agent.id] ?? { open: false, password: "", show: false, loading: false, error: "", success: "" };
+            const fullName = [agent.first_name, agent.last_name].filter(Boolean).join(" ") || agent.email;
+            return (
+              <div key={agent.id} className="py-3 border-b border-[var(--border-color)] last:border-0">
+                <div className="flex items-center gap-3">
+                  <Avatar name={fullName} color="#7C3AED" size={40} />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[var(--text-primary)] font-medium text-sm truncate">{fullName}</div>
+                    <div className="text-xs text-[var(--text-muted)] truncate">{agent.email}</div>
+                  </div>
+                  <button
+                    onClick={() => rs.open ? closeReset(agent.id) : openReset(agent.id)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 text-xs font-medium transition-colors shrink-0"
+                  >
+                    <KeyRound className="w-3.5 h-3.5" /> Reset Password
+                  </button>
+                </div>
+
+                {rs.open && (
+                  <div className="mt-3 ml-[52px] flex items-center gap-2">
+                    <div className="relative flex-1">
+                      <input
+                        type={rs.show ? "text" : "password"}
+                        value={rs.password}
+                        onChange={(e) => setResetState((s) => ({ ...s, [agent.id]: { ...s[agent.id], password: e.target.value } }))}
+                        placeholder="New password (min 8 chars)"
+                        className="w-full bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-xl px-3 py-2 pr-10 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+                      />
+                      <button
+                        onClick={() => setResetState((s) => ({ ...s, [agent.id]: { ...s[agent.id], show: !s[agent.id]?.show } }))}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                      >
+                        {rs.show ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                    <button
+                      onClick={() => handleReset(agent.id)}
+                      disabled={rs.loading}
+                      className="px-3 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-40 text-white text-xs font-medium transition-colors shrink-0"
+                    >
+                      {rs.loading ? "Saving…" : "Save"}
+                    </button>
+                    <button onClick={() => closeReset(agent.id)} className="px-3 py-2 rounded-xl bg-[var(--bg-subtle)] text-[var(--text-muted)] text-xs font-medium transition-colors shrink-0">
+                      Cancel
+                    </button>
+                  </div>
+                )}
+
+                {rs.error && (
+                  <div className="mt-2 ml-[52px] flex items-center gap-1.5 text-red-400 text-xs">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" /> {rs.error}
+                  </div>
+                )}
+                {rs.success && (
+                  <div className="mt-2 ml-[52px] flex items-center gap-1.5 text-emerald-400 text-xs">
+                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> {rs.success}
+                  </div>
+                )}
               </div>
-              <span className="text-xs text-[var(--text-muted)] shrink-0 hidden sm:block">Added {formatDate(agent.createdDate)}</span>
-              <button
-                onClick={() => setRemoving(agent)}
-                className="p-2 rounded-lg bg-[var(--bg-subtle)] text-red-400 hover:text-red-300 transition-colors shrink-0"
-                aria-label="Remove support account"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
-          {supportAgents.length === 0 && (
+            );
+          })}
+          {!loadingAgents && agents.length === 0 && (
             <p className="text-sm text-[var(--text-muted)] py-6 text-center">No support accounts yet.</p>
           )}
         </div>
       </div>
-
-      <ConfirmModal
-        open={!!removing}
-        title="Remove support account?"
-        description={`${removing?.fullName} will lose access to the support panel.`}
-        confirmLabel="Remove"
-        icon={<Trash2 className="w-6 h-6 text-red-400" />}
-        onConfirm={() => { if (removing) removeSupportAgent(removing.id); setRemoving(null); }}
-        onCancel={() => setRemoving(null)}
-      />
     </div>
   );
 }

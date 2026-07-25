@@ -371,6 +371,19 @@ export const adminApi = {
     })
   },
 
+  async getStaffAgents(): Promise<AdminUser[]> {
+    const res = await adminFetch<{ success: boolean; data: AdminUserListResponse }>('/admin/users?role=support_agent&page_size=100')
+    const inner = (res as any)?.data ?? res
+    return (inner as AdminUserListResponse).users ?? []
+  },
+
+  async resetStaffPassword(userId: string, newPassword: string): Promise<void> {
+    await adminFetch(`/admin/staff/${userId}/reset-password`, {
+      method: 'PATCH',
+      body: JSON.stringify({ new_password: newPassword }),
+    })
+  },
+
   // Support / Customer Service
   async getSupportChats(): Promise<SupportChat[]> {
     const res = await adminFetch<{ success: boolean; data: SupportChat[] }>('/support/admin/chats')

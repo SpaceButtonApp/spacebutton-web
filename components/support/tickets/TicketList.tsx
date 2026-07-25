@@ -6,6 +6,7 @@ import MiniCharts from '../analytics/MiniCharts'
 interface TicketListProps {
   tickets: Ticket[]
   loading: boolean
+  error: string | null
   selectedId: string | null
   onSelect: (id: string) => void
   currentUserId: string
@@ -38,7 +39,7 @@ function timeAgo(iso: string) {
   return `${Math.floor(h / 24)}d ago`
 }
 
-export default function TicketList({ tickets, loading, selectedId, onSelect, currentUserId }: TicketListProps) {
+export default function TicketList({ tickets, loading, error, selectedId, onSelect, currentUserId }: TicketListProps) {
   const open = tickets.filter(t => t.status !== 'resolved' && t.status !== 'closed')
 
   return (
@@ -57,7 +58,12 @@ export default function TicketList({ tickets, loading, selectedId, onSelect, cur
       </div>
 
       <div className="sp-tickets-area">
-        {loading && tickets.length === 0 ? (
+        {error && tickets.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: 40, fontSize: 13 }}>
+            <div style={{ color: 'var(--sp-trend-down)', fontWeight: 600, marginBottom: 6 }}>Failed to load tickets</div>
+            <div style={{ color: 'var(--sp-text-muted)', fontSize: 11, wordBreak: 'break-all' }}>{error}</div>
+          </div>
+        ) : loading && tickets.length === 0 ? (
           <div style={{ textAlign: 'center', color: 'var(--sp-text-muted)', padding: 40, fontSize: 13 }}>
             Loading tickets…
           </div>

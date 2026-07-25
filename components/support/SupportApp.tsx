@@ -27,6 +27,7 @@ export default function SupportApp() {
   const {
     tickets,
     loading: ticketsLoading,
+    error: ticketsError,
     detail,
     detailLoading,
     sending,
@@ -93,6 +94,7 @@ export default function SupportApp() {
             <TicketList
               tickets={tickets}
               loading={ticketsLoading}
+              error={ticketsError}
               selectedId={selectedId}
               onSelect={selectTicket}
               currentUserId={user?.id ?? ''}

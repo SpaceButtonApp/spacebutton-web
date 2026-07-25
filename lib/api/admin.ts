@@ -104,6 +104,33 @@ export interface AdminListingReportListResponse {
   reports: AdminListingReport[]
 }
 
+export interface SupportTicket {
+  id: string
+  user_id: string
+  user_name: string
+  subject: string
+  category: string
+  priority: string
+  status: string
+  assigned_to: string | null
+  escalated_to_admin: boolean
+  last_message: string | null
+  unread_count: number
+  created_at: string
+  updated_at: string
+}
+
+export interface SupportTicketMessage {
+  id: string
+  ticket_id: string | null
+  sender: string
+  sender_id: string | null
+  user_name: string
+  text: string
+  is_admin_thread: boolean
+  created_at: string
+}
+
 export interface AdminChatMessage {
   id: string
   sender_id: string
@@ -450,5 +477,37 @@ export const adminApi = {
     )
     const inner = (res as any)?.data ?? res
     return inner as AdminChatMessagesResponse
+  },
+
+  // Support tickets (admin role satisfies require_role("admin","support_agent"))
+  async getSupportTickets(params?: { status?: string; page?: number }): Promise<{ tickets: SupportTicket[]; total: number }> {
+    const qs = new URLSearchParams({ page_size: '50' })
+    if (params?.status) qs.set('status', params.status)
+    if (params?.page) qs.set('page', String(params.page))
+    const res = await adminFetch<{ success: boolean; data: { tickets: SupportTicket[]; total: number } }>(
+      `/support/tickets/admin/all?${qs}`
+    )
+    return (res as any)?.data ?? res
+  },
+
+  async getSupportTicketDetail(ticketId: string): Promise<{ ticket: SupportTicket; messages: SupportTicketMessage[]; admin_messages: SupportTicketMessage[] }> {
+    const res = await adminFetch<{ success: boolean; data: any }>(`/support/tickets/admin/${ticketId}`)
+    return (res as any)?.data ?? res
+  },
+
+  async replyToSupportTicket(ticketId: string, text: string): Promise<SupportTicketMessage> {
+    const res = await adminFetch<{ success: boolean; data: SupportTicketMessage }>(
+      `/support/tickets/admin/${ticketId}/reply`,
+      { method: 'POST', body: JSON.stringify({ text }) }
+    )
+    return (res as any)?.data ?? res
+  },
+
+  async updateSupportTicketStatus(ticketId: string, status: string): Promise<SupportTicket> {
+    const res = await adminFetch<{ success: boolean; data: SupportTicket }>(
+      `/support/tickets/admin/${ticketId}/status`,
+      { method: 'PATCH', body: JSON.stringify({ status }) }
+    )
+    return (res as any)?.data ?? res
   },
 }

@@ -326,6 +326,13 @@ export const adminApi = {
     return res.verifications ?? []
   },
 
+  async getPartialVerifications(): Promise<PendingVerification[]> {
+    const res = await adminFetch<{ total: number; verifications: PendingVerification[] }>(
+      '/verification/admin/partial',
+    )
+    return res.verifications ?? []
+  },
+
   async approveIdVerification(userId: string): Promise<void> {
     await adminFetch(`/verification/admin/${userId}/id/approve`, { method: 'PATCH' })
   },

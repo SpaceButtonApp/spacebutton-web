@@ -1,7 +1,7 @@
 'use client'
 import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { FileCheck2, ShieldCheck, ShieldX, Clock, Eye, MessageCircle, Mail, RefreshCw, AlertCircle } from "lucide-react";
+import { FileCheck2, ShieldCheck, ShieldX, ShieldAlert, Clock, Eye, MessageCircle, Mail, RefreshCw, AlertCircle } from "lucide-react";
 import { adminApi } from "@/lib/api/admin";
 import type { AdminUser, PendingVerification, VerifiedUser } from "@/lib/api/admin";
 import { StatCard } from "@/components/admin/shared/StatCard";
@@ -9,7 +9,7 @@ import { SearchInput, ExportButton, FilterPill, Avatar, ActionMenu, EmptyState }
 import { formatDate, exportToExcel, truncateId } from "@/lib/utils/admin-format";
 import type { AppUser, UserRole } from "@/lib/types/admin";
 
-type VerFilter = "pending" | "verified";
+type VerFilter = "pending" | "partial" | "verified";
 
 interface VerRow {
   userId: string;
@@ -20,7 +20,7 @@ interface VerRow {
   idNumber?: string;
   idImageUrl?: string;
   selfieImageUrl?: string;
-  status: "pending" | "verified";
+  status: "pending" | "partial" | "verified";
   idVerificationStatus: string;
   liveVerificationStatus: string;
   role?: string;
@@ -68,18 +68,44 @@ export function VerificationsPage({ onMessageUser, onMailUser }: VerificationsPa
     setLoading(true);
     setError(null);
     try {
-      const pendingResult = await adminApi.getPendingVerifications().catch(() => [] as PendingVerification[]);
-      const pending = pendingResult as PendingVerification[];
+      const [pendingResult, partialResult] = await Promise.all([
+        adminApi.getPendingVerifications().catch(() => [] as PendingVerification[]),
+        adminApi.getPartialVerifications().catch(() => [] as PendingVerification[]),
+      ]);
 
-      // Fetch each pending user individually — avoids page_size limits
-      const userResults = await Promise.allSettled(
-        pending.map((p) => adminApi.getUser(p.user_id))
-      );
+      // Collect all unique user IDs across pending + partial to batch-fetch profiles
+      const allProfiles = [...pendingResult, ...partialResult];
+      const uniqueIds = [...new Set(allProfiles.map((p) => p.user_id))];
+      const userResults = await Promise.allSettled(uniqueIds.map((id) => adminApi.getUser(id)));
       const userMap = new Map<string, AdminUser>();
-      pending.forEach((p, i) => {
+      uniqueIds.forEach((id, i) => {
         const r = userResults[i];
-        if (r.status === "fulfilled") userMap.set(p.user_id, r.value);
+        if (r.status === "fulfilled") userMap.set(id, r.value);
       });
+
+      const toRow = (p: PendingVerification, status: VerRow["status"]): VerRow => {
+        const u = userMap.get(p.user_id);
+        const name = u ? [u.first_name, u.last_name].filter(Boolean).join(" ") || p.user_id : p.user_id;
+        return {
+          userId: p.user_id,
+          name,
+          email: u?.email ?? "—",
+          phone: u?.phone_number,
+          idType: p.id_type,
+          idNumber: p.id_document_number,
+          idImageUrl: p.id_document_url,
+          selfieImageUrl: p.selfie_url,
+          status,
+          idVerificationStatus: p.id_verification_status,
+          liveVerificationStatus: p.live_verification_status,
+          role: u?.role,
+          submittedDate: p.created_at ?? "",
+          avatarColor: hashColor(p.user_id),
+        };
+      };
+
+      const pendingRows = pendingResult.map((p) => toRow(p, "pending"));
+      const partialRows = partialResult.map((p) => toRow(p, "partial"));
 
       let allVerified: VerifiedUser[] = [];
       try {
@@ -92,36 +118,13 @@ export function VerificationsPage({ onMessageUser, onMailUser }: VerificationsPa
           vPage++;
         }
       } catch {
-        // verified users endpoint unavailable — show pending only
+        // verified users endpoint unavailable — continue with pending + partial
       }
-
-      const pendingRows: VerRow[] = pending.map((p) => {
-        const u = userMap.get(p.user_id);
-        const name = u
-          ? [u.first_name, u.last_name].filter(Boolean).join(" ") || p.user_id
-          : p.user_id;
-        return {
-          userId: p.user_id,
-          name,
-          email: u?.email ?? "—",
-          phone: u?.phone_number,
-          idType: p.id_type,
-          idNumber: p.id_document_number,
-          idImageUrl: p.id_document_url,
-          selfieImageUrl: p.selfie_url,
-          status: "pending" as const,
-          idVerificationStatus: p.id_verification_status,
-          liveVerificationStatus: p.live_verification_status,
-          role: u?.role,
-          submittedDate: p.created_at ?? "",
-          avatarColor: hashColor(p.user_id),
-        };
-      });
 
       const verifiedRows: VerRow[] = allVerified.map((v) => ({
         userId: v.user_id,
         name: [v.first_name, v.last_name].filter(Boolean).join(" ") || v.user_id,
-        email: v.email,
+        email: v.email ?? "—",
         phone: v.phone_number,
         role: v.role,
         idType: v.id_type,
@@ -132,7 +135,7 @@ export function VerificationsPage({ onMessageUser, onMailUser }: VerificationsPa
         avatarColor: hashColor(v.user_id),
       }));
 
-      setRows([...pendingRows, ...verifiedRows]);
+      setRows([...pendingRows, ...partialRows, ...verifiedRows]);
     } catch (e) {
       const msg = e instanceof Error ? e.message : typeof e === "string" ? e : "Failed to load verifications";
       setError(msg);
@@ -144,6 +147,7 @@ export function VerificationsPage({ onMessageUser, onMailUser }: VerificationsPa
   useEffect(() => { load(); }, [load]);
 
   const pendingCount = rows.filter((r) => r.status === "pending").length;
+  const partialCount = rows.filter((r) => r.status === "partial").length;
   const verifiedCount = rows.filter((r) => r.status === "verified").length;
 
   const filtered = useMemo(() => {
@@ -203,7 +207,7 @@ export function VerificationsPage({ onMessageUser, onMailUser }: VerificationsPa
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <StatCard label="Total Submissions" value={rows.length} icon={FileCheck2} iconBg="bg-violet-500/15" iconColor="text-violet-400" />
         <StatCard label="Fully Verified" value={verifiedCount} icon={ShieldCheck} iconBg="bg-emerald-500/15" iconColor="text-emerald-400" valueColor="text-emerald-400" />
-        <StatCard label="Not Verified" value={0} icon={ShieldX} iconBg="bg-red-500/15" iconColor="text-red-400" valueColor="text-red-400" />
+        <StatCard label="Partial Verification" value={partialCount} icon={ShieldAlert} iconBg="bg-orange-500/15" iconColor="text-orange-400" valueColor="text-orange-400" />
         <StatCard label="Pending Review" value={pendingCount} icon={Clock} iconBg="bg-amber-500/15" iconColor="text-amber-400" valueColor="text-amber-400" />
       </div>
 
@@ -212,6 +216,12 @@ export function VerificationsPage({ onMessageUser, onMailUser }: VerificationsPa
           Pending Review
           {pendingCount > 0 && (
             <span className="ml-1.5 text-xs bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded-full">{pendingCount}</span>
+          )}
+        </FilterPill>
+        <FilterPill active={filter === "partial"} onClick={() => setFilter("partial")}>
+          Partial Verification
+          {partialCount > 0 && (
+            <span className="ml-1.5 text-xs bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded-full">{partialCount}</span>
           )}
         </FilterPill>
         <FilterPill active={filter === "verified"} onClick={() => setFilter("verified")}>
@@ -259,6 +269,12 @@ export function VerificationsPage({ onMessageUser, onMailUser }: VerificationsPa
                         {r.status === "verified" && (
                           <div className="text-xs text-emerald-400 flex items-center gap-1">
                             <ShieldCheck className="w-3 h-3" /> Fully Verified
+                          </div>
+                        )}
+                        {r.status === "partial" && (
+                          <div className="text-xs text-orange-400 flex items-center gap-1">
+                            <ShieldAlert className="w-3 h-3" />
+                            {r.idVerificationStatus === "approved" ? "ID ✓ — Selfie needed" : "Selfie ✓ — ID needed"}
                           </div>
                         )}
                       </div>

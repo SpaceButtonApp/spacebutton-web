@@ -104,6 +104,16 @@ export const verificationApi = {
     const res = await api.post<ApiResponse<null>>('/verification/live', form)
     return res.message
   },
+
+  async submitBoth(idType: string, idFile: File, selfieFile: File, documentNumber?: string): Promise<string> {
+    const form = new FormData()
+    form.append('id_type', idType)
+    form.append('id_file', idFile)
+    form.append('selfie_file', selfieFile)
+    if (documentNumber) form.append('document_number', documentNumber)
+    const res = await api.post<ApiResponse<null>>('/verification/submit-both', form)
+    return res.message
+  },
 }
 
 // ─── Display info helper (name from auth svc + avatar from user svc) ─────────

@@ -15,6 +15,14 @@ async function adminFetch<T>(path: string, options: RequestInit = {}): Promise<T
       ...(options.headers || {}),
     },
   })
+  if (res.status === 401) {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('admin-token')
+      localStorage.removeItem('admin-profile')
+      window.location.href = '/admin'
+    }
+    throw new Error('Session expired. Please log in again.')
+  }
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
     const raw = body?.detail ?? body?.message

@@ -75,7 +75,7 @@ export default function VerificationsView() {
       supportApi.getVerifiedUsers(),
       supportApi.getPendingVerifications(),
       supportApi.getPartialVerifications(),
-      supportApi.getUsers({ page_size: 200 }),
+      supportApi.getUsers({ page_size: 100 }),
     ])
       .then(([verifiedData, pendingData, partialData, usersData]) => {
         setVerified(verifiedData.users)

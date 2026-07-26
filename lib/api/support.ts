@@ -15,6 +15,14 @@ async function supportFetch<T>(path: string, options: RequestInit = {}): Promise
       ...(options.headers || {}),
     },
   })
+  if (res.status === 401) {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('support-token')
+      localStorage.removeItem('support-user')
+      window.location.href = '/support'
+    }
+    throw new Error('Session expired. Please log in again.')
+  }
   if (!res.ok) {
     const body = await res.json().catch(() => ({}))
     const raw = body?.detail ?? body?.message

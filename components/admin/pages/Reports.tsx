@@ -24,7 +24,11 @@ function ReasonBadge({ reason }: { reason: string }) {
   );
 }
 
-export function ReportsPage() {
+interface ReportsPageProps {
+  onViewListing?: (listingId: string) => void;
+}
+
+export function ReportsPage({ onViewListing }: ReportsPageProps) {
   const [userReports, setUserReports] = useState<AdminUserReport[]>([]);
   const [listingReports, setListingReports] = useState<AdminListingReport[]>([]);
   const [loading, setLoading] = useState(true);

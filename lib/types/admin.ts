@@ -34,6 +34,7 @@ export interface AppUser {
   avatarColor: string;
   referralCode: string;
   referredBy?: string; // referralCode of the user who referred this one
+  referralsMade: number;
   connects: number; // available connects balance
   bio?: string;
 }

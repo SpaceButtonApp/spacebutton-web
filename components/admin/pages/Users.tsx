@@ -35,6 +35,7 @@ function mapApiUser(u: AdminUser): AppUser {
     joinDate: u.created_at,
     avatarColor: avatarColorForId(u.id),
     referralCode: "",
+    referralsMade: u.referrals_made ?? 0,
     connects: 0,
   };
 }
@@ -187,6 +188,7 @@ export function UsersPage({ onMessageUser, onMailUser }: UsersPageProps) {
                 <th className="px-6 py-4 font-medium">Phone</th>
                 <th className="px-6 py-4 font-medium">Role</th>
                 <th className="px-6 py-4 font-medium">Status</th>
+                <th className="px-6 py-4 font-medium">Referrals</th>
                 <th className="px-6 py-4 font-medium">Joined</th>
                 <th className="px-6 py-4 font-medium text-right">Actions</th>
               </tr>
@@ -219,6 +221,11 @@ export function UsersPage({ onMessageUser, onMailUser }: UsersPageProps) {
                     </span>
                   </td>
                   <td className="px-6 py-3.5"><StatusBadge status={u.status} /></td>
+                  <td className="px-6 py-3.5">
+                    <span className={`text-sm font-semibold ${u.referralsMade > 0 ? "text-violet-400" : "text-[var(--text-muted)]"}`}>
+                      {u.referralsMade}
+                    </span>
+                  </td>
                   <td className="px-6 py-3.5 text-[var(--text-secondary)]">{formatDate(u.joinDate)}</td>
                   <td className="px-6 py-3.5 text-right">
                     <ActionMenu
@@ -310,6 +317,7 @@ function UserProfileContent({
         <Row label="Joined" value={formatDate(user.joinDate)} />
         <Row label="User ID" value={user.userId} />
         <Row label="Referral Code" value={user.referralCode || "—"} />
+        <Row label="Users Referred" value={String(user.referralsMade)} />
       </div>
     </div>
   );

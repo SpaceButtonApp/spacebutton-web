@@ -44,6 +44,7 @@ export interface AdminUser {
   /** "active" | "suspended" | "inactive" — normalise with .toLowerCase() */
   status: string
   is_email_verified: boolean
+  referrals_made: number
   created_at: string
 }
 

@@ -71,6 +71,7 @@ function mapApiUser(u: AdminUser): AppUser {
     joinDate: u.created_at,
     avatarColor: avatarColorForId(u.id),
     referralCode: "",
+    referralsMade: 0,
     connects: 0,
   };
 }

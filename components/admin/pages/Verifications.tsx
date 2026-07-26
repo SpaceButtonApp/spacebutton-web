@@ -47,6 +47,7 @@ function toAppUser(r: VerRow): AppUser {
     joinDate: r.submittedDate,
     avatarColor: r.avatarColor,
     referralCode: "",
+    referralsMade: 0,
     connects: 0,
   };
 }

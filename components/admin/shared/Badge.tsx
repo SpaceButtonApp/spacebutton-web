@@ -51,7 +51,7 @@ export function statusBadgeTone(status: string): BadgeTone {
 export function StatusBadge({ status }: { status: string | undefined | null }) {
   const label = (status ?? "unknown").replace(/_/g, " ");
   return (
-    <Badge tone={statusBadgeTone(status)}>
+    <Badge tone={statusBadgeTone(status ?? "unknown")}>
       <span className="capitalize">{label}</span>
     </Badge>
   );

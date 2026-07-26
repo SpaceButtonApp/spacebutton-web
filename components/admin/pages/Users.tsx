@@ -119,6 +119,7 @@ export function UsersPage({ onMessageUser, onMailUser }: UsersPageProps) {
         setUsers((prev) => prev.map((u) => u.id === confirmAction.user.id ? { ...u, status: "active" } : u));
       }
       if (confirmAction.type === "delete") {
+        await adminApi.deleteUser(confirmAction.user.id);
         setUsers((prev) => prev.filter((u) => u.id !== confirmAction.user.id));
       }
     } catch {

@@ -444,6 +444,10 @@ export const adminApi = {
     await adminFetch(`/admin/staff/${userId}`, { method: 'DELETE' })
   },
 
+  async deleteUser(userId: string): Promise<void> {
+    await adminFetch(`/admin/users/${userId}`, { method: 'DELETE' })
+  },
+
   async changePassword(currentPassword: string, newPassword: string): Promise<void> {
     await adminFetch('/auth/change-password', {
       method: 'POST',

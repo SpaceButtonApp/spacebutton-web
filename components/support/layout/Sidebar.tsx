@@ -8,7 +8,6 @@ const NAV_ITEMS = [
   { id: 'users', label: 'Users', icon: '👥' },
   { id: 'verifications', label: 'Verifications', icon: '🪪', badge: '2', badgeColor: 'green' },
   { id: 'listings', label: 'Listings', icon: '🏠' },
-  { id: 'transactions', label: 'Transactions', icon: '💳' },
   { id: 'reviews', label: 'Reviews', icon: '⭐' },
   { id: 'reports', label: 'Reports', icon: '🚩' },
   { id: 'notifications', label: 'Notifications', icon: '🔔' },

@@ -228,9 +228,9 @@ export interface VerifiedUsersResponse {
 }
 
 export interface WaitlistEntry {
-  id: string
+  id?: string
   email: string
-  created_at: string
+  joined_at: string
 }
 
 export interface WaitlistResponse {
@@ -238,6 +238,27 @@ export interface WaitlistResponse {
   page: number
   page_size: number
   entries: WaitlistEntry[]
+}
+
+export interface AdminTransaction {
+  id: string
+  user_id: string
+  user_name: string
+  user_email: string
+  transaction_type: string   // "purchase" | "deduction" | "bonus" | "referral"
+  status: string             // "pending" | "success" | "failed"
+  amount_kobo: number
+  connects_qty: number
+  paystack_reference: string | null
+  description: string | null
+  created_at: string
+}
+
+export interface AdminTransactionListResponse {
+  total: number
+  page: number
+  page_size: number
+  transactions: AdminTransaction[]
 }
 
 export interface SupportChat {
@@ -411,6 +432,17 @@ export const adminApi = {
     })
   },
 
+  async deleteStaff(userId: string): Promise<void> {
+    await adminFetch(`/admin/staff/${userId}`, { method: 'DELETE' })
+  },
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<void> {
+    await adminFetch('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
+    })
+  },
+
   // Support / Customer Service
   async getSupportChats(): Promise<SupportChat[]> {
     const res = await adminFetch<{ success: boolean; data: SupportChat[] }>('/support/admin/chats')
@@ -458,6 +490,18 @@ export const adminApi = {
 
   async updateListingReport(reportId: string, status: 'actioned' | 'dismissed'): Promise<void> {
     await adminFetch(`/admin/listing-reports/${reportId}?status=${status}`, { method: 'PATCH' })
+  },
+
+  // Transactions
+  async getTransactions(page = 1, pageSize = 50, transactionType?: string, status?: string): Promise<AdminTransactionListResponse> {
+    const qs = new URLSearchParams({ page: String(page), page_size: String(pageSize) })
+    if (transactionType) qs.set('transaction_type', transactionType)
+    if (status) qs.set('status', status)
+    const res = await adminFetch<{ success: boolean; data: AdminTransactionListResponse }>(
+      `/admin/transactions?${qs}`,
+    )
+    const inner = (res as any)?.data ?? res
+    return inner as AdminTransactionListResponse
   },
 
   // Waitlist

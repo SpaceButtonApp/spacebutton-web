@@ -24,6 +24,18 @@ async function supportFetch<T>(path: string, options: RequestInit = {}): Promise
   return res.json()
 }
 
+export interface AdminUser {
+  id: string
+  email: string
+  first_name: string | null
+  last_name: string | null
+  phone_number: string | null
+  role: string
+  status: string
+  is_email_verified: boolean
+  created_at: string
+}
+
 export interface SupportUser {
   id: string
   email: string
@@ -83,18 +95,18 @@ export const supportApi = {
 
   async changePassword(currentPassword: string, newPassword: string): Promise<void> {
     await supportFetch('/auth/change-password', {
-      method: 'PATCH',
+      method: 'POST',
       body: JSON.stringify({ current_password: currentPassword, new_password: newPassword }),
     })
   },
 
   // ── Ticket list ──────────────────────────────────────────────────────────
 
-  async getTickets(params?: { status?: string; page?: number }): Promise<{ tickets: Ticket[]; total: number }> {
+  async getTickets(params?: { status?: string; page?: number; page_size?: number }): Promise<{ tickets: Ticket[]; total: number }> {
     const qs = new URLSearchParams()
     if (params?.status) qs.set('status', params.status)
     if (params?.page) qs.set('page', String(params.page))
-    qs.set('page_size', '50')
+    qs.set('page_size', String(params?.page_size ?? 50))
     const res = await supportFetch<{ success: boolean; data: { tickets: Ticket[]; total: number } }>(
       `/support/tickets/admin/all?${qs}`
     )
@@ -162,5 +174,94 @@ export const supportApi = {
       { method: 'PATCH' }
     )
     return res.data
+  },
+
+  // ── Users ────────────────────────────────────────────────────────────────
+
+  async getUsers(params?: { page?: number; page_size?: number; role?: string }): Promise<{ users: AdminUser[]; total: number }> {
+    const qs = new URLSearchParams()
+    if (params?.page) qs.set('page', String(params.page))
+    qs.set('page_size', String(params?.page_size ?? 50))
+    if (params?.role) qs.set('role', params.role)
+    const res = await supportFetch<{ success: boolean; data: { users: AdminUser[]; total: number } }>(`/admin/users?${qs}`)
+    return res.data
+  },
+
+  async suspendUser(userId: string): Promise<void> {
+    await supportFetch(`/admin/users/${userId}/suspend`, { method: 'PATCH' })
+  },
+
+  async activateUser(userId: string): Promise<void> {
+    await supportFetch(`/admin/users/${userId}/activate`, { method: 'PATCH' })
+  },
+
+  // ── Verifications ────────────────────────────────────────────────────────
+
+  async getVerifiedUsers(page = 1): Promise<{ users: Array<{ user_id: string; first_name: string; last_name: string; email: string; phone_number: string | null; role: string; id_type: string | null }>; total: number }> {
+    const res = await supportFetch<{ success: boolean; data: { users: Array<{ user_id: string; first_name: string; last_name: string; email: string; phone_number: string | null; role: string; id_type: string | null }>; total: number } }>(
+      `/admin/verifications/verified?page=${page}&page_size=100`
+    )
+    return res.data
+  },
+
+  async getPendingVerifications(): Promise<Array<{ user_id: string; id_type: string | null; id_verification_status: string; live_verification_status: string; is_identity_verified: boolean; is_live_verified: boolean; created_at: string | null }>> {
+    const res = await supportFetch<{ total: number; verifications: Array<{ user_id: string; id_type: string | null; id_verification_status: string; live_verification_status: string; is_identity_verified: boolean; is_live_verified: boolean; created_at: string | null }> }>(
+      `/verification/admin/pending`
+    )
+    return res.verifications
+  },
+
+  async getPartialVerifications(): Promise<Array<{ user_id: string; id_type: string | null; id_verification_status: string; live_verification_status: string; is_identity_verified: boolean; is_live_verified: boolean; created_at: string | null }>> {
+    const res = await supportFetch<{ total: number; verifications: Array<{ user_id: string; id_type: string | null; id_verification_status: string; live_verification_status: string; is_identity_verified: boolean; is_live_verified: boolean; created_at: string | null }> }>(
+      `/verification/admin/partial`
+    )
+    return res.verifications
+  },
+
+  // ── Listings ─────────────────────────────────────────────────────────────
+
+  async getListings(page = 1, pageSize = 100): Promise<{ listings: import('@/lib/api/admin').AdminListing[]; total: number }> {
+    const res = await supportFetch<{ success: boolean; data: { listings: import('@/lib/api/admin').AdminListing[]; total: number } }>(
+      `/admin/listings?page=${page}&page_size=${pageSize}`
+    )
+    return res.data
+  },
+
+  async getListing(id: string): Promise<import('@/lib/api/admin').AdminListing> {
+    const res = await supportFetch<{ success: boolean; data: import('@/lib/api/admin').AdminListing }>(
+      `/admin/listings/${id}`
+    )
+    return res.data
+  },
+
+  async approveListing(id: string): Promise<void> {
+    await supportFetch(`/admin/listings/${id}/approve`, { method: 'PATCH' })
+  },
+
+  async rejectListing(id: string, reason: string): Promise<void> {
+    await supportFetch(`/admin/listings/${id}/reject`, {
+      method: 'PATCH',
+      body: JSON.stringify({ reason }),
+    })
+  },
+
+  async getAgents(page = 1, pageSize = 100): Promise<{ agents: import('@/lib/api/admin').AdminAgent[]; total: number }> {
+    const res = await supportFetch<{ success: boolean; data: { agents: import('@/lib/api/admin').AdminAgent[]; total: number } }>(
+      `/admin/agents?page=${page}&page_size=${pageSize}`
+    )
+    return res.data
+  },
+
+  // ── Reports ──────────────────────────────────────────────────────────────
+
+  async getUserReports(page = 1, pageSize = 50): Promise<{ reports: import('@/lib/api/admin').AdminUserReport[]; total: number }> {
+    const res = await supportFetch<{ success: boolean; data: { reports: import('@/lib/api/admin').AdminUserReport[]; total: number } }>(
+      `/admin/user-reports?page=${page}&page_size=${pageSize}`
+    )
+    return res.data
+  },
+
+  async updateUserReport(reportId: string, status: 'actioned' | 'dismissed'): Promise<void> {
+    await supportFetch(`/admin/user-reports/${reportId}?status=${status}`, { method: 'PATCH' })
   },
 }

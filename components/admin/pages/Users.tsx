@@ -1,7 +1,6 @@
 'use client'
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Users as UsersIcon, UserCheck, Briefcase, Ban, Eye, MessageCircle, Mail, UserX, Trash2, Star, Flag, Building2, Gift, RefreshCw, AlertCircle, MailCheck, MailX } from "lucide-react";
-import { useAdminStore, getReferralCount } from "@/lib/admin-store";
+import { Users as UsersIcon, UserCheck, Briefcase, Ban, Eye, MessageCircle, Mail, UserX, Trash2, RefreshCw, AlertCircle, MailCheck, MailX } from "lucide-react";
 import { adminApi } from "@/lib/api/admin";
 import type { AdminUser } from "@/lib/api/admin";
 import { StatCard } from "@/components/admin/shared/StatCard";
@@ -41,10 +40,6 @@ function mapApiUser(u: AdminUser): AppUser {
 }
 
 export function UsersPage({ onMessageUser, onMailUser }: UsersPageProps) {
-  const listings = useAdminStore((s) => s.listings);
-  const reports = useAdminStore((s) => s.reports);
-  const reviews = useAdminStore((s) => s.reviews);
-
   const [users, setUsers] = useState<AppUser[]>([]);
   const [emailVerifiedMap, setEmailVerifiedMap] = useState<Map<string, boolean>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -249,10 +244,6 @@ export function UsersPage({ onMessageUser, onMailUser }: UsersPageProps) {
         {profileUser && (
           <UserProfileContent
             user={profileUser}
-            listings={listings}
-            reports={reports}
-            reviews={reviews}
-            users={users}
             onMessage={() => { onMessageUser?.(profileUser); setProfileUser(null); }}
             onMail={() => { onMailUser?.(profileUser); setProfileUser(null); }}
           />
@@ -283,25 +274,12 @@ export function UsersPage({ onMessageUser, onMailUser }: UsersPageProps) {
 }
 
 function UserProfileContent({
-  user, listings, reports, reviews, users, onMessage, onMail,
+  user, onMessage, onMail,
 }: {
   user: AppUser;
-  listings: ReturnType<typeof useAdminStore.getState>["listings"];
-  reports: ReturnType<typeof useAdminStore.getState>["reports"];
-  reviews: ReturnType<typeof useAdminStore.getState>["reviews"];
-  users: AppUser[];
   onMessage: () => void;
   onMail: () => void;
 }) {
-  const userListings = listings.filter((l) => l.ownerId === user.id);
-  const closedListings = userListings.filter((l) => l.status === "closed");
-  const userReports = reports.filter((r) => r.reportedUserId === user.id);
-  const userReviews = reviews.filter((r) => r.revieweeId === user.id);
-  const referralCount = getReferralCount(users, user.referralCode);
-  const avgRating = userReviews.length
-    ? (userReviews.reduce((s, r) => s + r.rating, 0) / userReviews.length).toFixed(1)
-    : "—";
-
   return (
     <div>
       <div className="flex items-center gap-4 mb-6">
@@ -324,15 +302,6 @@ function UserProfileContent({
             <Mail className="w-4 h-4" />
           </button>
         </div>
-      </div>
-
-      <div className="grid grid-cols-3 gap-3 mb-6">
-        <MiniStat icon={Flag} label="Reports" value={userReports.length} />
-        <MiniStat icon={Star} label="Reviews" value={`${userReviews.length} (${avgRating}★)`} />
-        <MiniStat icon={Building2} label="Listings" value={userListings.length} />
-        <MiniStat icon={Ban} label="Closed Listings" value={closedListings.length} />
-        <MiniStat icon={Gift} label="Referrals" value={referralCount} />
-        <MiniStat icon={UserCheck} label="Connects" value={user.connects} />
       </div>
 
       <div className="space-y-2 text-sm">

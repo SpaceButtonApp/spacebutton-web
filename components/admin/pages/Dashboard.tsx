@@ -1,25 +1,51 @@
 'use client'
-import React from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Users, Building2, ShieldCheck, Ban, Mail } from "lucide-react";
-import { useAdminStore } from "@/lib/admin-store";
+import { adminApi, type AdminStats, type WaitlistEntry } from "@/lib/api/admin";
 import { StatCard } from "@/components/admin/shared/StatCard";
 import { ExportButton } from "@/components/admin/shared/Atoms";
 import { formatDate, exportToExcel } from "@/lib/utils/admin-format";
 import type { AdminRoute } from "@/components/admin/shared/Sidebar";
 
 export function Dashboard({ onNavigate }: { onNavigate: (r: AdminRoute) => void }) {
-  const users = useAdminStore((s) => s.users);
-  const listings = useAdminStore((s) => s.listings);
-  const verifications = useAdminStore((s) => s.verifications);
-  const waitlist = useAdminStore((s) => s.waitlist);
-  const adminProfile = useAdminStore((s) => s.adminProfile);
+  const [stats, setStats] = useState<AdminStats | null>(null);
+  const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
+  const [waitlistTotal, setWaitlistTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  const totalUsers = users.length;
-  const agentCount = users.filter((u) => u.role === "agent").length;
-  const activeListings = listings.filter((l) => l.status === "active").length;
-  const pendingListings = listings.filter((l) => l.approval === "pending").length;
-  const pendingVerifications = verifications.filter((v) => v.status === "pending").length;
-  const suspendedUsers = users.filter((u) => u.status === "suspended").length;
+  const adminProfile = (() => {
+    try {
+      const raw = typeof window !== 'undefined' ? localStorage.getItem('admin-profile') : null;
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  })();
+  const displayName = adminProfile?.first_name ?? adminProfile?.fullName?.split(' ')[0] ?? 'Admin';
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [statsData, waitlistData] = await Promise.allSettled([
+        adminApi.getStats(),
+        adminApi.getWaitlist(1, 50),
+      ]);
+      if (statsData.status === 'fulfilled') setStats(statsData.value);
+      if (waitlistData.status === 'fulfilled') {
+        setWaitlist(waitlistData.value.entries ?? []);
+        setWaitlistTotal(waitlistData.value.total ?? 0);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const totalUsers = stats?.users?.total_users ?? 0;
+  const agentCount = stats?.users?.total_agents ?? 0;
+  const suspendedUsers = stats?.users?.total_suspended ?? 0;
+  const activeListings = stats?.listings?.active_listings ?? 0;
+  const pendingListings = stats?.listings?.pending_listings ?? 0;
+  const totalListings = stats?.listings?.total_listings ?? 0;
 
   const quickActions = [
     {
@@ -44,27 +70,27 @@ export function Dashboard({ onNavigate }: { onNavigate: (r: AdminRoute) => void 
     <div className="p-8">
       <div className="rounded-2xl bg-gradient-to-r from-violet-900/40 to-indigo-900/20 border border-[var(--border-color)] px-8 py-7 mb-6">
         <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-1">
-          Welcome back, {adminProfile.fullName.split(" ")[0]}!
+          Welcome back, {displayName}!
         </h2>
         <p className="text-[var(--text-secondary)] text-sm">Here's what's happening with SpaceButton today.</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <StatCard
-          label="Total Users" value={totalUsers} sublabel={`${agentCount} agents`}
+          label="Total Users" value={loading ? "—" : totalUsers} sublabel={`${agentCount} agents`}
           icon={Users} iconBg="bg-violet-500/15" iconColor="text-violet-400"
         />
         <StatCard
-          label="Active Listings" value={activeListings}
-          sublabel={`${pendingListings} pending · ${listings.length} total`}
+          label="Active Listings" value={loading ? "—" : activeListings}
+          sublabel={`${pendingListings} pending · ${totalListings} total`}
           icon={Building2} iconBg="bg-blue-500/15" iconColor="text-blue-400"
         />
         <StatCard
-          label="Pending Verifications" value={pendingVerifications} sublabel="awaiting admin review"
-          icon={ShieldCheck} iconBg="bg-emerald-500/15" iconColor="text-emerald-400"
+          label="Waitlist Sign-ups" value={loading ? "—" : waitlistTotal} sublabel="registered interest"
+          icon={Mail} iconBg="bg-emerald-500/15" iconColor="text-emerald-400"
         />
         <StatCard
-          label="Suspended Users" value={suspendedUsers} sublabel="blocked from platform"
+          label="Suspended Users" value={loading ? "—" : suspendedUsers} sublabel="blocked from platform"
           icon={Ban} iconBg="bg-red-500/15" iconColor="text-red-400" valueColor="text-red-400"
         />
       </div>
@@ -94,7 +120,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (r: AdminRoute) => void 
             </div>
             <div>
               <div className="font-semibold text-[var(--text-primary)]">Waitlist</div>
-              <div className="text-sm text-[var(--text-secondary)]">{waitlist.length} sign-ups</div>
+              <div className="text-sm text-[var(--text-secondary)]">{loading ? '…' : `${waitlistTotal} sign-ups`}</div>
             </div>
           </div>
           <ExportButton
@@ -102,7 +128,8 @@ export function Dashboard({ onNavigate }: { onNavigate: (r: AdminRoute) => void 
               exportToExcel(
                 "waitlist",
                 waitlist.map((w) => ({
-                  Name: w.name, Email: w.email, Phone: w.phone, Date: formatDate(w.date),
+                  Email: w.email,
+                  Date: formatDate(w.joined_at),
                 }))
               )
             }
@@ -112,19 +139,23 @@ export function Dashboard({ onNavigate }: { onNavigate: (r: AdminRoute) => void 
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-[var(--bg-raised)]">
               <tr className="text-left text-[var(--text-muted)] text-xs uppercase tracking-wide">
-                <th className="px-6 py-3 font-medium">Name</th>
                 <th className="px-6 py-3 font-medium">Email</th>
-                <th className="px-6 py-3 font-medium">Phone</th>
                 <th className="px-6 py-3 font-medium">Date</th>
               </tr>
             </thead>
             <tbody>
-              {waitlist.map((w) => (
-                <tr key={w.id} className="border-t border-[var(--border-color)] hover:bg-[var(--bg-hover)]">
-                  <td className="px-6 py-3.5 text-[var(--text-primary)] font-medium">{w.name}</td>
-                  <td className="px-6 py-3.5 text-[var(--text-secondary)]">{w.email}</td>
-                  <td className="px-6 py-3.5 text-[var(--text-secondary)]">{w.phone}</td>
-                  <td className="px-6 py-3.5 text-[var(--text-secondary)]">{formatDate(w.date)}</td>
+              {loading ? (
+                <tr>
+                  <td colSpan={2} className="px-6 py-8 text-center text-[var(--text-muted)] text-sm">Loading…</td>
+                </tr>
+              ) : waitlist.length === 0 ? (
+                <tr>
+                  <td colSpan={2} className="px-6 py-8 text-center text-[var(--text-muted)] text-sm">No waitlist entries yet.</td>
+                </tr>
+              ) : waitlist.map((w) => (
+                <tr key={w.email} className="border-t border-[var(--border-color)] hover:bg-[var(--bg-hover)]">
+                  <td className="px-6 py-3.5 text-[var(--text-primary)] font-medium">{w.email}</td>
+                  <td className="px-6 py-3.5 text-[var(--text-secondary)]">{formatDate(w.joined_at)}</td>
                 </tr>
               ))}
             </tbody>

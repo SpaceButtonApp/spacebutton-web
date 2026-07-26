@@ -1,157 +1,195 @@
 'use client'
 
-import { transactions, reviews, userReports } from '@/lib/data/supportMockData'
-import { exportSupportTable } from '@/lib/utils/support-export'
-
-const COLOR_MAP: Record<string, string> = { blue: 'sp-av-blue', amber: 'sp-av-amber', teal: 'sp-av-teal', coral: 'sp-av-coral', purple: 'sp-av-purple' }
+import { useState, useEffect, useCallback } from 'react'
+import { supportApi } from '@/lib/api/support'
+import type { AdminUserReport } from '@/lib/api/admin'
 
 interface GenericListViewProps {
   tab: string
 }
 
 export default function GenericListView({ tab }: GenericListViewProps) {
-  if (tab === 'transactions') {
-    return (
-      <div className="sp-view-container">
-        <div className="sp-view-header-row">
-          <div>
-            <h2 style={{ fontSize: 18, fontWeight: 700 }}>Transactions</h2>
-            <p style={{ fontSize: 12, color: 'var(--sp-text-muted)', marginTop: 2 }}>{transactions.length} records</p>
-          </div>
-          <button className="sp-btn-excel" onClick={() => exportSupportTable(transactions as unknown as Record<string, unknown>[], 'transactions')}>
-            📊 Export
-          </button>
-        </div>
-        <div className="sp-table-card">
-          <table className="sp-data-table">
-            <thead>
-              <tr>
-                <th>ID</th><th>User</th><th>Type</th><th>Amount</th><th>Status</th><th>Gateway</th><th>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.map(tx => (
-                <tr key={tx.id}>
-                  <td><span className="sp-tx-cell-id">🧾 {tx.id}</span></td>
-                  <td>{tx.user}</td>
-                  <td>{tx.type}</td>
-                  <td style={{ fontWeight: 600 }}>{tx.amount}</td>
-                  <td><span className={`sp-status-badge sp-status-${tx.status}`}>{tx.status}</span></td>
-                  <td>{tx.gateway}</td>
-                  <td style={{ color: 'var(--sp-text-muted)' }}>{tx.date}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    )
+  if (tab === 'reports') return <ReportsView />
+  if (tab === 'reviews') return <ReviewsPlaceholder />
+  if (tab === 'notifications') return <NotificationsPlaceholder />
+  return null
+}
+
+// ─── Reports ─────────────────────────────────────────────────────────────────
+
+const STATUS_MAP: Record<string, { bg: string; color: string }> = {
+  pending:   { bg: 'rgba(245,158,11,0.15)', color: '#f59e0b' },
+  actioned:  { bg: 'rgba(16,185,129,0.15)', color: '#10b981' },
+  dismissed: { bg: 'rgba(100,116,139,0.15)', color: '#94a3b8' },
+}
+
+function ReportStatusBadge({ status }: { status: string }) {
+  const s = STATUS_MAP[status] ?? STATUS_MAP.pending
+  return (
+    <span style={{ background: s.bg, color: s.color, borderRadius: 10, fontSize: 11, fontWeight: 700, padding: '2px 8px' }}>
+      {status}
+    </span>
+  )
+}
+
+function ReportsView() {
+  const [reports, setReports] = useState<AdminUserReport[]>([])
+  const [total, setTotal] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [filter, setFilter] = useState('all')
+  const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [expanded, setExpanded] = useState<string | null>(null)
+
+  const load = useCallback(async () => {
+    setLoading(true); setError(null)
+    try {
+      const data = await supportApi.getUserReports(1, 100)
+      setReports(data.reports)
+      setTotal(data.total)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to load reports')
+    } finally { setLoading(false) }
+  }, [])
+
+  useEffect(() => { load() }, [load])
+
+  async function handleAction(reportId: string, status: 'actioned' | 'dismissed') {
+    setActionLoading(reportId)
+    try {
+      await supportApi.updateUserReport(reportId, status)
+      setReports(prev => prev.map(r => r.id === reportId ? { ...r, status } : r))
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : 'Action failed')
+    } finally { setActionLoading(null) }
   }
 
-  if (tab === 'reviews') {
-    return (
-      <div className="sp-view-container">
-        <div className="sp-view-header-row">
-          <div>
-            <h2 style={{ fontSize: 18, fontWeight: 700 }}>Reviews</h2>
-            <p style={{ fontSize: 12, color: 'var(--sp-text-muted)', marginTop: 2 }}>{reviews.length} reviews</p>
-          </div>
-          <button className="sp-btn-excel" onClick={() => exportSupportTable(reviews as unknown as Record<string, unknown>[], 'reviews')}>
-            📊 Export
-          </button>
-        </div>
-        <div className="sp-table-card">
-          <table className="sp-data-table">
-            <thead>
-              <tr>
-                <th>ID</th><th>User</th><th>Target</th><th>Rating</th><th>Review</th><th>Status</th><th>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {reviews.map(r => (
-                <tr key={r.id}>
-                  <td style={{ color: 'var(--sp-text-muted)', fontSize: 12 }}>{r.id}</td>
-                  <td>{r.user}</td>
-                  <td>{r.target}</td>
-                  <td>
-                    <span className="sp-rating-badge">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)} {r.rating}</span>
-                  </td>
-                  <td><span className="sp-review-snippet">{r.text}</span></td>
-                  <td><span className={`sp-status-badge sp-status-${r.status}`}>{r.status}</span></td>
-                  <td style={{ color: 'var(--sp-text-muted)' }}>{r.date}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+  const filtered = reports.filter(r => filter === 'all' || r.status === filter)
+  const pending = reports.filter(r => r.status === 'pending').length
+
+  return (
+    <div className="sp-view-container">
+      <div className="sp-view-header-row">
+        <div>
+          <h2 style={{ fontSize: 18, fontWeight: 700 }}>User Reports</h2>
+          <p style={{ fontSize: 12, color: 'var(--sp-text-muted)', marginTop: 2 }}>
+            {loading ? 'Loading…' : `${total} total · ${pending} pending`}
+          </p>
         </div>
       </div>
-    )
-  }
 
-  if (tab === 'reports') {
-    return (
-      <div className="sp-view-container">
-        <div className="sp-view-header-row">
-          <div>
-            <h2 style={{ fontSize: 18, fontWeight: 700 }}>User Reports</h2>
-            <p style={{ fontSize: 12, color: 'var(--sp-text-muted)', marginTop: 2 }}>{userReports.length} reports</p>
-          </div>
-          <button className="sp-btn-excel" onClick={() => exportSupportTable(userReports as unknown as Record<string, unknown>[], 'user_reports')}>
-            📊 Export
-          </button>
-        </div>
-        <div className="sp-table-card">
-          <table className="sp-data-table">
-            <thead>
-              <tr>
-                <th>ID</th><th>Reported User</th><th>Reporter</th><th>Reason</th><th>Status</th><th>Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {userReports.map(r => (
-                <tr key={r.id}>
-                  <td style={{ color: 'var(--sp-text-muted)', fontSize: 12 }}>{r.id}</td>
-                  <td style={{ fontWeight: 600 }}>{r.reportedUser}</td>
-                  <td>{r.reporter}</td>
-                  <td><span className="sp-report-reason" title={r.reason}>{r.reason}</span></td>
-                  <td><span className={`sp-status-badge sp-status-${r.status}`}>{r.status}</span></td>
-                  <td style={{ color: 'var(--sp-text-muted)' }}>{r.date}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    )
-  }
-
-  if (tab === 'notifications') {
-    const NOTIFS = [
-      { icon: '🎫', title: 'New urgent ticket from Taiwo Ibrahim', time: '2 min ago' },
-      { icon: '🪪', title: 'Verification request submitted by Chidi Anozie', time: '15 min ago' },
-      { icon: '🚩', title: 'New user report filed by Seun Okafor', time: '1h ago' },
-      { icon: '💳', title: 'Payment dispute raised — TXN-003', time: '2h ago' },
-      { icon: '⭐', title: 'New review flagged — Agent Ngozi (2★)', time: '3h ago' },
-    ]
-    return (
-      <div className="sp-view-container">
-        <div className="sp-view-header-row">
-          <h2 style={{ fontSize: 18, fontWeight: 700 }}>Notifications</h2>
-        </div>
-        <div className="sp-log-list">
-          {NOTIFS.map((n, i) => (
-            <div key={i} className="sp-log-item">
-              <div className="sp-log-icon">{n.icon}</div>
-              <div className="sp-log-details">
-                <h4>{n.title}</h4>
-                <span className="sp-log-time">{n.time}</span>
-              </div>
-            </div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <div className="sp-role-filter-group">
+          {['all', 'pending', 'actioned', 'dismissed'].map(f => (
+            <button
+              key={f}
+              className={`sp-filter-tab${filter === f ? ' active' : ''}`}
+              onClick={() => setFilter(f)}
+            >
+              {f.charAt(0).toUpperCase() + f.slice(1)}
+            </button>
           ))}
         </div>
       </div>
-    )
-  }
 
-  return null
+      {error && <div style={{ color: 'var(--sp-trend-down)', fontSize: 13, marginBottom: 12 }}>{error}</div>}
+
+      <div className="sp-table-card">
+        <table className="sp-data-table">
+          <thead>
+            <tr>
+              <th>Reported User</th>
+              <th>Reason</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={5} className="sp-table-empty-row">Loading reports…</td></tr>
+            ) : filtered.length === 0 ? (
+              <tr><td colSpan={5} className="sp-table-empty-row">No reports match your filter.</td></tr>
+            ) : filtered.map(r => (
+              <>
+                <tr key={r.id} style={{ cursor: r.details ? 'pointer' : 'default' }} onClick={() => r.details && setExpanded(expanded === r.id ? null : r.id)}>
+                  <td>
+                    <div style={{ fontWeight: 600, fontSize: 13 }}>{r.reported_user_id.slice(0, 8)}…</div>
+                    <div style={{ fontSize: 11, color: 'var(--sp-text-muted)' }}>Reporter: {r.reporter_id.slice(0, 8)}…</div>
+                  </td>
+                  <td style={{ fontSize: 13 }}>{r.reason}</td>
+                  <td><ReportStatusBadge status={r.status} /></td>
+                  <td style={{ fontSize: 12, color: 'var(--sp-text-muted)' }}>
+                    {new Date(r.created_at).toLocaleDateString()}
+                  </td>
+                  <td>
+                    {r.status === 'pending' && (
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button
+                          className="sp-btn sp-btn-small sp-btn-activate"
+                          disabled={actionLoading === r.id}
+                          onClick={e => { e.stopPropagation(); handleAction(r.id, 'actioned') }}
+                        >
+                          {actionLoading === r.id ? '…' : '✓ Action'}
+                        </button>
+                        <button
+                          className="sp-btn sp-btn-small"
+                          disabled={actionLoading === r.id}
+                          onClick={e => { e.stopPropagation(); handleAction(r.id, 'dismissed') }}
+                        >
+                          Dismiss
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+                {expanded === r.id && r.details && (
+                  <tr key={r.id + '-detail'}>
+                    <td colSpan={5} style={{ background: 'var(--sp-surface-2)', padding: '10px 16px' }}>
+                      <p style={{ fontSize: 12, color: 'var(--sp-text-muted)', lineHeight: 1.6 }}>
+                        <strong style={{ color: 'var(--sp-text-primary)' }}>Details: </strong>{r.details}
+                      </p>
+                    </td>
+                  </tr>
+                )}
+              </>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+// ─── Reviews placeholder ──────────────────────────────────────────────────────
+
+function ReviewsPlaceholder() {
+  return (
+    <div className="sp-view-container">
+      <div className="sp-view-header-row">
+        <h2 style={{ fontSize: 18, fontWeight: 700 }}>Reviews</h2>
+      </div>
+      <div style={{ textAlign: 'center', padding: 60, color: 'var(--sp-text-muted)', fontSize: 13 }}>
+        <div style={{ fontSize: 36, marginBottom: 12 }}>⭐</div>
+        <p>Agent reviews will be shown here.</p>
+        <p style={{ fontSize: 12, marginTop: 6 }}>Coming soon.</p>
+      </div>
+    </div>
+  )
+}
+
+// ─── Notifications placeholder ────────────────────────────────────────────────
+
+function NotificationsPlaceholder() {
+  return (
+    <div className="sp-view-container">
+      <div className="sp-view-header-row">
+        <h2 style={{ fontSize: 18, fontWeight: 700 }}>Notifications</h2>
+      </div>
+      <div style={{ textAlign: 'center', padding: 60, color: 'var(--sp-text-muted)', fontSize: 13 }}>
+        <div style={{ fontSize: 36, marginBottom: 12 }}>🔔</div>
+        <p>Real-time notifications coming soon.</p>
+      </div>
+    </div>
+  )
 }

@@ -1,12 +1,10 @@
 'use client'
 import React, { useRef, useState, useEffect, useCallback } from "react";
-import { User, Shield, Bell, Camera, Save, Lock, Eye, EyeOff, UserPlus, Headset, Trash2, RotateCcw, AlertCircle, CheckCircle2, KeyRound } from "lucide-react";
-import { useAdminStore, ADMIN_STORAGE_KEY } from "@/lib/admin-store";
+import { User, Shield, Bell, Camera, Save, Lock, Eye, EyeOff, UserPlus, Headset, Trash2, AlertCircle, CheckCircle2, KeyRound, Ban, CheckCheck } from "lucide-react";
+import { useAdminStore } from "@/lib/admin-store";
 import { adminApi } from "@/lib/api/admin";
 import { Avatar } from "@/components/admin/shared/Atoms";
 import { ConfirmModal } from "@/components/admin/shared/Modal";
-import { formatDate } from "@/lib/utils/admin-format";
-import type { SupportAgent } from "@/lib/types/admin";
 
 type Tab = "profile" | "security" | "support" | "notifications";
 
@@ -51,15 +49,26 @@ function TabButton({ icon: Icon, label, active, onClick }: { icon: React.Element
   );
 }
 
+// ─── Profile Tab ─────────────────────────────────────────────────────────────
+
 function ProfileTab() {
   const adminProfile = useAdminStore((s) => s.adminProfile);
   const updateAdminProfile = useAdminStore((s) => s.updateAdminProfile);
-  const [form, setForm] = useState(adminProfile);
-  const [saved, setSaved] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [firstName, setFirstName] = useState(() => {
+    const parts = adminProfile.fullName.split(" ");
+    return parts[0] ?? "";
+  });
+  const [lastName, setLastName] = useState(() => {
+    const parts = adminProfile.fullName.split(" ");
+    return parts.slice(1).join(" ");
+  });
+  const [saved, setSaved] = useState(false);
+
   function handleSave() {
-    updateAdminProfile(form);
+    const fullName = [firstName.trim(), lastName.trim()].filter(Boolean).join(" ");
+    updateAdminProfile({ fullName });
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }
@@ -69,11 +78,7 @@ function ProfileTab() {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      const dataUrl = reader.result as string;
-      const updated = { ...form, avatarUrl: dataUrl };
-      setForm(updated);
-      // Photo changes apply immediately, like most profile-photo pickers.
-      updateAdminProfile({ avatarUrl: dataUrl });
+      updateAdminProfile({ avatarUrl: reader.result as string });
     };
     reader.readAsDataURL(file);
     e.target.value = "";
@@ -82,19 +87,13 @@ function ProfileTab() {
   return (
     <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl p-6">
       <h3 className="font-semibold text-[var(--text-primary)] mb-1">Profile Information</h3>
-      <p className="text-sm text-[var(--text-secondary)] mb-6">Update your account profile details</p>
+      <p className="text-sm text-[var(--text-secondary)] mb-6">Update your display name and photo</p>
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handlePhotoChange}
-        className="hidden"
-      />
+      <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
 
       <div className="flex items-center gap-4 mb-6">
         <div className="relative">
-          <Avatar name={form.fullName} color={form.avatarColor} imageUrl={form.avatarUrl} size={72} />
+          <Avatar name={adminProfile.fullName} color={adminProfile.avatarColor} imageUrl={adminProfile.avatarUrl} size={72} />
           <button
             onClick={() => fileInputRef.current?.click()}
             className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-violet-600 flex items-center justify-center border-2 border-[var(--bg-raised)]"
@@ -112,10 +111,10 @@ function ProfileTab() {
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-6">
-        <Field label="Full Name" value={form.fullName} onChange={(v) => setForm({ ...form, fullName: v })} />
-        <Field label="Email Address" value={form.email} onChange={(v) => setForm({ ...form, email: v })} />
-        <Field label="Phone Number" value={form.phone} onChange={(v) => setForm({ ...form, phone: v })} />
-        <Field label="Role" value={form.role} disabled />
+        <Field label="First Name" value={firstName} onChange={setFirstName} />
+        <Field label="Last Name" value={lastName} onChange={setLastName} />
+        <Field label="Email Address" value={adminProfile.email} disabled />
+        <Field label="Role" value={adminProfile.role} disabled />
       </div>
 
       <button
@@ -128,99 +127,80 @@ function ProfileTab() {
   );
 }
 
-function Field({ label, value, onChange, disabled, type = "text" }: { label: string; value: string; onChange?: (v: string) => void; disabled?: boolean; type?: string }) {
-  return (
-    <div>
-      <label className="block text-sm text-[var(--text-secondary)] mb-2">{label}</label>
-      <input
-        type={type}
-        value={value}
-        disabled={disabled}
-        onChange={(e) => onChange?.(e.target.value)}
-        className="w-full bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-violet-500/40 disabled:opacity-60"
-      />
-    </div>
-  );
-}
+// ─── Security Tab ─────────────────────────────────────────────────────────────
 
 function SecurityTab() {
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
-  const [resetting, setResetting] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  function handleResetData() {
-    localStorage.removeItem(ADMIN_STORAGE_KEY);
-    window.location.reload();
+  async function handleChangePassword() {
+    setError(""); setSuccess("");
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setError("All fields are required."); return;
+    }
+    if (newPassword.length < 8) {
+      setError("New password must be at least 8 characters."); return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError("New passwords do not match."); return;
+    }
+    setLoading(true);
+    try {
+      await adminApi.changePassword(currentPassword, newPassword);
+      setSuccess("Password updated successfully.");
+      setCurrentPassword(""); setNewPassword(""); setConfirmPassword("");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to update password.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
-    <div className="space-y-6">
-      <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl p-6">
-        <h3 className="font-semibold text-[var(--text-primary)] mb-1">Change Password</h3>
-        <p className="text-sm text-[var(--text-secondary)] mb-6">Update your password to keep your account secure</p>
+    <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl p-6">
+      <h3 className="font-semibold text-[var(--text-primary)] mb-1">Change Password</h3>
+      <p className="text-sm text-[var(--text-secondary)] mb-6">Update your password to keep your account secure</p>
 
-        <div className="space-y-4 mb-6">
-          <PasswordField label="Current Password" show={showCurrent} onToggle={() => setShowCurrent((s) => !s)} />
-          <PasswordField label="New Password" show={showNew} onToggle={() => setShowNew((s) => !s)} />
-          <PasswordField label="Confirm New Password" />
+      <div className="space-y-4 mb-6">
+        <PasswordField label="Current Password" value={currentPassword} onChange={setCurrentPassword} show={showCurrent} onToggle={() => setShowCurrent((s) => !s)} />
+        <PasswordField label="New Password" value={newPassword} onChange={setNewPassword} show={showNew} onToggle={() => setShowNew((s) => !s)} />
+        <PasswordField label="Confirm New Password" value={confirmPassword} onChange={setConfirmPassword} show={showConfirm} onToggle={() => setShowConfirm((s) => !s)} />
+      </div>
+
+      {error && (
+        <div className="flex items-center gap-2 mb-4 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+          <AlertCircle className="w-4 h-4 shrink-0" /> {error}
         </div>
+      )}
+      {success && (
+        <div className="flex items-center gap-2 mb-4 px-4 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm">
+          <CheckCircle2 className="w-4 h-4 shrink-0" /> {success}
+        </div>
+      )}
 
-        <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium transition-colors">
-          <Lock className="w-4 h-4" /> Update Password
-        </button>
-      </div>
-
-      <div className="bg-[var(--bg-raised)] border border-amber-500/20 rounded-2xl p-6">
-        <h3 className="font-semibold text-[var(--text-primary)] mb-1">Reset Demo Data</h3>
-        <p className="text-sm text-[var(--text-secondary)] mb-5">
-          This app's data is saved in your browser's local storage. If things look stale or out of sync after an update, use this to wipe it and reload fresh seed data.
-        </p>
-        {!resetting ? (
-          <button
-            onClick={() => setResetting(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500/15 text-amber-400 text-sm font-medium hover:bg-amber-500/25 transition-colors"
-          >
-            <RotateCcw className="w-4 h-4" /> Reset Demo Data
-          </button>
-        ) : (
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-[var(--text-secondary)]">This will reload the page and restore default sample data. Continue?</span>
-            <button onClick={handleResetData} className="px-4 py-2 rounded-xl bg-red-500 text-white text-sm font-medium hover:bg-red-600 transition-colors shrink-0">
-              Yes, reset
-            </button>
-            <button onClick={() => setResetting(false)} className="px-4 py-2 rounded-xl bg-[var(--bg-subtle)] text-[var(--text-tertiary)] text-sm font-medium hover:bg-[var(--bg-subtle-strong)] transition-colors shrink-0">
-              Cancel
-            </button>
-          </div>
-        )}
-      </div>
+      <button
+        onClick={handleChangePassword}
+        disabled={loading}
+        className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-40 text-white text-sm font-medium transition-colors"
+      >
+        <Lock className="w-4 h-4" /> {loading ? "Updating…" : "Update Password"}
+      </button>
     </div>
   );
 }
 
-function PasswordField({ label, show, onToggle }: { label: string; show?: boolean; onToggle?: () => void }) {
-  return (
-    <div>
-      <label className="block text-sm text-[var(--text-secondary)] mb-2">{label}</label>
-      <div className="relative">
-        <input
-          type={show ? "text" : "password"}
-          className="w-full bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-xl px-4 py-3 pr-11 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-        />
-        {onToggle && (
-          <button onClick={onToggle} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]">
-            {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
+// ─── Support Tab ──────────────────────────────────────────────────────────────
+
+type AgentAction = { type: "suspend" | "activate" | "delete"; agentId: string; agentName: string } | null;
 
 function SupportTab() {
-  const addSupportAgent = useAdminStore((s) => s.addSupportAgent);
-
-  // Create form
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -230,11 +210,11 @@ function SupportTab() {
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
-  // Agents list from API
   const [agents, setAgents] = useState<import("@/lib/api/admin").AdminUser[]>([]);
   const [loadingAgents, setLoadingAgents] = useState(true);
+  const [pendingAction, setPendingAction] = useState<AgentAction>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  // Reset password state: { [userId]: { open, password, show, loading, error, success } }
   const [resetState, setResetState] = useState<Record<string, { open: boolean; password: string; show: boolean; loading: boolean; error: string; success: string }>>({});
 
   const loadAgents = useCallback(async () => {
@@ -250,17 +230,9 @@ function SupportTab() {
 
   async function handleCreate() {
     if (!firstName.trim() || !lastName.trim() || !email.trim() || !password.trim()) return;
-    setSubmitting(true);
-    setErrorMsg("");
-    setSuccessMsg("");
+    setSubmitting(true); setErrorMsg(""); setSuccessMsg("");
     try {
-      const res = await adminApi.createStaff({
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
-        email: email.trim(),
-        password,
-      });
-      addSupportAgent({ fullName: `${firstName.trim()} ${lastName.trim()}`, email: email.trim() });
+      const res = await adminApi.createStaff({ first_name: firstName.trim(), last_name: lastName.trim(), email: email.trim(), password });
       setSuccessMsg(res.message || "Support account created successfully.");
       setFirstName(""); setLastName(""); setEmail(""); setPassword("");
       loadAgents();
@@ -271,14 +243,29 @@ function SupportTab() {
     }
   }
 
+  async function confirmAction() {
+    if (!pendingAction) return;
+    const { type, agentId } = pendingAction;
+    setActionLoading(agentId);
+    setPendingAction(null);
+    try {
+      if (type === "suspend") await adminApi.suspendUser(agentId);
+      else if (type === "activate") await adminApi.activateUser(agentId);
+      else if (type === "delete") await adminApi.deleteStaff(agentId);
+      await loadAgents();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Action failed");
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
   function openReset(userId: string) {
     setResetState((s) => ({ ...s, [userId]: { open: true, password: "", show: false, loading: false, error: "", success: "" } }));
   }
-
   function closeReset(userId: string) {
     setResetState((s) => ({ ...s, [userId]: { ...s[userId], open: false } }));
   }
-
   async function handleReset(userId: string) {
     const state = resetState[userId];
     if (!state?.password?.trim() || state.password.length < 8) {
@@ -288,9 +275,9 @@ function SupportTab() {
     setResetState((s) => ({ ...s, [userId]: { ...s[userId], loading: true, error: "", success: "" } }));
     try {
       await adminApi.resetStaffPassword(userId, state.password);
-      setResetState((s) => ({ ...s, [userId]: { ...s[userId], loading: false, success: "Password reset successfully.", open: false } }));
+      setResetState((s) => ({ ...s, [userId]: { ...s[userId], loading: false, success: "Password reset.", open: false } }));
     } catch (e) {
-      setResetState((s) => ({ ...s, [userId]: { ...s[userId], loading: false, error: e instanceof Error ? e.message : "Failed to reset password." } }));
+      setResetState((s) => ({ ...s, [userId]: { ...s[userId], loading: false, error: e instanceof Error ? e.message : "Failed." } }));
     }
   }
 
@@ -298,6 +285,7 @@ function SupportTab() {
 
   return (
     <div className="space-y-6">
+      {/* Create form */}
       <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl p-6">
         <h3 className="font-semibold text-[var(--text-primary)] mb-1">Create Support Account</h3>
         <p className="text-sm text-[var(--text-secondary)] mb-6">
@@ -342,10 +330,11 @@ function SupportTab() {
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium transition-colors"
         >
           <UserPlus className="w-4 h-4" />
-          {submitting ? "Creating..." : "Create Support Account"}
+          {submitting ? "Creating…" : "Create Support Account"}
         </button>
       </div>
 
+      {/* Agent list */}
       <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl p-6">
         <h3 className="font-semibold text-[var(--text-primary)] mb-1">Customer Support Team</h3>
         <p className="text-sm text-[var(--text-secondary)] mb-5">
@@ -356,20 +345,60 @@ function SupportTab() {
           {agents.map((agent) => {
             const rs = resetState[agent.id] ?? { open: false, password: "", show: false, loading: false, error: "", success: "" };
             const fullName = [agent.first_name, agent.last_name].filter(Boolean).join(" ") || agent.email;
+            const isSuspended = (agent.status ?? "").toLowerCase() === "suspended";
+            const isActioning = actionLoading === agent.id;
+
             return (
               <div key={agent.id} className="py-3 border-b border-[var(--border-color)] last:border-0">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
                   <Avatar name={fullName} color="#7C3AED" size={40} />
                   <div className="flex-1 min-w-0">
-                    <div className="text-[var(--text-primary)] font-medium text-sm truncate">{fullName}</div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[var(--text-primary)] font-medium text-sm truncate">{fullName}</span>
+                      {isSuspended && (
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-500/15 text-red-400 border border-red-500/20 shrink-0">
+                          Suspended
+                        </span>
+                      )}
+                    </div>
                     <div className="text-xs text-[var(--text-muted)] truncate">{agent.email}</div>
                   </div>
-                  <button
-                    onClick={() => rs.open ? closeReset(agent.id) : openReset(agent.id)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 text-xs font-medium transition-colors shrink-0"
-                  >
-                    <KeyRound className="w-3.5 h-3.5" /> Reset Password
-                  </button>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => rs.open ? closeReset(agent.id) : openReset(agent.id)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 text-xs font-medium transition-colors"
+                    >
+                      <KeyRound className="w-3.5 h-3.5" /> Reset Password
+                    </button>
+
+                    {isSuspended ? (
+                      <button
+                        disabled={isActioning}
+                        onClick={() => setPendingAction({ type: "activate", agentId: agent.id, agentName: fullName })}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 text-xs font-medium transition-colors disabled:opacity-40"
+                      >
+                        <CheckCheck className="w-3.5 h-3.5" /> {isActioning ? "…" : "Activate"}
+                      </button>
+                    ) : (
+                      <button
+                        disabled={isActioning}
+                        onClick={() => setPendingAction({ type: "suspend", agentId: agent.id, agentName: fullName })}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 text-xs font-medium transition-colors disabled:opacity-40"
+                      >
+                        <Ban className="w-3.5 h-3.5" /> {isActioning ? "…" : "Suspend"}
+                      </button>
+                    )}
+
+                    <button
+                      disabled={isActioning}
+                      onClick={() => setPendingAction({ type: "delete", agentId: agent.id, agentName: fullName })}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 text-xs font-medium transition-colors disabled:opacity-40"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> {isActioning ? "…" : "Delete"}
+                    </button>
+                  </div>
                 </div>
 
                 {rs.open && (
@@ -420,9 +449,32 @@ function SupportTab() {
           )}
         </div>
       </div>
+
+      {/* Confirm modal for suspend / activate / delete */}
+      <ConfirmModal
+        open={!!pendingAction}
+        title={
+          pendingAction?.type === "delete" ? "Delete support account?" :
+          pendingAction?.type === "suspend" ? "Suspend support agent?" : "Activate support agent?"
+        }
+        description={
+          pendingAction?.type === "delete"
+            ? `${pendingAction.agentName}'s account will be permanently removed and they will no longer be able to log in.`
+            : pendingAction?.type === "suspend"
+            ? `${pendingAction?.agentName} will be suspended and lose access to the support portal until reactivated.`
+            : `${pendingAction?.agentName} will regain full access to the support portal.`
+        }
+        confirmLabel={pendingAction?.type === "delete" ? "Delete" : pendingAction?.type === "suspend" ? "Suspend" : "Activate"}
+        danger={pendingAction?.type !== "activate"}
+        icon={pendingAction?.type === "delete" ? <Trash2 className="w-6 h-6 text-red-400" /> : pendingAction?.type === "suspend" ? <Ban className="w-6 h-6 text-orange-400" /> : <CheckCheck className="w-6 h-6 text-emerald-400" />}
+        onConfirm={confirmAction}
+        onCancel={() => setPendingAction(null)}
+      />
     </div>
   );
 }
+
+// ─── Notifications Tab ────────────────────────────────────────────────────────
 
 function NotificationsTab() {
   const [prefs, setPrefs] = useState(NOTIF_PREFS_DEFAULT);
@@ -443,14 +495,46 @@ function NotificationsTab() {
               onClick={() => setPrefs(prefs.map((x, xi) => (xi === i ? { ...x, on: !x.on } : x)))}
               className={`w-11 h-6 rounded-full transition-colors relative shrink-0 ${p.on ? "bg-violet-600" : "bg-[var(--bg-subtle-strong)]"}`}
             >
-              <span
-                className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${
-                  p.on ? "translate-x-5" : "translate-x-0"
-                }`}
-              />
+              <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${p.on ? "translate-x-5" : "translate-x-0"}`} />
             </button>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Shared field components ──────────────────────────────────────────────────
+
+function Field({ label, value, onChange, disabled, type = "text" }: { label: string; value: string; onChange?: (v: string) => void; disabled?: boolean; type?: string }) {
+  return (
+    <div>
+      <label className="block text-sm text-[var(--text-secondary)] mb-2">{label}</label>
+      <input
+        type={type}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange?.(e.target.value)}
+        className="w-full bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-violet-500/40 disabled:opacity-60"
+      />
+    </div>
+  );
+}
+
+function PasswordField({ label, value, onChange, show, onToggle }: { label: string; value: string; onChange: (v: string) => void; show: boolean; onToggle: () => void }) {
+  return (
+    <div>
+      <label className="block text-sm text-[var(--text-secondary)] mb-2">{label}</label>
+      <div className="relative">
+        <input
+          type={show ? "text" : "password"}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-xl px-4 py-3 pr-11 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+        />
+        <button onClick={onToggle} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]">
+          {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+        </button>
       </div>
     </div>
   );

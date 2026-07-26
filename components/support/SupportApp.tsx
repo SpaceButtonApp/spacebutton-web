@@ -83,7 +83,6 @@ export default function SupportApp() {
       case 'verifications': return <VerificationsView />
       case 'listings': return <ListingsView />
       case 'settings': return <SettingsView user={user} />
-      case 'transactions':
       case 'reviews':
       case 'reports':
       case 'notifications':

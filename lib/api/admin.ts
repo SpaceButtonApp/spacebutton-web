@@ -44,8 +44,25 @@ export interface AdminUser {
   /** "active" | "suspended" | "inactive" — normalise with .toLowerCase() */
   status: string
   is_email_verified: boolean
+  referral_code?: string
   referrals_made: number
   created_at: string
+}
+
+export interface AdminUserFullProfile extends AdminUser {
+  profile_photo_url?: string
+  bio?: string
+  state?: string
+  city?: string
+  gender?: string
+  date_of_birth?: string
+  agency_name?: string
+  years_of_experience?: number
+  id_type?: string
+  id_verification_status: string
+  live_verification_status: string
+  is_identity_verified: boolean
+  is_live_verified: boolean
 }
 
 export interface AdminUserListResponse {
@@ -321,6 +338,11 @@ export const adminApi = {
     const res = await adminFetch<{ success: boolean; data: AdminUser }>(`/admin/users/${userId}`)
     const inner = (res as any)?.data ?? res
     return inner as AdminUser
+  },
+
+  async getUserFullProfile(userId: string): Promise<AdminUserFullProfile> {
+    const res = await adminFetch<{ success: boolean; data: AdminUserFullProfile }>(`/admin/users/${userId}/profile`)
+    return res.data
   },
 
   async suspendUser(userId: string): Promise<void> {

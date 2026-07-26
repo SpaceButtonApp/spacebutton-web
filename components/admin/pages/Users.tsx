@@ -1,12 +1,13 @@
 'use client'
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Users as UsersIcon, UserCheck, Briefcase, Ban, Eye, MessageCircle, Mail, UserX, Trash2, RefreshCw, AlertCircle, MailCheck, MailX } from "lucide-react";
+
 import { adminApi } from "@/lib/api/admin";
 import type { AdminUser } from "@/lib/api/admin";
 import { StatCard } from "@/components/admin/shared/StatCard";
 import { SearchInput, ExportButton, ActionMenu, FilterPill, Avatar, EmptyState } from "@/components/admin/shared/Atoms";
 import { StatusBadge } from "@/components/admin/shared/Badge";
-import { Modal, ConfirmModal } from "@/components/admin/shared/Modal";
+import { ConfirmModal } from "@/components/admin/shared/Modal";
 import { formatDate, exportToExcel, truncateId } from "@/lib/utils/admin-format";
 import type { AppUser } from "@/lib/types/admin";
 
@@ -15,6 +16,7 @@ type UserFilter = "all" | "individual" | "agent";
 interface UsersPageProps {
   onMessageUser?: (user: AppUser) => void;
   onMailUser?: (user: AppUser) => void;
+  onViewUser?: (userId: string) => void;
 }
 
 const AVATAR_COLORS = ["#7c3aed","#a855f7","#8b5cf6","#6366f1","#c026d3","#9333ea"];
@@ -40,7 +42,7 @@ function mapApiUser(u: AdminUser): AppUser {
   };
 }
 
-export function UsersPage({ onMessageUser, onMailUser }: UsersPageProps) {
+export function UsersPage({ onMessageUser, onMailUser, onViewUser }: UsersPageProps) {
   const [users, setUsers] = useState<AppUser[]>([]);
   const [emailVerifiedMap, setEmailVerifiedMap] = useState<Map<string, boolean>>(new Map());
   const [loading, setLoading] = useState(true);
@@ -48,7 +50,6 @@ export function UsersPage({ onMessageUser, onMailUser }: UsersPageProps) {
 
   const [filter, setFilter] = useState<UserFilter>("all");
   const [search, setSearch] = useState("");
-  const [profileUser, setProfileUser] = useState<AppUser | null>(null);
   const [confirmAction, setConfirmAction] = useState<{ type: "suspend" | "delete" | "reinstate"; user: AppUser } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -230,7 +231,7 @@ export function UsersPage({ onMessageUser, onMailUser }: UsersPageProps) {
                   <td className="px-6 py-3.5 text-right">
                     <ActionMenu
                       items={[
-                        { label: "View profile", icon: <Eye className="w-4 h-4" />, onClick: () => setProfileUser(u) },
+                        { label: "View profile", icon: <Eye className="w-4 h-4" />, onClick: () => onViewUser?.(u.id) },
                         { label: "Message", icon: <MessageCircle className="w-4 h-4" />, onClick: () => onMessageUser?.(u) },
                         { label: "Send mail", icon: <Mail className="w-4 h-4" />, onClick: () => onMailUser?.(u) },
                         u.status === "suspended"
@@ -247,16 +248,6 @@ export function UsersPage({ onMessageUser, onMailUser }: UsersPageProps) {
           {filtered.length === 0 && <EmptyState label="No users match your search." />}
         </div>
       </div>
-
-      <Modal open={!!profileUser} onClose={() => setProfileUser(null)} title="User Profile" maxWidth="max-w-xl">
-        {profileUser && (
-          <UserProfileContent
-            user={profileUser}
-            onMessage={() => { onMessageUser?.(profileUser); setProfileUser(null); }}
-            onMail={() => { onMailUser?.(profileUser); setProfileUser(null); }}
-          />
-        )}
-      </Modal>
 
       <ConfirmModal
         open={!!confirmAction}
@@ -281,63 +272,3 @@ export function UsersPage({ onMessageUser, onMailUser }: UsersPageProps) {
   );
 }
 
-function UserProfileContent({
-  user, onMessage, onMail,
-}: {
-  user: AppUser;
-  onMessage: () => void;
-  onMail: () => void;
-}) {
-  return (
-    <div>
-      <div className="flex items-center gap-4 mb-6">
-        <Avatar name={user.name} color={user.avatarColor} size={64} />
-        <div className="flex-1">
-          <div className="text-xl font-bold text-[var(--text-primary)]">{user.name}</div>
-          <div className="text-sm text-[var(--text-secondary)]">{user.email}</div>
-          <div className="flex items-center gap-2 mt-1.5">
-            <StatusBadge status={user.status} />
-            <span className="text-xs font-medium capitalize px-2.5 py-1 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/20">
-              {user.role}
-            </span>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={onMessage} className="p-2.5 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-subtle-strong)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Message">
-            <MessageCircle className="w-4 h-4" />
-          </button>
-          <button onClick={onMail} className="p-2.5 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-subtle-strong)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Send mail">
-            <Mail className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      <div className="space-y-2 text-sm">
-        <Row label="Phone" value={user.phone || "—"} />
-        <Row label="Joined" value={formatDate(user.joinDate)} />
-        <Row label="User ID" value={user.userId} />
-        <Row label="Referral Code" value={user.referralCode || "—"} />
-        <Row label="Users Referred" value={String(user.referralsMade)} />
-      </div>
-    </div>
-  );
-}
-
-function MiniStat({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string | number }) {
-  return (
-    <div className="bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-xl p-3.5">
-      <Icon className="w-4 h-4 text-violet-400 mb-2" />
-      <div className="font-bold text-[var(--text-primary)] text-lg truncate">{value}</div>
-      <div className="text-xs text-[var(--text-muted)]">{label}</div>
-    </div>
-  );
-}
-
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex justify-between py-2 border-b border-[var(--border-color)] last:border-0">
-      <span className="text-[var(--text-muted)]">{label}</span>
-      <span className="text-[var(--text-primary)] font-medium">{value}</span>
-    </div>
-  );
-}

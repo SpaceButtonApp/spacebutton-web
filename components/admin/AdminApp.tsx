@@ -16,6 +16,7 @@ import { ReviewsPage } from "@/components/admin/pages/Reviews";
 import { NotificationsPage } from "@/components/admin/pages/Notifications";
 import { ReportsPage } from "@/components/admin/pages/Reports";
 import { SettingsPage } from "@/components/admin/pages/Settings";
+import { UserDetailPage } from "@/components/admin/pages/UserDetail";
 import type { AdminRoute } from "@/components/admin/shared/Sidebar";
 
 const PAGE_TITLES: Record<AdminRoute, string> = {
@@ -49,6 +50,7 @@ export function AdminApp() {
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [messageTargetUserId, setMessageTargetUserId] = useState<string | null>(null);
   const [viewListingId, setViewListingId] = useState<string | null>(null);
+  const [viewUserId, setViewUserId] = useState<string | null>(null);
   const [composeMailTo, setComposeMailTo] = useState<{ name: string; email: string } | null>(null);
 
   const badgeCounts: Partial<Record<AdminRoute, number>> = {
@@ -67,6 +69,11 @@ export function AdminApp() {
   function goToListingDetail(listingId: string) {
     setViewListingId(listingId);
     setRoute("listings");
+  }
+
+  function handleNavigate(r: AdminRoute) {
+    if (r !== "users") setViewUserId(null);
+    setRoute(r);
   }
 
   function handleLogout() {
@@ -88,22 +95,31 @@ export function AdminApp() {
       )}
       <Sidebar
         active={route}
-        onNavigate={setRoute}
+        onNavigate={handleNavigate}
         onLogoutClick={() => setLogoutOpen(true)}
         badgeCounts={badgeCounts}
       />
 
       <div className="flex-1 min-w-0 flex flex-col h-full">
         <div className="shrink-0">
-          <AdminHeader title={PAGE_TITLES[route]} onNavigate={setRoute} />
+          <AdminHeader title={PAGE_TITLES[route]} onNavigate={handleNavigate} />
         </div>
 
         <div className="flex-1 overflow-y-auto">
           {route === "dashboard" && <Dashboard onNavigate={setRoute} />}
-          {route === "users" && (
+          {route === "users" && !viewUserId && (
             <UsersPage
               onMessageUser={(u) => goToUserThread(u.id)}
               onMailUser={(u) => setComposeMailTo({ name: u.name, email: u.email })}
+              onViewUser={(id) => setViewUserId(id)}
+            />
+          )}
+          {route === "users" && viewUserId && (
+            <UserDetailPage
+              userId={viewUserId}
+              onBack={() => setViewUserId(null)}
+              onMessageUser={(u) => { setViewUserId(null); goToUserThread(u.id); }}
+              onMailUser={(u) => { setViewUserId(null); setComposeMailTo({ name: u.name, email: u.email }); }}
             />
           )}
           {route === "verifications" && (

@@ -377,11 +377,11 @@ export const useAdminStore = create<AdminState>()(
           const waitlist: WaitlistEntry[] =
             waitlistResp.status === "fulfilled"
               ? (waitlistResp.value.entries ?? []).map((e) => ({
-                  id: e.id,
+                  id: e.id ?? e.email,
                   name: e.email.split("@")[0],
                   email: e.email,
                   phone: "",
-                  date: e.created_at,
+                  date: e.joined_at,
                 }))
               : get().waitlist;
 

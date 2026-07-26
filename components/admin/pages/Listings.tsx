@@ -125,7 +125,7 @@ function toAppUser(row: ListingRow): AppUser {
   return {
     id: row.agentId, userId: row.agentId, name: row.agentName, email: row.agentEmail,
     phone: "", role: "agent" as UserRole, status: "active", joinDate: "",
-    avatarColor: row.agentAvatarColor, referralCode: "", connects: 0,
+    avatarColor: row.agentAvatarColor, referralCode: "", referralsMade: 0, connects: 0,
   };
 }
 

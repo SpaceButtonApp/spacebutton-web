@@ -24,9 +24,12 @@ function getInitials(first: string | null, last: string | null) {
 
 const AVATAR_COLORS = ['sp-av-blue', 'sp-av-amber', 'sp-av-teal', 'sp-av-coral', 'sp-av-purple']
 
+const PAGE_SIZE = 50
+
 export default function UsersView() {
   const [users, setUsers] = useState<AdminUser[]>([])
   const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [roleFilter, setRoleFilter] = useState('all')
@@ -34,11 +37,13 @@ export default function UsersView() {
   const [profileUser, setProfileUser] = useState<AdminUser | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
 
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
+
   const fetchUsers = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const data = await supportApi.getUsers({ page_size: 100, role: roleFilter === 'all' ? undefined : roleFilter })
+      const data = await supportApi.getUsers({ page, page_size: PAGE_SIZE, role: roleFilter === 'all' ? undefined : roleFilter })
       setUsers(data.users)
       setTotal(data.total)
     } catch (e: unknown) {
@@ -46,9 +51,12 @@ export default function UsersView() {
     } finally {
       setLoading(false)
     }
-  }, [roleFilter])
+  }, [roleFilter, page])
 
   useEffect(() => { fetchUsers() }, [fetchUsers])
+
+  // Reset to page 1 when role changes
+  useEffect(() => { setPage(1) }, [roleFilter])
 
   const filtered = users.filter(u => {
     if (!search) return true
@@ -125,7 +133,7 @@ export default function UsersView() {
         </div>
       )}
 
-      <div className="sp-table-card">
+      <div className="sp-table-card" style={{ marginBottom: 16 }}>
         <table className="sp-data-table">
           <thead>
             <tr>
@@ -196,6 +204,61 @@ export default function UsersView() {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
+          <button
+            className="sp-btn sp-btn-small"
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1 || loading}
+          >
+            ← Prev
+          </button>
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1)
+            .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
+            .reduce<(number | 'gap')[]>((acc, p, idx, arr) => {
+              if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('gap')
+              acc.push(p)
+              return acc
+            }, [])
+            .map((p, i) =>
+              p === 'gap' ? (
+                <span key={`gap-${i}`} style={{ color: 'var(--sp-text-muted)', fontSize: 12 }}>…</span>
+              ) : (
+                <button
+                  key={p}
+                  className="sp-btn sp-btn-small"
+                  onClick={() => setPage(p as number)}
+                  disabled={loading}
+                  style={{
+                    minWidth: 30,
+                    background: page === p ? 'var(--sp-text-accent)' : undefined,
+                    color: page === p ? '#fff' : undefined,
+                    borderColor: page === p ? 'transparent' : undefined,
+                    fontWeight: page === p ? 700 : 500,
+                  }}
+                >
+                  {p}
+                </button>
+              )
+            )
+          }
+
+          <button
+            className="sp-btn sp-btn-small"
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages || loading}
+          >
+            Next →
+          </button>
+
+          <span style={{ fontSize: 12, color: 'var(--sp-text-muted)', marginLeft: 4 }}>
+            {total} total
+          </span>
+        </div>
+      )}
 
       {profileUser && (
         <div className="sp-lightbox" onClick={() => setProfileUser(null)}>

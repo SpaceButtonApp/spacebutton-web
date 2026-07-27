@@ -19,16 +19,18 @@ interface SidebarProps {
   onTabChange: (tab: string) => void
   onLogout: () => void
   user: SupportUser | null
+  collapsed?: boolean
+  onToggleCollapse?: () => void
 }
 
-export default function Sidebar({ activeTab, onTabChange, onLogout, user }: SidebarProps) {
+export default function Sidebar({ activeTab, onTabChange, onLogout, user, collapsed, onToggleCollapse }: SidebarProps) {
   const initials = user
     ? `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}`.toUpperCase()
     : 'SA'
   const displayName = user ? `${user.first_name} ${user.last_name}` : 'Support Agent'
 
   return (
-    <aside className="sp-sidebar">
+    <aside className={`sp-sidebar${collapsed ? ' collapsed' : ''}`}>
       <div className="sp-sidebar-logo">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -42,7 +44,31 @@ export default function Sidebar({ activeTab, onTabChange, onLogout, user }: Side
         </div>
       </div>
 
-      <p className="sp-section-title" style={{ marginTop: 0 }}>Navigation</p>
+      <button
+        className="sp-sidebar-collapse-btn"
+        onClick={onToggleCollapse}
+        title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: collapsed ? 'center' : 'flex-end',
+          padding: '2px 6px',
+          marginBottom: 2,
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          color: 'var(--sp-text-muted)',
+          fontSize: 16,
+          borderRadius: 6,
+          width: '100%',
+          lineHeight: 1,
+          transition: 'color 0.15s',
+        }}
+      >
+        {collapsed ? '›' : '‹'}
+      </button>
+
+      {!collapsed && <p className="sp-section-title" style={{ marginTop: 0 }}>Navigation</p>}
 
       <nav className="sp-sidebar-nav">
         {NAV_ITEMS.map(item => (
@@ -50,6 +76,7 @@ export default function Sidebar({ activeTab, onTabChange, onLogout, user }: Side
             key={item.id}
             className={`sp-nav-item${activeTab === item.id ? ' active' : ''}`}
             onClick={() => onTabChange(item.id)}
+            title={collapsed ? item.label : undefined}
           >
             <span style={{ fontSize: 16 }}>{item.icon}</span>
             <span style={{ flex: 1 }}>{item.label}</span>
@@ -59,7 +86,11 @@ export default function Sidebar({ activeTab, onTabChange, onLogout, user }: Side
           </button>
         ))}
 
-        <button className="sp-nav-item sp-sidebar-logout" onClick={onLogout}>
+        <button
+          className="sp-nav-item sp-sidebar-logout"
+          onClick={onLogout}
+          title={collapsed ? 'Log out' : undefined}
+        >
           <span style={{ fontSize: 16 }}>↩</span>
           <span>Log out</span>
         </button>

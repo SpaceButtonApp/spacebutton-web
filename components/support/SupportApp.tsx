@@ -23,6 +23,7 @@ export default function SupportApp() {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [theme, setTheme] = useState('dark')
   const [ready, setReady] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   const {
     tickets,
@@ -90,14 +91,6 @@ export default function SupportApp() {
       case 'messages':
         return (
           <div className="sp-messages-grid">
-            <TicketList
-              tickets={tickets}
-              loading={ticketsLoading}
-              error={ticketsError}
-              selectedId={selectedId}
-              onSelect={selectTicket}
-              currentUserId={user?.id ?? ''}
-            />
             <ChatPanel
               detail={detail}
               detailLoading={detailLoading}
@@ -110,6 +103,14 @@ export default function SupportApp() {
               onClaim={claimTicket}
               onUnclaim={unclaimTicket}
             />
+            <TicketList
+              tickets={tickets}
+              loading={ticketsLoading}
+              error={ticketsError}
+              selectedId={selectedId}
+              onSelect={selectTicket}
+              currentUserId={user?.id ?? ''}
+            />
           </div>
         )
       default: return null
@@ -118,12 +119,14 @@ export default function SupportApp() {
 
   return (
     <div className="support-portal-root" data-sp-theme={theme}>
-      <div className="sp-dashboard-container">
+      <div className={`sp-dashboard-container${sidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
         <Sidebar
           activeTab={activeTab}
           onTabChange={setActiveTab}
           onLogout={handleLogout}
           user={user}
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed(c => !c)}
         />
         <div className="sp-content-area">
           <Topbar

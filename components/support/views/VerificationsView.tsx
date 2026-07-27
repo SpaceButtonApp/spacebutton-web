@@ -71,21 +71,28 @@ export default function VerificationsView() {
     setLoading(true)
     setError(null)
 
-    Promise.all([
+    Promise.allSettled([
       supportApi.getVerifiedUsers(),
       supportApi.getPendingVerifications(),
       supportApi.getPartialVerifications(),
       supportApi.getUsers({ page_size: 100 }),
     ])
-      .then(([verifiedData, pendingData, partialData, usersData]) => {
-        setVerified(verifiedData.users)
-        setPending(pendingData)
-        setPartial(partialData)
-        const map: Record<string, AdminUser> = {}
-        usersData.users.forEach(u => { map[u.id] = u })
-        setUserMap(map)
+      .then(([verifiedResult, pendingResult, partialResult, usersResult]) => {
+        if (verifiedResult.status === 'fulfilled') setVerified(verifiedResult.value.users)
+        if (pendingResult.status === 'fulfilled') setPending(pendingResult.value)
+        if (partialResult.status === 'fulfilled') setPartial(partialResult.value)
+        if (usersResult.status === 'fulfilled') {
+          const map: Record<string, AdminUser> = {}
+          usersResult.value.users.forEach(u => { map[u.id] = u })
+          setUserMap(map)
+        }
+        const results = [verifiedResult, pendingResult, partialResult, usersResult]
+        const allFailed = results.every(r => r.status === 'rejected')
+        if (allFailed) {
+          const first = results.find(r => r.status === 'rejected') as PromiseRejectedResult | undefined
+          setError(first?.reason instanceof Error ? first.reason.message : 'Failed to load verifications')
+        }
       })
-      .catch(e => setError(e instanceof Error ? e.message : 'Failed to load verifications'))
       .finally(() => setLoading(false))
   }, [])
 

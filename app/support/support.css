@@ -586,9 +586,9 @@
 .sp-filter-tab.active { background-color: var(--sp-text-accent); color: #ffffff; font-weight: 600; }
 
 /* ── Split Layout (Verifications) ── */
-.sp-split-layout { display: grid; grid-template-columns: 320px 1fr; height: calc(100dvh - 64px); overflow: hidden; }
-.sp-split-left { border-right: 1px solid var(--sp-border-primary); padding: 20px; overflow-y: auto; background-color: var(--sp-bg-sidebar); }
-.sp-split-right { padding: 24px 30px; overflow-y: auto; display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.sp-split-layout { display: grid; grid-template-columns: 320px 1fr; grid-template-rows: 1fr; height: calc(100dvh - 64px); overflow: hidden; }
+.sp-split-left { border-right: 1px solid var(--sp-border-primary); padding: 20px; overflow-y: auto; background-color: var(--sp-bg-sidebar); min-height: 0; }
+.sp-split-right { padding: 24px 30px; overflow-y: auto; min-height: 0; }
 .sp-request-list { display: flex; flex-direction: column; gap: 8px; }
 .sp-request-item { display: flex; align-items: center; gap: 10px; padding: 12px; background-color: var(--sp-bg-card); border: 1px solid var(--sp-border-primary); border-radius: 8px; cursor: pointer; text-align: left; transition: border-color 0.15s, background-color 0.15s; color: inherit; width: 100%; }
 .sp-request-item:hover { background-color: var(--sp-hover-bg); }

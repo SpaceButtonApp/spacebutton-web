@@ -32,7 +32,7 @@ function mapApiUser(u: AdminUser): AppUser {
     name: `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim() || u.email,
     email: u.email,
     phone: u.phone_number ?? "",
-    role: u.role === "agent" ? "agent" : "individual",
+    role: u.role === "agent" ? "agent" : u.role === "user" ? "individual" : u.role as "individual",
     status: (u.status ?? "active").toLowerCase() === "suspended" ? "suspended" : "active",
     joinDate: u.created_at,
     avatarColor: avatarColorForId(u.id),

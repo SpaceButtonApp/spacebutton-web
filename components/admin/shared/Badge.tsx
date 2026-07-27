@@ -36,6 +36,7 @@ export function statusBadgeTone(status: string): BadgeTone {
     case "pending":
     case "pending_verification":
     case "flagged":
+    case "abandoned":
       return "warning";
     case "suspended":
     case "closed":

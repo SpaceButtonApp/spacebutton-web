@@ -272,11 +272,12 @@ export interface AdminTransaction {
   user_name: string
   user_email: string
   transaction_type: string   // "purchase" | "deduction" | "bonus" | "referral"
-  status: string             // "pending" | "success" | "failed"
+  status: string             // "pending" | "success" | "failed" | "abandoned"
   amount_kobo: number
   connects_qty: number
   paystack_reference: string | null
   description: string | null
+  channel: string            // "paystack" | "apple_iap" | "internal"
   created_at: string
 }
 
@@ -537,6 +538,14 @@ export const adminApi = {
     )
     const inner = (res as any)?.data ?? res
     return inner as AdminTransactionListResponse
+  },
+
+  async reconcileTransactions(): Promise<{ checked: number; results: Record<string, number> }> {
+    const res = await adminFetch<{ success: boolean; data: { checked: number; results: Record<string, number> } }>(
+      '/admin/reconcile-pending',
+      { method: 'POST' },
+    )
+    return (res as any)?.data ?? res
   },
 
   // Waitlist

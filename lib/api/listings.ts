@@ -44,9 +44,19 @@ function mapType(l: ListingResponse): Property['type'] {
 
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=400&h=300&fit=crop'
 
+function isVideoUrl(url: string): boolean {
+  return (
+    /\.(mp4|mov|avi|webm|m4v|mkv)(\?|$)/i.test(url) ||
+    url.includes('/video/upload/')
+  )
+}
+
 export function mapListing(l: ListingResponse, savedIds: Set<string> = new Set()): Property {
-  const sortedImages = [...l.images]
-    .sort((a, b) => a.order - b.order)
+  const allSorted = [...l.images].sort((a, b) => a.order - b.order)
+  // Mobile app may upload videos through the images endpoint — detect and separate them
+  const videoFromImages = allSorted.find((img) => isVideoUrl(img.image_url))
+  const sortedImages = allSorted
+    .filter((img) => !isVideoUrl(img.image_url))
     .map((img) => img.image_url)
 
   let features: string[] = []
@@ -74,7 +84,7 @@ export function mapListing(l: ListingResponse, savedIds: Set<string> = new Set()
     price: Number(l.price),
     rentPeriod: l.rent_period === 'monthly' ? 'monthly' : 'yearly',
     images: sortedImages.length > 0 ? sortedImages : [FALLBACK_IMAGE],
-    videoUrl: l.video_tour_url ?? undefined,
+    videoUrl: l.video_tour_url ?? videoFromImages?.image_url ?? undefined,
     type,
     listingType: type,
     condition: mapCondition(l),
@@ -86,7 +96,7 @@ export function mapListing(l: ListingResponse, savedIds: Set<string> = new Set()
     description: l.description,
     verified: l.is_featured,
     saved: savedIds.has(l.id),
-    photoCount: l.images.length,
+    photoCount: sortedImages.length,
     ownerId: l.agent_id,
     views: l.views_count,
     agent,

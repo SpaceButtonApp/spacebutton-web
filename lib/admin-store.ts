@@ -310,7 +310,7 @@ export const useAdminStore = create<AdminState>()(
       transactions: seedTransactions(),
       reviews: seedReviews(),
       reports: [],
-      notifications: seedNotifications(),
+      notifications: [],
       waitlist: [],
       supportAgents: seedSupportAgents(),
       adminProfile: {

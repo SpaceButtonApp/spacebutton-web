@@ -275,7 +275,10 @@ export function VerificationsPage({ onMessageUser, onMailUser }: VerificationsPa
                         {r.status === "partial" && (
                           <div className="text-xs text-orange-400 flex items-center gap-1">
                             <ShieldAlert className="w-3 h-3" />
-                            {r.idVerificationStatus === "approved" ? "ID ✓ — Selfie needed" : "Selfie ✓ — ID needed"}
+                            {r.idVerificationStatus === "approved"
+                          ? r.liveVerificationStatus === "rejected" ? "ID ✓ — Selfie rejected" : "ID ✓ — Selfie needed"
+                          : r.idVerificationStatus === "rejected" ? "Selfie ✓ — ID rejected" : "Selfie ✓ — ID needed"
+                        }
                           </div>
                         )}
                       </div>

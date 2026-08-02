@@ -36,11 +36,14 @@ export default function VerificationDetailPage() {
   useEffect(() => {
     async function load() {
       try {
-        const [pending, userData] = await Promise.all([
+        const [pending, partial, userData] = await Promise.all([
           adminApi.getPendingVerifications().catch(() => []),
+          adminApi.getPartialVerifications().catch(() => []),
           adminApi.getUser(userId).catch(() => null),
         ])
-        const found = (pending as PendingVerification[]).find((p) => p.user_id === userId) ?? null
+        const allVerifs = [...(pending as PendingVerification[]), ...(partial as PendingVerification[])]
+        // prefer pending entry if user appears in both
+        const found = allVerifs.find((p) => p.user_id === userId) ?? null
         setVerif(found)
         setUser(userData)
       } catch (e) {

@@ -80,9 +80,6 @@ export default function Sidebar({ activeTab, onTabChange, onLogout, user, collap
           >
             <span style={{ fontSize: 16 }}>{item.icon}</span>
             <span style={{ flex: 1 }}>{item.label}</span>
-            {item.badge && (
-              <span className={`sp-badge sp-badge-${item.badgeColor}`}>{item.badge}</span>
-            )}
           </button>
         ))}
 

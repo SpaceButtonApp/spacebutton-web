@@ -276,8 +276,12 @@ export function VerificationsPage({ onMessageUser, onMailUser }: VerificationsPa
                           <div className="text-xs text-orange-400 flex items-center gap-1">
                             <ShieldAlert className="w-3 h-3" />
                             {r.idVerificationStatus === "approved"
-                          ? r.liveVerificationStatus === "rejected" ? "ID ✓ — Selfie rejected" : "ID ✓ — Selfie needed"
-                          : r.idVerificationStatus === "rejected" ? "Selfie ✓ — ID rejected" : "Selfie ✓ — ID needed"
+                          ? r.liveVerificationStatus === "pending"   ? "ID ✓ — Selfie pending review"
+                          : r.liveVerificationStatus === "rejected"  ? "ID ✓ — Selfie rejected"
+                          : "ID ✓ — Selfie needed"
+                          : r.idVerificationStatus === "pending"     ? "Selfie ✓ — ID pending review"
+                          : r.idVerificationStatus === "rejected"    ? "Selfie ✓ — ID rejected"
+                          : "Selfie ✓ — ID needed"
                         }
                           </div>
                         )}

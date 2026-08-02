@@ -4,9 +4,9 @@ import type { SupportUser } from '@/lib/api/support'
 
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: '⊞' },
-  { id: 'messages', label: 'Messages', icon: '💬', badge: '5', badgeColor: 'red' },
+  { id: 'messages', label: 'Messages', icon: '💬' },
   { id: 'users', label: 'Users', icon: '👥' },
-  { id: 'verifications', label: 'Verifications', icon: '🪪', badge: '2', badgeColor: 'green' },
+  { id: 'verifications', label: 'Verifications', icon: '🪪' },
   { id: 'listings', label: 'Listings', icon: '🏠' },
   { id: 'reviews', label: 'Reviews', icon: '⭐' },
   { id: 'reports', label: 'Reports', icon: '🚩' },

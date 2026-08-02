@@ -52,27 +52,33 @@ export function AdminApp() {
   const [viewListingId, setViewListingId] = useState<string | null>(null);
   const [viewUserId, setViewUserId] = useState<string | null>(null);
   const [composeMailTo, setComposeMailTo] = useState<{ name: string; email: string } | null>(null);
+  // Tracks routes visited this session — badge clears once you open the page
+  const [visitedRoutes, setVisitedRoutes] = useState<Set<AdminRoute>>(new Set<AdminRoute>(["dashboard"]));
 
+  const pendingReports = reports.filter((r) => r.status === "pending").length;
   const badgeCounts: Partial<Record<AdminRoute, number>> = {
     verifications: verifications.filter((v) => v.status === "pending").length,
     listings: listings.filter((l) => l.approval === "pending").length,
-    reports: reports.filter((r) => r.status === "pending").length,
+    reports: visitedRoutes.has("reports") ? 0 : pendingReports,
     messages: messages.reduce((sum, t) => sum + t.unreadCount, 0),
     notifications: notifications.filter((n) => !n.read).length,
   };
 
   function goToUserThread(userId: string) {
     setMessageTargetUserId(userId);
+    setVisitedRoutes((prev) => new Set([...prev, "messages" as AdminRoute]));
     setRoute("messages");
   }
 
   function goToListingDetail(listingId: string) {
     setViewListingId(listingId);
+    setVisitedRoutes((prev) => new Set([...prev, "listings" as AdminRoute]));
     setRoute("listings");
   }
 
   function handleNavigate(r: AdminRoute) {
     if (r !== "users") setViewUserId(null);
+    setVisitedRoutes((prev) => new Set([...prev, r]));
     setRoute(r);
   }
 

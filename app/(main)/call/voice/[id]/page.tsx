@@ -3,9 +3,9 @@
 export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, use, useRef, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import Image from 'next/image'
-import { ChevronLeft, MicOff, Mic, Volume2, VolumeX, PhoneOff, Phone } from 'lucide-react'
+import { MicOff, Mic, Volume2, VolumeX, PhoneOff, Phone } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { callsApi } from '@/lib/api/calls'
 import { getUserDisplayInfo } from '@/lib/api/users'
@@ -14,8 +14,20 @@ import type { CallResponse } from '@/lib/types/call'
 
 type CallState = 'connecting' | 'calling' | 'ongoing' | 'ended' | 'error'
 
-const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face'
 const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!
+
+function InitialsAvatar({ name, size }: { name: string; size: number }) {
+  const initials = name.split(' ').map(w => w[0] ?? '').join('').slice(0, 2).toUpperCase() || '?'
+  const colors = ['#6D28D9', '#7C3AED', '#2563EB', '#0EA5E9', '#10B981', '#F59E0B', '#EF4444']
+  const bg = colors[name.charCodeAt(0) % colors.length]
+  return (
+    <div
+      style={{ width: size, height: size, background: bg, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.35, fontWeight: 700, color: '#fff' }}
+    >
+      {initials}
+    </div>
+  )
+}
 
 function VoiceCallPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -46,7 +58,11 @@ function VoiceCallPage({ params }: { params: Promise<{ id: string }> }) {
     if (callRef.current) {
       await callsApi.endCall(callRef.current.id).catch(() => {})
     }
-    window.history.back()
+    if (window.history.length > 1) {
+      window.history.back()
+    } else {
+      window.location.replace('/messages')
+    }
   }
 
   useEffect(() => {
@@ -138,14 +154,12 @@ function VoiceCallPage({ params }: { params: Promise<{ id: string }> }) {
     setIsSpeakerOff(next)
   }
 
-  const avatar = otherAvatar || DEFAULT_AVATAR
-
   if (callState === 'error') {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
         <p className="text-muted-foreground mb-2">Call failed</p>
         <p className="text-sm text-destructive mb-6">{errorMsg}</p>
-        <Button variant="outline" onClick={() => window.history.back()}>Go Back</Button>
+        <Button variant="outline" onClick={handleEndCall}>Go Back</Button>
       </div>
     )
   }
@@ -154,19 +168,28 @@ function VoiceCallPage({ params }: { params: Promise<{ id: string }> }) {
     return (
       <div className="flex min-h-screen flex-col bg-background">
         <header className="flex items-center gap-4 p-4">
-          <button onClick={() => window.history.back()} className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-            <ChevronLeft className="h-6 w-6" />
-          </button>
+          <div className="w-12" />
           <h1 className="flex-1 text-center text-xl font-semibold">
             {callState === 'connecting' ? 'Connecting...' : 'Calling...'}
           </h1>
           <div className="w-12" />
         </header>
         <div className="flex flex-1 flex-col items-center justify-center px-4">
-          <div className="relative mb-6 h-48 w-48">
-            <Image src={avatar} alt={otherName} fill className="rounded-full object-cover" unoptimized />
-            {callState === 'calling' && (
-              <div className="absolute inset-0 animate-ping rounded-full bg-primary/20" />
+          <div className="relative mb-6">
+            {otherAvatar ? (
+              <div className="relative h-48 w-48">
+                <Image src={otherAvatar} alt={otherName} fill className="rounded-full object-cover" unoptimized />
+                {callState === 'calling' && (
+                  <div className="absolute inset-0 animate-ping rounded-full bg-primary/20" />
+                )}
+              </div>
+            ) : (
+              <div className="relative">
+                {callState === 'calling' && (
+                  <div className="absolute inset-0 animate-ping rounded-full bg-primary/20" />
+                )}
+                <InitialsAvatar name={otherName} size={192} />
+              </div>
             )}
           </div>
           <h2 className="text-2xl font-semibold">{otherName}</h2>
@@ -186,9 +209,7 @@ function VoiceCallPage({ params }: { params: Promise<{ id: string }> }) {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <header className="flex items-center gap-4 p-4">
-        <button onClick={() => window.history.back()} className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-          <ChevronLeft className="h-6 w-6" />
-        </button>
+        <div className="w-12" />
         <div className="flex-1 text-center">
           <h1 className="text-xl font-semibold">{otherName}</h1>
           <span className="rounded-full bg-muted px-3 py-1 text-sm">{formatTime(callTime)}</span>
@@ -197,9 +218,17 @@ function VoiceCallPage({ params }: { params: Promise<{ id: string }> }) {
       </header>
 
       <div className="flex flex-1 flex-col items-center justify-center px-4">
-        <div className="relative mb-6 h-48 w-48">
+        <div className="relative mb-6">
           <div className="absolute inset-0 animate-pulse rounded-full bg-primary/20" />
-          <Image src={avatar} alt={otherName} fill className="rounded-full border-4 border-white object-cover shadow-lg" unoptimized />
+          {otherAvatar ? (
+            <div className="relative h-48 w-48">
+              <Image src={otherAvatar} alt={otherName} fill className="rounded-full border-4 border-white object-cover shadow-lg" unoptimized />
+            </div>
+          ) : (
+            <div className="border-4 border-white shadow-lg rounded-full">
+              <InitialsAvatar name={otherName} size={192} />
+            </div>
+          )}
         </div>
         <p className="text-muted-foreground text-sm mt-2">Voice Call</p>
       </div>

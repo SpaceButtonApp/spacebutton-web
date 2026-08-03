@@ -3,8 +3,8 @@
 export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, use, useRef, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { ChevronLeft, MicOff, Mic, Phone, Video, VideoOff } from 'lucide-react'
+import { useSearchParams } from 'next/navigation'
+import { MicOff, Mic, Phone, Video, VideoOff, SwitchCamera, PhoneOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { callsApi } from '@/lib/api/calls'
 import { getUserDisplayInfo } from '@/lib/api/users'
@@ -17,7 +17,6 @@ const APP_ID = process.env.NEXT_PUBLIC_AGORA_APP_ID!
 
 function VideoCallPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const router = useRouter()
   const searchParams = useSearchParams()
   const callIdParam = searchParams.get('callId')
 
@@ -25,8 +24,10 @@ function VideoCallPage({ params }: { params: Promise<{ id: string }> }) {
   const [callTime, setCallTime] = useState(0)
   const [isMuted, setIsMuted] = useState(false)
   const [isVideoOff, setIsVideoOff] = useState(false)
+  const [isSwitchingCamera, setIsSwitchingCamera] = useState(false)
   const [otherName, setOtherName] = useState('Connecting...')
   const [hasRemoteVideo, setHasRemoteVideo] = useState(false)
+  const cameraIndexRef = useRef(0)
 
   const callRef = useRef<CallResponse | null>(null)
   const clientRef = useRef<IAgoraRTCClient | null>(null)
@@ -48,7 +49,27 @@ function VideoCallPage({ params }: { params: Promise<{ id: string }> }) {
     if (callRef.current) {
       await callsApi.endCall(callRef.current.id).catch(() => {})
     }
-    window.history.back()
+    if (window.history.length > 1) {
+      window.history.back()
+    } else {
+      window.location.replace('/messages')
+    }
+  }
+
+  const handleSwitchCamera = async () => {
+    if (isSwitchingCamera || !videoTrackRef.current) return
+    setIsSwitchingCamera(true)
+    try {
+      const { default: AgoraRTC } = await import('agora-rtc-sdk-ng')
+      const cameras = await AgoraRTC.getCameras()
+      if (cameras.length < 2) return
+      cameraIndexRef.current = (cameraIndexRef.current + 1) % cameras.length
+      await videoTrackRef.current.setDevice(cameras[cameraIndexRef.current].deviceId)
+    } catch {
+      // camera switch failed silently — user stays on current camera
+    } finally {
+      setIsSwitchingCamera(false)
+    }
   }
 
   useEffect(() => {
@@ -171,16 +192,22 @@ function VideoCallPage({ params }: { params: Promise<{ id: string }> }) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
         <p className="text-muted-foreground mb-4">Call failed to connect</p>
-        <Button variant="outline" onClick={() => window.history.back()}>Go Back</Button>
+        <Button variant="outline" onClick={handleEndCall}>Go Back</Button>
       </div>
     )
   }
 
   if (callState === 'connecting') {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-black">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-black gap-6">
         <div className="w-10 h-10 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-        <p className="text-white/60 mt-4">Connecting video call...</p>
+        <p className="text-white/60">Connecting video call...</p>
+        <button
+          onClick={handleEndCall}
+          className="flex h-14 w-14 items-center justify-center rounded-full bg-red-500 text-white shadow-lg mt-4"
+        >
+          <PhoneOff className="h-6 w-6" />
+        </button>
       </div>
     )
   }
@@ -200,9 +227,7 @@ function VideoCallPage({ params }: { params: Promise<{ id: string }> }) {
 
       {/* Header */}
       <header className="relative z-10 flex items-center gap-4 p-4">
-        <button onClick={() => window.history.back()} className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
-          <ChevronLeft className="h-6 w-6 text-white" />
-        </button>
+        <div className="w-12" />
         <div className="flex-1 text-center">
           <h1 className="text-xl font-semibold text-white drop-shadow">{otherName}</h1>
           <span className="rounded-full bg-black/50 px-3 py-1 text-sm text-white">{formatTime(callTime)}</span>
@@ -225,7 +250,7 @@ function VideoCallPage({ params }: { params: Promise<{ id: string }> }) {
 
       {/* Controls */}
       <div className="relative z-10 px-4 pb-10">
-        <div className="mx-auto mb-4 flex max-w-xs items-center justify-center gap-6 rounded-full bg-white/90 backdrop-blur-sm p-4">
+        <div className="mx-auto mb-4 flex max-w-xs items-center justify-center gap-4 rounded-full bg-white/90 backdrop-blur-sm p-4">
           <button
             onClick={handleToggleMute}
             className={`flex h-14 w-14 items-center justify-center rounded-full transition-colors ${isMuted ? 'bg-red-500 text-white' : 'bg-muted'}`}
@@ -237,6 +262,13 @@ function VideoCallPage({ params }: { params: Promise<{ id: string }> }) {
             className={`flex h-14 w-14 items-center justify-center rounded-full transition-colors ${isVideoOff ? 'bg-red-500 text-white' : 'bg-muted'}`}
           >
             {isVideoOff ? <VideoOff className="h-6 w-6" /> : <Video className="h-6 w-6" />}
+          </button>
+          <button
+            onClick={handleSwitchCamera}
+            disabled={isSwitchingCamera || isVideoOff}
+            className="flex h-14 w-14 items-center justify-center rounded-full bg-muted transition-colors disabled:opacity-40"
+          >
+            <SwitchCamera className={`h-6 w-6 ${isSwitchingCamera ? 'animate-spin' : ''}`} />
           </button>
         </div>
 

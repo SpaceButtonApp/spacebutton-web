@@ -311,7 +311,7 @@ export const adminApi = {
   // Auth
   async loginAdmin(email: string, password: string): Promise<string> {
     const res = await adminFetch<{ success: boolean; data: { access_token: string } }>(
-      '/admin/login',
+      '/auth/admin-login',
       { method: 'POST', body: JSON.stringify({ email, password }) },
     )
     return res.data.access_token

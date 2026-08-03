@@ -5,6 +5,12 @@ function getAdminToken(): string {
   try { return localStorage.getItem('admin-token') || '' } catch { return '' }
 }
 
+export function getAdminLoginUrl(): string {
+  if (typeof window === 'undefined') return '/admin/login'
+  const key = localStorage.getItem('admin-login-key') || ''
+  return key ? `/admin/login?key=${key}` : '/admin/login'
+}
+
 async function adminFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getAdminToken()
   const res = await fetch(`${API_BASE}${path}`, {
@@ -19,7 +25,7 @@ async function adminFetch<T>(path: string, options: RequestInit = {}): Promise<T
     if (typeof window !== 'undefined') {
       localStorage.removeItem('admin-token')
       localStorage.removeItem('admin-profile')
-      window.location.href = '/admin'
+      window.location.href = getAdminLoginUrl()
     }
     throw new Error('Session expired. Please log in again.')
   }
@@ -310,11 +316,19 @@ export interface SupportMessage {
 export const adminApi = {
   // Auth
   async loginAdmin(email: string, password: string): Promise<string> {
-    const res = await adminFetch<{ success: boolean; data: { access_token: string } }>(
-      '/auth/admin-login',
-      { method: 'POST', body: JSON.stringify({ email, password }) },
-    )
-    return res.data.access_token
+    const res = await fetch(`${API_BASE}/auth/admin-login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      const raw = body?.detail ?? body?.message
+      const msg = typeof raw === 'string' ? raw : raw != null ? JSON.stringify(raw) : 'Invalid email or password.'
+      throw new Error(msg)
+    }
+    const data = await res.json()
+    return data.data.access_token
   },
 
   // Stats

@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import { getAdminLoginUrl } from '@/lib/api/admin'
 import {
   LayoutDashboard,
   Users,
@@ -50,7 +51,7 @@ export function AdminSidebar() {
   const handleLogout = () => {
     localStorage.removeItem('admin-auth')
     localStorage.removeItem('admin-token')
-    router.push('/admin/login')
+    window.location.href = getAdminLoginUrl()
   }
 
   return (

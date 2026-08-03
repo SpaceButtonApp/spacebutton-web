@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { AdminApp } from '@/components/admin/AdminApp'
+import { getAdminLoginUrl } from '@/lib/api/admin'
 
 export default function AdminPage() {
   const router = useRouter()
@@ -10,7 +11,7 @@ export default function AdminPage() {
   useEffect(() => {
     const auth = localStorage.getItem('admin-auth')
     if (!auth) {
-      router.replace('/admin/login')
+      router.replace(getAdminLoginUrl())
     } else {
       setReady(true)
     }

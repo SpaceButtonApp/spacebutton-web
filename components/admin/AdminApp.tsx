@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { LogOut } from "lucide-react";
 import { useAdminStore } from "@/lib/admin-store";
+import { getAdminLoginUrl } from "@/lib/api/admin";
 import { Sidebar } from "@/components/admin/shared/Sidebar";
 import { AdminHeader } from "@/components/admin/shared/AdminHeader";
 import { ConfirmModal } from "@/components/admin/shared/Modal";
@@ -85,7 +86,8 @@ export function AdminApp() {
   function handleLogout() {
     if (typeof window !== "undefined") {
       localStorage.removeItem("admin-auth");
-      window.location.href = "/admin/login";
+      localStorage.removeItem("admin-token");
+      window.location.href = getAdminLoginUrl();
     }
   }
 

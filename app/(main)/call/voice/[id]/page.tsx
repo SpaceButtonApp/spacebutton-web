@@ -31,7 +31,6 @@ function InitialsAvatar({ name, size }: { name: string; size: number }) {
 
 function VoiceCallPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const router = useRouter()
   const searchParams = useSearchParams()
   const callIdParam = searchParams.get('callId')
 

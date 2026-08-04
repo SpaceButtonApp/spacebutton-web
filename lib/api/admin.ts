@@ -316,26 +316,18 @@ export interface SupportMessage {
 export const adminApi = {
   // Auth
   async loginAdmin(email: string, password: string): Promise<string> {
-    const fetchBody = JSON.stringify({ email, password })
-    const headers: HeadersInit = { 'Content-Type': 'application/json' }
-
-    // Try admin role first (admin service)
-    const adminRes = await fetch(`${API_BASE}/admin/login`, { method: 'POST', headers, body: fetchBody })
-    if (adminRes.ok) {
-      const data = await adminRes.json()
-      return data.data.access_token
+    const res = await fetch(`${API_BASE}/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    })
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}))
+      const raw = body?.detail ?? body?.message
+      throw new Error(typeof raw === 'string' ? raw : 'Invalid email or password.')
     }
-
-    // Fall back to support agent login (auth service)
-    const supportRes = await fetch(`${API_BASE}/auth/support-login`, { method: 'POST', headers, body: fetchBody })
-    if (supportRes.ok) {
-      const data = await supportRes.json()
-      return data.data.access_token
-    }
-
-    const errBody = await supportRes.json().catch(() => ({}))
-    const raw = errBody?.detail ?? errBody?.message
-    throw new Error(typeof raw === 'string' ? raw : 'Invalid email or password.')
+    const data = await res.json()
+    return data.data.access_token
   },
 
   // Stats

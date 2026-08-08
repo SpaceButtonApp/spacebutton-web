@@ -1,0 +1,19 @@
+name: Sync to TeraByte07 Fork
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to TeraByte07 fork
+        run: |
+          git remote add terabyte07 https://x-access-token:${{ secrets.TERABYTE_PAT }}@github.com/TeraByte07/v0-space-button-apartment-web-app.git
+          git push terabyte07 main --force

@@ -4,11 +4,15 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowRight, Sun, Moon, Monitor, ChevronRight, ChevronDown, MapPin, Home, DollarSign, Grid3X3, Star, Search, Heart, Zap, Shield, TrendingUp, Clock, CheckCircle, Users, Building, MessageCircle, Sparkles, Play, Smartphone, Bell, User } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ArrowRight, Sun, Moon, Monitor, ChevronRight, ChevronDown, MapPin, Home, DollarSign, Grid3X3, Star, Search, Heart, Zap, Shield, TrendingUp, Clock, CheckCircle, Users, Building, MessageCircle, Sparkles, Play, Smartphone, Bell, User, X } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { cn } from '@/lib/utils'
 
 type Theme = 'light' | 'dark' | 'system'
+
+const APP_STORE_URL = 'https://apps.apple.com/ng/app/spacebutton/id6767217574'
+const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.spacebutton.app&pcampaignid=web_share'
 
 export default function LandingPage() {
   const router = useRouter()
@@ -17,7 +21,9 @@ export default function LandingPage() {
   const [isDark, setIsDark] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [openFaq, setOpenFaq] = useState<number | null>(null)
-  
+  const [storeLink, setStoreLink] = useState(PLAY_STORE_URL)
+  const [showAppBanner, setShowAppBanner] = useState(true)
+
   // Typewriter effect state
   const [typewriterText, setTypewriterText] = useState('')
   const [isDeleting, setIsDeleting] = useState(false)
@@ -32,7 +38,23 @@ export default function LandingPage() {
     } else {
       setTheme('system')
     }
+
+    const ua = window.navigator.userAgent
+    if (/iPad|iPhone|iPod/.test(ua)) {
+      setStoreLink(APP_STORE_URL)
+    } else if (/android/i.test(ua)) {
+      setStoreLink(PLAY_STORE_URL)
+    }
+
+    if (localStorage.getItem('appBannerDismissed') === '1') {
+      setShowAppBanner(false)
+    }
   }, [])
+
+  const dismissAppBanner = () => {
+    setShowAppBanner(false)
+    localStorage.setItem('appBannerDismissed', '1')
+  }
 
   // Typewriter effect
   useEffect(() => {
@@ -190,6 +212,46 @@ export default function LandingPage() {
     <div className={cn(isDark ? 'dark' : 'light')}>
       <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
 
+        {/* App Download Banner */}
+        <AnimatePresence>
+          {showAppBanner && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
+              className="overflow-hidden bg-primary text-primary-foreground"
+            >
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="hidden sm:flex w-9 h-9 rounded-lg bg-white/15 items-center justify-center flex-shrink-0">
+                    <Smartphone className="w-5 h-5" />
+                  </div>
+                  <p className="text-xs sm:text-sm font-medium truncate">
+                    Get the SpaceButton app for a faster, easier way to find your dream space.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <a
+                    href={storeLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 sm:px-4 py-1.5 bg-white text-primary rounded-full text-xs sm:text-sm font-semibold hover:bg-white/90 transition-colors whitespace-nowrap"
+                  >
+                    Download App
+                  </a>
+                  <button
+                    onClick={dismissAppBanner}
+                    aria-label="Dismiss"
+                    className="p-1.5 rounded-full hover:bg-white/15 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Navigation */}
         <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-lg border-b border-border">
@@ -260,9 +322,21 @@ export default function LandingPage() {
         <section className="relative py-16 sm:py-20 md:py-28 overflow-hidden">
           {/* Background gradient */}
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10 pointer-events-none" />
-          
+
+          {/* Dot grid pattern */}
+          <div
+            aria-hidden
+            className="absolute inset-0 pointer-events-none opacity-[0.15] [mask-image:radial-gradient(ellipse_at_center,black,transparent_70%)]"
+            style={{ backgroundImage: 'radial-gradient(currentColor 1px, transparent 1px)', backgroundSize: '24px 24px', color: 'var(--foreground)' }}
+          />
+
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative">
-            <div className="space-y-8">
+            <motion.div
+              className="space-y-8"
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: 'easeOut' }}
+            >
               {/* Badge */}
               <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium">
                 <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
@@ -283,24 +357,28 @@ export default function LandingPage() {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button
+                <motion.button
                   onClick={() => router.push('/get-started')}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
                   className="group flex items-center justify-center gap-2 px-8 py-4 bg-primary text-primary-foreground rounded-xl font-semibold hover:bg-primary/90 transition-all hover:shadow-xl hover:shadow-primary/25 text-base"
                 >
                   Get Started Free
                   <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </button>
-                <button
+                </motion.button>
+                <motion.button
                   onClick={() => router.push('/get-started')}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
                   className="group flex items-center justify-center gap-2 px-8 py-4 bg-secondary text-foreground rounded-xl font-semibold hover:bg-secondary/80 transition-all text-base border border-border"
                 >
                   <Play className="w-5 h-5" />
                   Watch Demo
-                </button>
+                </motion.button>
               </div>
 
 
-            </div>
+            </motion.div>
           </div>
         </section>
 
@@ -336,18 +414,32 @@ export default function LandingPage() {
         {/* How It Works */}
         <section className="py-16 sm:py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
+            <motion.div
+              className="text-center mb-12"
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-50px' }}
+              transition={{ duration: 0.5 }}
+            >
               <p className="text-primary font-semibold text-sm uppercase tracking-wider mb-2">Simple Process</p>
               <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">How SpaceButton Works</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">Find your perfect space in four easy steps. Our streamlined process makes property hunting effortless.</p>
-            </div>
+            </motion.div>
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {howItWorks.map((item, i) => (
-                <div key={i} className="relative group">
-                  <div className="bg-card rounded-2xl p-6 border border-border hover:border-primary/50 transition-all hover:shadow-lg h-full">
+                <motion.div
+                  key={i}
+                  className="relative group"
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-50px' }}
+                  transition={{ duration: 0.5, delay: i * 0.1 }}
+                  whileHover={{ y: -6 }}
+                >
+                  <div className="bg-card rounded-2xl p-6 border border-border group-hover:border-primary/50 transition-all group-hover:shadow-lg h-full">
                     <div className="text-5xl font-bold text-primary/20 mb-4">{item.step}</div>
-                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
+                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary/20 group-hover:scale-110 transition-all">
                       <item.icon className="w-6 h-6 text-primary" />
                     </div>
                     <h3 className="font-semibold text-foreground text-lg mb-2">{item.title}</h3>
@@ -358,7 +450,7 @@ export default function LandingPage() {
                       <ArrowRight className="w-6 h-6 text-border" />
                     </div>
                   )}
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>
@@ -367,21 +459,35 @@ export default function LandingPage() {
         {/* Features/Benefits */}
         <section className="py-16 sm:py-20 bg-card/50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
+            <motion.div
+              className="text-center mb-12"
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-50px' }}
+              transition={{ duration: 0.5 }}
+            >
               <p className="text-primary font-semibold text-sm uppercase tracking-wider mb-2">Why Choose Us</p>
               <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">Everything You Need in One Platform</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">SpaceButton combines powerful features with simplicity to give you the best property search experience.</p>
-            </div>
+            </motion.div>
 
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {features.map((feature, i) => (
-                <div key={i} className="bg-background rounded-2xl p-6 border border-border hover:border-primary/50 transition-all hover:shadow-lg group">
-                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                <motion.div
+                  key={i}
+                  className="bg-background rounded-2xl p-6 border border-border hover:border-primary/50 transition-all hover:shadow-lg group"
+                  initial={{ opacity: 0, y: 24 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-50px' }}
+                  transition={{ duration: 0.5, delay: i * 0.08 }}
+                  whileHover={{ y: -6 }}
+                >
+                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4 group-hover:bg-primary/20 group-hover:scale-110 transition-all">
                     <feature.icon className="w-6 h-6 text-primary" />
                   </div>
                   <h3 className="font-semibold text-foreground text-lg mb-2">{feature.title}</h3>
                   <p className="text-muted-foreground text-sm">{feature.description}</p>
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>
@@ -393,17 +499,27 @@ export default function LandingPage() {
         {/* FAQs */}
         <section className="py-16 sm:py-20">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
+            <motion.div
+              className="text-center mb-12"
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-50px' }}
+              transition={{ duration: 0.5 }}
+            >
               <p className="text-primary font-semibold text-sm uppercase tracking-wider mb-2">FAQ</p>
               <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">Frequently Asked Questions</h2>
               <p className="text-muted-foreground">Everything you need to know about SpaceButton. Can&apos;t find your answer? Contact our support team.</p>
-            </div>
+            </motion.div>
 
             <div className="space-y-4">
               {faqs.map((faq, i) => (
-                <div 
-                  key={i} 
+                <motion.div
+                  key={i}
                   className="bg-card rounded-xl border border-border overflow-hidden"
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-50px' }}
+                  transition={{ duration: 0.4, delay: i * 0.05 }}
                 >
                   <button
                     onClick={() => setOpenFaq(openFaq === i ? null : i)}
@@ -423,7 +539,7 @@ export default function LandingPage() {
                       <p className="px-6 pb-4 text-muted-foreground">{faq.a}</p>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>
@@ -432,13 +548,27 @@ export default function LandingPage() {
         {/* CTA Section */}
         <section className="py-16 sm:py-20">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="relative bg-primary rounded-3xl p-8 sm:p-12 overflow-hidden">
+            <motion.div
+              className="relative bg-primary rounded-3xl p-8 sm:p-12 overflow-hidden"
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-50px' }}
+              transition={{ duration: 0.6 }}
+            >
               {/* Background pattern */}
               <div className="absolute inset-0 opacity-10">
-                <div className="absolute top-0 left-0 w-64 h-64 bg-white rounded-full -translate-x-1/2 -translate-y-1/2" />
-                <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full translate-x-1/3 translate-y-1/3" />
+                <motion.div
+                  className="absolute top-0 left-0 w-64 h-64 bg-white rounded-full -translate-x-1/2 -translate-y-1/2"
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+                />
+                <motion.div
+                  className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full translate-x-1/3 translate-y-1/3"
+                  animate={{ scale: [1, 1.08, 1] }}
+                  transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+                />
               </div>
-              
+
               <div className="relative text-center">
                 <h2 className="text-3xl sm:text-4xl font-bold text-primary-foreground mb-4">
                   Ready to Find Your Perfect Space?
@@ -447,21 +577,25 @@ export default function LandingPage() {
                   Join over 20,000 users who have already found their dream homes through SpaceButton. Start your journey today - it&apos;s completely free!
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <button
+                  <motion.button
                     onClick={() => router.push('/signup')}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
                     className="px-8 py-4 bg-white text-primary rounded-xl font-semibold hover:bg-white/90 transition-all hover:shadow-lg"
                   >
                     Create Free Account
-                  </button>
-                  <button
+                  </motion.button>
+                  <motion.button
                     onClick={() => router.push('/get-started')}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
                     className="px-8 py-4 bg-transparent text-white border-2 border-white/30 rounded-xl font-semibold hover:bg-white/10 transition-all"
                   >
                     Browse Properties
-                  </button>
+                  </motion.button>
                 </div>
               </div>
-            </div>
+            </motion.div>
           </div>
         </section>
 
@@ -470,10 +604,16 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               {/* Left Content */}
-              <div className="space-y-6">
+              <motion.div
+                className="space-y-6"
+                initial={{ opacity: 0, x: -24 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: '-50px' }}
+                transition={{ duration: 0.6 }}
+              >
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-primary text-sm font-medium">
                   <Smartphone className="w-4 h-4" />
-                  Coming Soon on Mobile
+                  Now on Mobile
                 </div>
                 <h2 className="text-3xl sm:text-4xl font-bold text-foreground">
                   Take SpaceButton Everywhere You Go
@@ -514,7 +654,12 @@ export default function LandingPage() {
 
                 {/* App Store Buttons */}
                 <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                  <button className="flex items-center gap-3 px-6 py-3 bg-foreground text-background rounded-xl hover:opacity-90 transition-all">
+                  <a
+                    href={APP_STORE_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 px-6 py-3 bg-foreground text-background rounded-xl hover:opacity-90 transition-all"
+                  >
                     <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
                     </svg>
@@ -522,8 +667,13 @@ export default function LandingPage() {
                       <p className="text-xs opacity-80">Download on the</p>
                       <p className="text-base font-semibold">App Store</p>
                     </div>
-                  </button>
-                  <button className="flex items-center gap-3 px-6 py-3 bg-foreground text-background rounded-xl hover:opacity-90 transition-all">
+                  </a>
+                  <a
+                    href={PLAY_STORE_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 px-6 py-3 bg-foreground text-background rounded-xl hover:opacity-90 transition-all"
+                  >
                     <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M3.609 1.814L13.792 12 3.61 22.186a.996.996 0 01-.61-.92V2.734a1 1 0 01.609-.92zm10.89 10.893l2.302 2.302-10.937 6.333 8.635-8.635zm3.199-3.198l2.807 1.626a1 1 0 010 1.73l-2.808 1.626L15.206 12l2.492-2.491zM5.864 2.658L16.802 8.99l-2.303 2.303-8.635-8.635z"/>
                     </svg>
@@ -531,12 +681,18 @@ export default function LandingPage() {
                       <p className="text-xs opacity-80">Get it on</p>
                       <p className="text-base font-semibold">Google Play</p>
                     </div>
-                  </button>
+                  </a>
                 </div>
-              </div>
+              </motion.div>
 
               {/* Right Side - Phone Mockups */}
-              <div className="flex gap-4 justify-center lg:justify-end overflow-x-auto pb-4">
+              <motion.div
+                className="flex gap-4 justify-center lg:justify-end overflow-x-auto pb-4"
+                initial={{ opacity: 0, x: 24 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true, margin: '-50px' }}
+                transition={{ duration: 0.6 }}
+              >
                 {/* Light Mode */}
                 <div className="flex-shrink-0">
                   <Image
@@ -560,7 +716,7 @@ export default function LandingPage() {
                     unoptimized
                   />
                 </div>
-              </div>
+              </motion.div>
             </div>
           </div>
         </section>

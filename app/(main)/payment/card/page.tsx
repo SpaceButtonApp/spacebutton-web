@@ -38,7 +38,7 @@ function PayWithCardPage() {
   }
 
   const handlePayNow = () => {
-    router.push(`/payment/success?amount=${amount}&plan=${plan}&connects=${connects}&type=${type}&returnUrl=${encodeURIComponent(returnUrl)}`)
+    alert('Card payment is not yet available. Please use bank transfer or another payment method.')
   }
 
   return (

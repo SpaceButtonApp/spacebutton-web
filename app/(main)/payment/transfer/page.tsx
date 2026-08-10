@@ -21,9 +21,9 @@ function TransferPage() {
   const returnUrl = searchParams.get("returnUrl") || "/home"
 
   const bankDetails = {
-    bankName: "Sterling Bank",
-    accountName: "CORALPAY-NextGen PG",
-    accountNumber: "5274332865",
+    bankName: process.env.NEXT_PUBLIC_TRANSFER_BANK_NAME || "Sterling Bank",
+    accountName: process.env.NEXT_PUBLIC_TRANSFER_ACCOUNT_NAME || "CORALPAY-NextGen PG",
+    accountNumber: process.env.NEXT_PUBLIC_TRANSFER_ACCOUNT_NUMBER || "",
     amount: `NGN ${amount}`,
   }
 

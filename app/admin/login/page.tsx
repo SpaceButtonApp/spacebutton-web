@@ -41,10 +41,10 @@ function AdminLoginForm() {
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-2">
-            <img 
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png" 
-              alt="SpaceButton" 
-              className="w-10 h-10"
+            <img
+              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/logo%20icon-2NxSPMU2FJojZ6X3c9hif4dJEqs6ro.png"
+              alt="SpaceButton"
+              className="h-10 w-auto"
             />
             <span className="text-2xl font-bold text-white">SpaceButton</span>
           </div>

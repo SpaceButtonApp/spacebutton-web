@@ -7,7 +7,7 @@ import {
   AlertCircle, Copy, Check,
 } from "lucide-react"
 import { adminApi } from "@/lib/api/admin"
-import type { AdminUserFullProfile } from "@/lib/api/admin"
+import type { AdminUserFullProfile, AdminListing } from "@/lib/api/admin"
 import { StatusBadge } from "@/components/admin/shared/Badge"
 import { ConfirmModal } from "@/components/admin/shared/Modal"
 import { formatDate } from "@/lib/utils/admin-format"
@@ -67,6 +67,8 @@ export function UserDetailPage({ userId, onBack, onMessageUser, onMailUser }: Us
   const [error, setError] = useState<string | null>(null)
   const [confirmAction, setConfirmAction] = useState<ConfirmType | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
+  const [listingsCount, setListingsCount] = useState<number | null>(null)
+  const [rating, setRating] = useState<{ avg: number; count: number } | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -78,6 +80,38 @@ export function UserDetailPage({ userId, onBack, onMessageUser, onMailUser }: Us
       setError(e instanceof Error ? e.message : "Failed to load profile")
     } finally {
       setLoading(false)
+    }
+
+    // Listings count + rating — best-effort, don't block the main profile load
+    try {
+      let allListings: AdminListing[] = []
+      let page = 1
+      while (true) {
+        const r = await adminApi.getListings(page, 100)
+        allListings = [...allListings, ...(r.listings ?? [])]
+        if (allListings.length >= (r.total ?? 0) || (r.listings?.length ?? 0) < 100) break
+        page++
+      }
+      setListingsCount(allListings.filter((l) => l.agent_id === userId).length)
+    } catch {
+      // leave as null — count just won't show
+    }
+
+    try {
+      let allAgents: Awaited<ReturnType<typeof adminApi.getAgents>>["agents"] = []
+      let page = 1
+      while (true) {
+        const r = await adminApi.getAgents(page, 100)
+        allAgents = [...allAgents, ...(r.agents ?? [])]
+        if (allAgents.length >= (r.total ?? 0) || (r.agents?.length ?? 0) < 100) break
+        page++
+      }
+      const agent = allAgents.find((a) => a.id === userId || a.user_id === userId)
+      if (agent && agent.average_rating != null) {
+        setRating({ avg: agent.average_rating, count: agent.total_reviews ?? 0 })
+      }
+    } catch {
+      // leave as null — rating just won't show
     }
   }, [userId])
 
@@ -272,14 +306,14 @@ export function UserDetailPage({ userId, onBack, onMessageUser, onMailUser }: Us
           <div className="space-y-0">
             <InfoRow label="User ID" value={profile.id.slice(-12).toUpperCase()} />
             <InfoRow label="Phone" value={profile.phone_number} />
-            <InfoRow label="Gender" value={profile.gender ? profile.gender.charAt(0).toUpperCase() + profile.gender.slice(1) : null} />
-            <InfoRow label="Date of Birth" value={profile.date_of_birth ? formatDate(profile.date_of_birth) : null} />
             <InfoRow label="Location" value={[profile.city, profile.state].filter(Boolean).join(", ") || null} />
             <InfoRow label="Joined" value={formatDate(profile.created_at)} />
             <InfoRow label="Email Verified" value={profile.is_email_verified ? "Yes" : "No"} />
             {profile.role === "agent" && profile.years_of_experience != null && (
               <InfoRow label="Experience" value={`${profile.years_of_experience} yr${profile.years_of_experience !== 1 ? "s" : ""}`} />
             )}
+            <InfoRow label="Listings" value={listingsCount != null ? String(listingsCount) : null} />
+            <InfoRow label="Rating" value={rating ? `${rating.avg.toFixed(1)} ★ (${rating.count} review${rating.count !== 1 ? "s" : ""})` : "No reviews yet"} />
           </div>
         </div>
 

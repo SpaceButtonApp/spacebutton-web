@@ -205,8 +205,8 @@ export const supportApi = {
 
   // ── Verifications ────────────────────────────────────────────────────────
 
-  async getVerifiedUsers(page = 1): Promise<{ users: Array<{ user_id: string; first_name: string; last_name: string; email: string; phone_number: string | null; role: string; id_type: string | null }>; total: number }> {
-    const res = await supportFetch<{ success: boolean; data: { users: Array<{ user_id: string; first_name: string; last_name: string; email: string; phone_number: string | null; role: string; id_type: string | null }>; total: number } }>(
+  async getVerifiedUsers(page = 1): Promise<{ users: Array<{ user_id: string; first_name: string; last_name: string; email: string; phone_number: string | null; role: string; id_type: string | null; verified_at?: string; created_at?: string; updated_at?: string }>; total: number }> {
+    const res = await supportFetch<{ success: boolean; data: { users: Array<{ user_id: string; first_name: string; last_name: string; email: string; phone_number: string | null; role: string; id_type: string | null; verified_at?: string; created_at?: string; updated_at?: string }>; total: number } }>(
       `/admin/verifications/verified?page=${page}&page_size=100`
     )
     return res.data
@@ -251,6 +251,14 @@ export const supportApi = {
       method: 'PATCH',
       body: JSON.stringify({ reason }),
     })
+  },
+
+  async closeListing(id: string): Promise<void> {
+    await supportFetch(`/listings/${id}/close`, { method: 'POST' })
+  },
+
+  async deleteListing(id: string): Promise<void> {
+    await supportFetch(`/admin/listings/${id}`, { method: 'DELETE' })
   },
 
   async getAgents(page = 1, pageSize = 100): Promise<{ agents: import('@/lib/api/admin').AdminAgent[]; total: number }> {

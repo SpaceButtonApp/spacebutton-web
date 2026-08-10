@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './support.css'
 import './chat.css'
+import '../admin/admin.css'
 
 export const metadata: Metadata = {
   title: 'SpaceButton Support',

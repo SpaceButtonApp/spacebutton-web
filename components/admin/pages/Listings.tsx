@@ -146,6 +146,7 @@ export function ListingsPage({ onMessageUser, onMailUser, focusListingId, onFocu
   const [viewMode, setViewMode] = useState<ViewMode>("table");
   const [detailListing, setDetailListing] = useState<ListingRow | null>(null);
   const [confirmDel, setConfirmDel] = useState<ListingRow | null>(null);
+  const [confirmClose, setConfirmClose] = useState<ListingRow | null>(null);
   const [rejectingListing, setRejectingListing] = useState<ListingRow | null>(null);
 
   const load = useCallback(async () => {
@@ -216,6 +217,16 @@ export function ListingsPage({ onMessageUser, onMailUser, focusListingId, onFocu
     } catch (e) { alert(e instanceof Error ? e.message : "Failed to delete"); }
   }
 
+  async function handleClose(id: string) {
+    try {
+      await adminApi.closeListing(id);
+      const upd = (l: ListingRow) => l.id === id ? { ...l, status: "closed" as const } : l;
+      setListings((p) => p.map(upd));
+      setDetailListing((p) => p ? upd(p) : p);
+      setConfirmClose(null);
+    } catch (e) { alert(e instanceof Error ? e.message : "Failed to close listing"); }
+  }
+
   // ── filtered list (must be before any early returns — Rules of Hooks) ──────
   const filtered = useMemo(() => {
     let list = listings;
@@ -251,6 +262,15 @@ export function ListingsPage({ onMessageUser, onMailUser, focusListingId, onFocu
         onSubmit={(reason) => { if (rejectingListing) handleReject(rejectingListing.id, reason); }}
         onCancel={() => setRejectingListing(null)}
       />
+      <ConfirmModal
+        open={!!confirmClose}
+        title="Close listing?"
+        description={`"${confirmClose?.title}" will be marked closed and hidden from search. This can be reversed by the poster later.`}
+        confirmLabel="Close listing"
+        icon={<X className="w-6 h-6 text-red-400" />}
+        onConfirm={() => { if (confirmClose) handleClose(confirmClose.id); }}
+        onCancel={() => setConfirmClose(null)}
+      />
     </>
   );
 
@@ -263,6 +283,7 @@ export function ListingsPage({ onMessageUser, onMailUser, focusListingId, onFocu
           onBack={() => setDetailListing(null)}
           onApprove={() => handleApprove(detailListing.id)}
           onReject={() => setRejectingListing(detailListing)}
+          onClose={() => setConfirmClose(detailListing)}
           onDelete={() => setConfirmDel(detailListing)}
           onMessage={() => onMessageUser?.(toAppUser(detailListing))}
           onMail={() => onMailUser?.(toAppUser(detailListing))}
@@ -409,6 +430,7 @@ export function ListingsPage({ onMessageUser, onMailUser, focusListingId, onFocu
                           { label: "Email poster", icon: <Mail className="w-4 h-4" />, onClick: () => onMailUser?.(toAppUser(l)) },
                           l.approval === "pending" ? { label: "Approve", icon: <CheckCheck className="w-4 h-4" />, onClick: () => handleApprove(l.id) } : null,
                           l.approval === "pending" ? { label: "Reject", icon: <X className="w-4 h-4" />, onClick: () => setRejectingListing(l), danger: true } : null,
+                          l.status === "active" ? { label: "Close listing", icon: <XCircle className="w-4 h-4" />, onClick: () => setConfirmClose(l), danger: true } : null,
                           { label: "Delete", icon: <Trash2 className="w-4 h-4" />, onClick: () => setConfirmDel(l), danger: true },
                         ].filter(Boolean) as Parameters<typeof ActionMenu>[0]["items"]} />
                       </td>
@@ -469,12 +491,13 @@ function ListingCard({ listing, onView }: { listing: ListingRow; onView: () => v
 // ─── Full-page detail view ───────────────────────────────────────────────────
 
 function ListingDetailPage({
-  listing, onBack, onApprove, onReject, onDelete, onMessage, onMail,
+  listing, onBack, onApprove, onReject, onClose, onDelete, onMessage, onMail,
 }: {
   listing: ListingRow;
   onBack: () => void;
   onApprove: () => void;
   onReject: () => void;
+  onClose: () => void;
   onDelete: () => void;
   onMessage: () => void;
   onMail: () => void;
@@ -795,6 +818,16 @@ function ListingDetailPage({
           >
             <MessageCircle className="w-4 h-4" /> Message Owner
           </button>
+
+          {/* Close listing */}
+          {data.status === "active" && (
+            <button
+              onClick={onClose}
+              className="w-full py-3.5 rounded-2xl bg-[var(--bg-sunken)] border border-[var(--border-color)] text-[var(--text-secondary)] font-medium flex items-center justify-center gap-2 hover:text-red-400 hover:border-red-500/30 transition-colors"
+            >
+              <XCircle className="w-4 h-4" /> Close Listing
+            </button>
+          )}
 
           {/* Delete */}
           <button

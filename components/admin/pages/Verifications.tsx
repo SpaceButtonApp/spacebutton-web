@@ -132,7 +132,7 @@ export function VerificationsPage({ onMessageUser, onMailUser }: VerificationsPa
         status: "verified" as const,
         idVerificationStatus: "approved",
         liveVerificationStatus: "approved",
-        submittedDate: "",
+        submittedDate: v.verified_at ?? v.updated_at ?? v.created_at ?? "",
         avatarColor: hashColor(v.user_id),
       }));
 
@@ -160,6 +160,9 @@ export function VerificationsPage({ onMessageUser, onMailUser }: VerificationsPa
         r.email.toLowerCase().includes(q) ||
         r.userId.toLowerCase().includes(q)
       );
+    }
+    if (filter === "verified") {
+      list = [...list].sort((a, b) => new Date(b.submittedDate || 0).getTime() - new Date(a.submittedDate || 0).getTime());
     }
     return list;
   }, [rows, filter, search]);
@@ -252,10 +255,12 @@ export function VerificationsPage({ onMessageUser, onMailUser }: VerificationsPa
               <tr className="text-left text-[var(--text-muted)] text-xs uppercase tracking-wide border-b border-[var(--border-color)]">
                 <th className="px-6 py-4 font-medium">User</th>
                 <th className="px-6 py-4 font-medium">Email</th>
+                <th className="px-6 py-4 font-medium">Phone</th>
                 <th className="px-6 py-4 font-medium">ID Doc</th>
                 <th className="px-6 py-4 font-medium">Selfie</th>
                 <th className="px-6 py-4 font-medium">ID Type</th>
                 <th className="px-6 py-4 font-medium">Role</th>
+                <th className="px-6 py-4 font-medium">Date</th>
                 <th className="px-6 py-4 font-medium text-right">Action</th>
               </tr>
             </thead>
@@ -289,6 +294,7 @@ export function VerificationsPage({ onMessageUser, onMailUser }: VerificationsPa
                     </div>
                   </td>
                   <td className="px-6 py-3.5 text-[var(--text-secondary)]">{r.email}</td>
+                  <td className="px-6 py-3.5 text-[var(--text-secondary)]">{r.phone || "—"}</td>
                   <td className="px-6 py-3.5"><DocStatusChip status={r.idVerificationStatus} /></td>
                   <td className="px-6 py-3.5"><DocStatusChip status={r.liveVerificationStatus} /></td>
                   <td className="px-6 py-3.5">
@@ -301,6 +307,7 @@ export function VerificationsPage({ onMessageUser, onMailUser }: VerificationsPa
                     )}
                   </td>
                   <td className="px-6 py-3.5 text-[var(--text-tertiary)] capitalize">{r.role ?? "—"}</td>
+                  <td className="px-6 py-3.5 text-[var(--text-secondary)]">{r.submittedDate ? formatDate(r.submittedDate) : "—"}</td>
                   <td className="px-6 py-3.5 text-right">
                     <ActionMenu
                       items={[

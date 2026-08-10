@@ -1,321 +1,385 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Users as UsersIcon, UserCheck, Briefcase, Ban, Eye, UserX, RefreshCw, AlertCircle, MailCheck, MailX, ShieldCheck, Phone } from 'lucide-react'
 import { supportApi, type AdminUser } from '@/lib/api/support'
-import { exportSupportTable } from '@/lib/utils/support-export'
+import { StatCard } from '@/components/admin/shared/StatCard'
+import { SearchInput, ExportButton, ActionMenu, FilterPill, Avatar, EmptyState } from '@/components/admin/shared/Atoms'
+import { StatusBadge } from '@/components/admin/shared/Badge'
+import { ConfirmModal, Modal } from '@/components/admin/shared/Modal'
+import { formatDate, exportToExcel, truncateId } from '@/lib/utils/admin-format'
 
-const STATUS_CLASS: Record<string, string> = {
-  active: 'sp-status-active',
-  inactive: 'sp-status-inactive',
-  suspended: 'sp-status-suspended',
-  pending_verification: 'sp-status-pending',
+type UserFilter = 'all' | 'individual' | 'agent'
+
+interface Row {
+  id: string
+  userId: string
+  name: string
+  email: string
+  phone: string
+  role: 'individual' | 'agent' | string
+  status: string
+  joinDate: string
+  avatarColor: string
+  isEmailVerified: boolean
 }
 
-const STATUS_LABEL: Record<string, string> = {
-  active: 'Active',
-  inactive: 'Inactive',
-  suspended: 'Suspended',
-  pending_verification: 'Pending Verification',
+const AVATAR_COLORS = ['#7c3aed', '#a855f7', '#8b5cf6', '#6366f1', '#c026d3', '#9333ea']
+function avatarColorForId(id: string) {
+  const n = id.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
+  return AVATAR_COLORS[n % AVATAR_COLORS.length]
 }
 
-function getInitials(first: string | null, last: string | null) {
-  return `${(first ?? '')[0] ?? ''}${(last ?? '')[0] ?? ''}`.toUpperCase() || '?'
+function mapUser(u: AdminUser): Row {
+  return {
+    id: u.id,
+    userId: u.id.slice(-8).toUpperCase(),
+    name: `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() || u.email,
+    email: u.email,
+    phone: u.phone_number ?? '',
+    role: u.role === 'agent' ? 'agent' : u.role === 'user' ? 'individual' : u.role,
+    status: (u.status ?? 'active').toLowerCase() === 'suspended' ? 'suspended' : 'active',
+    joinDate: u.created_at,
+    avatarColor: avatarColorForId(u.id),
+    isEmailVerified: u.is_email_verified,
+  }
 }
-
-const AVATAR_COLORS = ['sp-av-blue', 'sp-av-amber', 'sp-av-teal', 'sp-av-coral', 'sp-av-purple']
-
-const PAGE_SIZE = 50
 
 export default function UsersView() {
-  const [users, setUsers] = useState<AdminUser[]>([])
-  const [total, setTotal] = useState(0)
-  const [page, setPage] = useState(1)
+  const [users, setUsers] = useState<Row[]>([])
+  const [identityVerifiedIds, setIdentityVerifiedIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [roleFilter, setRoleFilter] = useState('all')
+
+  const [filter, setFilter] = useState<UserFilter>('all')
   const [search, setSearch] = useState('')
-  const [profileUser, setProfileUser] = useState<AdminUser | null>(null)
-  const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [confirmAction, setConfirmAction] = useState<{ type: 'suspend' | 'reinstate'; user: Row } | null>(null)
+  const [actionLoading, setActionLoading] = useState(false)
+  const [profileUser, setProfileUser] = useState<Row | null>(null)
+  const [listingsCountMap, setListingsCountMap] = useState<Map<string, number>>(new Map())
+  const [ratingMap, setRatingMap] = useState<Map<string, { avg: number; count: number }>>(new Map())
 
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
-
-  const fetchUsers = useCallback(async () => {
+  const loadUsers = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const data = await supportApi.getUsers({ page, page_size: PAGE_SIZE, role: roleFilter === 'all' ? undefined : roleFilter })
-      setUsers(data.users)
-      setTotal(data.total)
-    } catch (e: unknown) {
+      let all: AdminUser[] = []
+      let page = 1
+      const pageSize = 100
+      while (true) {
+        const res = await supportApi.getUsers({ page, page_size: pageSize })
+        const batch = res.users ?? []
+        all = [...all, ...batch]
+        if (all.length >= (res.total ?? 0) || batch.length < pageSize) break
+        page++
+      }
+      setUsers(all.map(mapUser))
+
+      try {
+        let verifiedIds: string[] = []
+        let vPage = 1
+        while (true) {
+          const vRes = await supportApi.getVerifiedUsers(vPage)
+          const batch = vRes.users ?? []
+          verifiedIds = [...verifiedIds, ...batch.map((v) => v.user_id)]
+          if (verifiedIds.length >= (vRes.total ?? 0) || batch.length < 100) break
+          vPage++
+        }
+        setIdentityVerifiedIds(new Set(verifiedIds))
+      } catch {
+        // verified users endpoint unavailable — badge just won't show
+      }
+
+      try {
+        let allListings: Awaited<ReturnType<typeof supportApi.getListings>>['listings'] = []
+        let lPage = 1
+        while (true) {
+          const r = await supportApi.getListings(lPage, 100)
+          allListings = [...allListings, ...(r.listings ?? [])]
+          if (allListings.length >= (r.total ?? 0) || (r.listings?.length ?? 0) < 100) break
+          lPage++
+        }
+        const counts = new Map<string, number>()
+        for (const l of allListings) counts.set(l.agent_id, (counts.get(l.agent_id) ?? 0) + 1)
+        setListingsCountMap(counts)
+      } catch {
+        // listings count just won't show
+      }
+
+      try {
+        let allAgents: Awaited<ReturnType<typeof supportApi.getAgents>>['agents'] = []
+        let aPage = 1
+        while (true) {
+          const r = await supportApi.getAgents(aPage, 100)
+          allAgents = [...allAgents, ...(r.agents ?? [])]
+          if (allAgents.length >= (r.total ?? 0) || (r.agents?.length ?? 0) < 100) break
+          aPage++
+        }
+        const ratings = new Map<string, { avg: number; count: number }>()
+        for (const a of allAgents) {
+          if (a.average_rating != null) {
+            ratings.set(a.id, { avg: a.average_rating, count: a.total_reviews ?? 0 })
+            if (a.user_id) ratings.set(a.user_id, { avg: a.average_rating, count: a.total_reviews ?? 0 })
+          }
+        }
+        setRatingMap(ratings)
+      } catch {
+        // rating just won't show
+      }
+    } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load users')
     } finally {
       setLoading(false)
     }
-  }, [roleFilter, page])
+  }, [])
 
-  useEffect(() => { fetchUsers() }, [fetchUsers])
+  useEffect(() => { loadUsers() }, [loadUsers])
 
-  // Reset to page 1 when role changes
-  useEffect(() => { setPage(1) }, [roleFilter])
+  const individualCount = users.filter((u) => u.role === 'individual').length
+  const agentCount = users.filter((u) => u.role === 'agent').length
+  const suspendedCount = users.filter((u) => u.status === 'suspended').length
 
-  const filtered = users.filter(u => {
-    if (!search) return true
-    const q = search.toLowerCase()
-    return (
-      (u.first_name ?? '').toLowerCase().includes(q) ||
-      (u.last_name ?? '').toLowerCase().includes(q) ||
-      u.email.toLowerCase().includes(q)
+  const filtered = useMemo(() => {
+    let list = users
+    if (filter === 'individual') list = list.filter((u) => u.role === 'individual')
+    if (filter === 'agent') list = list.filter((u) => u.role === 'agent')
+    if (search.trim()) {
+      const q = search.toLowerCase()
+      list = list.filter(
+        (u) =>
+          u.name.toLowerCase().includes(q) ||
+          u.email.toLowerCase().includes(q) ||
+          u.userId.toLowerCase().includes(q),
+      )
+    }
+    return [...list].sort((a, b) => new Date(b.joinDate).getTime() - new Date(a.joinDate).getTime())
+  }, [users, filter, search])
+
+  function handleExport() {
+    exportToExcel(
+      'users',
+      filtered.map((u) => ({
+        UserID: u.userId, Name: u.name, Email: u.email, Phone: u.phone, Role: u.role,
+        Status: u.status, Joined: formatDate(u.joinDate),
+      })),
     )
-  })
+  }
 
-  async function toggleStatus(user: AdminUser) {
-    setActionLoading(user.id)
+  async function handleConfirm() {
+    if (!confirmAction) return
+    setActionLoading(true)
     try {
-      if (user.status === 'active') {
-        await supportApi.suspendUser(user.id)
-      } else {
-        await supportApi.activateUser(user.id)
+      if (confirmAction.type === 'suspend') {
+        await supportApi.suspendUser(confirmAction.user.id)
+        setUsers((prev) => prev.map((u) => u.id === confirmAction.user.id ? { ...u, status: 'suspended' } : u))
       }
-      await fetchUsers()
-      if (profileUser?.id === user.id) setProfileUser(null)
-    } catch (e: unknown) {
+      if (confirmAction.type === 'reinstate') {
+        await supportApi.activateUser(confirmAction.user.id)
+        setUsers((prev) => prev.map((u) => u.id === confirmAction.user.id ? { ...u, status: 'active' } : u))
+      }
+    } catch (e) {
       alert(e instanceof Error ? e.message : 'Action failed')
     } finally {
-      setActionLoading(null)
+      setActionLoading(false)
+      setConfirmAction(null)
     }
   }
 
   return (
-    <div className="sp-view-container">
-      <div className="sp-view-header-row">
-        <div>
-          <h2 style={{ fontSize: 18, fontWeight: 700 }}>Users</h2>
-          <p style={{ fontSize: 12, color: 'var(--sp-text-muted)', marginTop: 2 }}>
-            {loading ? 'Loading…' : `${total} total users`}
-          </p>
-        </div>
-        <button
-          className="sp-btn-excel"
-          onClick={() => exportSupportTable(users as unknown as Record<string, unknown>[], 'users')}
-        >
-          📊 Export
-        </button>
-      </div>
-
-      <div style={{ display: 'flex', gap: 12, marginBottom: 16, alignItems: 'center', flexWrap: 'wrap' }}>
-        <div className="sp-role-filter-group">
-          {[
-            { value: 'all', label: 'All' },
-            { value: 'user', label: 'Individual' },
-            { value: 'agent', label: 'Agent' },
-          ].map(r => (
+    <div className="admin-root dark" style={{ height: 'auto', overflow: 'visible' }}>
+      <div className="p-8">
+        {loading ? (
+          <div className="flex flex-col items-center justify-center min-h-[300px] gap-3">
+            <div className="w-8 h-8 border-2 border-violet-500/30 border-t-violet-500 rounded-full animate-spin" />
+            <span className="text-sm text-[var(--text-secondary)]">Loading users…</span>
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center min-h-[300px] gap-4">
+            <AlertCircle className="w-10 h-10 text-red-400" />
+            <p className="text-sm text-[var(--text-secondary)] text-center max-w-xs">{error}</p>
             <button
-              key={r.value}
-              className={`sp-filter-tab${roleFilter === r.value ? ' active' : ''}`}
-              onClick={() => setRoleFilter(r.value)}
+              onClick={loadUsers}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm transition-colors"
             >
-              {r.label}
+              <RefreshCw className="w-4 h-4" /> Retry
             </button>
-          ))}
-        </div>
-        <input
-          className="sp-form-input"
-          style={{ maxWidth: 240 }}
-          placeholder="Search by name or email…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <StatCard label="Total Users" value={users.length} icon={UsersIcon} iconBg="bg-violet-500/15" iconColor="text-violet-400" />
+              <StatCard label="Individuals" value={individualCount} icon={UserCheck} iconBg="bg-blue-500/15" iconColor="text-blue-400" />
+              <StatCard label="Agents" value={agentCount} icon={Briefcase} iconBg="bg-emerald-500/15" iconColor="text-emerald-400" />
+              <StatCard label="Suspended Users" value={suspendedCount} icon={Ban} iconBg="bg-red-500/15" iconColor="text-red-400" valueColor="text-red-400" />
+            </div>
+
+            <div className="flex gap-2 mb-4">
+              <FilterPill active={filter === 'all'} onClick={() => setFilter('all')}>Users</FilterPill>
+              <FilterPill active={filter === 'individual'} onClick={() => setFilter('individual')}>Individual</FilterPill>
+              <FilterPill active={filter === 'agent'} onClick={() => setFilter('agent')}>Agent</FilterPill>
+            </div>
+
+            <div className="flex gap-3 mb-5">
+              <SearchInput value={search} onChange={setSearch} placeholder="Search by name, email, or ID..." />
+              <ExportButton onClick={handleExport} />
+              <button onClick={loadUsers} className="p-2.5 rounded-xl bg-[var(--bg-subtle)] hover:bg-[var(--bg-subtle-strong)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" title="Refresh">
+                <RefreshCw className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl overflow-hidden shadow-[var(--shadow-card)]">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-[var(--text-muted)] text-xs uppercase tracking-wide border-b border-[var(--border-color)]">
+                      <th className="px-6 py-4 font-medium">User</th>
+                      <th className="px-6 py-4 font-medium">Email</th>
+                      <th className="px-6 py-4 font-medium">Phone</th>
+                      <th className="px-6 py-4 font-medium">Role</th>
+                      <th className="px-6 py-4 font-medium">Status</th>
+                      <th className="px-6 py-4 font-medium">Joined</th>
+                      <th className="px-6 py-4 font-medium text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map((u) => (
+                      <tr key={u.id} className="border-b border-[var(--border-color)] last:border-0 hover:bg-[var(--bg-hover)]">
+                        <td className="px-6 py-3.5">
+                          <div className="flex items-center gap-3">
+                            <Avatar name={u.name} color={u.avatarColor} size={36} />
+                            <div>
+                              <div className="text-[var(--text-primary)] font-medium flex items-center gap-1.5">
+                                {u.name}
+                                {identityVerifiedIds.has(u.id) && (
+                                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" aria-label="Identity verified" />
+                                )}
+                              </div>
+                              <div className="text-xs text-[var(--text-muted)]">{truncateId(u.userId, 10)}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-3.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[var(--text-secondary)]">{u.email}</span>
+                            {u.isEmailVerified
+                              ? <MailCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" aria-label="Email verified" />
+                              : <MailX className="w-3.5 h-3.5 text-amber-400 shrink-0" aria-label="Email not verified" />
+                            }
+                          </div>
+                        </td>
+                        <td className="px-6 py-3.5 text-[var(--text-secondary)]">{u.phone || '—'}</td>
+                        <td className="px-6 py-3.5">
+                          <span className="text-xs font-medium capitalize px-2.5 py-1 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/20">
+                            {u.role}
+                          </span>
+                        </td>
+                        <td className="px-6 py-3.5"><StatusBadge status={u.status} /></td>
+                        <td className="px-6 py-3.5 text-[var(--text-secondary)]">{formatDate(u.joinDate)}</td>
+                        <td className="px-6 py-3.5 text-right">
+                          <ActionMenu
+                            items={[
+                              { label: 'View profile', icon: <Eye className="w-4 h-4" />, onClick: () => setProfileUser(u) },
+                              u.status === 'suspended'
+                                ? { label: 'Reinstate', icon: <UserCheck className="w-4 h-4" />, onClick: () => setConfirmAction({ type: 'reinstate', user: u }) }
+                                : { label: 'Suspend', icon: <UserX className="w-4 h-4" />, onClick: () => setConfirmAction({ type: 'suspend', user: u }), danger: true },
+                            ]}
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {filtered.length === 0 && <EmptyState label="No users match your search." />}
+              </div>
+            </div>
+          </>
+        )}
+
+        <ConfirmModal
+          open={!!confirmAction}
+          title={confirmAction?.type === 'reinstate' ? 'Reinstate user?' : 'Suspend user?'}
+          description={
+            confirmAction?.type === 'reinstate'
+              ? `${confirmAction.user.name} will regain full access to the platform.`
+              : `${confirmAction?.user.name} will lose access to the platform until reinstated.`
+          }
+          confirmLabel={confirmAction?.type === 'reinstate' ? 'Reinstate' : 'Suspend'}
+          danger={confirmAction?.type !== 'reinstate'}
+          icon={<UserX className="w-6 h-6 text-red-400" />}
+          onConfirm={handleConfirm}
+          onCancel={() => setConfirmAction(null)}
         />
-      </div>
 
-      {error && (
-        <div style={{ color: 'var(--sp-trend-down)', fontSize: 13, marginBottom: 12 }}>
-          {error}
-        </div>
-      )}
-
-      <div className="sp-table-card" style={{ marginBottom: 16 }}>
-        <table className="sp-data-table">
-          <thead>
-            <tr>
-              <th>User</th>
-              <th>Role</th>
-              <th>Status</th>
-              <th>Email Verified</th>
-              <th>Joined</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan={6} className="sp-table-empty-row">Loading users…</td></tr>
-            ) : filtered.length === 0 ? (
-              <tr><td colSpan={6} className="sp-table-empty-row">No users match your filter.</td></tr>
-            ) : filtered.map((u, i) => (
-              <tr key={u.id}>
-                <td>
-                  <div className="sp-table-user-cell">
-                    <div className={`sp-avatar sp-table-avatar ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}>
-                      {getInitials(u.first_name, u.last_name)}
-                    </div>
-                    <div>
-                      <div className="sp-user-name-strong">
-                        {u.first_name || u.last_name ? `${u.first_name ?? ''} ${u.last_name ?? ''}`.trim() : '—'}
-                      </div>
-                      <div style={{ fontSize: 11, color: 'var(--sp-text-muted)' }}>{u.email}</div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <span className={`sp-role-badge role-${u.role.toLowerCase()}`}>{u.role}</span>
-                </td>
-                <td>
-                  <span className={`sp-status-badge ${STATUS_CLASS[u.status] ?? ''}`}>
-                    {STATUS_LABEL[u.status] ?? u.status}
-                  </span>
-                </td>
-                <td>
-                  <span style={{
-                    fontSize: 12,
-                    fontWeight: 600,
-                    color: u.is_email_verified ? 'var(--sp-trend-up, #10b981)' : 'var(--sp-text-muted)',
-                  }}>
-                    {u.is_email_verified ? '✓ Verified' : '✗ Not verified'}
-                  </span>
-                </td>
-                <td style={{ color: 'var(--sp-text-muted)', fontSize: 12 }}>
-                  {new Date(u.created_at).toLocaleDateString()}
-                </td>
-                <td>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <button className="sp-btn sp-btn-small" onClick={() => setProfileUser(u)}>View</button>
-                    {u.status !== 'pending_verification' && (
-                      <button
-                        className={`sp-btn sp-btn-small ${u.status === 'active' ? 'sp-btn-suspend' : 'sp-btn-activate'}`}
-                        onClick={() => toggleStatus(u)}
-                        disabled={actionLoading === u.id}
-                      >
-                        {actionLoading === u.id ? '…' : u.status === 'active' ? 'Suspend' : 'Activate'}
-                      </button>
+        <Modal open={!!profileUser} onClose={() => setProfileUser(null)} title="User Profile" maxWidth="max-w-md">
+          {profileUser && (
+            <>
+              <div className="flex items-center gap-4 mb-6">
+                <Avatar name={profileUser.name} color={profileUser.avatarColor} size={52} />
+                <div>
+                  <div className="flex items-center gap-1.5 text-base font-semibold text-[var(--text-primary)]">
+                    {profileUser.name}
+                    {identityVerifiedIds.has(profileUser.id) && (
+                      <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" aria-label="Identity verified" />
                     )}
                   </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  <p className="text-xs text-[var(--text-muted)]">{profileUser.email}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[10px] uppercase tracking-wide font-semibold text-[var(--text-muted)] mb-1">Role</p>
+                  <p className="text-sm text-[var(--text-primary)] capitalize">{profileUser.role}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-wide font-semibold text-[var(--text-muted)] mb-1">Status</p>
+                  <StatusBadge status={profileUser.status} />
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-wide font-semibold text-[var(--text-muted)] mb-1">Email Verified</p>
+                  <p className="text-sm text-[var(--text-primary)]">{profileUser.isEmailVerified ? 'Yes' : 'No'}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-wide font-semibold text-[var(--text-muted)] mb-1 flex items-center gap-1"><Phone className="w-3 h-3" /> Phone</p>
+                  <p className="text-sm text-[var(--text-primary)]">{profileUser.phone || '—'}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-wide font-semibold text-[var(--text-muted)] mb-1">Joined</p>
+                  <p className="text-sm text-[var(--text-primary)]">{formatDate(profileUser.joinDate)}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-wide font-semibold text-[var(--text-muted)] mb-1">Listings</p>
+                  <p className="text-sm text-[var(--text-primary)]">{listingsCountMap.get(profileUser.id) ?? 0}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-wide font-semibold text-[var(--text-muted)] mb-1">Rating</p>
+                  <p className="text-sm text-[var(--text-primary)]">
+                    {ratingMap.has(profileUser.id)
+                      ? `${ratingMap.get(profileUser.id)!.avg.toFixed(1)} ★ (${ratingMap.get(profileUser.id)!.count} review${ratingMap.get(profileUser.id)!.count !== 1 ? 's' : ''})`
+                      : 'No reviews yet'}
+                  </p>
+                </div>
+              </div>
+              <div className="mt-6">
+                {profileUser.status === 'suspended' ? (
+                  <button
+                    onClick={() => { setConfirmAction({ type: 'reinstate', user: profileUser }); setProfileUser(null) }}
+                    className="w-full py-2.5 rounded-xl bg-violet-600 text-white font-medium hover:bg-violet-700 transition-colors"
+                  >
+                    Reinstate User
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => { setConfirmAction({ type: 'suspend', user: profileUser }); setProfileUser(null) }}
+                    className="w-full py-2.5 rounded-xl bg-red-500 text-white font-medium hover:bg-red-600 transition-colors"
+                  >
+                    Suspend User
+                  </button>
+                )}
+              </div>
+            </>
+          )}
+        </Modal>
       </div>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
-          <button
-            className="sp-btn sp-btn-small"
-            onClick={() => setPage(p => Math.max(1, p - 1))}
-            disabled={page === 1 || loading}
-          >
-            ← Prev
-          </button>
-
-          {Array.from({ length: totalPages }, (_, i) => i + 1)
-            .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 2)
-            .reduce<(number | 'gap')[]>((acc, p, idx, arr) => {
-              if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('gap')
-              acc.push(p)
-              return acc
-            }, [])
-            .map((p, i) =>
-              p === 'gap' ? (
-                <span key={`gap-${i}`} style={{ color: 'var(--sp-text-muted)', fontSize: 12 }}>…</span>
-              ) : (
-                <button
-                  key={p}
-                  className="sp-btn sp-btn-small"
-                  onClick={() => setPage(p as number)}
-                  disabled={loading}
-                  style={{
-                    minWidth: 30,
-                    background: page === p ? 'var(--sp-text-accent)' : undefined,
-                    color: page === p ? '#fff' : undefined,
-                    borderColor: page === p ? 'transparent' : undefined,
-                    fontWeight: page === p ? 700 : 500,
-                  }}
-                >
-                  {p}
-                </button>
-              )
-            )
-          }
-
-          <button
-            className="sp-btn sp-btn-small"
-            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages || loading}
-          >
-            Next →
-          </button>
-
-          <span style={{ fontSize: 12, color: 'var(--sp-text-muted)', marginLeft: 4 }}>
-            {total} total
-          </span>
-        </div>
-      )}
-
-      {profileUser && (
-        <div className="sp-lightbox" onClick={() => setProfileUser(null)}>
-          <div className="sp-modal-box" onClick={e => e.stopPropagation()}>
-            <div className="sp-modal-header">
-              <h3>User Profile</h3>
-              <button className="sp-btn sp-btn-small" onClick={() => setProfileUser(null)}>✕ Close</button>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
-              <div className="sp-avatar sp-av-blue" style={{ width: 52, height: 52, fontSize: 18 }}>
-                {getInitials(profileUser.first_name, profileUser.last_name)}
-              </div>
-              <div>
-                <p style={{ fontWeight: 700, fontSize: 16 }}>
-                  {`${profileUser.first_name ?? ''} ${profileUser.last_name ?? ''}`.trim() || '—'}
-                </p>
-                <p style={{ fontSize: 12, color: 'var(--sp-text-muted)' }}>{profileUser.email}</p>
-              </div>
-            </div>
-            <div className="sp-profile-grid">
-              <div className="sp-profile-item">
-                <span className="sp-profile-label">Role</span>
-                <span className="sp-profile-value">{profileUser.role}</span>
-              </div>
-              <div className="sp-profile-item">
-                <span className="sp-profile-label">Status</span>
-                <span className="sp-profile-value">{STATUS_LABEL[profileUser.status] ?? profileUser.status}</span>
-              </div>
-              <div className="sp-profile-item">
-                <span className="sp-profile-label">Email Verified</span>
-                <span className="sp-profile-value">{profileUser.is_email_verified ? 'Yes' : 'No'}</span>
-              </div>
-              <div className="sp-profile-item">
-                <span className="sp-profile-label">Phone</span>
-                <span className="sp-profile-value">{profileUser.phone_number ?? '—'}</span>
-              </div>
-              <div className="sp-profile-item">
-                <span className="sp-profile-label">Joined</span>
-                <span className="sp-profile-value">{new Date(profileUser.created_at).toLocaleDateString()}</span>
-              </div>
-            </div>
-            <div style={{ marginTop: 20, display: 'flex', gap: 8 }}>
-              {profileUser.status !== 'pending_verification' && (
-                <button
-                  className={`sp-btn ${profileUser.status === 'active' ? 'sp-btn-suspend' : 'sp-btn-activate'}`}
-                  onClick={() => toggleStatus(profileUser)}
-                  disabled={actionLoading === profileUser.id}
-                >
-                  {actionLoading === profileUser.id
-                    ? '…'
-                    : profileUser.status === 'active' ? 'Suspend User' : 'Activate User'}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

@@ -13,6 +13,9 @@ interface VerifiedUser {
   phone_number: string | null
   role: string
   id_type: string | null
+  verified_at?: string
+  created_at?: string
+  updated_at?: string
 }
 
 interface VerifRecord {
@@ -78,7 +81,14 @@ export default function VerificationsView() {
       supportApi.getUsers({ page_size: 100 }),
     ])
       .then(([verifiedResult, pendingResult, partialResult, usersResult]) => {
-        if (verifiedResult.status === 'fulfilled') setVerified(verifiedResult.value.users)
+        if (verifiedResult.status === 'fulfilled') {
+          const sorted = [...verifiedResult.value.users].sort((a, b) => {
+            const da = new Date(a.verified_at ?? a.updated_at ?? a.created_at ?? 0).getTime()
+            const db = new Date(b.verified_at ?? b.updated_at ?? b.created_at ?? 0).getTime()
+            return db - da
+          })
+          setVerified(sorted)
+        }
         if (pendingResult.status === 'fulfilled') setPending(pendingResult.value)
         if (partialResult.status === 'fulfilled') setPartial(partialResult.value)
         if (usersResult.status === 'fulfilled') {
@@ -190,6 +200,7 @@ function VerifiedList({ users }: { users: VerifiedUser[] }) {
         <thead>
           <tr>
             <th>User</th>
+            <th>Phone</th>
             <th>ID Type</th>
             <th>Role</th>
             <th>Status</th>
@@ -211,6 +222,7 @@ function VerifiedList({ users }: { users: VerifiedUser[] }) {
                   </div>
                 </div>
               </td>
+              <td style={{ fontSize: 12, color: 'var(--sp-text-muted)' }}>{u.phone_number || '—'}</td>
               <td style={{ fontSize: 12 }}>{u.id_type ? (ID_LABEL[u.id_type] ?? u.id_type) : '—'}</td>
               <td>
                 <span className={`sp-role-badge role-${u.role.toLowerCase()}`}>{u.role}</span>

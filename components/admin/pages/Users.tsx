@@ -1,6 +1,6 @@
 'use client'
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Users as UsersIcon, UserCheck, Briefcase, Ban, Eye, MessageCircle, Mail, UserX, Trash2, RefreshCw, AlertCircle, MailCheck, MailX } from "lucide-react";
+import { Users as UsersIcon, UserCheck, Briefcase, Ban, Eye, MessageCircle, Mail, UserX, Trash2, RefreshCw, AlertCircle, MailCheck, MailX, ShieldCheck } from "lucide-react";
 
 import { adminApi } from "@/lib/api/admin";
 import type { AdminUser } from "@/lib/api/admin";
@@ -45,6 +45,7 @@ function mapApiUser(u: AdminUser): AppUser {
 export function UsersPage({ onMessageUser, onMailUser, onViewUser }: UsersPageProps) {
   const [users, setUsers] = useState<AppUser[]>([]);
   const [emailVerifiedMap, setEmailVerifiedMap] = useState<Map<string, boolean>>(new Map());
+  const [identityVerifiedIds, setIdentityVerifiedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -69,6 +70,21 @@ export function UsersPage({ onMessageUser, onMailUser, onViewUser }: UsersPagePr
       }
       setUsers(all.map(mapApiUser));
       setEmailVerifiedMap(new Map(all.map((u) => [u.id, u.is_email_verified])));
+
+      try {
+        let verifiedIds: string[] = [];
+        let vPage = 1;
+        while (true) {
+          const vRes = await adminApi.getVerifiedUsers(vPage, 100);
+          const batch = vRes.users ?? [];
+          verifiedIds = [...verifiedIds, ...batch.map((v) => v.user_id)];
+          if (verifiedIds.length >= (vRes.total ?? 0) || batch.length < 100) break;
+          vPage++;
+        }
+        setIdentityVerifiedIds(new Set(verifiedIds));
+      } catch {
+        // verified users endpoint unavailable — badge just won't show
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load users");
     } finally {
@@ -201,7 +217,12 @@ export function UsersPage({ onMessageUser, onMailUser, onViewUser }: UsersPagePr
                     <div className="flex items-center gap-3">
                       <Avatar name={u.name} color={u.avatarColor} size={36} />
                       <div>
-                        <div className="text-[var(--text-primary)] font-medium">{u.name}</div>
+                        <div className="text-[var(--text-primary)] font-medium flex items-center gap-1.5">
+                          {u.name}
+                          {identityVerifiedIds.has(u.id) && (
+                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" aria-label="Identity verified" />
+                          )}
+                        </div>
                         <div className="text-xs text-[var(--text-muted)]">{truncateId(u.userId, 10)}</div>
                       </div>
                     </div>

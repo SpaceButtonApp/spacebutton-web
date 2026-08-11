@@ -27,6 +27,13 @@ export function useTickets() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const selectedIdRef = useRef<string | null>(null)
   selectedIdRef.current = selectedId
+  const ticketsRef = useRef<Ticket[]>([])
+  ticketsRef.current = state.tickets
+
+  // Tracks, per ticket, the unread_count that was already visible when the agent
+  // last opened it — lets per-ticket / tab badges clear on read while the
+  // backend's raw unread_count (used for the sidebar's claim-gated badge) is untouched.
+  const [seenCounts, setSeenCounts] = useState<Record<string, number>>({})
 
   // ── Load ticket list ─────────────────────────────────────────────────────
 
@@ -145,10 +152,18 @@ export function useTickets() {
 
   const selectTicket = useCallback((id: string | null) => {
     setSelectedId(id)
+    if (id) {
+      const ticket = ticketsRef.current.find((t) => t.id === id)
+      if (ticket) {
+        setSeenCounts((sc) => ({ ...sc, [id]: ticket.unread_count }))
+      }
+    }
   }, [])
 
   const claimTicket = useCallback(async (ticketId: string) => {
-    const updated = await supportApi.claimTicket(ticketId)
+    // Claiming is what marks a ticket "handled" — clear its unread badge client-side
+    // regardless of whether the backend's claim response already reflects that.
+    const updated = { ...(await supportApi.claimTicket(ticketId)), unread_count: 0 }
     setState(prev => {
       const tickets = prev.tickets.map(t => t.id === ticketId ? updated : t)
       const detail = prev.detail?.ticket.id === ticketId
@@ -175,6 +190,7 @@ export function useTickets() {
     ...state,
     selectedId,
     selectTicket,
+    seenCounts,
     sendMessage,
     sendAdminMessage,
     escalateTicket,

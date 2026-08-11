@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/admin/shared/Badge"
 interface MessagesPageProps {
   openUserId?: string | null
   onOpenUserConsumed?: () => void
+  onOpenTicket?: (ticketId: string) => void
 }
 
 const POLL_LIST = 10_000
@@ -31,7 +32,7 @@ function getInitials(name: string) {
   return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
 }
 
-export function MessagesPage({ openUserId, onOpenUserConsumed }: MessagesPageProps) {
+export function MessagesPage({ openUserId, onOpenUserConsumed, onOpenTicket }: MessagesPageProps) {
   const [tickets, setTickets] = useState<SupportTicket[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -169,7 +170,13 @@ export function MessagesPage({ openUserId, onOpenUserConsumed }: MessagesPagePro
             tickets.map(ticket => (
               <button
                 key={ticket.id}
-                onClick={() => setSelectedId(ticket.id)}
+                onClick={() => {
+                  setSelectedId(ticket.id)
+                  if (ticket.unread_count > 0) {
+                    setTickets((prev) => prev.map((t) => t.id === ticket.id ? { ...t, unread_count: 0 } : t))
+                    onOpenTicket?.(ticket.id)
+                  }
+                }}
                 className={`w-full flex items-start gap-3 px-4 py-3.5 border-l-2 text-left transition-colors ${
                   selectedId === ticket.id
                     ? 'bg-violet-600/10 border-violet-500'

@@ -27,8 +27,8 @@ export function SupportChatWidget() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const lastMsgCountRef = useRef(0)
 
-  // Hide on admin, auth, and support chat routes
-  const hidden = pathname.startsWith('/admin') ||
+  // Hide on admin, support-staff, auth, and support chat routes
+  const hidden = pathname.startsWith('/admin') || pathname.startsWith('/support') ||
     pathname === '/login' || pathname === '/signup' ||
     pathname.startsWith('/forgot') || pathname.startsWith('/verify') ||
     pathname === '/welcome' || pathname === '/get-started' ||

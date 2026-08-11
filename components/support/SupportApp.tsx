@@ -34,6 +34,7 @@ export default function SupportApp() {
     sending,
     selectedId,
     selectTicket,
+    seenCounts,
     sendMessage,
     sendAdminMessage,
     escalateTicket,
@@ -66,6 +67,8 @@ export default function SupportApp() {
     localStorage.removeItem('support-theme')
     router.push('/support/login')
   }
+
+  const messagesUnread = tickets.reduce((sum, t) => sum + (t.unread_count ?? 0), 0)
 
   if (!ready) {
     return (
@@ -110,6 +113,7 @@ export default function SupportApp() {
               selectedId={selectedId}
               onSelect={selectTicket}
               currentUserId={user?.id ?? ''}
+              seenCounts={seenCounts}
             />
           </div>
         )
@@ -127,6 +131,7 @@ export default function SupportApp() {
           user={user}
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed(c => !c)}
+          badgeCounts={{ messages: messagesUnread }}
         />
         <div className="sp-content-area">
           <Topbar

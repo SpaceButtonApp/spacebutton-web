@@ -3,10 +3,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { Bookmark, Sparkles } from 'lucide-react'
+import { Bookmark, Sparkles, Play } from 'lucide-react'
 import { BottomNav } from '@/components/bottom-nav'
 import { PropertyCard } from '@/components/property-card'
 import { ConnectBalanceButton } from '@/components/connect-balance-button'
+import { AppDownloadBanner } from '@/components/app-download-banner'
 import { useAppStore } from '@/lib/store'
 import { listingsApi, mapListing } from '@/lib/api/listings'
 import { syncMyProfile } from '@/lib/api/users'
@@ -161,6 +162,8 @@ export default function HomePage() {
 
       {/* Content */}
       <div className="px-4 py-6">
+        <AppDownloadBanner />
+
         {/* Coming soon for Shortlet & Properties */}
         {(currentTab === 'Shortlet' || currentTab === 'Properties') && (
           <div className="flex flex-col items-center justify-center py-20">
@@ -197,6 +200,13 @@ export default function HomePage() {
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform"
                       unoptimized
                     />
+                    {property.videoUrl && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="w-8 h-8 rounded-full bg-black/50 flex items-center justify-center backdrop-blur-sm">
+                          <Play className="w-3.5 h-3.5 text-white fill-white ml-0.5" />
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div className="p-3">
                     <p className="text-sm font-semibold text-foreground line-clamp-1">{property.title}</p>

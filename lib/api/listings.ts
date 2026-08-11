@@ -36,9 +36,9 @@ function mapCondition(l: ListingResponse): Property['condition'] {
 }
 
 function mapType(l: ListingResponse): Property['type'] {
+  if (l.owner_type === 'agent') return 'agent'
   if (l.category === 'need_roommate' || l.category === 'flatmate') return 'connect'
   if (l.category === 'subletting') return 'shortlet'
-  if (l.owner_type === 'agent') return 'agent'
   return 'properties'
 }
 

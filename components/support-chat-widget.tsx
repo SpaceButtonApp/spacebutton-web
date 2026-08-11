@@ -6,6 +6,9 @@ import { MessageCircle, X, Send, Loader2, ChevronDown } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { supportApi } from '@/lib/api/chat'
 import type { SupportMsg } from '@/lib/api/chat'
+import { ListingRequestModal } from '@/components/listing-request-modal'
+
+const BUBBLE_DISMISS_KEY = 'sb-listing-bubble-dismissed'
 
 export function SupportChatWidget() {
   const pathname = usePathname()
@@ -18,6 +21,9 @@ export function SupportChatWidget() {
   const [initialized, setInitialized] = useState(false)
   const [loading, setLoading] = useState(false)
   const [unread, setUnread] = useState(0)
+  const [showBubble, setShowBubble] = useState(false)
+  const [bubbleDismissed, setBubbleDismissed] = useState(true)
+  const [showRequestModal, setShowRequestModal] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const lastMsgCountRef = useRef(0)
 
@@ -27,6 +33,23 @@ export function SupportChatWidget() {
     pathname.startsWith('/forgot') || pathname.startsWith('/verify') ||
     pathname === '/welcome' || pathname === '/get-started' ||
     pathname === '/chat/admin-support'
+
+  useEffect(() => {
+    setBubbleDismissed(localStorage.getItem(BUBBLE_DISMISS_KEY) === '1')
+  }, [])
+
+  function dismissBubble() {
+    setShowBubble(false)
+    setBubbleDismissed(true)
+    localStorage.setItem(BUBBLE_DISMISS_KEY, '1')
+  }
+
+  // Recurring nudge — pops the bubble every 5 seconds while the chat is closed
+  useEffect(() => {
+    if (hidden || !user || open || bubbleDismissed) { setShowBubble(false); return }
+    const interval = setInterval(() => setShowBubble((v) => !v), 5_000)
+    return () => clearInterval(interval)
+  }, [hidden, user, open, bubbleDismissed])
 
   const loadMessages = useCallback(async () => {
     try {
@@ -176,6 +199,31 @@ export function SupportChatWidget() {
         </div>
       )}
 
+      {/* "Can't find your space?" nudge bubble — pops every 5s while chat is closed */}
+      {showBubble && !open && (
+        <div className="fixed bottom-[150px] right-4 sm:bottom-24 sm:right-5 z-50 w-72 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="relative bg-[#12121a] border border-gray-800 rounded-2xl p-4 shadow-2xl">
+            <button
+              onClick={dismissBubble}
+              aria-label="Dismiss"
+              className="absolute top-2.5 right-2.5 text-gray-500 hover:text-gray-300 transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => { setShowRequestModal(true); setShowBubble(false) }}
+              className="text-left w-full pr-4"
+            >
+              <p className="text-white font-semibold text-sm mb-1">Can&apos;t Find Your Perfect Space?</p>
+              <p className="text-gray-400 text-xs leading-relaxed">
+                Tell us what you&apos;re looking for and our team will find matching listings for you — usually within 24 hours.
+              </p>
+            </button>
+            <div className="absolute -bottom-2 right-6 w-4 h-4 bg-[#12121a] border-r border-b border-gray-800 transform rotate-45" />
+          </div>
+        </div>
+      )}
+
       {/* Floating button */}
       <button
         onClick={() => setOpen(prev => !prev)}
@@ -189,6 +237,8 @@ export function SupportChatWidget() {
           </span>
         )}
       </button>
+
+      <ListingRequestModal isOpen={showRequestModal} onClose={() => setShowRequestModal(false)} />
     </>
   )
 }

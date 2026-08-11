@@ -134,21 +134,23 @@ export default function AddPostPage() {
       return false
     }
     
-    if (photos.length < 3) {
-      setValidationMessage("Please add at least 3 photos/videos of the property")
+    const photoCount = mediaFiles.filter(f => !f.type.startsWith('video/')).length
+    const videoCount = mediaFiles.filter(f => f.type.startsWith('video/')).length
+
+    if (photoCount < 1) {
+      setValidationMessage("Please add at least 1 photo of the property")
       setShowValidationModal(true)
       return false
     }
-    
+
+    if (videoCount < 1) {
+      setValidationMessage("Please upload at least 1 video of the property")
+      setShowValidationModal(true)
+      return false
+    }
+
     if (photos.length > 5) {
       setValidationMessage("Maximum 5 photos/videos allowed")
-      setShowValidationModal(true)
-      return false
-    }
-    
-    const hasVideo = mediaFiles.some(f => f.type.startsWith('video/'))
-    if (!hasVideo) {
-      setValidationMessage("Please upload at least one video of the property")
       setShowValidationModal(true)
       return false
     }
@@ -403,7 +405,7 @@ export default function AddPostPage() {
           </div>
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-medium text-foreground">Listing Photos & Videos</h3>
-            <span className="text-xs text-muted-foreground">{photos.length}/5 (min 3, at least 1 video)</span>
+            <span className="text-xs text-muted-foreground">{photos.length}/5 (min 1 photo, min 1 video)</span>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {photos.map((photo, index) => (
@@ -489,9 +491,8 @@ export default function AddPostPage() {
             </div>
           </div>
 
-          {/* Reward - Visible for Connect Tenant with Rent/Vacating OR Agent with Vacating */}
-          {((listingType === "Connect" && connectRole === "Tenant" && (selectedCondition === "Rent" || selectedCondition === "Vacating")) || 
-            (isAgent && selectedCondition === "Vacating")) && (
+          {/* Reward - Visible for Connect Tenant with Rent/Vacating */}
+          {(listingType === "Connect" && connectRole === "Tenant" && (selectedCondition === "Rent" || selectedCondition === "Vacating")) && (
             <div>
               <h3 className="font-medium text-foreground mb-3">Reward (5% of Rent)</h3>
               <div className="relative">
@@ -506,8 +507,8 @@ export default function AddPostPage() {
             </div>
           )}
 
-          {/* Total Package - Visible for Agent (except Vacating) OR Connect with Landlord role OR Connect with Tenant and Roommate/Flatmate */}
-          {((listingType === "Agent" && selectedCondition !== "Vacating") || (listingType === "Connect" && connectRole === "Landlord") || (listingType === "Connect" && connectRole === "Tenant" && (selectedCondition === "Roommate" || selectedCondition === "Flatmate"))) && (
+          {/* Total Package - Visible for Agent (all conditions, including Vacating) OR Connect with Landlord role OR Connect with Tenant and Roommate/Flatmate */}
+          {(listingType === "Agent" || (listingType === "Connect" && connectRole === "Landlord") || (listingType === "Connect" && connectRole === "Tenant" && (selectedCondition === "Roommate" || selectedCondition === "Flatmate"))) && (
             <div>
               <h3 className="font-medium text-foreground mb-3">Total Package</h3>
               <div className="relative">
@@ -700,7 +701,7 @@ export default function AddPostPage() {
         {(selectedCondition === "Rent" || selectedCondition === "Flatmate" || selectedCondition === "Roommate") && (
           <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
             <p className="text-sm font-bold text-amber-400 text-center tracking-wide">
-              AGENT MUST NOT COLLECT INSPECTION FEE
+              AGENT MUST NOT COLLECT INSPECTION FEE FOR PROPERTY LISTED ON THE APP
             </p>
           </div>
         )}

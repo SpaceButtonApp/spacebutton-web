@@ -126,7 +126,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
     )
   }
 
-  const mediaItems = [...property.images, ...(property.videoUrl ? [property.videoUrl] : [])]
+  const mediaItems = [...(property.videoUrl ? [property.videoUrl] : []), ...property.images]
   const isVideoItem = (url: string) => !!property.videoUrl && url === property.videoUrl
 
   const handlePrevImage = () => {

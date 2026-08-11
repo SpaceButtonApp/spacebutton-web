@@ -37,6 +37,9 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
   const videoRef = useRef<HTMLVideoElement>(null)
   const fullscreenVideoRef = useRef<HTMLVideoElement>(null)
   const [isFullscreenVideoPlaying, setIsFullscreenVideoPlaying] = useState(false)
+  const [videoCurrentTime, setVideoCurrentTime] = useState(0)
+  const [videoDuration, setVideoDuration] = useState(0)
+  const touchStartX = useRef<number | null>(null)
 
   const handlePlayVideo = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -69,6 +72,35 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
     e.stopPropagation()
     if (fullscreenVideoRef.current)
       fullscreenVideoRef.current.currentTime += 10
+  }
+
+  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation()
+    const video = fullscreenVideoRef.current
+    if (!video || !videoDuration) return
+    const rect = e.currentTarget.getBoundingClientRect()
+    const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width))
+    video.currentTime = ratio * videoDuration
+  }
+
+  function formatTime(seconds: number): string {
+    if (!Number.isFinite(seconds) || seconds < 0) return '0:00'
+    const m = Math.floor(seconds / 60)
+    const s = Math.floor(seconds % 60)
+    return `${m}:${s.toString().padStart(2, '0')}`
+  }
+
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX
+  }
+
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (touchStartX.current === null) return
+    const dx = e.changedTouches[0].clientX - touchStartX.current
+    touchStartX.current = null
+    if (Math.abs(dx) < 40) return
+    if (dx > 0) handlePrevImage()
+    else handleNextImage()
   }
 
   // Reset play state when switching media items
@@ -179,7 +211,11 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
       </div>
 
       {/* Image Gallery */}
-      <div className="relative aspect-[4/3] md:aspect-auto md:h-80">
+      <div
+        className="relative aspect-[4/3] md:aspect-auto md:h-80"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         {isVideoItem(mediaItems[currentImageIndex]) ? (
           <>
             <video
@@ -535,7 +571,11 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
 
       {/* Fullscreen modal */}
       {showFullScreen && mediaItems.length > 0 && (
-        <div className="fixed inset-0 z-50 bg-black flex items-center justify-center">
+        <div
+          className="fixed inset-0 z-50 bg-black flex items-center justify-center"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
 
           {isVideoItem(mediaItems[currentImageIndex]) ? (
             /* ── Video fullscreen ── */
@@ -550,36 +590,53 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
                 poster={property.images[0] || ''}
                 onPlay={() => setIsFullscreenVideoPlaying(true)}
                 onPause={() => setIsFullscreenVideoPlaying(false)}
+                onLoadedMetadata={(e) => setVideoDuration(e.currentTarget.duration)}
+                onTimeUpdate={(e) => setVideoCurrentTime(e.currentTarget.currentTime)}
               />
 
               {/* Minimize */}
               <button
                 onClick={() => setShowFullScreen(false)}
-                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center"
+                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center z-10"
               >
                 <Minimize2 className="w-5 h-5 text-white" />
               </button>
 
-              {/* Video controls bar */}
-              <div className="absolute bottom-0 left-0 right-0 px-6 pb-10 pt-16 bg-gradient-to-t from-black/80 to-transparent">
-                <div className="flex items-center justify-center gap-10">
-                  <button onClick={handleSkipBackward} className="flex flex-col items-center gap-1">
-                    <SkipBack className="w-7 h-7 text-white" fill="white" />
-                    <span className="text-white text-xs">10s</span>
-                  </button>
-                  <button
-                    onClick={handleFullscreenPlayPause}
-                    className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center border border-white/30"
-                  >
-                    {isFullscreenVideoPlaying
-                      ? <Pause className="w-8 h-8 text-white" fill="white" />
-                      : <Play className="w-8 h-8 text-white ml-1" fill="white" />
-                    }
-                  </button>
-                  <button onClick={handleSkipForward} className="flex flex-col items-center gap-1">
-                    <SkipForward className="w-7 h-7 text-white" fill="white" />
-                    <span className="text-white text-xs">10s</span>
-                  </button>
+              {/* Centered playback controls — YouTube-style */}
+              <div className="absolute inset-0 flex items-center justify-center gap-10 pointer-events-none">
+                <button onClick={handleSkipBackward} className="flex flex-col items-center gap-1 pointer-events-auto">
+                  <SkipBack className="w-8 h-8 text-white drop-shadow-lg" fill="white" />
+                  <span className="text-white text-xs drop-shadow-lg">10s</span>
+                </button>
+                <button
+                  onClick={handleFullscreenPlayPause}
+                  className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center border border-white/30 pointer-events-auto"
+                >
+                  {isFullscreenVideoPlaying
+                    ? <Pause className="w-8 h-8 text-white" fill="white" />
+                    : <Play className="w-8 h-8 text-white ml-1" fill="white" />
+                  }
+                </button>
+                <button onClick={handleSkipForward} className="flex flex-col items-center gap-1 pointer-events-auto">
+                  <SkipForward className="w-8 h-8 text-white drop-shadow-lg" fill="white" />
+                  <span className="text-white text-xs drop-shadow-lg">10s</span>
+                </button>
+              </div>
+
+              {/* Seek bar + time — bottom overlay */}
+              <div className="absolute bottom-0 left-0 right-0 px-6 pb-8 pt-16 bg-gradient-to-t from-black/80 to-transparent">
+                <div
+                  className="relative h-1.5 rounded-full bg-white/25 cursor-pointer"
+                  onClick={handleSeek}
+                >
+                  <div
+                    className="absolute top-0 left-0 h-full rounded-full bg-white"
+                    style={{ width: `${videoDuration ? (videoCurrentTime / videoDuration) * 100 : 0}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-white text-xs font-medium">{formatTime(videoCurrentTime)}</span>
+                  <span className="text-white/70 text-xs font-medium">{formatTime(videoDuration)}</span>
                 </div>
               </div>
             </div>

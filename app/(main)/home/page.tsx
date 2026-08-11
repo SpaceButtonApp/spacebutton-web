@@ -20,10 +20,10 @@ type Tab = typeof tabs[number]
 
 function tabToFilters(tab: Tab): ListingFilters {
   switch (tab) {
-    case 'Connect':    return { owner_type: 'user', page_size: 20 }
-    case 'Agent':      return { owner_type: 'agent', page_size: 20 }
-    case 'Shortlet':   return { category: 'subletting', page_size: 20 }
-    case 'Properties': return { category: 'for_rent', owner_type: 'user', page_size: 20 }
+    case 'Connect':    return { owner_type: 'user' }
+    case 'Agent':      return { owner_type: 'agent' }
+    case 'Shortlet':   return { category: 'subletting' }
+    case 'Properties': return { category: 'for_rent', owner_type: 'user' }
   }
 }
 
@@ -79,14 +79,24 @@ export default function HomePage() {
       .catch(() => {})
   }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Fetch listings whenever tab changes
+  // Fetch listings whenever tab changes — loop through every page so the
+  // feed isn't silently capped at a single page's worth of results
   const fetchListings = useCallback(async (tab: Tab) => {
     setLoading(true)
     setListings([])
     try {
-      const data = await listingsApi.getListings(tabToFilters(tab))
+      const filters = tabToFilters(tab)
+      const pageSize = 100
+      let all: Awaited<ReturnType<typeof listingsApi.getListings>>['listings'] = []
+      let page = 1
+      while (true) {
+        const data = await listingsApi.getListings({ ...filters, page, page_size: pageSize })
+        all = [...all, ...(data.listings ?? [])]
+        if (all.length >= (data.total ?? 0) || (data.listings?.length ?? 0) < pageSize) break
+        page++
+      }
       const savedSet = new Set(savedProperties)
-      setListings(data.listings.map((l) => mapListing(l, savedSet)))
+      setListings(all.map((l) => mapListing(l, savedSet)))
     } catch {
       setListings([])
     } finally {

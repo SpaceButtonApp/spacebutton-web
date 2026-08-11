@@ -536,13 +536,14 @@ export const mockUsers: User[] = [
 ]
 
 export const safetyTips = [
-  'Do not pay inspection fee to any agent.',
+  'Do not pay inspection fee if the property you are seeing is from the app.',
   'Only pay Rental fee, Sales fee or any upfront payment after you verify the Landlord',
   'Ensure you meet the Individual/Agent in an Open location',
   'The Individual/Agent does not represent SpaceButton',
   'When dealing with individual. Make sure the Individual is living in the apartment by checking from two or more neighbours',
   'All form of communication like chat and calls should be on the app not other chatting apps.',
   'After successful transaction between both parties. Both parties should make sure they toggle the done deal button in the chat section. To avoid the lister giving same apartment to someone else.',
+  'Renters will not pay more than 5% of the annual rent to vacating tenant as reward. Any demand above this is against SpaceButton policy.',
 ]
 
 export const formatPrice = (price: number, rentPeriod?: 'monthly' | 'yearly'): string => {

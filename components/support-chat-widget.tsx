@@ -8,8 +8,6 @@ import { supportApi } from '@/lib/api/chat'
 import type { SupportMsg } from '@/lib/api/chat'
 import { ListingRequestModal } from '@/components/listing-request-modal'
 
-const BUBBLE_DISMISS_KEY = 'sb-listing-bubble-dismissed'
-
 export function SupportChatWidget() {
   const pathname = usePathname()
   const user = useAppStore((s) => s.user)
@@ -22,7 +20,8 @@ export function SupportChatWidget() {
   const [loading, setLoading] = useState(false)
   const [unread, setUnread] = useState(0)
   const [showBubble, setShowBubble] = useState(false)
-  const [bubbleDismissed, setBubbleDismissed] = useState(true)
+  // Session-only: resets on every page load, so the nudge comes back on reload
+  const [bubbleDismissed, setBubbleDismissed] = useState(false)
   const [showRequestModal, setShowRequestModal] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const lastMsgCountRef = useRef(0)
@@ -34,14 +33,9 @@ export function SupportChatWidget() {
     pathname === '/welcome' || pathname === '/get-started' ||
     pathname === '/chat/admin-support'
 
-  useEffect(() => {
-    setBubbleDismissed(localStorage.getItem(BUBBLE_DISMISS_KEY) === '1')
-  }, [])
-
   function dismissBubble() {
     setShowBubble(false)
     setBubbleDismissed(true)
-    localStorage.setItem(BUBBLE_DISMISS_KEY, '1')
   }
 
   // Recurring nudge — pops the bubble every 5 seconds while the chat is closed

@@ -38,9 +38,10 @@ export function SupportChatWidget() {
     setBubbleDismissed(true)
   }
 
-  // Recurring nudge — pops the bubble every 5 seconds while the chat is closed
+  // Recurring nudge — pops the bubble every 5 seconds while the chat is closed.
+  // Individual accounts only — agents are listing spaces, not looking for one.
   useEffect(() => {
-    if (hidden || !user || open || bubbleDismissed) { setShowBubble(false); return }
+    if (hidden || !user || user.type === 'agent' || open || bubbleDismissed) { setShowBubble(false); return }
     const interval = setInterval(() => setShowBubble((v) => !v), 5_000)
     return () => clearInterval(interval)
   }, [hidden, user, open, bubbleDismissed])

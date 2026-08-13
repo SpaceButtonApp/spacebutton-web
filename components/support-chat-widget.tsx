@@ -118,6 +118,18 @@ export function SupportChatWidget() {
     finally { setSending(false) }
   }
 
+  // While the nudge bubble is up, the floating icon does the same thing the
+  // bubble does (opens the listing-request form) instead of the chat panel —
+  // most people were tapping the icon rather than the bubble text itself.
+  const handleFabClick = () => {
+    if (showBubble) {
+      setShowRequestModal(true)
+      setShowBubble(false)
+    } else {
+      setOpen((prev) => !prev)
+    }
+  }
+
   if (hidden || !user) return null
 
   const formatTime = (ts: string) =>
@@ -226,7 +238,7 @@ export function SupportChatWidget() {
 
       {/* Floating button */}
       <button
-        onClick={() => setOpen(prev => !prev)}
+        onClick={handleFabClick}
         className="fixed bottom-[84px] right-4 sm:bottom-5 sm:right-5 z-50 w-14 h-14 rounded-full bg-[#703BF7] hover:bg-[#5f32d4] shadow-lg shadow-[#703BF7]/30 flex items-center justify-center text-white transition-all active:scale-95"
         aria-label="Support chat"
       >

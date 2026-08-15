@@ -2,10 +2,9 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { X, ChevronDown, Loader2, CheckCircle2 } from 'lucide-react'
+import { X, Loader2, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { supportApi as userSupportApi } from '@/lib/api/chat'
-import { apartmentTypes } from '@/lib/mock-data'
 import { useAppStore } from '@/lib/store'
 
 interface ListingRequestModalProps {
@@ -17,7 +16,6 @@ export function ListingRequestModal({ isOpen, onClose }: ListingRequestModalProp
   const router = useRouter()
   const user = useAppStore((s) => s.user)
   const [propertyType, setPropertyType] = useState('')
-  const [showTypeDropdown, setShowTypeDropdown] = useState(false)
   const [location, setLocation] = useState('')
   const [budget, setBudget] = useState('')
   const [other, setOther] = useState('')
@@ -98,32 +96,14 @@ export function ListingRequestModal({ isOpen, onClose }: ListingRequestModalProp
             </p>
 
             <div className="space-y-4">
-              <div className="relative">
+              <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Property Type</label>
-                <button
-                  type="button"
-                  onClick={() => setShowTypeDropdown((v) => !v)}
-                  className="w-full h-12 rounded-xl border border-border bg-background px-4 flex items-center justify-between"
-                >
-                  <span className={propertyType ? 'text-foreground text-sm' : 'text-muted-foreground text-sm'}>
-                    {propertyType || 'Select a property type'}
-                  </span>
-                  <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${showTypeDropdown ? 'rotate-180' : ''}`} />
-                </button>
-                {showTypeDropdown && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-border rounded-xl shadow-lg z-10 max-h-48 overflow-auto">
-                    {[...apartmentTypes, 'Other'].map((t) => (
-                      <button
-                        key={t}
-                        type="button"
-                        onClick={() => { setPropertyType(t); setShowTypeDropdown(false) }}
-                        className="w-full px-4 py-2.5 text-left hover:bg-secondary text-sm"
-                      >
-                        {t}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                <input
+                  value={propertyType}
+                  onChange={(e) => setPropertyType(e.target.value)}
+                  placeholder="Two Bedroom Flat"
+                  className="w-full h-12 rounded-xl border border-border bg-background px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                />
               </div>
 
               <div>
@@ -153,7 +133,7 @@ export function ListingRequestModal({ isOpen, onClose }: ListingRequestModalProp
                 <textarea
                   value={other}
                   onChange={(e) => setOther(e.target.value)}
-                  placeholder="Number of bedrooms, must-haves, etc."
+                  placeholder="Must haves, other e.t.c"
                   rows={3}
                   className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/40"
                 />

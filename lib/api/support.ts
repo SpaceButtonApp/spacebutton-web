@@ -280,4 +280,15 @@ export const supportApi = {
   async updateUserReport(reportId: string, status: 'actioned' | 'dismissed'): Promise<void> {
     await supportFetch(`/admin/user-reports/${reportId}?status=${status}`, { method: 'PATCH' })
   },
+
+  async getListingReports(page = 1, pageSize = 50): Promise<{ reports: import('@/lib/api/admin').AdminListingReport[]; total: number }> {
+    const res = await supportFetch<{ success: boolean; data: { reports: import('@/lib/api/admin').AdminListingReport[]; total: number } }>(
+      `/admin/listing-reports?page=${page}&page_size=${pageSize}`
+    )
+    return res.data
+  },
+
+  async updateListingReport(reportId: string, status: 'actioned' | 'dismissed'): Promise<void> {
+    await supportFetch(`/admin/listing-reports/${reportId}?status=${status}`, { method: 'PATCH' })
+  },
 }

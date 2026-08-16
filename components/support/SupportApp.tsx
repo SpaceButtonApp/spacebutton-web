@@ -12,6 +12,7 @@ import VerificationsView from './views/VerificationsView'
 import ListingsView from './views/ListingsView'
 import SettingsView from './views/SettingsView'
 import GenericListView from './views/GenericListView'
+import ReportsView from './views/ReportsView'
 import TicketList from './tickets/TicketList'
 import ChatPanel from './chat/ChatPanel'
 
@@ -24,6 +25,7 @@ export default function SupportApp() {
   const [theme, setTheme] = useState('dark')
   const [ready, setReady] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [viewListingId, setViewListingId] = useState<string | null>(null)
 
   const {
     tickets,
@@ -85,10 +87,21 @@ export default function SupportApp() {
       case 'dashboard': return <DashboardView onTabChange={setActiveTab} />
       case 'users': return <UsersView />
       case 'verifications': return <VerificationsView />
-      case 'listings': return <ListingsView />
+      case 'listings':
+        return (
+          <ListingsView
+            focusListingId={viewListingId}
+            onFocusConsumed={() => setViewListingId(null)}
+          />
+        )
       case 'settings': return <SettingsView user={user} />
-      case 'reviews':
       case 'reports':
+        return (
+          <ReportsView
+            onViewListing={(id) => { setViewListingId(id); setActiveTab('listings') }}
+          />
+        )
+      case 'reviews':
       case 'notifications':
         return <GenericListView tab={activeTab} />
       case 'messages':

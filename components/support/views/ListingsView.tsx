@@ -118,7 +118,12 @@ function mapListing(l: AdminListing, agentMap: Map<string, AdminAgent>): Listing
   };
 }
 
-export default function ListingsView() {
+interface ListingsViewProps {
+  focusListingId?: string | null;
+  onFocusConsumed?: () => void;
+}
+
+export default function ListingsView({ focusListingId, onFocusConsumed }: ListingsViewProps = {}) {
   const [listings, setListings] = useState<ListingRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -161,6 +166,15 @@ export default function ListingsView() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (focusListingId && listings.length > 0) {
+      const l = listings.find((li) => li.id === focusListingId);
+      if (l) setDetailListing(l);
+      onFocusConsumed?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusListingId, listings]);
 
   async function handleApprove(id: string) {
     try {

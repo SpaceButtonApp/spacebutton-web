@@ -4,7 +4,7 @@ import Image from "next/image"
 import {
   ArrowLeft, Mail, MessageCircle, UserX, UserCheck, Trash2,
   ShieldCheck, ShieldX, MapPin, Phone, Calendar, User, RefreshCw,
-  AlertCircle, Copy, Check,
+  AlertCircle, Copy, Check, Zap,
 } from "lucide-react"
 import { adminApi } from "@/lib/api/admin"
 import type { AdminUserFullProfile } from "@/lib/api/admin"
@@ -27,6 +27,63 @@ interface UserDetailPageProps {
 }
 
 type ConfirmType = "suspend" | "reinstate" | "delete"
+
+function GrantConnectsModal({ name, onConfirm, onCancel }: { name: string; onConfirm: (amount: number) => Promise<void>; onCancel: () => void }) {
+  const [amount, setAmount] = useState(1)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSubmit() {
+    if (amount < 1 || amount > 100) return
+    setLoading(true)
+    setError(null)
+    try {
+      await onConfirm(amount)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to grant connects")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl p-6 w-full max-w-sm shadow-xl">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 rounded-xl bg-violet-500/15 flex items-center justify-center">
+            <Zap className="w-5 h-5 text-violet-400" />
+          </div>
+          <div>
+            <h2 className="text-base font-semibold text-[var(--text-primary)]">Grant Connects</h2>
+            <p className="text-xs text-[var(--text-muted)]">{name}</p>
+          </div>
+        </div>
+        <label className="block text-sm text-[var(--text-secondary)] mb-1.5">Amount (1–100)</label>
+        <input
+          type="number"
+          min={1}
+          max={100}
+          value={amount}
+          onChange={(e) => setAmount(Number(e.target.value))}
+          className="w-full px-4 py-2.5 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-color)] text-[var(--text-primary)] text-sm focus:outline-none focus:border-violet-500 mb-4"
+        />
+        {error && <p className="text-xs text-red-400 mb-3">{error}</p>}
+        <div className="flex gap-2">
+          <button onClick={onCancel} className="flex-1 px-4 py-2.5 rounded-xl bg-[var(--bg-subtle)] text-[var(--text-secondary)] text-sm hover:bg-[var(--bg-subtle-strong)] transition-colors">
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={loading || amount < 1 || amount > 100}
+            className="flex-1 px-4 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-sm font-medium transition-colors"
+          >
+            {loading ? "Granting…" : `Grant ${amount}`}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function CopyField({ label, value }: { label: string; value: string | null | undefined }) {
   const [copied, setCopied] = useState(false)
@@ -67,6 +124,8 @@ export function UserDetailPage({ userId, onBack, onMessageUser, onMailUser }: Us
   const [error, setError] = useState<string | null>(null)
   const [confirmAction, setConfirmAction] = useState<ConfirmType | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
+  const [showGrantConnects, setShowGrantConnects] = useState(false)
+  const [grantSuccess, setGrantSuccess] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -248,6 +307,12 @@ export function UserDetailPage({ userId, onBack, onMessageUser, onMailUser }: Us
               </button>
             )}
             <button
+              onClick={() => setShowGrantConnects(true)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-violet-500/15 hover:bg-violet-500/25 text-violet-400 text-sm transition-colors"
+            >
+              <Zap className="w-4 h-4" /> Grant Connects
+            </button>
+            <button
               onClick={() => setConfirmAction("delete")}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-500/15 hover:bg-red-500/25 text-red-400 text-sm transition-colors"
             >
@@ -307,6 +372,25 @@ export function UserDetailPage({ userId, onBack, onMessageUser, onMailUser }: Us
           </div>
         </div>
       </div>
+
+      {showGrantConnects && (
+        <GrantConnectsModal
+          name={name}
+          onConfirm={async (amount) => {
+            await adminApi.grantConnects(profile.id, amount)
+            setShowGrantConnects(false)
+            setGrantSuccess(`${amount} connect${amount !== 1 ? 's' : ''} granted to ${name}`)
+            setTimeout(() => setGrantSuccess(null), 4000)
+          }}
+          onCancel={() => setShowGrantConnects(false)}
+        />
+      )}
+
+      {grantSuccess && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-5 py-3 rounded-2xl bg-emerald-500 text-white text-sm font-medium shadow-xl">
+          <Zap className="w-4 h-4" /> {grantSuccess}
+        </div>
+      )}
 
       <ConfirmModal
         open={!!confirmAction}

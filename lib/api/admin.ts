@@ -611,4 +611,11 @@ export const adminApi = {
     )
     return (res as any)?.data ?? res
   },
+
+  async grantConnects(userId: string, amount: number): Promise<void> {
+    await adminFetch(`/admin/users/${userId}/grant-connects`, {
+      method: 'POST',
+      body: JSON.stringify({ amount }),
+    })
+  },
 }

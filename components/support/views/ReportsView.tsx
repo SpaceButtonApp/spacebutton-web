@@ -1,8 +1,8 @@
 'use client'
 import React, { useCallback, useEffect, useState } from "react";
 import { Flag, AlertCircle, Building2, FileText, XCircle, CheckCircle2, ExternalLink, MapPin } from "lucide-react";
-import { supportApi } from "@/lib/api/support";
-import type { AdminUserReport, AdminListingReport, AdminUser, AdminListing } from "@/lib/api/admin";
+import { supportApi, type AdminUser } from "@/lib/api/support";
+import type { AdminUserReport, AdminListingReport, AdminListing } from "@/lib/api/admin";
 import { StatCard } from "@/components/admin/shared/StatCard";
 import { FilterPill, EmptyState, ActionMenu, Avatar } from "@/components/admin/shared/Atoms";
 import { StatusBadge } from "@/components/admin/shared/Badge";

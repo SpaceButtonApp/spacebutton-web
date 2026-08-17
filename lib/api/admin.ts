@@ -298,6 +298,23 @@ export interface AdminTransactionListResponse {
   transactions: AdminTransaction[]
 }
 
+export interface ListingConversation {
+  chat_id: string
+  user_id: string
+  status: string
+  last_message: string | null
+  created_at: string
+  user_name: string
+  user_email: string | null
+  user_phone: string | null
+}
+
+export interface ListingConversationsResponse {
+  listing_id: string
+  total: number
+  conversations: ListingConversation[]
+}
+
 export interface SupportChat {
   user_id: string
   user_name: string
@@ -625,5 +642,13 @@ export const adminApi = {
       method: 'POST',
       body: JSON.stringify({ amount }),
     })
+  },
+
+  async getListingConversations(listingId: string): Promise<ListingConversationsResponse> {
+    const res = await adminFetch<{ success: boolean; data: ListingConversationsResponse }>(
+      `/admin/listings/${listingId}/conversations`,
+    )
+    const inner = (res as any)?.data ?? res
+    return inner as ListingConversationsResponse
   },
 }

@@ -7,7 +7,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { adminApi } from "@/lib/api/admin";
-import type { AdminListing, AdminAgent } from "@/lib/api/admin";
+import type { AdminListing, AdminAgent, ListingConversation } from "@/lib/api/admin";
 import { StatCard } from "@/components/admin/shared/StatCard";
 import { SearchInput, ExportButton, ActionMenu, FilterPill, Avatar, EmptyState } from "@/components/admin/shared/Atoms";
 import { StatusBadge } from "@/components/admin/shared/Badge";
@@ -507,6 +507,8 @@ function ListingDetailPage({
   // full data starts from what the list gave us; enriched below
   const [data, setData] = useState<ListingRow>(listing);
   const [fetching, setFetching] = useState(true);
+  const [conversations, setConversations] = useState<ListingConversation[]>([]);
+  const [convoLoading, setConvoLoading] = useState(true);
 
   // keep approval/status in sync when parent updates them (approve/reject)
   useEffect(() => {
@@ -569,6 +571,16 @@ function ListingDetailPage({
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listing.id, listing.agentId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setConvoLoading(true);
+    adminApi.getListingConversations(listing.id)
+      .then((res) => { if (!cancelled) setConversations(res.conversations ?? []); })
+      .catch(() => { /* best-effort */ })
+      .finally(() => { if (!cancelled) setConvoLoading(false); });
+    return () => { cancelled = true; };
+  }, [listing.id]);
 
   const ownerLabel = data.ownerType === "agent" ? "Agent" : (data.connectRole ?? "User");
 
@@ -790,6 +802,52 @@ function ListingDetailPage({
                 <Mail className="w-4 h-4" />
               </button>
             </div>
+          </section>
+
+          {/* Conversations */}
+          <section className="bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-2xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-semibold text-[var(--text-primary)] flex items-center gap-2">
+                <Users className="w-4 h-4 text-[var(--text-muted)]" />
+                Interested Users
+                {conversations.length > 0 && (
+                  <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-400">
+                    {conversations.length}
+                  </span>
+                )}
+              </h4>
+              {convoLoading && (
+                <div className="w-4 h-4 border-2 border-violet-500/30 border-t-violet-500 rounded-full animate-spin" />
+              )}
+            </div>
+            {!convoLoading && conversations.length === 0 ? (
+              <p className="text-sm text-[var(--text-muted)] text-center py-4">No conversations yet</p>
+            ) : (
+              <div className="space-y-2">
+                {conversations.map((c) => (
+                  <div key={c.chat_id} className="flex items-center gap-3 p-3 rounded-xl bg-[var(--bg-raised)] border border-[var(--border-color)]">
+                    <div
+                      className="w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+                      style={{ backgroundColor: hashColor(c.user_id) }}
+                    >
+                      {c.user_name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase() || "?"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-[var(--text-primary)] truncate">{c.user_name}</div>
+                      {c.user_phone && (
+                        <div className="text-xs text-[var(--text-muted)] truncate">{c.user_phone}</div>
+                      )}
+                      {c.user_email && (
+                        <div className="text-xs text-[var(--text-muted)] truncate">{c.user_email}</div>
+                      )}
+                    </div>
+                    <div className="shrink-0">
+                      <StatusBadge status={c.status === "ChatStatus.ACTIVE" ? "active" : c.status.replace("ChatStatus.", "").toLowerCase()} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
 
           {/* Approve / Reject */}

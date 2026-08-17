@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { Camera, Grid3X3, Bookmark, MapPin, Users, Building2, CheckCircle2, Tag } from 'lucide-react'
+import { Camera, Grid3X3, Bookmark, MapPin, Users, Building2, CheckCircle2, Tag, Play } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { saveListing } from '@/lib/api/listings'
 import { formatPrice, type Property } from '@/lib/mock-data'
@@ -11,6 +11,30 @@ import { cn } from '@/lib/utils'
 interface PropertyCardProps {
   property: Property
   variant?: 'full' | 'compact' | 'horizontal'
+}
+
+const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=400&h=300&fit=crop'
+
+/** Photo thumbnail, with a play badge when a video is also available. */
+function CardMedia({ property }: { property: Property }) {
+  return (
+    <>
+      <Image
+        src={property.images[0] || FALLBACK_IMAGE}
+        alt={property.title}
+        fill
+        className="object-cover"
+        unoptimized
+      />
+      {property.videoUrl && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-9 h-9 rounded-full bg-black/50 flex items-center justify-center backdrop-blur-sm">
+            <Play className="w-4 h-4 text-white fill-white ml-0.5" />
+          </div>
+        </div>
+      )}
+    </>
+  )
 }
 
 export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) {
@@ -35,13 +59,7 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
       >
         {/* Image */}
         <div className="relative w-32 h-28 flex-shrink-0 rounded-xl overflow-hidden">
-          <Image
-            src={property.images[0] || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=400&h=300&fit=crop'}
-            alt={property.title}
-            fill
-            className="object-cover"
-            unoptimized
-          />
+          <CardMedia property={property} />
           {property.isAdminPost && (
             <div className="absolute top-2 left-2 w-6 h-6 rounded-full bg-[#703BF7] flex items-center justify-center">
               <CheckCircle2 className="w-4 h-4 text-white" />
@@ -107,13 +125,7 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
     >
       {/* Image */}
       <div className="relative aspect-video">
-        <Image
-          src={property.images[0] || 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=400&h=300&fit=crop'}
-          alt={property.title}
-          fill
-          className="object-cover"
-          unoptimized
-        />
+        <CardMedia property={property} />
 
         {/* Verified badge */}
         {property.isAdminPost && (

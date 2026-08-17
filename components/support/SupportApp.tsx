@@ -12,6 +12,7 @@ import VerificationsView from './views/VerificationsView'
 import ListingsView from './views/ListingsView'
 import SettingsView from './views/SettingsView'
 import GenericListView from './views/GenericListView'
+import ReportsView from './views/ReportsView'
 import TicketList from './tickets/TicketList'
 import ChatPanel from './chat/ChatPanel'
 
@@ -24,6 +25,7 @@ export default function SupportApp() {
   const [theme, setTheme] = useState('dark')
   const [ready, setReady] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [viewListingId, setViewListingId] = useState<string | null>(null)
 
   const {
     tickets,
@@ -34,6 +36,7 @@ export default function SupportApp() {
     sending,
     selectedId,
     selectTicket,
+    seenCounts,
     sendMessage,
     sendAdminMessage,
     escalateTicket,
@@ -67,6 +70,8 @@ export default function SupportApp() {
     router.push('/support/login')
   }
 
+  const messagesUnread = tickets.reduce((sum, t) => sum + (t.unread_count ?? 0), 0)
+
   if (!ready) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100dvh', background: '#0b0c10', color: '#94a3b8', fontSize: 14 }}>
@@ -82,10 +87,21 @@ export default function SupportApp() {
       case 'dashboard': return <DashboardView onTabChange={setActiveTab} />
       case 'users': return <UsersView />
       case 'verifications': return <VerificationsView />
-      case 'listings': return <ListingsView />
+      case 'listings':
+        return (
+          <ListingsView
+            focusListingId={viewListingId}
+            onFocusConsumed={() => setViewListingId(null)}
+          />
+        )
       case 'settings': return <SettingsView user={user} />
-      case 'reviews':
       case 'reports':
+        return (
+          <ReportsView
+            onViewListing={(id) => { setViewListingId(id); setActiveTab('listings') }}
+          />
+        )
+      case 'reviews':
       case 'notifications':
         return <GenericListView tab={activeTab} />
       case 'messages':
@@ -110,6 +126,7 @@ export default function SupportApp() {
               selectedId={selectedId}
               onSelect={selectTicket}
               currentUserId={user?.id ?? ''}
+              seenCounts={seenCounts}
             />
           </div>
         )
@@ -127,6 +144,7 @@ export default function SupportApp() {
           user={user}
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed(c => !c)}
+          badgeCounts={{ messages: messagesUnread }}
         />
         <div className="sp-content-area">
           <Topbar

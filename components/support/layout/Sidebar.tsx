@@ -21,9 +21,10 @@ interface SidebarProps {
   user: SupportUser | null
   collapsed?: boolean
   onToggleCollapse?: () => void
+  badgeCounts?: Partial<Record<string, number>>
 }
 
-export default function Sidebar({ activeTab, onTabChange, onLogout, user, collapsed, onToggleCollapse }: SidebarProps) {
+export default function Sidebar({ activeTab, onTabChange, onLogout, user, collapsed, onToggleCollapse, badgeCounts }: SidebarProps) {
   const initials = user
     ? `${user.first_name?.[0] ?? ''}${user.last_name?.[0] ?? ''}`.toUpperCase()
     : 'SA'
@@ -71,17 +72,40 @@ export default function Sidebar({ activeTab, onTabChange, onLogout, user, collap
       {!collapsed && <p className="sp-section-title" style={{ marginTop: 0 }}>Navigation</p>}
 
       <nav className="sp-sidebar-nav">
-        {NAV_ITEMS.map(item => (
-          <button
-            key={item.id}
-            className={`sp-nav-item${activeTab === item.id ? ' active' : ''}`}
-            onClick={() => onTabChange(item.id)}
-            title={collapsed ? item.label : undefined}
-          >
-            <span style={{ fontSize: 16 }}>{item.icon}</span>
-            <span style={{ flex: 1 }}>{item.label}</span>
-          </button>
-        ))}
+        {NAV_ITEMS.map(item => {
+          const count = badgeCounts?.[item.id] ?? 0
+          return (
+            <button
+              key={item.id}
+              className={`sp-nav-item${activeTab === item.id ? ' active' : ''}`}
+              onClick={() => onTabChange(item.id)}
+              title={collapsed ? item.label : undefined}
+              style={{ position: 'relative' }}
+            >
+              <span style={{ fontSize: 16 }}>{item.icon}</span>
+              <span style={{ flex: 1 }}>{item.label}</span>
+              {count > 0 && (
+                collapsed ? (
+                  <span style={{
+                    position: 'absolute', top: 2, right: 2, minWidth: 16, height: 16, padding: '0 3px',
+                    borderRadius: 999, background: 'var(--sp-trend-down)', color: '#fff',
+                    fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    {count > 9 ? '9+' : count}
+                  </span>
+                ) : (
+                  <span style={{
+                    minWidth: 20, height: 20, padding: '0 6px', borderRadius: 999,
+                    background: 'var(--sp-trend-down)', color: '#fff',
+                    fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    {count > 99 ? '99+' : count}
+                  </span>
+                )
+              )}
+            </button>
+          )
+        })}
 
         <button
           className="sp-nav-item sp-sidebar-logout"

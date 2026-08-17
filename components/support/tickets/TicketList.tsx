@@ -10,6 +10,8 @@ interface TicketListProps {
   selectedId: string | null
   onSelect: (id: string) => void
   currentUserId: string
+  /** unread_count already seen by the agent, per ticket id — clears the read-based badges below */
+  seenCounts?: Record<string, number>
 }
 
 const COLOR_MAP: Record<string, string> = {
@@ -46,8 +48,12 @@ function isResolved(t: Ticket) {
   return t.status === 'resolved' || t.status === 'closed'
 }
 
-export default function TicketList({ tickets, loading, error, selectedId, onSelect, currentUserId }: TicketListProps) {
+export default function TicketList({ tickets, loading, error, selectedId, onSelect, currentUserId, seenCounts = {} }: TicketListProps) {
   const [tab, setTab] = useState<TabKey>('active')
+
+  // A ticket's unread badge clears once the agent has opened it (seen its current
+  // unread_count) — a lighter bar than the sidebar's claim-gated aggregate badge.
+  const unreadOf = (t: Ticket) => Math.max(0, t.unread_count - (seenCounts[t.id] ?? 0))
 
   const filtered = useMemo(() => {
     switch (tab) {
@@ -59,11 +65,12 @@ export default function TicketList({ tickets, loading, error, selectedId, onSele
   }, [tickets, tab, currentUserId])
 
   const counts = useMemo(() => ({
-    active:   tickets.filter(t => !isResolved(t) && !t.assigned_to).length,
-    mine:     tickets.filter(t => t.assigned_to === currentUserId && !isResolved(t)).length,
-    claimed:  tickets.filter(t => !!t.assigned_to && t.assigned_to !== currentUserId && !isResolved(t)).length,
-    resolved: tickets.filter(t => isResolved(t)).length,
-  }), [tickets, currentUserId])
+    active:   tickets.filter(t => !isResolved(t) && !t.assigned_to).reduce((sum, t) => sum + unreadOf(t), 0),
+    mine:     tickets.filter(t => t.assigned_to === currentUserId && !isResolved(t)).reduce((sum, t) => sum + unreadOf(t), 0),
+    claimed:  tickets.filter(t => !!t.assigned_to && t.assigned_to !== currentUserId && !isResolved(t)).reduce((sum, t) => sum + unreadOf(t), 0),
+    resolved: tickets.filter(t => isResolved(t)).reduce((sum, t) => sum + unreadOf(t), 0),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [tickets, currentUserId, seenCounts])
 
   const emptyLabel: Record<TabKey, string> = {
     active: 'No active tickets.',
@@ -190,9 +197,9 @@ export default function TicketList({ tickets, loading, error, selectedId, onSele
                       🔒 {ticket.assigned_to === currentUserId ? 'You' : 'Claimed'}
                     </span>
                   )}
-                  {ticket.unread_count > 0 && (
+                  {unreadOf(ticket) > 0 && (
                     <span style={{ background: 'var(--sp-trend-down)', color: '#fff', borderRadius: 10, fontSize: 10, fontWeight: 700, padding: '1px 5px' }}>
-                      {ticket.unread_count}
+                      {unreadOf(ticket)}
                     </span>
                   )}
                 </div>

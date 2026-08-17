@@ -3,10 +3,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { Bookmark, Sparkles } from 'lucide-react'
+import { Bookmark, Sparkles, Play } from 'lucide-react'
 import { BottomNav } from '@/components/bottom-nav'
 import { PropertyCard } from '@/components/property-card'
 import { ConnectBalanceButton } from '@/components/connect-balance-button'
+import { AppDownloadBanner } from '@/components/app-download-banner'
 import { useAppStore } from '@/lib/store'
 import { listingsApi, mapListing } from '@/lib/api/listings'
 import { syncMyProfile } from '@/lib/api/users'
@@ -19,10 +20,10 @@ type Tab = typeof tabs[number]
 
 function tabToFilters(tab: Tab): ListingFilters {
   switch (tab) {
-    case 'Connect':    return { owner_type: 'user', page_size: 20 }
-    case 'Agent':      return { owner_type: 'agent', page_size: 20 }
-    case 'Shortlet':   return { category: 'subletting', page_size: 20 }
-    case 'Properties': return { category: 'for_rent', owner_type: 'user', page_size: 20 }
+    case 'Connect':    return { owner_type: 'user' }
+    case 'Agent':      return { owner_type: 'agent' }
+    case 'Shortlet':   return { category: 'subletting' }
+    case 'Properties': return { category: 'for_rent', owner_type: 'user' }
   }
 }
 
@@ -78,14 +79,24 @@ export default function HomePage() {
       .catch(() => {})
   }, [user?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Fetch listings whenever tab changes
+  // Fetch listings whenever tab changes — loop through every page so the
+  // feed isn't silently capped at a single page's worth of results
   const fetchListings = useCallback(async (tab: Tab) => {
     setLoading(true)
     setListings([])
     try {
-      const data = await listingsApi.getListings(tabToFilters(tab))
+      const filters = tabToFilters(tab)
+      const pageSize = 100
+      let all: Awaited<ReturnType<typeof listingsApi.getListings>>['listings'] = []
+      let page = 1
+      while (true) {
+        const data = await listingsApi.getListings({ ...filters, page, page_size: pageSize })
+        all = [...all, ...(data.listings ?? [])]
+        if (all.length >= (data.total ?? 0) || (data.listings?.length ?? 0) < pageSize) break
+        page++
+      }
       const savedSet = new Set(savedProperties)
-      setListings(data.listings.map((l) => mapListing(l, savedSet)))
+      setListings(all.map((l) => mapListing(l, savedSet)))
     } catch {
       setListings([])
     } finally {
@@ -161,6 +172,8 @@ export default function HomePage() {
 
       {/* Content */}
       <div className="px-4 py-6">
+        <AppDownloadBanner />
+
         {/* Coming soon for Shortlet & Properties */}
         {(currentTab === 'Shortlet' || currentTab === 'Properties') && (
           <div className="flex flex-col items-center justify-center py-20">
@@ -197,6 +210,13 @@ export default function HomePage() {
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform"
                       unoptimized
                     />
+                    {property.videoUrl && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="w-8 h-8 rounded-full bg-black/50 flex items-center justify-center backdrop-blur-sm">
+                          <Play className="w-3.5 h-3.5 text-white fill-white ml-0.5" />
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div className="p-3">
                     <p className="text-sm font-semibold text-foreground line-clamp-1">{property.title}</p>

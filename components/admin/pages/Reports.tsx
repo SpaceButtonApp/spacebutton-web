@@ -1,14 +1,33 @@
 'use client'
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Flag, AlertCircle, Building2, Eye, CheckCircle2 } from "lucide-react";
-import { adminApi, type AdminUserReport, type AdminListingReport } from "@/lib/api/admin";
+import React, { useCallback, useEffect, useState } from "react";
+import { Flag, AlertCircle, Building2, FileText, XCircle, CheckCircle2, ExternalLink, MapPin } from "lucide-react";
+import { adminApi, type AdminUserReport, type AdminListingReport, type AdminUser, type AdminListing } from "@/lib/api/admin";
 import { StatCard } from "@/components/admin/shared/StatCard";
-import { FilterPill, EmptyState } from "@/components/admin/shared/Atoms";
+import { FilterPill, EmptyState, ActionMenu, Avatar } from "@/components/admin/shared/Atoms";
 import { StatusBadge } from "@/components/admin/shared/Badge";
-import { Modal } from "@/components/admin/shared/Modal";
-import { formatDate, truncateId } from "@/lib/utils/admin-format";
+import { Modal, ConfirmModal } from "@/components/admin/shared/Modal";
+import { formatDate, truncateId, formatNaira } from "@/lib/utils/admin-format";
 
 type Tab = "user" | "listing";
+
+const AVATAR_COLORS = ["#7c3aed", "#a855f7", "#8b5cf6", "#6366f1", "#c026d3", "#9333ea"];
+function avatarColor(id: string) {
+  const n = id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  return AVATAR_COLORS[n % AVATAR_COLORS.length];
+}
+
+function UserCell({ userId, user }: { userId: string; user?: AdminUser }) {
+  const name = user ? `${user.first_name ?? ""} ${user.last_name ?? ""}`.trim() || user.email : null;
+  return (
+    <div className="flex items-center gap-2.5">
+      <Avatar name={name ?? userId} color={avatarColor(userId)} size={30} />
+      <div>
+        <div className="font-medium text-[var(--text-primary)] text-sm">{name ?? "Unknown user"}</div>
+        <div className="text-xs text-[var(--text-muted)] font-mono">{userId.slice(-8).toUpperCase()}</div>
+      </div>
+    </div>
+  );
+}
 
 const STATUS_BADGE: Record<string, { bg: string; text: string }> = {
   pending:   { bg: "bg-amber-500/15 text-amber-400",   text: "pending" },
@@ -31,11 +50,15 @@ interface ReportsPageProps {
 export function ReportsPage({ onViewListing }: ReportsPageProps) {
   const [userReports, setUserReports] = useState<AdminUserReport[]>([]);
   const [listingReports, setListingReports] = useState<AdminListingReport[]>([]);
+  const [usersMap, setUsersMap] = useState<Map<string, AdminUser>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("user");
   const [selectedUser, setSelectedUser] = useState<AdminUserReport | null>(null);
   const [selectedListing, setSelectedListing] = useState<AdminListingReport | null>(null);
+  const [listingDetail, setListingDetail] = useState<AdminListing | null>(null);
+  const [listingDetailLoading, setListingDetailLoading] = useState(false);
+  const [confirmCloseListing, setConfirmCloseListing] = useState<AdminListingReport | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -53,9 +76,36 @@ export function ReportsPage({ onViewListing }: ReportsPageProps) {
     } finally {
       setLoading(false);
     }
+
+    try {
+      let all: AdminUser[] = [];
+      let page = 1;
+      while (true) {
+        const res = await adminApi.getUsers(page, 100);
+        const batch = res.users ?? [];
+        all = [...all, ...batch];
+        if (all.length >= (res.total ?? 0) || batch.length < 100) break;
+        page++;
+      }
+      setUsersMap(new Map(all.map((u) => [u.id, u])));
+    } catch {
+      // names just won't resolve — falls back to raw IDs
+    }
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  // Fetch full listing details (price, location, poster) when the report modal opens
+  useEffect(() => {
+    if (!selectedListing) { setListingDetail(null); return; }
+    let cancelled = false;
+    setListingDetailLoading(true);
+    adminApi.getListing(selectedListing.listing_id)
+      .then((l) => { if (!cancelled) setListingDetail(l); })
+      .catch(() => { if (!cancelled) setListingDetail(null); })
+      .finally(() => { if (!cancelled) setListingDetailLoading(false); });
+    return () => { cancelled = true; };
+  }, [selectedListing]);
 
   async function handleUserAction(reportId: string, status: 'actioned' | 'dismissed') {
     setActionLoading(reportId);
@@ -81,6 +131,23 @@ export function ReportsPage({ onViewListing }: ReportsPageProps) {
     } finally {
       setActionLoading(null);
     }
+  }
+
+  async function handleCloseListing(r: AdminListingReport) {
+    setActionLoading(r.id);
+    try {
+      await adminApi.closeListing(r.listing_id);
+      setConfirmCloseListing(null);
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : 'Failed to close listing');
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  function goToListing(listingId: string) {
+    setSelectedListing(null);
+    onViewListing?.(listingId);
   }
 
   const pendingUsers = userReports.filter((r) => r.status === "pending").length;
@@ -126,10 +193,10 @@ export function ReportsPage({ onViewListing }: ReportsPageProps) {
                 ) : userReports.map((r) => (
                   <tr key={r.id} className="border-b border-[var(--border-color)] last:border-0 hover:bg-[var(--bg-hover)]">
                     <td className="px-6 py-3.5">
-                      <div className="font-medium text-[var(--text-primary)] font-mono text-xs">{truncateId(r.reported_user_id, 12)}</div>
+                      <UserCell userId={r.reported_user_id} user={usersMap.get(r.reported_user_id)} />
                     </td>
                     <td className="px-6 py-3.5">
-                      <span className="text-violet-400 font-mono text-xs">{truncateId(r.reporter_id, 12)}</span>
+                      <UserCell userId={r.reporter_id} user={usersMap.get(r.reporter_id)} />
                     </td>
                     <td className="px-6 py-3.5"><ReasonBadge reason={r.reason} /></td>
                     <td className="px-6 py-3.5 text-[var(--text-secondary)] text-xs">{formatDate(r.created_at)}</td>
@@ -140,7 +207,7 @@ export function ReportsPage({ onViewListing }: ReportsPageProps) {
                           onClick={() => setSelectedUser(r)}
                           className="flex items-center gap-1.5 text-violet-400 hover:text-violet-300 text-xs font-medium"
                         >
-                          <Eye className="w-3.5 h-3.5" /> View
+                          <FileText className="w-3.5 h-3.5" /> View
                         </button>
                       </div>
                     </td>
@@ -172,20 +239,18 @@ export function ReportsPage({ onViewListing }: ReportsPageProps) {
                       <div className="text-xs text-[var(--text-muted)] font-mono">{truncateId(r.listing_id, 12)}</div>
                     </td>
                     <td className="px-6 py-3.5">
-                      <span className="text-violet-400 font-mono text-xs">{truncateId(r.reporter_id, 12)}</span>
+                      <UserCell userId={r.reporter_id} user={usersMap.get(r.reporter_id)} />
                     </td>
                     <td className="px-6 py-3.5"><ReasonBadge reason={r.reason} /></td>
                     <td className="px-6 py-3.5 text-[var(--text-secondary)] text-xs">{formatDate(r.created_at)}</td>
                     <td className="px-6 py-3.5"><StatusBadge status={r.status} /></td>
-                    <td className="px-6 py-3.5">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => setSelectedListing(r)}
-                          className="flex items-center gap-1.5 text-violet-400 hover:text-violet-300 text-xs font-medium"
-                        >
-                          <Eye className="w-3.5 h-3.5" /> View
-                        </button>
-                      </div>
+                    <td className="px-6 py-3.5 text-right">
+                      <ActionMenu items={[
+                        { label: "Report Details", icon: <FileText className="w-4 h-4" />, onClick: () => setSelectedListing(r) },
+                        { label: "Close Listing", icon: <XCircle className="w-4 h-4" />, onClick: () => setConfirmCloseListing(r), danger: true },
+                        r.status === "pending" ? { label: "Mark Actioned", icon: <CheckCircle2 className="w-4 h-4" />, onClick: () => handleListingAction(r.id, "actioned") } : null,
+                        r.status === "pending" ? { label: "Dismiss", icon: <XCircle className="w-4 h-4" />, onClick: () => handleListingAction(r.id, "dismissed") } : null,
+                      ].filter(Boolean) as Parameters<typeof ActionMenu>[0]["items"]} />
                     </td>
                   </tr>
                 ))}
@@ -249,17 +314,49 @@ export function ReportsPage({ onViewListing }: ReportsPageProps) {
       <Modal open={!!selectedListing} onClose={() => setSelectedListing(null)} title="Listing Report Details" maxWidth="max-w-lg">
         {selectedListing && (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-xl p-3.5">
-                <div className="text-xs text-[var(--text-muted)] mb-1">Reporter ID</div>
-                <div className="text-[var(--text-primary)] font-mono text-xs">{selectedListing.reporter_id}</div>
-              </div>
-              <div className="bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-xl p-3.5">
-                <div className="text-xs text-[var(--text-muted)] mb-1">Listing</div>
-                <div className="text-[var(--text-primary)] font-medium text-sm">{selectedListing.listing_title ?? '—'}</div>
-                <div className="text-[var(--text-muted)] font-mono text-xs mt-0.5">{truncateId(selectedListing.listing_id, 14)}</div>
-              </div>
+            <div>
+              <div className="text-xs text-[var(--text-muted)] mb-1.5">Reporter</div>
+              <UserCell userId={selectedListing.reporter_id} user={usersMap.get(selectedListing.reporter_id)} />
             </div>
+
+            <div className="bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-xl p-3.5 space-y-2.5">
+              <div>
+                <div className="text-xs text-[var(--text-muted)] mb-1">Listing Name</div>
+                <div className="text-[var(--text-primary)] font-medium text-sm">{selectedListing.listing_title ?? listingDetail?.title ?? '—'}</div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <div className="text-xs text-[var(--text-muted)] mb-1">Price</div>
+                  <div className="text-[var(--text-primary)] text-sm">
+                    {listingDetailLoading ? '…' : listingDetail?.price ? formatNaira(parseFloat(listingDetail.price)) : '—'}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-[var(--text-muted)] mb-1">Location</div>
+                  <div className="text-[var(--text-primary)] text-sm flex items-center gap-1">
+                    <MapPin className="w-3 h-3 text-[var(--text-muted)] shrink-0" />
+                    {listingDetailLoading ? '…' : [listingDetail?.city, listingDetail?.state].filter(Boolean).join(', ') || '—'}
+                  </div>
+                </div>
+              </div>
+              <div>
+                <div className="text-xs text-[var(--text-muted)] mb-1">Posted By</div>
+                {listingDetailLoading ? (
+                  <div className="text-[var(--text-primary)] text-sm">…</div>
+                ) : listingDetail ? (
+                  <UserCell userId={listingDetail.agent_id} user={usersMap.get(listingDetail.agent_id)} />
+                ) : (
+                  <div className="text-[var(--text-primary)] text-sm">—</div>
+                )}
+              </div>
+              <button
+                onClick={() => goToListing(selectedListing.listing_id)}
+                className="flex items-center gap-1.5 text-violet-400 hover:text-violet-300 text-sm font-medium pt-1"
+              >
+                <ExternalLink className="w-3.5 h-3.5" /> Listing Details
+              </button>
+            </div>
+
             <div>
               <div className="text-xs text-[var(--text-muted)] mb-1">Reason</div>
               <div className="text-[var(--text-primary)]">{selectedListing.reason}</div>
@@ -274,27 +371,46 @@ export function ReportsPage({ onViewListing }: ReportsPageProps) {
               <StatusBadge status={selectedListing.status} />
               <span className="text-xs text-[var(--text-muted)]">{formatDate(selectedListing.created_at)}</span>
             </div>
-            {selectedListing.status === 'pending' && (
-              <div className="flex gap-2 pt-2">
-                <button
-                  disabled={actionLoading === selectedListing.id}
-                  onClick={() => handleListingAction(selectedListing.id, 'actioned')}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500/15 text-emerald-400 text-sm font-medium hover:bg-emerald-500/25"
-                >
-                  <CheckCircle2 className="w-4 h-4" /> {actionLoading === selectedListing.id ? '…' : 'Mark Actioned'}
-                </button>
-                <button
-                  disabled={actionLoading === selectedListing.id}
-                  onClick={() => handleListingAction(selectedListing.id, 'dismissed')}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[var(--bg-subtle)] text-[var(--text-tertiary)] text-sm font-medium hover:bg-[var(--bg-hover-strong)]"
-                >
-                  {actionLoading === selectedListing.id ? '…' : 'Dismiss'}
-                </button>
-              </div>
-            )}
+            <div className="flex flex-wrap gap-2 pt-2">
+              <button
+                disabled={actionLoading === selectedListing.id}
+                onClick={() => setConfirmCloseListing(selectedListing)}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-red-500/15 text-red-400 text-sm font-medium hover:bg-red-500/25"
+              >
+                <XCircle className="w-4 h-4" /> Close Listing
+              </button>
+              {selectedListing.status === 'pending' && (
+                <>
+                  <button
+                    disabled={actionLoading === selectedListing.id}
+                    onClick={() => handleListingAction(selectedListing.id, 'actioned')}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500/15 text-emerald-400 text-sm font-medium hover:bg-emerald-500/25"
+                  >
+                    <CheckCircle2 className="w-4 h-4" /> {actionLoading === selectedListing.id ? '…' : 'Mark Actioned'}
+                  </button>
+                  <button
+                    disabled={actionLoading === selectedListing.id}
+                    onClick={() => handleListingAction(selectedListing.id, 'dismissed')}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[var(--bg-subtle)] text-[var(--text-tertiary)] text-sm font-medium hover:bg-[var(--bg-hover-strong)]"
+                  >
+                    {actionLoading === selectedListing.id ? '…' : 'Dismiss'}
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         )}
       </Modal>
+
+      <ConfirmModal
+        open={!!confirmCloseListing}
+        title="Close listing?"
+        description={`"${confirmCloseListing?.listing_title ?? 'This listing'}" will be marked closed and hidden from search.`}
+        confirmLabel="Close listing"
+        icon={<XCircle className="w-6 h-6 text-red-400" />}
+        onConfirm={() => { if (confirmCloseListing) handleCloseListing(confirmCloseListing); }}
+        onCancel={() => setConfirmCloseListing(null)}
+      />
     </div>
   );
 }

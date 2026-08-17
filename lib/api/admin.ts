@@ -250,6 +250,10 @@ export interface VerifiedUser {
   phone_number?: string
   role?: string
   id_type?: string
+  /** Date the user's verification was approved, if the backend includes it */
+  verified_at?: string
+  created_at?: string
+  updated_at?: string
 }
 
 export interface VerifiedUsersResponse {
@@ -409,6 +413,10 @@ export const adminApi = {
 
   async deleteListing(listingId: string): Promise<void> {
     await adminFetch(`/admin/listings/${listingId}`, { method: 'DELETE' })
+  },
+
+  async closeListing(listingId: string): Promise<void> {
+    await adminFetch(`/listings/${listingId}/close`, { method: 'POST' })
   },
 
   // Verification — routes are on user service, accessible via gateway with admin JWT

@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { LogOut } from "lucide-react";
 import { useAdminStore } from "@/lib/admin-store";
-import { getAdminLoginUrl } from "@/lib/api/admin";
+import { adminApi, getAdminLoginUrl, type SupportTicket } from "@/lib/api/admin";
 import { Sidebar } from "@/components/admin/shared/Sidebar";
 import { AdminHeader } from "@/components/admin/shared/AdminHeader";
 import { ConfirmModal } from "@/components/admin/shared/Modal";
@@ -44,7 +44,6 @@ export function AdminApp() {
   }, [initFromApi]);
   const listings = useAdminStore((s) => s.listings);
   const reports = useAdminStore((s) => s.reports);
-  const messages = useAdminStore((s) => s.messages);
   const notifications = useAdminStore((s) => s.notifications);
 
   const [route, setRoute] = useState<AdminRoute>("dashboard");
@@ -56,12 +55,38 @@ export function AdminApp() {
   // Tracks routes visited this session — badge clears once you open the page
   const [visitedRoutes, setVisitedRoutes] = useState<Set<AdminRoute>>(new Set<AdminRoute>(["dashboard"]));
 
+  // Support tickets — badge only counts unread messages on tickets escalated to admin
+  const [messagesTickets, setMessagesTickets] = useState<SupportTicket[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    async function pollTickets() {
+      try {
+        const res = await adminApi.getSupportTickets();
+        if (!cancelled) setMessagesTickets(res.tickets ?? []);
+      } catch {
+        // ignore — badge just won't update this cycle
+      }
+    }
+    pollTickets();
+    const t = setInterval(pollTickets, 10_000);
+    return () => { cancelled = true; clearInterval(t); };
+  }, []);
+
+  // Opening an escalated ticket clears its contribution to the badge immediately
+  function markMessageOpened(ticketId: string) {
+    setMessagesTickets((prev) => prev.map((t) => t.id === ticketId ? { ...t, unread_count: 0 } : t));
+  }
+
+  const messagesUnread = messagesTickets
+    .filter((t) => t.escalated_to_admin)
+    .reduce((sum, t) => sum + (t.unread_count ?? 0), 0);
+
   const pendingReports = reports.filter((r) => r.status === "pending").length;
   const badgeCounts: Partial<Record<AdminRoute, number>> = {
     verifications: verifications.filter((v) => v.status === "pending").length,
     listings: listings.filter((l) => l.approval === "pending").length,
     reports: visitedRoutes.has("reports") ? 0 : pendingReports,
-    messages: messages.reduce((sum, t) => sum + t.unreadCount, 0),
+    messages: messagesUnread,
     notifications: notifications.filter((n) => !n.read).length,
   };
 
@@ -145,7 +170,7 @@ export function AdminApp() {
             />
           )}
           {route === "messages" && (
-            <MessagesPage openUserId={messageTargetUserId} onOpenUserConsumed={() => setMessageTargetUserId(null)} />
+            <MessagesPage openUserId={messageTargetUserId} onOpenUserConsumed={() => setMessageTargetUserId(null)} onOpenTicket={markMessageOpened} />
           )}
           {route === "transactions" && <TransactionsPage />}
           {route === "reviews" && <ReviewsPage />}

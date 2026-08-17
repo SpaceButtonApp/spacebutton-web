@@ -3,11 +3,11 @@ import React, { useCallback, useEffect, useState } from "react"
 import Image from "next/image"
 import {
   ArrowLeft, Mail, MessageCircle, UserX, UserCheck, Trash2,
-  ShieldCheck, ShieldX, MapPin, Phone, Calendar, User, RefreshCw,
+  ShieldCheck, ShieldX, RefreshCw,
   AlertCircle, Copy, Check, Zap,
 } from "lucide-react"
 import { adminApi } from "@/lib/api/admin"
-import type { AdminUserFullProfile } from "@/lib/api/admin"
+import type { AdminUserFullProfile, AdminListing } from "@/lib/api/admin"
 import { StatusBadge } from "@/components/admin/shared/Badge"
 import { ConfirmModal } from "@/components/admin/shared/Modal"
 import { formatDate } from "@/lib/utils/admin-format"
@@ -27,6 +27,39 @@ interface UserDetailPageProps {
 }
 
 type ConfirmType = "suspend" | "reinstate" | "delete"
+
+function CopyField({ label, value }: { label: string; value: string | null | undefined }) {
+  const [copied, setCopied] = useState(false)
+  function copy() {
+    if (!value) return
+    navigator.clipboard.writeText(value).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    })
+  }
+  return (
+    <div className="flex justify-between items-center py-3 border-b border-[var(--border-color)] last:border-0">
+      <span className="text-sm text-[var(--text-muted)]">{label}</span>
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-[var(--text-primary)] font-medium">{value || "—"}</span>
+        {value && (
+          <button onClick={copy} className="p-1 rounded hover:bg-[var(--bg-subtle)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
+            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function InfoRow({ label, value }: { label: string; value: string | null | undefined }) {
+  return (
+    <div className="flex justify-between items-center py-3 border-b border-[var(--border-color)] last:border-0">
+      <span className="text-sm text-[var(--text-muted)]">{label}</span>
+      <span className="text-sm text-[var(--text-primary)] font-medium">{value || "—"}</span>
+    </div>
+  )
+}
 
 function GrantConnectsModal({ name, onConfirm, onCancel }: { name: string; onConfirm: (amount: number) => Promise<void>; onCancel: () => void }) {
   const [amount, setAmount] = useState(1)
@@ -85,45 +118,14 @@ function GrantConnectsModal({ name, onConfirm, onCancel }: { name: string; onCon
   )
 }
 
-function CopyField({ label, value }: { label: string; value: string | null | undefined }) {
-  const [copied, setCopied] = useState(false)
-  function copy() {
-    if (!value) return
-    navigator.clipboard.writeText(value).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    })
-  }
-  return (
-    <div className="flex justify-between items-center py-3 border-b border-[var(--border-color)] last:border-0">
-      <span className="text-sm text-[var(--text-muted)]">{label}</span>
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-[var(--text-primary)] font-medium">{value || "—"}</span>
-        {value && (
-          <button onClick={copy} className="p-1 rounded hover:bg-[var(--bg-subtle)] text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-          </button>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function InfoRow({ label, value }: { label: string; value: string | null | undefined }) {
-  return (
-    <div className="flex justify-between items-center py-3 border-b border-[var(--border-color)] last:border-0">
-      <span className="text-sm text-[var(--text-muted)]">{label}</span>
-      <span className="text-sm text-[var(--text-primary)] font-medium">{value || "—"}</span>
-    </div>
-  )
-}
-
 export function UserDetailPage({ userId, onBack, onMessageUser, onMailUser }: UserDetailPageProps) {
   const [profile, setProfile] = useState<AdminUserFullProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [confirmAction, setConfirmAction] = useState<ConfirmType | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
+  const [listingsCount, setListingsCount] = useState<number | null>(null)
+  const [rating, setRating] = useState<{ avg: number; count: number } | null>(null)
   const [showGrantConnects, setShowGrantConnects] = useState(false)
   const [grantSuccess, setGrantSuccess] = useState<string | null>(null)
 
@@ -137,6 +139,39 @@ export function UserDetailPage({ userId, onBack, onMessageUser, onMailUser }: Us
       setError(e instanceof Error ? e.message : "Failed to load profile")
     } finally {
       setLoading(false)
+    }
+
+    // Listings count — best-effort
+    try {
+      let allListings: AdminListing[] = []
+      let page = 1
+      while (true) {
+        const r = await adminApi.getListings(page, 100)
+        allListings = [...allListings, ...(r.listings ?? [])]
+        if (allListings.length >= (r.total ?? 0) || (r.listings?.length ?? 0) < 100) break
+        page++
+      }
+      setListingsCount(allListings.filter((l) => l.agent_id === userId).length)
+    } catch {
+      // leave as null — count just won't show
+    }
+
+    // Rating — best-effort
+    try {
+      let allAgents: Awaited<ReturnType<typeof adminApi.getAgents>>["agents"] = []
+      let page = 1
+      while (true) {
+        const r = await adminApi.getAgents(page, 100)
+        allAgents = [...allAgents, ...(r.agents ?? [])]
+        if (allAgents.length >= (r.total ?? 0) || (r.agents?.length ?? 0) < 100) break
+        page++
+      }
+      const agent = allAgents.find((a) => a.id === userId || a.user_id === userId)
+      if (agent && agent.average_rating != null) {
+        setRating({ avg: agent.average_rating, count: agent.total_reviews ?? 0 })
+      }
+    } catch {
+      // leave as null — rating just won't show
     }
   }, [userId])
 
@@ -291,6 +326,12 @@ export function UserDetailPage({ userId, onBack, onMessageUser, onMailUser }: Us
             >
               <Mail className="w-4 h-4" /> Email
             </button>
+            <button
+              onClick={() => setShowGrantConnects(true)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-violet-500/15 hover:bg-violet-500/25 text-violet-400 text-sm transition-colors"
+            >
+              <Zap className="w-4 h-4" /> Grant Connects
+            </button>
             {isSuspended ? (
               <button
                 onClick={() => setConfirmAction("reinstate")}
@@ -306,12 +347,6 @@ export function UserDetailPage({ userId, onBack, onMessageUser, onMailUser }: Us
                 <UserX className="w-4 h-4" /> Suspend
               </button>
             )}
-            <button
-              onClick={() => setShowGrantConnects(true)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-violet-500/15 hover:bg-violet-500/25 text-violet-400 text-sm transition-colors"
-            >
-              <Zap className="w-4 h-4" /> Grant Connects
-            </button>
             <button
               onClick={() => setConfirmAction("delete")}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-500/15 hover:bg-red-500/25 text-red-400 text-sm transition-colors"
@@ -337,18 +372,18 @@ export function UserDetailPage({ userId, onBack, onMessageUser, onMailUser }: Us
           <div className="space-y-0">
             <InfoRow label="User ID" value={profile.id.slice(-12).toUpperCase()} />
             <InfoRow label="Phone" value={profile.phone_number} />
-            <InfoRow label="Gender" value={profile.gender ? profile.gender.charAt(0).toUpperCase() + profile.gender.slice(1) : null} />
-            <InfoRow label="Date of Birth" value={profile.date_of_birth ? formatDate(profile.date_of_birth) : null} />
             <InfoRow label="Location" value={[profile.city, profile.state].filter(Boolean).join(", ") || null} />
             <InfoRow label="Joined" value={formatDate(profile.created_at)} />
             <InfoRow label="Email Verified" value={profile.is_email_verified ? "Yes" : "No"} />
             {profile.role === "agent" && profile.years_of_experience != null && (
               <InfoRow label="Experience" value={`${profile.years_of_experience} yr${profile.years_of_experience !== 1 ? "s" : ""}`} />
             )}
+            <InfoRow label="Listings" value={listingsCount != null ? String(listingsCount) : null} />
+            <InfoRow label="Rating" value={rating ? `${rating.avg.toFixed(1)} ★ (${rating.count} review${rating.count !== 1 ? "s" : ""})` : "No reviews yet"} />
           </div>
         </div>
 
-        {/* Referrals */}
+        {/* Referrals + Verification */}
         <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl p-5 shadow-[var(--shadow-card)]">
           <h2 className="text-sm font-semibold text-[var(--text-muted)] uppercase tracking-wide mb-3">Referrals</h2>
           <CopyField label="Referral Code" value={profile.referral_code} />

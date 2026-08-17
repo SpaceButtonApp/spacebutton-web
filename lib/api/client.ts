@@ -2,7 +2,7 @@
 
 import { useAppStore } from '@/lib/store'
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? ''
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.spacebutton.net/api/v1'
 
 export class ApiError extends Error {
   constructor(

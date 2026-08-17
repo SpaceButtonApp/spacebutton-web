@@ -6,6 +6,7 @@ import { MessageCircle, X, Send, Loader2, ChevronDown } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
 import { supportApi } from '@/lib/api/chat'
 import type { SupportMsg } from '@/lib/api/chat'
+import { ListingRequestModal } from '@/components/listing-request-modal'
 
 export function SupportChatWidget() {
   const pathname = usePathname()
@@ -18,15 +19,32 @@ export function SupportChatWidget() {
   const [initialized, setInitialized] = useState(false)
   const [loading, setLoading] = useState(false)
   const [unread, setUnread] = useState(0)
+  const [showBubble, setShowBubble] = useState(false)
+  // Session-only: resets on every page load, so the nudge comes back on reload
+  const [bubbleDismissed, setBubbleDismissed] = useState(false)
+  const [showRequestModal, setShowRequestModal] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const lastMsgCountRef = useRef(0)
 
-  // Hide on admin, auth, and support chat routes
-  const hidden = pathname.startsWith('/admin') ||
+  // Hide on admin, support-staff, auth, and support chat routes
+  const hidden = pathname.startsWith('/admin') || pathname.startsWith('/support') ||
     pathname === '/login' || pathname === '/signup' ||
     pathname.startsWith('/forgot') || pathname.startsWith('/verify') ||
     pathname === '/welcome' || pathname === '/get-started' ||
     pathname === '/chat/admin-support'
+
+  function dismissBubble() {
+    setShowBubble(false)
+    setBubbleDismissed(true)
+  }
+
+  // Recurring nudge — pops the bubble every 5 seconds while the chat is closed.
+  // Individual accounts only — agents are listing spaces, not looking for one.
+  useEffect(() => {
+    if (hidden || !user || user.type === 'agent' || open || bubbleDismissed) { setShowBubble(false); return }
+    const interval = setInterval(() => setShowBubble((v) => !v), 5_000)
+    return () => clearInterval(interval)
+  }, [hidden, user, open, bubbleDismissed])
 
   const loadMessages = useCallback(async () => {
     try {
@@ -93,6 +111,18 @@ export function SupportChatWidget() {
       setInput(text)
     }
     finally { setSending(false) }
+  }
+
+  // While the nudge bubble is up, the floating icon does the same thing the
+  // bubble does (opens the listing-request form) instead of the chat panel —
+  // most people were tapping the icon rather than the bubble text itself.
+  const handleFabClick = () => {
+    if (showBubble) {
+      setShowRequestModal(true)
+      setShowBubble(false)
+    } else {
+      setOpen((prev) => !prev)
+    }
   }
 
   if (hidden || !user) return null
@@ -176,9 +206,34 @@ export function SupportChatWidget() {
         </div>
       )}
 
+      {/* "Can't find your space?" nudge bubble — pops every 5s while chat is closed */}
+      {showBubble && !open && (
+        <div className="fixed bottom-[150px] right-4 sm:bottom-24 sm:right-5 z-50 w-72 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="relative bg-[#12121a] border border-gray-800 rounded-2xl p-4 shadow-2xl">
+            <button
+              onClick={dismissBubble}
+              aria-label="Dismiss"
+              className="absolute top-2.5 right-2.5 text-gray-500 hover:text-gray-300 transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => { setShowRequestModal(true); setShowBubble(false) }}
+              className="text-left w-full pr-4"
+            >
+              <p className="text-white font-semibold text-sm mb-1">Can&apos;t Find Your Perfect Space?</p>
+              <p className="text-gray-400 text-xs leading-relaxed">
+                Tell us what you&apos;re looking for and our team will find matching listings for you — usually within 24 hours.
+              </p>
+            </button>
+            <div className="absolute -bottom-2 right-6 w-4 h-4 bg-[#12121a] border-r border-b border-gray-800 transform rotate-45" />
+          </div>
+        </div>
+      )}
+
       {/* Floating button */}
       <button
-        onClick={() => setOpen(prev => !prev)}
+        onClick={handleFabClick}
         className="fixed bottom-[84px] right-4 sm:bottom-5 sm:right-5 z-50 w-14 h-14 rounded-full bg-[#703BF7] hover:bg-[#5f32d4] shadow-lg shadow-[#703BF7]/30 flex items-center justify-center text-white transition-all active:scale-95"
         aria-label="Support chat"
       >
@@ -189,6 +244,8 @@ export function SupportChatWidget() {
           </span>
         )}
       </button>
+
+      <ListingRequestModal isOpen={showRequestModal} onClose={() => setShowRequestModal(false)} />
     </>
   )
 }

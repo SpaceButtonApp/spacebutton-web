@@ -48,6 +48,23 @@ export default function SupportApp() {
   useEffect(() => {
     const token = localStorage.getItem('support-token')
     if (!token) { router.replace('/support/login'); return }
+
+    // Decode JWT client-side to check expiry without a network call
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      if (payload.exp && payload.exp * 1000 < Date.now()) {
+        localStorage.removeItem('support-token')
+        localStorage.removeItem('support-user')
+        router.replace('/support/login')
+        return
+      }
+    } catch {
+      localStorage.removeItem('support-token')
+      localStorage.removeItem('support-user')
+      router.replace('/support/login')
+      return
+    }
+
     try {
       const stored = localStorage.getItem('support-user')
       if (stored) setUser(JSON.parse(stored))

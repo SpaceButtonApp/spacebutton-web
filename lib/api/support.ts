@@ -19,7 +19,7 @@ async function supportFetch<T>(path: string, options: RequestInit = {}): Promise
     if (typeof window !== 'undefined') {
       localStorage.removeItem('support-token')
       localStorage.removeItem('support-user')
-      window.location.href = '/support'
+      window.location.href = '/support/login'
     }
     throw new Error('Session expired. Please log in again.')
   }

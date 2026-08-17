@@ -10,11 +10,32 @@ export default function AdminPage() {
 
   useEffect(() => {
     const auth = localStorage.getItem('admin-auth')
-    if (!auth) {
+    const token = localStorage.getItem('admin-token')
+
+    if (!auth || !token) {
       router.replace(getAdminLoginUrl())
-    } else {
-      setReady(true)
+      return
     }
+
+    // Decode JWT client-side to check expiry without a network call
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      if (payload.exp && payload.exp * 1000 < Date.now()) {
+        localStorage.removeItem('admin-token')
+        localStorage.removeItem('admin-auth')
+        localStorage.removeItem('admin-profile')
+        router.replace(getAdminLoginUrl())
+        return
+      }
+    } catch {
+      // Malformed token — treat as expired
+      localStorage.removeItem('admin-token')
+      localStorage.removeItem('admin-auth')
+      router.replace(getAdminLoginUrl())
+      return
+    }
+
+    setReady(true)
   }, [router])
 
   if (!ready) {

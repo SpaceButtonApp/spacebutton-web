@@ -291,4 +291,14 @@ export const supportApi = {
   async updateListingReport(reportId: string, status: 'actioned' | 'dismissed'): Promise<void> {
     await supportFetch(`/admin/listing-reports/${reportId}?status=${status}`, { method: 'PATCH' })
   },
+
+  // ── Notifications ────────────────────────────────────────────────────────
+
+  async broadcastNotification(title: string, body: string): Promise<{ total_users: number; push_sent: number }> {
+    const res = await supportFetch<{ success: boolean; data: { total_users: number; push_sent: number } }>(
+      '/admin/notifications/broadcast',
+      { method: 'POST', body: JSON.stringify({ title, body }) },
+    )
+    return (res as any)?.data ?? res
+  },
 }

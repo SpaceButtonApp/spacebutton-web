@@ -12,6 +12,7 @@ import VerificationsView from './views/VerificationsView'
 import ListingsView from './views/ListingsView'
 import SettingsView from './views/SettingsView'
 import GenericListView from './views/GenericListView'
+import NotificationsView from './views/NotificationsView'
 import ReportsView from './views/ReportsView'
 import TicketList from './tickets/TicketList'
 import ChatPanel from './chat/ChatPanel'
@@ -119,8 +120,9 @@ export default function SupportApp() {
           />
         )
       case 'reviews':
-      case 'notifications':
         return <GenericListView tab={activeTab} />
+      case 'notifications':
+        return <NotificationsView />
       case 'messages':
         return (
           <div className="sp-messages-grid">

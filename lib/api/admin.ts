@@ -644,6 +644,15 @@ export const adminApi = {
     })
   },
 
+  // Notifications
+  async broadcastNotification(title: string, body: string): Promise<{ total_users: number; push_sent: number }> {
+    const res = await adminFetch<{ success: boolean; data: { total_users: number; push_sent: number } }>(
+      '/admin/notifications/broadcast',
+      { method: 'POST', body: JSON.stringify({ title, body }) },
+    )
+    return (res as any)?.data ?? res
+  },
+
   async getListingConversations(listingId: string): Promise<ListingConversationsResponse> {
     const res = await adminFetch<{ success: boolean; data: ListingConversationsResponse }>(
       `/admin/listings/${listingId}/conversations`,

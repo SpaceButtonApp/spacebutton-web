@@ -55,6 +55,27 @@ export interface AdminUser {
   created_at: string
 }
 
+export type NotificationTargetType = 'all' | 'agent' | 'user' | 'specific'
+
+export interface NotificationBroadcastRequest {
+  id: string
+  title: string
+  body: string
+  target_type: NotificationTargetType
+  target_user_id: string | null
+  target_label: string | null
+  status: 'pending' | 'sent' | 'rejected'
+  created_by_id: string
+  created_by_name: string
+  created_by_role: string
+  decided_by_id: string | null
+  decided_by_name: string | null
+  decided_at: string | null
+  total_users: number | null
+  push_sent: number | null
+  created_at: string
+}
+
 export interface AdminUserFullProfile extends AdminUser {
   profile_photo_url?: string
   bio?: string
@@ -358,9 +379,10 @@ export const adminApi = {
   },
 
   // Users
-  async getUsers(page = 1, pageSize = 20, role?: string): Promise<AdminUserListResponse> {
+  async getUsers(page = 1, pageSize = 20, role?: string, search?: string): Promise<AdminUserListResponse> {
     const qs = new URLSearchParams({ page: String(page), page_size: String(pageSize) })
     if (role) qs.set('role', role)
+    if (search) qs.set('search', search)
     const res = await adminFetch<{ success: boolean; data: AdminUserListResponse }>(
       `/admin/users?${qs}`,
     )
@@ -645,10 +667,45 @@ export const adminApi = {
   },
 
   // Notifications
-  async broadcastNotification(title: string, body: string): Promise<{ total_users: number; push_sent: number }> {
-    const res = await adminFetch<{ success: boolean; data: { total_users: number; push_sent: number } }>(
+  async broadcastNotification(
+    title: string,
+    body: string,
+    targetType: NotificationTargetType = 'all',
+    targetUserId?: string,
+    targetLabel?: string,
+  ): Promise<{ total_users?: number; push_sent?: number; status?: string }> {
+    const res = await adminFetch<{ success: boolean; data: { total_users?: number; push_sent?: number; status?: string } }>(
       '/admin/notifications/broadcast',
-      { method: 'POST', body: JSON.stringify({ title, body }) },
+      {
+        method: 'POST',
+        body: JSON.stringify({ title, body, target_type: targetType, target_user_id: targetUserId, target_label: targetLabel }),
+      },
+    )
+    return (res as any)?.data ?? res
+  },
+
+  async getPendingNotifications(): Promise<{ requests: NotificationBroadcastRequest[] }> {
+    const res = await adminFetch<{ success: boolean; data: { requests: NotificationBroadcastRequest[] } }>('/admin/notifications/pending')
+    return (res as any)?.data ?? res
+  },
+
+  async getMyNotifications(): Promise<{ requests: NotificationBroadcastRequest[] }> {
+    const res = await adminFetch<{ success: boolean; data: { requests: NotificationBroadcastRequest[] } }>('/admin/notifications/mine')
+    return (res as any)?.data ?? res
+  },
+
+  async approveNotification(requestId: string): Promise<NotificationBroadcastRequest> {
+    const res = await adminFetch<{ success: boolean; data: NotificationBroadcastRequest }>(
+      `/admin/notifications/pending/${requestId}/approve`,
+      { method: 'POST' },
+    )
+    return (res as any)?.data ?? res
+  },
+
+  async rejectNotification(requestId: string): Promise<NotificationBroadcastRequest> {
+    const res = await adminFetch<{ success: boolean; data: NotificationBroadcastRequest }>(
+      `/admin/notifications/pending/${requestId}/reject`,
+      { method: 'POST' },
     )
     return (res as any)?.data ?? res
   },

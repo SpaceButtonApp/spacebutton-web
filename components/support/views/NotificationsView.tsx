@@ -1,7 +1,31 @@
 'use client'
 
-import { useState } from 'react'
-import { supportApi } from '@/lib/api/support'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { X } from 'lucide-react'
+import { supportApi, AdminUser, NotificationBroadcastRequest, NotificationTargetType } from '@/lib/api/support'
+
+const AUDIENCE_OPTIONS: { value: NotificationTargetType; label: string }[] = [
+  { value: 'all', label: 'All Users' },
+  { value: 'agent', label: 'Agents Only' },
+  { value: 'user', label: 'Individuals Only' },
+  { value: 'specific', label: 'Specific User' },
+]
+
+const STATUS_STYLE: Record<string, { background: string; color: string }> = {
+  pending: { background: 'rgba(245,158,11,0.15)', color: '#f59e0b' },
+  sent: { background: 'rgba(52,211,153,0.15)', color: '#34d399' },
+  rejected: { background: 'rgba(248,113,113,0.15)', color: '#f87171' },
+}
+
+function timeAgo(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime()
+  const mins = Math.floor(diffMs / 60000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  return `${Math.floor(hrs / 24)}d ago`
+}
 
 export default function NotificationsView() {
   const [title, setTitle] = useState('')
@@ -10,18 +34,71 @@ export default function NotificationsView() {
   const [confirming, setConfirming] = useState(false)
   const [result, setResult] = useState<{ text: string; ok: boolean } | null>(null)
 
-  const canSend = title.trim().length > 0 && body.trim().length > 0 && !sending
+  const [targetType, setTargetType] = useState<NotificationTargetType>('all')
+  const [userQuery, setUserQuery] = useState('')
+  const [userResults, setUserResults] = useState<AdminUser[]>([])
+  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null)
+  const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const [mine, setMine] = useState<NotificationBroadcastRequest[]>([])
+  const [mineLoading, setMineLoading] = useState(true)
+
+  const loadMine = useCallback(async () => {
+    try {
+      const res = await supportApi.getMyNotifications()
+      setMine(res.requests || [])
+    } catch {
+      // Non-critical — history list just stays empty on failure
+    } finally {
+      setMineLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadMine()
+  }, [loadMine])
+
+  useEffect(() => {
+    if (targetType !== 'specific' || userQuery.trim().length < 2) {
+      setUserResults([])
+      return
+    }
+    if (searchDebounce.current) clearTimeout(searchDebounce.current)
+    searchDebounce.current = setTimeout(async () => {
+      try {
+        const res = await supportApi.getUsers({ page: 1, page_size: 10, search: userQuery.trim() })
+        setUserResults(res.users || [])
+      } catch {
+        setUserResults([])
+      }
+    }, 350)
+    return () => {
+      if (searchDebounce.current) clearTimeout(searchDebounce.current)
+    }
+  }, [userQuery, targetType])
+
+  const canSend = title.trim().length > 0 && body.trim().length > 0 && !sending && (targetType !== 'specific' || !!selectedUser)
 
   async function handleSend() {
     setSending(true)
     setResult(null)
     try {
-      const res = await supportApi.broadcastNotification(title.trim(), body.trim())
-      setResult({ text: `Sent to ${res.total_users} user${res.total_users === 1 ? '' : 's'} (${res.push_sent} received a push).`, ok: true })
+      const label = selectedUser ? `${selectedUser.first_name} ${selectedUser.last_name}`.trim() || selectedUser.email : undefined
+      const res = await supportApi.broadcastNotification(title.trim(), body.trim(), targetType, selectedUser?.id, label)
+      setResult({
+        text: res.status === 'pending' || res.total_users == null
+          ? 'Submitted for admin approval.'
+          : `Sent to ${res.total_users} user${res.total_users === 1 ? '' : 's'} (${res.push_sent} received a push).`,
+        ok: true,
+      })
       setTitle('')
       setBody('')
+      setSelectedUser(null)
+      setUserQuery('')
+      setTargetType('all')
+      loadMine()
     } catch (err) {
-      setResult({ text: err instanceof Error ? err.message : 'Failed to send broadcast.', ok: false })
+      setResult({ text: err instanceof Error ? err.message : 'Failed to submit notification.', ok: false })
     } finally {
       setSending(false)
       setConfirming(false)
@@ -35,8 +112,71 @@ export default function NotificationsView() {
       </div>
 
       <div className="sp-settings-card" style={{ maxWidth: 560 }}>
-        <h3>Notify All Users</h3>
-        <p className="sp-section-desc">Sends a push notification and in-app message to every user, right now.</p>
+        <h3>Notify Users</h3>
+        <p className="sp-section-desc">Submitted notifications need admin approval before they go out — direct pushes/in-app messages, sent when approved.</p>
+
+        <div className="sp-form-group">
+          <label className="sp-form-input-label">Audience</label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {AUDIENCE_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                className="sp-btn"
+                style={targetType === opt.value ? { background: 'var(--sp-accent)', color: '#fff', borderColor: 'var(--sp-accent)' } : undefined}
+                onClick={() => {
+                  setTargetType(opt.value)
+                  if (opt.value !== 'specific') {
+                    setSelectedUser(null)
+                    setUserQuery('')
+                  }
+                }}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {targetType === 'specific' && (
+          <div className="sp-form-group">
+            <label className="sp-form-input-label">User</label>
+            {selectedUser ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid var(--sp-border)', borderRadius: 10, padding: '8px 14px' }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600 }}>{selectedUser.first_name} {selectedUser.last_name}</div>
+                  <div style={{ fontSize: 12, color: 'var(--sp-text-muted)' }}>{selectedUser.email}</div>
+                </div>
+                <button className="sp-btn" onClick={() => setSelectedUser(null)} style={{ padding: 6 }}>
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              <div style={{ position: 'relative' }}>
+                <input
+                  className="sp-form-input"
+                  value={userQuery}
+                  onChange={(e) => setUserQuery(e.target.value)}
+                  placeholder="Search by name, email, or phone..."
+                />
+                {userResults.length > 0 && (
+                  <div style={{ position: 'absolute', zIndex: 10, marginTop: 4, width: '100%', background: 'var(--sp-bg-card)', border: '1px solid var(--sp-border)', borderRadius: 10, maxHeight: 220, overflowY: 'auto' }}>
+                    {userResults.map((u) => (
+                      <button
+                        key={u.id}
+                        onClick={() => { setSelectedUser(u); setUserResults([]) }}
+                        style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 14px', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                      >
+                        <div style={{ fontSize: 13, fontWeight: 600 }}>{u.first_name} {u.last_name}</div>
+                        <div style={{ fontSize: 12, color: 'var(--sp-text-muted)' }}>{u.email}</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="sp-form-group">
           <label className="sp-form-input-label">Title</label>
@@ -77,15 +217,41 @@ export default function NotificationsView() {
             disabled={!canSend}
             onClick={() => setConfirming(true)}
           >
-            Send to All Users
+            Submit Notification
           </button>
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 13, color: 'var(--sp-text-muted)', flex: 1 }}>Send this to every user right now?</span>
+            <span style={{ fontSize: 13, color: 'var(--sp-text-muted)', flex: 1 }}>Submit this for admin approval?</span>
             <button className="sp-btn" onClick={() => setConfirming(false)}>Cancel</button>
             <button className="sp-btn sp-btn-primary" disabled={sending} onClick={handleSend}>
-              {sending ? 'Sending…' : 'Yes, Send Now'}
+              {sending ? 'Submitting…' : 'Yes, Submit'}
             </button>
+          </div>
+        )}
+      </div>
+
+      <div className="sp-settings-card" style={{ maxWidth: 560, marginTop: 20 }}>
+        <h3>Your Submissions</h3>
+        {mineLoading ? (
+          <p className="sp-section-desc">Loading…</p>
+        ) : mine.length === 0 ? (
+          <p className="sp-section-desc">Nothing submitted yet.</p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {mine.map((r) => (
+              <div key={r.id} style={{ border: '1px solid var(--sp-border)', borderRadius: 10, padding: '10px 14px' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>{r.title}</div>
+                    <div style={{ fontSize: 12, color: 'var(--sp-text-muted)', marginTop: 2 }}>{r.body}</div>
+                    <div style={{ fontSize: 11, color: 'var(--sp-text-muted)', marginTop: 6 }}>
+                      {r.target_type === 'specific' ? (r.target_label || '1 user') : AUDIENCE_OPTIONS.find((o) => o.value === r.target_type)?.label} · {timeAgo(r.created_at)}
+                    </div>
+                  </div>
+                  <span className="sp-pill" style={STATUS_STYLE[r.status]}>{r.status}</span>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>

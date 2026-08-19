@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { Bell, Send, Check, X, Search, Loader2 } from "lucide-react";
 import { adminApi, AdminUser, NotificationBroadcastRequest, NotificationTargetType } from "@/lib/api/admin";
+import { ReasonModal } from "@/components/admin/shared/Modal";
 
 const AUDIENCE_OPTIONS: { value: NotificationTargetType; label: string }[] = [
   { value: "all", label: "All Users" },
@@ -37,6 +38,7 @@ export function NotificationsPage() {
   const [pending, setPending] = useState<NotificationBroadcastRequest[]>([]);
   const [pendingLoading, setPendingLoading] = useState(true);
   const [decidingId, setDecidingId] = useState<string | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<NotificationBroadcastRequest | null>(null);
 
   const loadPending = useCallback(async () => {
     try {
@@ -100,16 +102,30 @@ export function NotificationsPage() {
     }
   }
 
-  async function handleDecide(id: string, action: "approve" | "reject") {
+  async function handleApprove(id: string) {
     setDecidingId(id);
     try {
-      if (action === "approve") await adminApi.approveNotification(id);
-      else await adminApi.rejectNotification(id);
+      await adminApi.approveNotification(id);
       setPending((prev) => prev.filter((r) => r.id !== id));
     } catch {
       // leave it in the list — the admin can retry
     } finally {
       setDecidingId(null);
+    }
+  }
+
+  async function handleReject(reason: string) {
+    if (!rejectTarget) return;
+    const id = rejectTarget.id;
+    setDecidingId(id);
+    try {
+      await adminApi.rejectNotification(id, reason);
+      setPending((prev) => prev.filter((r) => r.id !== id));
+    } catch {
+      // leave it in the list — the admin can retry
+    } finally {
+      setDecidingId(null);
+      setRejectTarget(null);
     }
   }
 
@@ -178,7 +194,7 @@ export function NotificationsPage() {
                 />
                 {searching && <Loader2 className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] animate-spin" />}
                 {userResults.length > 0 && (
-                  <div className="absolute z-10 mt-1 w-full bg-[var(--bg-card)] border border-[var(--border-color)] rounded-xl shadow-lg max-h-56 overflow-y-auto">
+                  <div className="absolute z-10 mt-1 w-full bg-[var(--bg-modal)] border border-[var(--border-strong)] rounded-xl shadow-2xl max-h-56 overflow-y-auto">
                     {userResults.map((u) => (
                       <button
                         key={u.id}
@@ -283,7 +299,7 @@ export function NotificationsPage() {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <button
-                      onClick={() => handleDecide(r.id, "reject")}
+                      onClick={() => setRejectTarget(r)}
                       disabled={decidingId === r.id}
                       className="w-9 h-9 rounded-full flex items-center justify-center bg-red-500/10 text-red-400 hover:bg-red-500/20 disabled:opacity-40 transition-colors"
                       title="Reject"
@@ -291,7 +307,7 @@ export function NotificationsPage() {
                       <X className="w-4 h-4" />
                     </button>
                     <button
-                      onClick={() => handleDecide(r.id, "approve")}
+                      onClick={() => handleApprove(r.id)}
                       disabled={decidingId === r.id}
                       className="w-9 h-9 rounded-full flex items-center justify-center bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-40 transition-colors"
                       title="Approve & Send"
@@ -305,6 +321,13 @@ export function NotificationsPage() {
           </div>
         )}
       </div>
+
+      <ReasonModal
+        open={!!rejectTarget}
+        title="Reject Notification"
+        onSubmit={handleReject}
+        onCancel={() => setRejectTarget(null)}
+      />
     </div>
   );
 }

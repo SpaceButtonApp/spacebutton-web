@@ -44,7 +44,6 @@ export function AdminApp() {
   }, [initFromApi]);
   const listings = useAdminStore((s) => s.listings);
   const reports = useAdminStore((s) => s.reports);
-  const notifications = useAdminStore((s) => s.notifications);
 
   const [route, setRoute] = useState<AdminRoute>("dashboard");
   const [logoutOpen, setLogoutOpen] = useState(false);
@@ -72,6 +71,23 @@ export function AdminApp() {
     return () => { cancelled = true; clearInterval(t); };
   }, []);
 
+  // Notifications nav badge — count of support-submitted broadcasts awaiting approval
+  const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    async function pollPending() {
+      try {
+        const res = await adminApi.getPendingNotifications();
+        if (!cancelled) setPendingApprovalsCount(res.requests?.length ?? 0);
+      } catch {
+        // ignore — badge just won't update this cycle
+      }
+    }
+    pollPending();
+    const t = setInterval(pollPending, 10_000);
+    return () => { cancelled = true; clearInterval(t); };
+  }, []);
+
   // Opening an escalated ticket clears its contribution to the badge immediately
   function markMessageOpened(ticketId: string) {
     setMessagesTickets((prev) => prev.map((t) => t.id === ticketId ? { ...t, unread_count: 0 } : t));
@@ -87,7 +103,7 @@ export function AdminApp() {
     listings: listings.filter((l) => l.approval === "pending").length,
     reports: visitedRoutes.has("reports") ? 0 : pendingReports,
     messages: messagesUnread,
-    notifications: notifications.filter((n) => !n.read).length,
+    notifications: pendingApprovalsCount,
   };
 
   function goToUserThread(userId: string) {

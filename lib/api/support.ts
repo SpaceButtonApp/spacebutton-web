@@ -60,6 +60,7 @@ export interface NotificationBroadcastRequest {
   decided_by_id: string | null
   decided_by_name: string | null
   decided_at: string | null
+  rejection_reason: string | null
   total_users: number | null
   push_sent: number | null
   created_at: string

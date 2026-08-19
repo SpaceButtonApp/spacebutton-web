@@ -247,6 +247,11 @@ export default function NotificationsView() {
                     <div style={{ fontSize: 11, color: 'var(--sp-text-muted)', marginTop: 6 }}>
                       {r.target_type === 'specific' ? (r.target_label || '1 user') : AUDIENCE_OPTIONS.find((o) => o.value === r.target_type)?.label} · {timeAgo(r.created_at)}
                     </div>
+                    {r.status === 'rejected' && r.rejection_reason && (
+                      <div style={{ fontSize: 12, color: '#f87171', marginTop: 6, background: 'rgba(248,113,113,0.08)', borderRadius: 8, padding: '6px 10px' }}>
+                        Reason: {r.rejection_reason}
+                      </div>
+                    )}
                   </div>
                   <span className="sp-pill" style={STATUS_STYLE[r.status]}>{r.status}</span>
                 </div>

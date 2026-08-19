@@ -71,6 +71,7 @@ export interface NotificationBroadcastRequest {
   decided_by_id: string | null
   decided_by_name: string | null
   decided_at: string | null
+  rejection_reason: string | null
   total_users: number | null
   push_sent: number | null
   created_at: string
@@ -702,10 +703,10 @@ export const adminApi = {
     return (res as any)?.data ?? res
   },
 
-  async rejectNotification(requestId: string): Promise<NotificationBroadcastRequest> {
+  async rejectNotification(requestId: string, reason: string): Promise<NotificationBroadcastRequest> {
     const res = await adminFetch<{ success: boolean; data: NotificationBroadcastRequest }>(
       `/admin/notifications/pending/${requestId}/reject`,
-      { method: 'POST' },
+      { method: 'POST', body: JSON.stringify({ reason }) },
     )
     return (res as any)?.data ?? res
   },

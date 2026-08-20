@@ -37,7 +37,7 @@ export default function NotificationsView() {
   const [targetType, setTargetType] = useState<NotificationTargetType>('all')
   const [userQuery, setUserQuery] = useState('')
   const [userResults, setUserResults] = useState<AdminUser[]>([])
-  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null)
+  const [selectedUsers, setSelectedUsers] = useState<AdminUser[]>([])
   const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [mine, setMine] = useState<NotificationBroadcastRequest[]>([])
@@ -77,14 +77,16 @@ export default function NotificationsView() {
     }
   }, [userQuery, targetType])
 
-  const canSend = title.trim().length > 0 && body.trim().length > 0 && !sending && (targetType !== 'specific' || !!selectedUser)
+  const canSend = title.trim().length > 0 && body.trim().length > 0 && !sending && (targetType !== 'specific' || selectedUsers.length > 0)
 
   async function handleSend() {
     setSending(true)
     setResult(null)
     try {
-      const label = selectedUser ? `${selectedUser.first_name} ${selectedUser.last_name}`.trim() || selectedUser.email : undefined
-      const res = await supportApi.broadcastNotification(title.trim(), body.trim(), targetType, selectedUser?.id, label)
+      const label = selectedUsers.length > 0
+        ? selectedUsers.map((u) => `${u.first_name} ${u.last_name}`.trim() || u.email).join(', ')
+        : undefined
+      const res = await supportApi.broadcastNotification(title.trim(), body.trim(), targetType, selectedUsers.map((u) => u.id), label)
       setResult({
         text: res.status === 'pending' || res.total_users == null
           ? 'Submitted for admin approval.'
@@ -93,7 +95,7 @@ export default function NotificationsView() {
       })
       setTitle('')
       setBody('')
-      setSelectedUser(null)
+      setSelectedUsers([])
       setUserQuery('')
       setTargetType('all')
       loadMine()
@@ -127,7 +129,7 @@ export default function NotificationsView() {
                 onClick={() => {
                   setTargetType(opt.value)
                   if (opt.value !== 'specific') {
-                    setSelectedUser(null)
+                    setSelectedUsers([])
                     setUserQuery('')
                   }
                 }}
@@ -140,41 +142,49 @@ export default function NotificationsView() {
 
         {targetType === 'specific' && (
           <div className="sp-form-group">
-            <label className="sp-form-input-label">User</label>
-            {selectedUser ? (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid var(--sp-border)', borderRadius: 10, padding: '8px 14px' }}>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 600 }}>{selectedUser.first_name} {selectedUser.last_name}</div>
-                  <div style={{ fontSize: 12, color: 'var(--sp-text-muted)' }}>{selectedUser.email}</div>
-                </div>
-                <button className="sp-btn" onClick={() => setSelectedUser(null)} style={{ padding: 6 }}>
-                  <X size={14} />
-                </button>
-              </div>
-            ) : (
-              <div style={{ position: 'relative' }}>
-                <input
-                  className="sp-form-input"
-                  value={userQuery}
-                  onChange={(e) => setUserQuery(e.target.value)}
-                  placeholder="Search by name, email, or phone..."
-                />
-                {userResults.length > 0 && (
-                  <div style={{ position: 'absolute', zIndex: 10, marginTop: 4, width: '100%', background: 'var(--sp-bg-card)', border: '1px solid var(--sp-border)', borderRadius: 10, maxHeight: 220, overflowY: 'auto' }}>
-                    {userResults.map((u) => (
-                      <button
-                        key={u.id}
-                        onClick={() => { setSelectedUser(u); setUserResults([]) }}
-                        style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 14px', background: 'transparent', border: 'none', cursor: 'pointer' }}
-                      >
-                        <div style={{ fontSize: 13, fontWeight: 600 }}>{u.first_name} {u.last_name}</div>
-                        <div style={{ fontSize: 12, color: 'var(--sp-text-muted)' }}>{u.email}</div>
-                      </button>
-                    ))}
+            <label className="sp-form-input-label">Users</label>
+            {selectedUsers.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+                {selectedUsers.map((u) => (
+                  <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid var(--sp-border)', borderRadius: 999, padding: '6px 8px 6px 14px' }}>
+                    <span style={{ fontSize: 13, fontWeight: 600 }}>{u.first_name} {u.last_name}</span>
+                    <button
+                      className="sp-btn"
+                      onClick={() => setSelectedUsers((prev) => prev.filter((x) => x.id !== u.id))}
+                      style={{ padding: 4 }}
+                    >
+                      <X size={12} />
+                    </button>
                   </div>
-                )}
+                ))}
               </div>
             )}
+            <div style={{ position: 'relative' }}>
+              <input
+                className="sp-form-input"
+                value={userQuery}
+                onChange={(e) => setUserQuery(e.target.value)}
+                placeholder="Search by name, email, or phone..."
+              />
+              {userResults.length > 0 && (
+                <div style={{ position: 'absolute', zIndex: 10, marginTop: 4, width: '100%', background: 'var(--sp-bg-card)', border: '1px solid var(--sp-border)', borderRadius: 10, maxHeight: 220, overflowY: 'auto' }}>
+                  {userResults.map((u) => (
+                    <button
+                      key={u.id}
+                      onClick={() => {
+                        setSelectedUsers((prev) => (prev.some((x) => x.id === u.id) ? prev : [...prev, u]))
+                        setUserQuery('')
+                        setUserResults([])
+                      }}
+                      style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 14px', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                    >
+                      <div style={{ fontSize: 13, fontWeight: 600 }}>{u.first_name} {u.last_name}</div>
+                      <div style={{ fontSize: 12, color: 'var(--sp-text-muted)' }}>{u.email}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 

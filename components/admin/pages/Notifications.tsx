@@ -1,5 +1,5 @@
 'use client'
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Bell, Send, Check, X, Search, Loader2 } from "lucide-react";
 import { adminApi, AdminUser, NotificationBroadcastRequest, NotificationTargetType } from "@/lib/api/admin";
 import { ReasonModal } from "@/components/admin/shared/Modal";
@@ -32,7 +32,7 @@ export function NotificationsPage() {
   const [userQuery, setUserQuery] = useState("");
   const [userResults, setUserResults] = useState<AdminUser[]>([]);
   const [searching, setSearching] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+  const [selectedUsers, setSelectedUsers] = useState<AdminUser[]>([]);
   const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [pending, setPending] = useState<NotificationBroadcastRequest[]>([]);
@@ -81,8 +81,10 @@ export function NotificationsPage() {
     setSending(true);
     setResult(null);
     try {
-      const label = selectedUser ? `${selectedUser.first_name} ${selectedUser.last_name}`.trim() || selectedUser.email : undefined;
-      const res = await adminApi.broadcastNotification(title.trim(), body.trim(), targetType, selectedUser?.id, label);
+      const label = selectedUsers.length > 0
+        ? selectedUsers.map((u) => `${u.first_name} ${u.last_name}`.trim() || u.email).join(", ")
+        : undefined;
+      const res = await adminApi.broadcastNotification(title.trim(), body.trim(), targetType, selectedUsers.map((u) => u.id), label);
       setResult({
         text: res.total_users != null
           ? `Sent to ${res.total_users} user${res.total_users === 1 ? "" : "s"} (${res.push_sent} received a push).`
@@ -91,7 +93,7 @@ export function NotificationsPage() {
       });
       setTitle("");
       setBody("");
-      setSelectedUser(null);
+      setSelectedUsers([]);
       setUserQuery("");
       setTargetType("all");
     } catch (err) {
@@ -129,7 +131,7 @@ export function NotificationsPage() {
     }
   }
 
-  const canSend = title.trim().length > 0 && body.trim().length > 0 && !sending && (targetType !== "specific" || !!selectedUser);
+  const canSend = title.trim().length > 0 && body.trim().length > 0 && !sending && (targetType !== "specific" || selectedUsers.length > 0);
 
   return (
     <div className="p-8 max-w-2xl">
@@ -154,7 +156,7 @@ export function NotificationsPage() {
                 onClick={() => {
                   setTargetType(opt.value);
                   if (opt.value !== "specific") {
-                    setSelectedUser(null);
+                    setSelectedUsers([]);
                     setUserQuery("");
                   }
                 }}
@@ -172,43 +174,50 @@ export function NotificationsPage() {
 
         {targetType === "specific" && (
           <div>
-            <label className="block text-sm text-[var(--text-secondary)] mb-2">User</label>
-            {selectedUser ? (
-              <div className="flex items-center justify-between bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-xl px-4 py-2.5">
-                <div>
-                  <div className="text-sm font-medium text-[var(--text-primary)]">{selectedUser.first_name} {selectedUser.last_name}</div>
-                  <div className="text-xs text-[var(--text-muted)]">{selectedUser.email}</div>
-                </div>
-                <button onClick={() => setSelectedUser(null)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)]">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
-                <input
-                  value={userQuery}
-                  onChange={(e) => setUserQuery(e.target.value)}
-                  placeholder="Search by name, email, or phone..."
-                  className="w-full bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-xl pl-9 pr-4 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-violet-500/40"
-                />
-                {searching && <Loader2 className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] animate-spin" />}
-                {userResults.length > 0 && (
-                  <div className="absolute z-10 mt-1 w-full bg-[var(--bg-modal)] border border-[var(--border-strong)] rounded-xl shadow-2xl max-h-56 overflow-y-auto">
-                    {userResults.map((u) => (
-                      <button
-                        key={u.id}
-                        onClick={() => { setSelectedUser(u); setUserResults([]); }}
-                        className="w-full text-left px-4 py-2.5 hover:bg-[var(--bg-sunken)] transition-colors"
-                      >
-                        <div className="text-sm font-medium text-[var(--text-primary)]">{u.first_name} {u.last_name}</div>
-                        <div className="text-xs text-[var(--text-muted)]">{u.email}</div>
-                      </button>
-                    ))}
+            <label className="block text-sm text-[var(--text-secondary)] mb-2">Users</label>
+            {selectedUsers.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {selectedUsers.map((u) => (
+                  <div key={u.id} className="flex items-center gap-2 bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-full pl-3 pr-2 py-1.5">
+                    <span className="text-sm text-[var(--text-primary)]">{u.first_name} {u.last_name}</span>
+                    <button
+                      onClick={() => setSelectedUsers((prev) => prev.filter((x) => x.id !== u.id))}
+                      className="text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
                   </div>
-                )}
+                ))}
               </div>
             )}
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+              <input
+                value={userQuery}
+                onChange={(e) => setUserQuery(e.target.value)}
+                placeholder="Search by name, email, or phone..."
+                className="w-full bg-[var(--bg-sunken)] border border-[var(--border-color)] rounded-xl pl-9 pr-4 py-2.5 text-sm text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-violet-500/40"
+              />
+              {searching && <Loader2 className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] animate-spin" />}
+              {userResults.length > 0 && (
+                <div className="absolute z-10 mt-1 w-full bg-[var(--bg-modal)] border border-[var(--border-strong)] rounded-xl shadow-2xl max-h-56 overflow-y-auto">
+                  {userResults.map((u) => (
+                    <button
+                      key={u.id}
+                      onClick={() => {
+                        setSelectedUsers((prev) => (prev.some((x) => x.id === u.id) ? prev : [...prev, u]));
+                        setUserQuery("");
+                        setUserResults([]);
+                      }}
+                      className="w-full text-left px-4 py-2.5 hover:bg-[var(--bg-sunken)] transition-colors"
+                    >
+                      <div className="text-sm font-medium text-[var(--text-primary)]">{u.first_name} {u.last_name}</div>
+                      <div className="text-xs text-[var(--text-muted)]">{u.email}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -260,7 +269,7 @@ export function NotificationsPage() {
         ) : (
           <div className="flex items-center justify-end gap-3 bg-amber-500/10 border border-amber-500/25 rounded-xl px-4 py-3">
             <span className="text-sm text-amber-300 flex-1">
-              Send this to {targetType === "all" ? "every user" : targetType === "agent" ? "all agents" : targetType === "user" ? "all individual users" : selectedUser ? `${selectedUser.first_name} ${selectedUser.last_name}` : "this user"} right now?
+              Send this to {targetType === "all" ? "every user" : targetType === "agent" ? "all agents" : targetType === "user" ? "all individual users" : selectedUsers.length > 0 ? selectedUsers.map((u) => `${u.first_name} ${u.last_name}`).join(", ") : "these users"} right now?
             </span>
             <button
               onClick={() => setConfirming(false)}

@@ -11,9 +11,9 @@ import UsersView from './views/UsersView'
 import VerificationsView from './views/VerificationsView'
 import ListingsView from './views/ListingsView'
 import SettingsView from './views/SettingsView'
-import GenericListView from './views/GenericListView'
 import NotificationsView from './views/NotificationsView'
 import ReportsView from './views/ReportsView'
+import ReviewsView from './views/ReviewsView'
 import TicketList from './tickets/TicketList'
 import ChatPanel from './chat/ChatPanel'
 
@@ -120,7 +120,7 @@ export default function SupportApp() {
           />
         )
       case 'reviews':
-        return <GenericListView tab={activeTab} />
+        return <ReviewsView />
       case 'notifications':
         return <NotificationsView />
       case 'messages':

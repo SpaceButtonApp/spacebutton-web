@@ -1,12 +1,12 @@
 'use client'
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Star, AlertCircle, MessageSquareOff, ChevronDown } from "lucide-react";
-import { adminApi, type AdminAgent } from "@/lib/api/admin";
+import { useCallback, useEffect, useState } from "react";
+import { Star, AlertCircle, MessageSquareOff, ShieldCheck, ChevronDown } from "lucide-react";
+import { adminApi, type AdminReview, type AdminReviewStats } from "@/lib/api/admin";
 import { StatCard } from "@/components/admin/shared/StatCard";
-import { SearchInput, Avatar, EmptyState } from "@/components/admin/shared/Atoms";
+import { Avatar, EmptyState } from "@/components/admin/shared/Atoms";
 import { formatDate } from "@/lib/utils/admin-format";
 
-type RatingFilter = "all" | "5" | "4" | "3" | "low";
+type RatingFilter = 0 | 1 | 2 | 3 | 4 | 5;
 
 const AVATAR_COLORS = ["#7c3aed", "#a855f7", "#8b5cf6", "#6366f1", "#c026d3", "#9333ea"];
 function avatarColor(id: string) {
@@ -15,13 +15,12 @@ function avatarColor(id: string) {
 }
 
 function StarRow({ rating }: { rating: number }) {
-  const rounded = Math.round(rating);
   return (
     <div className="flex items-center gap-0.5">
       {Array.from({ length: 5 }).map((_, i) => (
         <Star
           key={i}
-          className={`w-3.5 h-3.5 ${i < rounded ? "text-amber-400 fill-amber-400" : "text-[var(--text-muted)]"}`}
+          className={`w-3.5 h-3.5 ${i < rating ? "text-amber-400 fill-amber-400" : "text-[var(--text-muted)]"}`}
         />
       ))}
     </div>
@@ -29,67 +28,45 @@ function StarRow({ rating }: { rating: number }) {
 }
 
 const RATING_FILTERS: { key: RatingFilter; label: string }[] = [
-  { key: "all", label: "All Ratings" },
-  { key: "5", label: "5 Stars" },
-  { key: "4", label: "4+ Stars" },
-  { key: "3", label: "3+ Stars" },
-  { key: "low", label: "Low (1-2)" },
+  { key: 0, label: "All Ratings" },
+  { key: 5, label: "5 Stars" },
+  { key: 4, label: "4 Stars" },
+  { key: 3, label: "3 Stars" },
+  { key: 2, label: "2 Stars" },
+  { key: 1, label: "1 Star" },
 ];
 
+const PAGE_SIZE = 20;
+
 export function ReviewsPage() {
-  const [agents, setAgents] = useState<AdminAgent[]>([]);
+  const [reviews, setReviews] = useState<AdminReview[]>([]);
+  const [stats, setStats] = useState<AdminReviewStats | null>(null);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
-  const [ratingFilter, setRatingFilter] = useState<RatingFilter>("all");
+  const [ratingFilter, setRatingFilter] = useState<RatingFilter>(0);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (targetPage: number, rating: RatingFilter, append: boolean) => {
+    if (append) setLoadingMore(true); else setLoading(true);
     setError(null);
     try {
-      let all: AdminAgent[] = [];
-      let page = 1;
-      while (true) {
-        const res = await adminApi.getAgents(page, 100);
-        const batch = res.agents ?? [];
-        all = [...all, ...batch];
-        if (all.length >= (res.total ?? 0) || batch.length < 100) break;
-        page++;
-      }
-      setAgents(all);
+      const res = await adminApi.getReviews(targetPage, PAGE_SIZE, rating || undefined);
+      setReviews((prev) => (append ? [...prev, ...res.reviews] : res.reviews));
+      setStats(res.stats);
+      setTotal(res.total);
+      setPage(targetPage);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Failed to load agents");
+      setError(e instanceof Error ? e.message : "Failed to load reviews");
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
-
-  const rated = useMemo(() => agents.filter((a) => (a.total_reviews ?? 0) > 0 && a.average_rating != null), [agents]);
-
-  const totalReviews = rated.reduce((sum, a) => sum + (a.total_reviews ?? 0), 0);
-  const avgRating = totalReviews > 0
-    ? rated.reduce((sum, a) => sum + (a.average_rating ?? 0) * (a.total_reviews ?? 0), 0) / totalReviews
-    : 0;
-
-  const filtered = useMemo(() => {
-    let list = rated;
-    if (ratingFilter === "5") list = list.filter((a) => Math.round(a.average_rating ?? 0) === 5);
-    else if (ratingFilter === "4") list = list.filter((a) => (a.average_rating ?? 0) >= 4);
-    else if (ratingFilter === "3") list = list.filter((a) => (a.average_rating ?? 0) >= 3);
-    else if (ratingFilter === "low") list = list.filter((a) => (a.average_rating ?? 0) < 3);
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      list = list.filter((a) =>
-        `${a.first_name ?? ""} ${a.last_name ?? ""}`.toLowerCase().includes(q) ||
-        (a.agency_name ?? "").toLowerCase().includes(q) ||
-        (a.email ?? "").toLowerCase().includes(q)
-      );
-    }
-    return [...list].sort((a, b) => (b.average_rating ?? 0) - (a.average_rating ?? 0));
-  }, [rated, ratingFilter, search]);
+  useEffect(() => { load(1, ratingFilter, false); }, [load, ratingFilter]);
 
   if (loading) {
     return (
@@ -105,7 +82,7 @@ export function ReviewsPage() {
       <div className="p-8 flex flex-col items-center justify-center min-h-[400px] gap-4">
         <AlertCircle className="w-10 h-10 text-red-400" />
         <p className="text-[var(--text-secondary)] text-sm">{error}</p>
-        <button onClick={load} className="px-4 py-2 rounded-xl bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-colors">Retry</button>
+        <button onClick={() => load(1, ratingFilter, false)} className="px-4 py-2 rounded-xl bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-colors">Retry</button>
       </div>
     );
   }
@@ -113,14 +90,13 @@ export function ReviewsPage() {
   return (
     <div className="p-8">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <StatCard label="Total Reviews" value={totalReviews} icon={MessageSquareOff} iconBg="bg-violet-500/15" iconColor="text-violet-400" />
-        <StatCard label="Average Rating" value={totalReviews > 0 ? avgRating.toFixed(1) : "—"} icon={Star} iconBg="bg-amber-500/15" iconColor="text-amber-400" valueColor="text-amber-400" />
-        <StatCard label="5 Star Reviews" value="N/A" icon={Star} iconBg="bg-emerald-500/15" iconColor="text-emerald-400" sublabel="needs per-review data" />
-        <StatCard label="Low Reviews (1-2)" value="N/A" icon={Star} iconBg="bg-red-500/15" iconColor="text-red-400" sublabel="needs per-review data" />
+        <StatCard label="Total Reviews" value={stats?.total ?? 0} icon={MessageSquareOff} iconBg="bg-violet-500/15" iconColor="text-violet-400" />
+        <StatCard label="Average Rating" value={stats && stats.total > 0 ? stats.average_rating.toFixed(1) : "—"} icon={Star} iconBg="bg-amber-500/15" iconColor="text-amber-400" valueColor="text-amber-400" />
+        <StatCard label="5 Star Reviews" value={stats?.five_star ?? 0} icon={Star} iconBg="bg-emerald-500/15" iconColor="text-emerald-400" />
+        <StatCard label="Low Reviews (1-2)" value={stats?.low_star ?? 0} icon={Star} iconBg="bg-red-500/15" iconColor="text-red-400" />
       </div>
 
-      <div className="flex gap-3 mb-5 items-center">
-        <SearchInput value={search} onChange={setSearch} placeholder="Search agent by name, agency or email..." />
+      <div className="flex gap-3 mb-5 items-center justify-end">
         <div className="relative shrink-0">
           <button
             onClick={() => setShowFilterDropdown((v) => !v)}
@@ -147,53 +123,70 @@ export function ReviewsPage() {
 
       <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl overflow-hidden shadow-[var(--shadow-card)]">
         <div className="px-6 py-4 border-b border-[var(--border-color)]">
-          <h3 className="text-sm font-semibold text-[var(--text-primary)]">Agent Ratings</h3>
-          <p className="text-xs text-[var(--text-muted)] mt-0.5">
-            Aggregate rating per agent. Individual review comments will appear here once that data is available from the backend.
-          </p>
+          <h3 className="text-sm font-semibold text-[var(--text-primary)]">Reviews</h3>
+          <p className="text-xs text-[var(--text-muted)] mt-0.5">Most recent first.</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-[var(--text-muted)] text-xs uppercase tracking-wide border-b border-[var(--border-color)]">
                 <th className="px-6 py-4 font-medium">Agent</th>
+                <th className="px-6 py-4 font-medium">Reviewer</th>
                 <th className="px-6 py-4 font-medium">Rating</th>
-                <th className="px-6 py-4 font-medium">Reviews</th>
-                <th className="px-6 py-4 font-medium">Location</th>
-                <th className="px-6 py-4 font-medium">Agent Since</th>
+                <th className="px-6 py-4 font-medium">Comment</th>
+                <th className="px-6 py-4 font-medium">Date</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
-                <tr><td colSpan={5}><EmptyState label={rated.length === 0 ? "No agents have received reviews yet." : "No agents match your filter."} /></td></tr>
-              ) : filtered.map((a) => {
-                const name = [a.first_name, a.last_name].filter(Boolean).join(" ") || a.agency_name || "Unknown";
-                return (
-                  <tr key={a.id} className="border-b border-[var(--border-color)] last:border-0 hover:bg-[var(--bg-hover)]">
-                    <td className="px-6 py-3.5">
-                      <div className="flex items-center gap-3">
-                        <Avatar name={name} color={avatarColor(a.id)} size={34} />
-                        <div>
-                          <div className="text-[var(--text-primary)] font-medium">{name}</div>
-                          {a.agency_name && <div className="text-xs text-[var(--text-muted)]">{a.agency_name}</div>}
-                        </div>
+              {reviews.length === 0 ? (
+                <tr><td colSpan={5}><EmptyState label={ratingFilter ? "No reviews at this rating." : "No reviews yet."} /></td></tr>
+              ) : reviews.map((r) => (
+                <tr key={r.id} className="border-b border-[var(--border-color)] last:border-0 hover:bg-[var(--bg-hover)] align-top">
+                  <td className="px-6 py-3.5">
+                    <div className="flex items-center gap-3">
+                      <Avatar name={r.agent.name} color={avatarColor(r.agent.id)} size={34} />
+                      <div>
+                        <div className="text-[var(--text-primary)] font-medium">{r.agent.name}</div>
+                        {r.agent.email && <div className="text-xs text-[var(--text-muted)]">{r.agent.email}</div>}
                       </div>
-                    </td>
-                    <td className="px-6 py-3.5">
-                      <div className="flex items-center gap-2">
-                        <StarRow rating={a.average_rating ?? 0} />
-                        <span className="text-[var(--text-secondary)] text-xs font-medium">{(a.average_rating ?? 0).toFixed(1)}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-3.5 text-[var(--text-secondary)]">{a.total_reviews ?? 0}</td>
-                    <td className="px-6 py-3.5 text-[var(--text-secondary)]">{[a.city, a.state].filter(Boolean).join(", ") || "—"}</td>
-                    <td className="px-6 py-3.5 text-[var(--text-secondary)] text-xs">{a.created_at ? formatDate(a.created_at) : "—"}</td>
-                  </tr>
-                );
-              })}
+                    </div>
+                  </td>
+                  <td className="px-6 py-3.5">
+                    <div className="flex items-center gap-2.5">
+                      <Avatar name={r.reviewer.name} color={avatarColor(r.reviewer.id)} size={28} />
+                      <div className="text-[var(--text-secondary)]">{r.reviewer.name}</div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-3.5">
+                    <div className="flex items-center gap-2">
+                      <StarRow rating={r.rating} />
+                      {r.is_verified_deal && (
+                        <span title="Verified deal" className="flex items-center gap-1 text-[10px] font-medium text-emerald-400">
+                          <ShieldCheck className="w-3 h-3" /> Verified
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-3.5 text-[var(--text-secondary)] max-w-xs">
+                    {r.comment ? <span>{r.comment}</span> : <span className="text-[var(--text-muted)] italic">No comment</span>}
+                  </td>
+                  <td className="px-6 py-3.5 text-[var(--text-secondary)] text-xs whitespace-nowrap">{formatDate(r.created_at)}</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
+        {reviews.length < total && (
+          <div className="px-6 py-4 border-t border-[var(--border-color)] flex justify-center">
+            <button
+              onClick={() => load(page + 1, ratingFilter, true)}
+              disabled={loadingMore}
+              className="px-4 py-2 rounded-xl bg-[var(--bg-sunken)] border border-[var(--border-color)] text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] disabled:opacity-50 transition-colors"
+            >
+              {loadingMore ? "Loading…" : `Load More (${reviews.length} of ${total})`}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

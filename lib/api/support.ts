@@ -291,6 +291,16 @@ export const supportApi = {
     return res.data
   },
 
+  // ── Reviews ──────────────────────────────────────────────────────────────
+
+  async getReviews(page = 1, pageSize = 20, rating?: number, agentId?: string): Promise<import('@/lib/api/admin').AdminReviewsResponse> {
+    const qs = new URLSearchParams({ page: String(page), page_size: String(pageSize) })
+    if (rating) qs.set('rating', String(rating))
+    if (agentId) qs.set('agent_id', agentId)
+    const res = await supportFetch<{ success: boolean; data: import('@/lib/api/admin').AdminReviewsResponse }>(`/admin/reviews?${qs}`)
+    return (res as any)?.data ?? res
+  },
+
   // ── Reports ──────────────────────────────────────────────────────────────
 
   async getUserReports(page = 1, pageSize = 50): Promise<{ reports: import('@/lib/api/admin').AdminUserReport[]; total: number }> {

@@ -62,7 +62,7 @@ export interface NotificationBroadcastRequest {
   title: string
   body: string
   target_type: NotificationTargetType
-  target_user_id: string | null
+  target_user_ids: string[] | null
   target_label: string | null
   status: 'pending' | 'sent' | 'rejected'
   created_by_id: string
@@ -672,14 +672,14 @@ export const adminApi = {
     title: string,
     body: string,
     targetType: NotificationTargetType = 'all',
-    targetUserId?: string,
+    targetUserIds?: string[],
     targetLabel?: string,
   ): Promise<{ total_users?: number; push_sent?: number; status?: string }> {
     const res = await adminFetch<{ success: boolean; data: { total_users?: number; push_sent?: number; status?: string } }>(
       '/admin/notifications/broadcast',
       {
         method: 'POST',
-        body: JSON.stringify({ title, body, target_type: targetType, target_user_id: targetUserId, target_label: targetLabel }),
+        body: JSON.stringify({ title, body, target_type: targetType, target_user_ids: targetUserIds, target_label: targetLabel }),
       },
     )
     return (res as any)?.data ?? res

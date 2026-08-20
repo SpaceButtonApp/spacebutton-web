@@ -122,6 +122,39 @@ export interface AdminAgentListResponse {
   agents: AdminAgent[]
 }
 
+export interface AdminReviewUser {
+  id: string
+  name: string
+  email: string | null
+}
+
+export interface AdminReview {
+  id: string
+  rating: number
+  comment: string | null
+  is_verified_deal: boolean
+  created_at: string
+  reviewer: AdminReviewUser
+  agent: AdminReviewUser
+}
+
+export interface AdminReviewStats {
+  total: number
+  average_rating: number
+  five_star: number
+  four_star: number
+  three_star: number
+  low_star: number
+}
+
+export interface AdminReviewsResponse {
+  total: number
+  page: number
+  page_size: number
+  stats: AdminReviewStats
+  reviews: AdminReview[]
+}
+
 export interface AdminUserReport {
   id: string
   reporter_id: string
@@ -419,6 +452,14 @@ export const adminApi = {
     )
     const inner = (res as any)?.data ?? res
     return inner as AdminAgentListResponse
+  },
+
+  async getReviews(page = 1, pageSize = 20, rating?: number, agentId?: string): Promise<AdminReviewsResponse> {
+    const qs = new URLSearchParams({ page: String(page), page_size: String(pageSize) })
+    if (rating) qs.set('rating', String(rating))
+    if (agentId) qs.set('agent_id', agentId)
+    const res = await adminFetch<{ success: boolean; data: AdminReviewsResponse }>(`/admin/reviews?${qs}`)
+    return (res as any)?.data ?? res
   },
 
   // Listings

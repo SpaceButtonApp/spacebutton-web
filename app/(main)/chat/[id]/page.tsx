@@ -5,18 +5,20 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import {
   Video, Phone, MoreVertical, Send, X, Check, CheckSquare,
-  MessageSquare, Star, Flag, ArrowLeft, CheckCheck,
+  MessageSquare, Star, Flag, ArrowLeft, CheckCheck, MapPin, CheckCircle2,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { VerifiedBadge } from '@/components/verified-badge'
 import { useAppStore } from '@/lib/store'
 import { chatApi } from '@/lib/api/chat'
-import { reviewApi, userApi, getUserDisplayInfo } from '@/lib/api/users'
+import { reviewApi, userApi, agentApi, getUserDisplayInfo } from '@/lib/api/users'
 import { listingsApi, mapListing } from '@/lib/api/listings'
 import { useChatWs } from '@/lib/hooks/use-chat-ws'
 import { cn } from '@/lib/utils'
 import type { ChatResponse, MessageResponse, DoneDealState } from '@/lib/types/chat'
 import type { Property } from '@/lib/mock-data'
+import type { ReviewResponse } from '@/lib/types/user'
 
 const DEFAULT_AVATAR = '/placeholder-user.jpg'
 const DEFAULT_PROPERTY_IMG = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=400&h=300&fit=crop'
@@ -65,7 +67,15 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [feedbackText, setFeedbackText] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [showUserPopup, setShowUserPopup] = useState(false)
-  const [popupProfile, setPopupProfile] = useState<{ bio: string | null; rating: number; reviewCount: number } | null>(null)
+  const [popupProfile, setPopupProfile] = useState<{
+    bio: string | null
+    city: string | null
+    state: string | null
+    role: string
+    isVerified: boolean
+    stats: { listings: number; closed: number; rating: string }
+    reviews: ReviewResponse[]
+  } | null>(null)
   const [popupLoading, setPopupLoading] = useState(false)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -201,14 +211,31 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
     setShowUserPopup(true)
     if (popupProfile) return
     setPopupLoading(true)
-    const [profileRes, reviewsRes] = await Promise.allSettled([
-      userApi.getPublicProfile(targetId),
-      reviewApi.getAgentReviews(targetId),
+
+    const role = otherInfo?.role ?? 'user'
+    const [agent, userP, listingsData, reviewsData] = await Promise.all([
+      role === 'agent' ? agentApi.getAgentProfile(targetId).catch(() => null) : Promise.resolve(null),
+      userApi.getPublicProfile(targetId).catch(() => null),
+      listingsApi.getAgentListings(targetId).catch(() => null),
+      reviewApi.getAgentReviews(targetId).catch(() => null),
     ])
+
+    const listings = listingsData?.listings ?? []
+    const active = listings.filter((l: any) => ['active', 'ACTIVE'].includes(l.status)).length
+    const avgRating = reviewsData?.average_rating ?? 0
+
     setPopupProfile({
-      bio: profileRes.status === 'fulfilled' ? profileRes.value.bio : null,
-      rating: reviewsRes.status === 'fulfilled' ? reviewsRes.value.average_rating : 0,
-      reviewCount: reviewsRes.status === 'fulfilled' ? reviewsRes.value.total : 0,
+      bio: agent?.bio || userP?.bio || null,
+      city: agent?.city || userP?.city || null,
+      state: agent?.state || userP?.state || null,
+      role,
+      isVerified: (userP?.is_identity_verified && userP?.is_live_verified) ?? false,
+      stats: {
+        listings: active,
+        closed: listings.length - active,
+        rating: avgRating > 0 ? avgRating.toFixed(1) : '—',
+      },
+      reviews: reviewsData?.reviews ?? [],
     })
     setPopupLoading(false)
   }
@@ -558,71 +585,107 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
       {/* User profile popup */}
       {showUserPopup && (
         <div
-          className="fixed inset-0 z-50 bg-black/50 flex items-end justify-center sm:items-center p-4"
+          className="fixed inset-0 z-50 bg-black/55 flex items-end justify-center"
           onClick={() => setShowUserPopup(false)}
         >
           <div
-            className="w-full max-w-sm rounded-2xl bg-background p-6 flex flex-col items-center gap-4"
+            className="w-full max-w-lg bg-background rounded-t-[28px] p-5 pb-9 max-h-[85vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <button
-              onClick={() => setShowUserPopup(false)}
-              className="self-end w-8 h-8 flex items-center justify-center rounded-full bg-secondary"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            <div className="w-10 h-1 rounded-full bg-border mx-auto mb-[18px]" />
 
-            <Image
-              src={otherAvatar}
-              alt={otherName}
-              width={80}
-              height={80}
-              className="rounded-full object-cover border-4 border-border"
-              unoptimized
-            />
-
-            <h3 className="text-xl font-bold text-foreground text-center">{otherName}</h3>
-
-            {popupLoading ? (
-              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <>
-                {(popupProfile?.reviewCount ?? 0) > 0 && (
-                  <div className="flex flex-col items-center gap-1">
-                    <div className="flex gap-0.5">
-                      {[1, 2, 3, 4, 5].map((s) => (
-                        <Star
-                          key={s}
-                          className={cn(
-                            'w-5 h-5',
-                            s <= Math.round(popupProfile!.rating)
-                              ? 'fill-yellow-400 text-yellow-400'
-                              : 'text-muted-foreground',
-                          )}
-                        />
-                      ))}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      {popupProfile!.rating.toFixed(1)} · {popupProfile!.reviewCount}{' '}
-                      {popupProfile!.reviewCount === 1 ? 'review' : 'reviews'}
-                    </p>
+            <div className="flex gap-3.5 mb-4">
+              <Image
+                src={otherAvatar}
+                alt={otherName}
+                width={72}
+                height={72}
+                className="rounded-full object-cover border-2 shrink-0"
+                style={{ borderColor: '#703BF7' }}
+                unoptimized
+              />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <h3 className="text-lg font-bold text-foreground truncate">{otherName}</h3>
+                  {popupProfile?.isVerified && <VerifiedBadge size={18} />}
+                </div>
+                <p className="text-sm text-muted-foreground capitalize mb-2.5">
+                  {popupProfile?.role === 'agent' ? 'Agent' : 'Individual'}
+                </p>
+                {popupLoading ? (
+                  <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <div className="flex gap-2">
+                    {[
+                      { l: 'Listings', v: popupProfile?.stats.listings ?? 0 },
+                      { l: 'Closed', v: popupProfile?.stats.closed ?? 0 },
+                      { l: 'Rating', v: popupProfile?.stats.rating ?? '—' },
+                    ].map((st) => (
+                      <div key={st.l} className="px-2.5 py-1.5 rounded-[10px] border border-border text-center">
+                        <p className="text-sm font-bold text-foreground leading-none">{st.v}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{st.l}</p>
+                      </div>
+                    ))}
                   </div>
                 )}
+              </div>
+            </div>
 
-                {popupProfile?.bio && (
-                  <p className="text-sm text-muted-foreground text-center leading-relaxed">
-                    {popupProfile.bio}
-                  </p>
+            {!popupLoading && (popupProfile?.bio || popupProfile?.city || popupProfile?.state) && (
+              <div className="border-t border-border pt-3.5 mt-1 space-y-1.5">
+                {(popupProfile?.city || popupProfile?.state) && (
+                  <div className="flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
+                    <span className="text-sm text-muted-foreground">
+                      {[popupProfile?.city, popupProfile?.state].filter(Boolean).join(', ')}
+                    </span>
+                  </div>
                 )}
-
-                <button
-                  onClick={() => { setShowUserPopup(false); router.push(`/user/${otherId}`) }}
-                  className="w-full h-11 rounded-xl bg-secondary text-foreground text-sm font-medium hover:bg-secondary/80 transition-colors"
-                >
-                  View Full Profile
-                </button>
-              </>
+                {popupProfile?.bio && (
+                  <p className="text-sm text-muted-foreground leading-relaxed">{popupProfile.bio}</p>
+                )}
+              </div>
             )}
+
+            {!popupLoading && (popupProfile?.reviews.length ?? 0) > 0 && (
+              <div className="border-t border-border pt-3.5 mt-3.5">
+                <h4 className="text-sm font-semibold text-foreground mb-2.5">
+                  Reviews ({popupProfile!.reviews.length})
+                </h4>
+                <div className="max-h-[220px] overflow-y-auto space-y-2">
+                  {popupProfile!.reviews.map((r) => (
+                    <div key={r.id} className="border border-border rounded-[10px] p-2.5">
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex gap-0.5">
+                          {[1, 2, 3, 4, 5].map((n) => (
+                            <Star
+                              key={n}
+                              className={cn('w-3 h-3', n <= r.rating ? 'fill-amber-500 text-amber-500' : 'text-muted-foreground')}
+                            />
+                          ))}
+                        </div>
+                        {r.is_verified_deal && (
+                          <span
+                            className="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold"
+                            style={{ color: '#10B981', backgroundColor: '#10B98120' }}
+                          >
+                            <CheckCircle2 className="w-2.5 h-2.5" /> Verified Deal
+                          </span>
+                        )}
+                      </div>
+                      {r.comment && <p className="text-xs text-muted-foreground leading-[17px]">{r.comment}</p>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={() => { setShowUserPopup(false); router.push(`/user/${otherId}`) }}
+              className="w-full h-11 rounded-xl bg-secondary text-foreground text-sm font-medium hover:bg-secondary/80 transition-colors mt-4"
+            >
+              View Full Profile
+            </button>
           </div>
         </div>
       )}

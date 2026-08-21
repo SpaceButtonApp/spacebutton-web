@@ -679,13 +679,6 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
                 </div>
               </div>
             )}
-
-            <button
-              onClick={() => { setShowUserPopup(false); router.push(`/user/${otherId}`) }}
-              className="w-full h-11 rounded-xl bg-secondary text-foreground text-sm font-medium hover:bg-secondary/80 transition-colors mt-4"
-            >
-              View Full Profile
-            </button>
           </div>
         </div>
       )}

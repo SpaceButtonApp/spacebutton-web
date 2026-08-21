@@ -8,6 +8,11 @@ import { supportApi } from '@/lib/api/chat'
 import type { SupportMsg } from '@/lib/api/chat'
 import { ListingRequestModal } from '@/components/listing-request-modal'
 
+// How long the nudge bubble stays hidden after being dismissed/engaged with,
+// before it's eligible to reappear. Short enough that real (non-reloading,
+// app-like) sessions still see it again, long enough not to nag.
+const BUBBLE_COOLDOWN_MS = 3 * 60 * 1000
+
 export function SupportChatWidget() {
   const pathname = usePathname()
   const user = useAppStore((s) => s.user)
@@ -20,8 +25,10 @@ export function SupportChatWidget() {
   const [loading, setLoading] = useState(false)
   const [unread, setUnread] = useState(0)
   const [showBubble, setShowBubble] = useState(false)
-  // Session-only: resets on every page load, so the nudge comes back on reload
-  const [bubbleDismissed, setBubbleDismissed] = useState(false)
+  // Timestamp of the last dismiss/interaction, or null if none yet this session.
+  // The bubble becomes eligible to show again once BUBBLE_COOLDOWN_MS has passed —
+  // it doesn't require a full page reload, since real (app-like) sessions rarely get one.
+  const [bubbleCooldownStart, setBubbleCooldownStart] = useState<number | null>(null)
   const [showRequestModal, setShowRequestModal] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const lastMsgCountRef = useRef(0)
@@ -35,16 +42,27 @@ export function SupportChatWidget() {
 
   function dismissBubble() {
     setShowBubble(false)
-    setBubbleDismissed(true)
+    setBubbleCooldownStart(Date.now())
   }
 
-  // Recurring nudge — pops the bubble every 5 seconds while the chat is closed.
-  // Individual accounts only — agents are listing spaces, not looking for one.
+  // Nudge appears once eligible and then stays up (no more blink-toggling —
+  // a steady presence is easier to notice than something that flickers on/off)
+  // until dismissed or interacted with. Individual accounts only — agents are
+  // listing spaces, not looking for one.
   useEffect(() => {
-    if (hidden || !user || user.type === 'agent' || open || bubbleDismissed) { setShowBubble(false); return }
-    const interval = setInterval(() => setShowBubble((v) => !v), 5_000)
-    return () => clearInterval(interval)
-  }, [hidden, user, open, bubbleDismissed])
+    if (hidden || !user || user.type === 'agent' || open) { setShowBubble(false); return }
+
+    function evaluate() {
+      const coolingDown = bubbleCooldownStart !== null && Date.now() - bubbleCooldownStart < BUBBLE_COOLDOWN_MS
+      setShowBubble(!coolingDown)
+    }
+
+    const initialDelay = setTimeout(evaluate, 4_000)
+    // Re-check periodically so it comes back on its own once the cooldown
+    // elapses, without needing a reload or navigation to retrigger it.
+    const interval = setInterval(evaluate, 15_000)
+    return () => { clearTimeout(initialDelay); clearInterval(interval) }
+  }, [hidden, user, open, bubbleCooldownStart])
 
   const loadMessages = useCallback(async () => {
     try {
@@ -119,7 +137,7 @@ export function SupportChatWidget() {
   const handleFabClick = () => {
     if (showBubble) {
       setShowRequestModal(true)
-      setShowBubble(false)
+      dismissBubble()
     } else {
       setOpen((prev) => !prev)
     }
@@ -206,7 +224,7 @@ export function SupportChatWidget() {
         </div>
       )}
 
-      {/* "Can't find your space?" nudge bubble — pops every 5s while chat is closed */}
+      {/* "Can't find your space?" nudge bubble — appears once eligible, stays up until dismissed/engaged */}
       {showBubble && !open && (
         <div className="fixed bottom-[150px] right-4 sm:bottom-24 sm:right-5 z-50 w-72 animate-in fade-in slide-in-from-bottom-2 duration-300">
           <div className="relative bg-[#12121a] border border-gray-800 rounded-2xl p-4 shadow-2xl">
@@ -218,7 +236,7 @@ export function SupportChatWidget() {
               <X className="w-3.5 h-3.5" />
             </button>
             <button
-              onClick={() => { setShowRequestModal(true); setShowBubble(false) }}
+              onClick={() => { setShowRequestModal(true); dismissBubble() }}
               className="text-left w-full pr-4"
             >
               <p className="text-white font-semibold text-sm mb-1">Can&apos;t Find Your Perfect Space?</p>

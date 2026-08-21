@@ -135,7 +135,7 @@ export default function HomePage() {
 
           <div className="flex-1 flex items-center justify-center gap-2">
             <Image src={logoUrl} alt="SpaceButton" width={40} height={69} className="h-7 w-auto" style={{ width: 'auto' }} />
-            <span className="text-lg font-bold text-foreground hidden sm:inline">SpaceButton</span>
+            <span className="text-lg font-bold text-foreground">SpaceButton</span>
           </div>
 
           <div className="flex items-center gap-2 flex-shrink-0">

@@ -10,9 +10,11 @@ import { useAppStore } from '@/lib/store'
 interface ListingRequestModalProps {
   isOpen: boolean
   onClose: () => void
+  /** Called once the request message is successfully sent (not on cancel/close). */
+  onSubmitted?: () => void
 }
 
-export function ListingRequestModal({ isOpen, onClose }: ListingRequestModalProps) {
+export function ListingRequestModal({ isOpen, onClose, onSubmitted }: ListingRequestModalProps) {
   const router = useRouter()
   const user = useAppStore((s) => s.user)
   const [propertyType, setPropertyType] = useState('')
@@ -44,6 +46,7 @@ export function ListingRequestModal({ isOpen, onClose }: ListingRequestModalProp
       ].filter(Boolean).join('\n')
       await userSupportApi.send(message)
       setSubmitted(true)
+      onSubmitted?.()
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong. Please try again.')
     } finally {

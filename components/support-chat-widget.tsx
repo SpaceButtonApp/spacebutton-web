@@ -11,7 +11,8 @@ import { ListingRequestModal } from '@/components/listing-request-modal'
 // How long the nudge bubble stays hidden after being dismissed/engaged with,
 // before it's eligible to reappear. Short enough that real (non-reloading,
 // app-like) sessions still see it again, long enough not to nag.
-const BUBBLE_COOLDOWN_MS = 3 * 60 * 1000
+const BUBBLE_COOLDOWN_CONFIRMED_MS = 2 * 60 * 1000 // "Yes, I've found it"
+const BUBBLE_COOLDOWN_SUBMITTED_MS = 3 * 60 * 1000 // filled out the request form
 
 export function SupportChatWidget() {
   const pathname = usePathname()
@@ -25,11 +26,12 @@ export function SupportChatWidget() {
   const [loading, setLoading] = useState(false)
   const [unread, setUnread] = useState(0)
   const [showBubble, setShowBubble] = useState(false)
-  // Timestamp of the last dismiss/interaction, or null if none yet this session.
-  // The bubble becomes eligible to show again once BUBBLE_COOLDOWN_MS has passed —
-  // it doesn't require a full page reload, since real (app-like) sessions rarely get one.
-  const [bubbleCooldownStart, setBubbleCooldownStart] = useState<number | null>(null)
+  // Start time + length of the current cooldown, or null if none yet this session.
+  // The bubble becomes eligible to show again once the cooldown elapses — it doesn't
+  // require a full page reload, since real (app-like) sessions rarely get one.
+  const [bubbleCooldown, setBubbleCooldown] = useState<{ start: number; durationMs: number } | null>(null)
   const [showRequestModal, setShowRequestModal] = useState(false)
+  const [showDismissConfirm, setShowDismissConfirm] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const lastMsgCountRef = useRef(0)
 
@@ -40,9 +42,28 @@ export function SupportChatWidget() {
     pathname === '/welcome' || pathname === '/get-started' ||
     pathname === '/chat/admin-support'
 
-  function dismissBubble() {
+  function startCooldown(durationMs: number) {
     setShowBubble(false)
-    setBubbleCooldownStart(Date.now())
+    setBubbleCooldown({ start: Date.now(), durationMs })
+  }
+
+  // X button no longer dismisses directly — it asks for confirmation first.
+  function handleDismissClick() {
+    setShowBubble(false)
+    setShowDismissConfirm(true)
+  }
+
+  // "Yes" — they've found their space. Short cooldown, no need to open the form.
+  function handleConfirmYes() {
+    setShowDismissConfirm(false)
+    startCooldown(BUBBLE_COOLDOWN_CONFIRMED_MS)
+  }
+
+  // "No" — send them straight to the request form. Cooldown only starts once
+  // they actually submit it (see ListingRequestModal's onSubmitted below).
+  function handleConfirmNo() {
+    setShowDismissConfirm(false)
+    setShowRequestModal(true)
   }
 
   // Nudge appears once eligible and then stays up (no more blink-toggling —
@@ -53,7 +74,7 @@ export function SupportChatWidget() {
     if (hidden || !user || user.type === 'agent' || open) { setShowBubble(false); return }
 
     function evaluate() {
-      const coolingDown = bubbleCooldownStart !== null && Date.now() - bubbleCooldownStart < BUBBLE_COOLDOWN_MS
+      const coolingDown = bubbleCooldown !== null && Date.now() - bubbleCooldown.start < bubbleCooldown.durationMs
       setShowBubble(!coolingDown)
     }
 
@@ -62,7 +83,7 @@ export function SupportChatWidget() {
     // elapses, without needing a reload or navigation to retrigger it.
     const interval = setInterval(evaluate, 15_000)
     return () => { clearTimeout(initialDelay); clearInterval(interval) }
-  }, [hidden, user, open, bubbleCooldownStart])
+  }, [hidden, user, open, bubbleCooldown])
 
   const loadMessages = useCallback(async () => {
     try {
@@ -136,8 +157,8 @@ export function SupportChatWidget() {
   // most people were tapping the icon rather than the bubble text itself.
   const handleFabClick = () => {
     if (showBubble) {
+      setShowBubble(false)
       setShowRequestModal(true)
-      dismissBubble()
     } else {
       setOpen((prev) => !prev)
     }
@@ -225,18 +246,18 @@ export function SupportChatWidget() {
       )}
 
       {/* "Can't find your space?" nudge bubble — appears once eligible, stays up until dismissed/engaged */}
-      {showBubble && !open && (
+      {showBubble && !open && !showDismissConfirm && (
         <div className="fixed bottom-[150px] right-4 sm:bottom-24 sm:right-5 z-50 w-72 animate-in fade-in slide-in-from-bottom-2 duration-300">
           <div className="relative bg-[#12121a] border border-gray-800 rounded-2xl p-4 shadow-2xl">
             <button
-              onClick={dismissBubble}
+              onClick={handleDismissClick}
               aria-label="Dismiss"
               className="absolute top-2.5 right-2.5 text-gray-500 hover:text-gray-300 transition-colors"
             >
               <X className="w-3.5 h-3.5" />
             </button>
             <button
-              onClick={() => { setShowRequestModal(true); dismissBubble() }}
+              onClick={() => { setShowBubble(false); setShowRequestModal(true) }}
               className="text-left w-full pr-4"
             >
               <p className="text-white font-semibold text-sm mb-1">Can&apos;t Find Your Perfect Space?</p>
@@ -245,6 +266,32 @@ export function SupportChatWidget() {
               </p>
             </button>
             <div className="absolute -bottom-2 right-6 w-4 h-4 bg-[#12121a] border-r border-b border-gray-800 transform rotate-45" />
+          </div>
+        </div>
+      )}
+
+      {/* Dismiss confirmation — asks whether they've actually found their space */}
+      {showDismissConfirm && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-[#12121a] border border-gray-800 p-6">
+            <p className="text-white font-semibold text-base mb-2">Have you found your perfect space?</p>
+            <p className="text-gray-400 text-sm mb-5 leading-relaxed">
+              If not, tell us what you&apos;re looking for and we&apos;ll help you find it.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={handleConfirmNo}
+                className="flex-1 h-11 rounded-xl bg-[#1a1a24] border border-gray-800 text-white text-sm font-medium hover:bg-[#20202c] transition-colors"
+              >
+                No
+              </button>
+              <button
+                onClick={handleConfirmYes}
+                className="flex-1 h-11 rounded-xl bg-[#703BF7] hover:bg-[#5f32d4] text-white text-sm font-medium transition-colors"
+              >
+                Yes
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -263,7 +310,11 @@ export function SupportChatWidget() {
         )}
       </button>
 
-      <ListingRequestModal isOpen={showRequestModal} onClose={() => setShowRequestModal(false)} />
+      <ListingRequestModal
+        isOpen={showRequestModal}
+        onClose={() => setShowRequestModal(false)}
+        onSubmitted={() => startCooldown(BUBBLE_COOLDOWN_SUBMITTED_MS)}
+      />
     </>
   )
 }

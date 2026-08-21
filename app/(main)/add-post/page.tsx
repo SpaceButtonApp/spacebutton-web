@@ -95,8 +95,30 @@ export default function AddPostPage() {
   }
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []).map(normalizeFileType)
+    const incoming = Array.from(e.target.files || []).map(normalizeFileType)
+    if (incoming.length === 0) return
+
+    // Only one video is supported per listing (the backend only stores a single
+    // video_tour_url) — silently keeping only the first at submit time meant
+    // extra videos the user picked were just discarded without them knowing.
+    // Reject the excess here instead, up front.
+    const existingVideoCount = mediaFiles.filter((f) => f.type.startsWith('video/')).length
+    let videoBudget = Math.max(0, 1 - existingVideoCount)
+    let droppedExtraVideo = false
+
+    const files = incoming.filter((f) => {
+      if (!f.type.startsWith('video/')) return true
+      if (videoBudget > 0) { videoBudget--; return true }
+      droppedExtraVideo = true
+      return false
+    })
+
+    if (droppedExtraVideo) {
+      setValidationMessage("Only one video is allowed per listing. The extra video(s) weren't added.")
+      setShowValidationModal(true)
+    }
     if (files.length === 0) return
+
     setMediaFiles((prev) => [...prev, ...files])
     setPhotos((prev) => [...prev, ...files.map((f) => URL.createObjectURL(f))])
   }
@@ -163,6 +185,12 @@ export default function AddPostPage() {
 
     if (videoCount < 1) {
       setValidationMessage("Please upload at least 1 video of the property")
+      setShowValidationModal(true)
+      return false
+    }
+
+    if (videoCount > 1) {
+      setValidationMessage("Only one video is allowed per listing")
       setShowValidationModal(true)
       return false
     }

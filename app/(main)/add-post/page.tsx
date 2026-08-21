@@ -18,6 +18,24 @@ const genderOptions = ["Male", "Female", "Both"]
 const propertyCategories = ["Flat", "Self Con", "Duplex", "Storey", "Penthouse"]
 const facilities = ["Parking Lot", "Pet Allowed", "Park", "Garden", "Estate", "Kid's Friendly", "Home theatre", "Other"]
 
+// Browsers (especially non-Apple ones) often report HEIC/HEIF files with a blank
+// or generic type (e.g. "application/octet-stream") since MIME-sniffing for that
+// format is unreliable — which then gets rejected by the backend as "unsupported"
+// even though it's a genuinely valid photo. Fall back to the file extension.
+const EXT_MIME_MAP: Record<string, string> = {
+  jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp",
+  heic: "image/heic", heif: "image/heif",
+  mp4: "video/mp4", mov: "video/quicktime", webm: "video/webm", m4v: "video/x-m4v",
+}
+
+function normalizeFileType(file: File): File {
+  if (file.type && (file.type.startsWith("image/") || file.type.startsWith("video/"))) return file
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? ""
+  const inferred = EXT_MIME_MAP[ext]
+  if (!inferred) return file
+  return new File([file], file.name, { type: inferred, lastModified: file.lastModified })
+}
+
 export default function AddPostPage() {
   const router = useRouter()
   const { user } = useAppStore()
@@ -77,7 +95,7 @@ export default function AddPostPage() {
   }
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || [])
+    const files = Array.from(e.target.files || []).map(normalizeFileType)
     if (files.length === 0) return
     setMediaFiles((prev) => [...prev, ...files])
     setPhotos((prev) => [...prev, ...files.map((f) => URL.createObjectURL(f))])

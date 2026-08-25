@@ -536,7 +536,6 @@ export const mockUsers: User[] = [
 ]
 
 export const safetyTips = [
-  'Do not pay inspection fee if the property you are seeing is from the app.',
   'Only pay Rental fee, Sales fee or any upfront payment after you verify the Landlord',
   'Ensure you meet the Individual/Agent in an Open location',
   'The Individual/Agent does not represent SpaceButton',

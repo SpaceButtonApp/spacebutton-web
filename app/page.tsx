@@ -352,7 +352,7 @@ export default function LandingPage() {
                   </span>
                 </h1>
                 <p className="text-lg sm:text-xl text-muted-foreground mt-6 leading-relaxed max-w-2xl mx-auto">
-                  Your journey to finding the perfect Space begins here. <span className="text-foreground font-medium">No agent fees. No inspection fees.</span> No stress. Just real connections.
+                  <span className="text-foreground font-medium">No agent fees. No hidden costs.</span> Just real connections to your perfect space.
                 </p>
               </div>
 

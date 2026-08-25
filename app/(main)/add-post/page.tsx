@@ -744,13 +744,6 @@ export default function AddPostPage() {
         </div>
 
         {/* Warning notice */}
-        {(selectedCondition === "Rent" || selectedCondition === "Flatmate" || selectedCondition === "Roommate") && (
-          <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
-            <p className="text-sm font-bold text-amber-400 text-center tracking-wide">
-              AGENT MUST NOT COLLECT INSPECTION FEE FOR PROPERTY LISTED ON THE APP
-            </p>
-          </div>
-        )}
         {selectedCondition === "Vacating" && (
           <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
             <p className="text-sm font-bold text-amber-400 text-center tracking-wide">

@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Users as UsersIcon, UserCheck, Briefcase, Ban, Eye, UserX, RefreshCw, AlertCircle, MailCheck, MailX, ShieldCheck, Phone } from 'lucide-react'
+import { Users as UsersIcon, UserCheck, Briefcase, Ban, Eye, UserX, RefreshCw, AlertCircle, MailCheck, MailX, ShieldCheck, Phone, Check, X } from 'lucide-react'
 import { supportApi, type AdminUser } from '@/lib/api/support'
 import { StatCard } from '@/components/admin/shared/StatCard'
 import { SearchInput, ExportButton, ActionMenu, FilterPill, Avatar, EmptyState } from '@/components/admin/shared/Atoms'
@@ -160,6 +160,7 @@ export default function UsersView() {
       'users',
       filtered.map((u) => ({
         UserID: u.userId, Name: u.name, Email: u.email, Phone: u.phone, Role: u.role,
+        Verified: identityVerifiedIds.has(u.id) ? 'Verified' : 'Not Verified',
         Status: u.status, Joined: formatDate(u.joinDate),
       })),
     )
@@ -236,6 +237,7 @@ export default function UsersView() {
                       <th className="px-6 py-4 font-medium">Email</th>
                       <th className="px-6 py-4 font-medium">Phone</th>
                       <th className="px-6 py-4 font-medium">Role</th>
+                      <th className="px-6 py-4 font-medium">Verified</th>
                       <th className="px-6 py-4 font-medium">Status</th>
                       <th className="px-6 py-4 font-medium">Joined</th>
                       <th className="px-6 py-4 font-medium text-right">Actions</th>
@@ -248,12 +250,7 @@ export default function UsersView() {
                           <div className="flex items-center gap-3">
                             <Avatar name={u.name} color={u.avatarColor} size={36} />
                             <div>
-                              <div className="text-[var(--text-primary)] font-medium flex items-center gap-1.5">
-                                {u.name}
-                                {identityVerifiedIds.has(u.id) && (
-                                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" aria-label="Identity verified" />
-                                )}
-                              </div>
+                              <div className="text-[var(--text-primary)] font-medium">{u.name}</div>
                               <div className="text-xs text-[var(--text-muted)]">{truncateId(u.userId, 10)}</div>
                             </div>
                           </div>
@@ -272,6 +269,17 @@ export default function UsersView() {
                           <span className="text-xs font-medium capitalize px-2.5 py-1 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/20">
                             {u.role}
                           </span>
+                        </td>
+                        <td className="px-6 py-3.5">
+                          {identityVerifiedIds.has(u.id) ? (
+                            <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-400">
+                              <Check className="w-3.5 h-3.5" /> Verified
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-xs font-medium text-red-400">
+                              <X className="w-3.5 h-3.5" /> Not Verified
+                            </span>
+                          )}
                         </td>
                         <td className="px-6 py-3.5"><StatusBadge status={u.status} /></td>
                         <td className="px-6 py-3.5 text-[var(--text-secondary)]">{formatDate(u.joinDate)}</td>

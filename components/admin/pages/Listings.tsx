@@ -7,7 +7,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { adminApi } from "@/lib/api/admin";
-import type { AdminListing, AdminAgent, ListingConversation } from "@/lib/api/admin";
+import type { AdminListing, AdminAgent, AdminUser, ListingConversation } from "@/lib/api/admin";
 import { StatCard } from "@/components/admin/shared/StatCard";
 import { SearchInput, ExportButton, ActionMenu, FilterPill, Avatar, EmptyState } from "@/components/admin/shared/Atoms";
 import { StatusBadge } from "@/components/admin/shared/Badge";
@@ -68,10 +68,13 @@ function hashColor(id: string): string {
   return colors[Math.abs(hash) % colors.length];
 }
 
-function mapListing(l: AdminListing, agentMap: Map<string, AdminAgent>): ListingRow {
+function mapListing(l: AdminListing, agentMap: Map<string, AdminAgent>, usersMap: Map<string, AdminUser>): ListingRow {
   const agent = agentMap.get(l.agent_id);
+  const user = !agent ? usersMap.get(l.agent_id) : undefined;
   const agentName = agent
     ? [agent.first_name, agent.last_name].filter(Boolean).join(" ") || agent.agency_name || "Unknown"
+    : user
+    ? [user.first_name, user.last_name].filter(Boolean).join(" ") || user.email || "Unknown"
     : "Unknown";
   const price = parseFloat(l.price ?? "0") || 0;
   const statusRaw = (l.status ?? "").toLowerCase();
@@ -115,7 +118,7 @@ function mapListing(l: AdminListing, agentMap: Map<string, AdminAgent>): Listing
     videoUrl: l.video_tour_url,
     agentId: l.agent_id,
     agentName,
-    agentEmail: agent?.email ?? "",
+    agentEmail: agent?.email ?? user?.email ?? "",
     agentAvatarColor: hashColor(l.agent_id),
     createdDate: l.created_at,
   };
@@ -172,7 +175,24 @@ export function ListingsPage({ onMessageUser, onMailUser, focusListingId, onFocu
           agentMap.set(a.id, a); agentMap.set(a.user_id, a);
         }
       }
-      setListings(all.map((l) => mapListing(l, agentMap)));
+
+      const usersMap = new Map<string, AdminUser>();
+      try {
+        let allUsers: AdminUser[] = [];
+        let uPage = 1;
+        while (true) {
+          const res = await adminApi.getUsers(uPage, 100);
+          const batch = res.users ?? [];
+          allUsers = [...allUsers, ...batch];
+          if (allUsers.length >= (res.total ?? 0) || batch.length < 100) break;
+          uPage++;
+        }
+        for (const u of allUsers) usersMap.set(u.id, u);
+      } catch {
+        // individual posters just won't resolve — falls back to "Unknown"
+      }
+
+      setListings(all.map((l) => mapListing(l, agentMap, usersMap)));
     } catch (e) {
       setError(e instanceof Error ? e.message : typeof e === "string" ? e : "Failed to load listings");
     } finally { setLoading(false); }

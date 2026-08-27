@@ -25,6 +25,7 @@ export function SupportChatWidget() {
   const [initialized, setInitialized] = useState(false)
   const [loading, setLoading] = useState(false)
   const [unread, setUnread] = useState(0)
+  const [popupMsg, setPopupMsg] = useState<string | null>(null)
   const [showBubble, setShowBubble] = useState(false)
   // Start time + length of the current cooldown, or null if none yet this session.
   // The bubble becomes eligible to show again once the cooldown elapses — it doesn't
@@ -92,8 +93,11 @@ export function SupportChatWidget() {
       if (!open) {
         const newCount = msgs.length - lastMsgCountRef.current
         if (newCount > 0 && lastMsgCountRef.current > 0) {
-          const hasNewAdminMsg = msgs.slice(-newCount).some(m => m.sender === 'admin')
-          if (hasNewAdminMsg) setUnread(prev => prev + newCount)
+          const newFromSupport = msgs.slice(-newCount).filter(m => m.sender !== 'user')
+          if (newFromSupport.length > 0) {
+            setUnread(prev => prev + newFromSupport.length)
+            setPopupMsg(newFromSupport[newFromSupport.length - 1].text)
+          }
         }
       }
       lastMsgCountRef.current = msgs.length
@@ -134,8 +138,20 @@ export function SupportChatWidget() {
 
   // Clear unread when opened
   useEffect(() => {
-    if (open) setUnread(0)
+    if (open) { setUnread(0); setPopupMsg(null) }
   }, [open])
+
+  // Auto-dismiss the new-message popup after a few seconds
+  useEffect(() => {
+    if (!popupMsg) return
+    const t = setTimeout(() => setPopupMsg(null), 8_000)
+    return () => clearTimeout(t)
+  }, [popupMsg])
+
+  function handleOpenFromPopup() {
+    setPopupMsg(null)
+    setOpen(true)
+  }
 
   const handleSend = async () => {
     if (!input.trim() || sending) return
@@ -156,7 +172,9 @@ export function SupportChatWidget() {
   // bubble does (opens the listing-request form) instead of the chat panel —
   // most people were tapping the icon rather than the bubble text itself.
   const handleFabClick = () => {
-    if (showBubble) {
+    if (popupMsg) {
+      handleOpenFromPopup()
+    } else if (showBubble) {
       setShowBubble(false)
       setShowRequestModal(true)
     } else {
@@ -202,17 +220,17 @@ export function SupportChatWidget() {
               </div>
             ) : (
               messages.map((msg) => (
-                <div key={msg.id} className={`flex ${msg.sender === 'admin' ? 'justify-start' : 'justify-end'}`}>
-                  {msg.sender === 'admin' && (
+                <div key={msg.id} className={`flex ${msg.sender !== 'user' ? 'justify-start' : 'justify-end'}`}>
+                  {msg.sender !== 'user' && (
                     <div className="w-6 h-6 rounded-full bg-[#703BF7] flex items-center justify-center text-white text-xs font-bold mr-2 shrink-0 mt-1">S</div>
                   )}
                   <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm ${
-                    msg.sender === 'admin'
+                    msg.sender !== 'user'
                       ? 'bg-[#1a1a24] text-white rounded-tl-none'
                       : 'bg-[#703BF7] text-white rounded-tr-none'
                   }`}>
                     <p className="whitespace-pre-wrap">{msg.text}</p>
-                    <p className={`text-xs mt-1 ${msg.sender === 'admin' ? 'text-gray-500' : 'text-purple-200'}`}>
+                    <p className={`text-xs mt-1 ${msg.sender !== 'user' ? 'text-gray-500' : 'text-purple-200'}`}>
                       {formatTime(msg.timestamp)}
                     </p>
                   </div>
@@ -245,8 +263,22 @@ export function SupportChatWidget() {
         </div>
       )}
 
+      {/* New support message popup — appears while the chat is closed */}
+      {popupMsg && !open && (
+        <div className="fixed bottom-[150px] right-4 sm:bottom-24 sm:right-5 z-50 w-72 animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <button
+            onClick={handleOpenFromPopup}
+            className="relative w-full text-left bg-[#12121a] border border-gray-800 rounded-2xl p-4 shadow-2xl hover:border-gray-700 transition-colors"
+          >
+            <p className="text-white font-semibold text-sm mb-1">New message from Support</p>
+            <p className="text-gray-400 text-xs leading-relaxed line-clamp-2">{popupMsg}</p>
+            <div className="absolute -bottom-2 right-6 w-4 h-4 bg-[#12121a] border-r border-b border-gray-800 transform rotate-45" />
+          </button>
+        </div>
+      )}
+
       {/* "Can't find your space?" nudge bubble — appears once eligible, stays up until dismissed/engaged */}
-      {showBubble && !open && !showDismissConfirm && (
+      {showBubble && !open && !showDismissConfirm && !popupMsg && (
         <div className="fixed bottom-[150px] right-4 sm:bottom-24 sm:right-5 z-50 w-72 animate-in fade-in slide-in-from-bottom-2 duration-300">
           <div className="relative bg-[#12121a] border border-gray-800 rounded-2xl p-4 shadow-2xl">
             <button

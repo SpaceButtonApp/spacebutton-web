@@ -96,7 +96,7 @@ export default function AdminSupportChatPage() {
               key={msg.id}
               className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
-              {msg.sender === 'admin' && (
+              {msg.sender !== 'user' && (
                 <div className="w-8 h-8 rounded-full bg-[#703BF7] flex items-center justify-center text-white text-xs font-bold mr-2 flex-shrink-0 mt-auto">
                   S
                 </div>

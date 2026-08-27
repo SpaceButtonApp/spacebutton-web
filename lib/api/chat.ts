@@ -70,7 +70,9 @@ export const chatApi = {
 
 export interface SupportMsg {
   id: string
-  sender: 'user' | 'admin'
+  // Backend labels support-staff replies "admin" or "agent" depending on the
+  // replier's exact role — treat anything that isn't "user" as "from support".
+  sender: 'user' | 'admin' | 'agent'
   text: string
   timestamp: string
 }

@@ -50,7 +50,7 @@ export function AdminApp() {
   const [messageTargetUserId, setMessageTargetUserId] = useState<string | null>(null);
   const [viewListingId, setViewListingId] = useState<string | null>(null);
   const [viewUserId, setViewUserId] = useState<string | null>(null);
-  const [composeMailTo, setComposeMailTo] = useState<{ name: string; email: string } | null>(null);
+  const [composeMailTo, setComposeMailTo] = useState<{ id: string; name: string; email: string } | null>(null);
   // Tracks routes visited this session — badge clears once you open the page
   const [visitedRoutes, setVisitedRoutes] = useState<Set<AdminRoute>>(new Set<AdminRoute>(["dashboard"]));
 
@@ -106,7 +106,15 @@ export function AdminApp() {
     notifications: pendingApprovalsCount,
   };
 
-  function goToUserThread(userId: string) {
+  // Ensures a ticket exists for this user (creating one if they've never
+  // contacted support before) so the Messages page can always open a real
+  // conversation, not just jump to the general inbox.
+  async function goToUserThread(userId: string, userName: string) {
+    try {
+      await adminApi.startTicketWithUser(userId, userName);
+    } catch {
+      // fall through — Messages page will still try to match an existing ticket
+    }
     setMessageTargetUserId(userId);
     setVisitedRoutes((prev) => new Set([...prev, "messages" as AdminRoute]));
     setRoute("messages");
@@ -158,8 +166,8 @@ export function AdminApp() {
           {route === "dashboard" && <Dashboard onNavigate={setRoute} />}
           {route === "users" && !viewUserId && (
             <UsersPage
-              onMessageUser={(u) => goToUserThread(u.id)}
-              onMailUser={(u) => setComposeMailTo({ name: u.name, email: u.email })}
+              onMessageUser={(u) => goToUserThread(u.id, u.name)}
+              onMailUser={(u) => setComposeMailTo({ id: u.id, name: u.name, email: u.email })}
               onViewUser={(id) => setViewUserId(id)}
             />
           )}
@@ -167,22 +175,22 @@ export function AdminApp() {
             <UserDetailPage
               userId={viewUserId}
               onBack={() => setViewUserId(null)}
-              onMessageUser={(u) => { setViewUserId(null); goToUserThread(u.id); }}
-              onMailUser={(u) => { setViewUserId(null); setComposeMailTo({ name: u.name, email: u.email }); }}
+              onMessageUser={(u) => { setViewUserId(null); goToUserThread(u.id, u.name); }}
+              onMailUser={(u) => { setViewUserId(null); setComposeMailTo({ id: u.id, name: u.name, email: u.email }); }}
             />
           )}
           {route === "verifications" && (
             <VerificationsPage
-              onMessageUser={(u) => goToUserThread(u.id)}
-              onMailUser={(u) => setComposeMailTo({ name: u.name, email: u.email })}
+              onMessageUser={(u) => goToUserThread(u.id, u.name)}
+              onMailUser={(u) => setComposeMailTo({ id: u.id, name: u.name, email: u.email })}
             />
           )}
           {route === "listings" && (
             <ListingsPage
               focusListingId={viewListingId}
               onFocusConsumed={() => setViewListingId(null)}
-              onMessageUser={(u) => goToUserThread(u.id)}
-              onMailUser={(u) => setComposeMailTo({ name: u.name, email: u.email })}
+              onMessageUser={(u) => goToUserThread(u.id, u.name)}
+              onMailUser={(u) => setComposeMailTo({ id: u.id, name: u.name, email: u.email })}
             />
           )}
           {route === "messages" && (

@@ -701,6 +701,23 @@ export const adminApi = {
     return (res as any)?.data ?? res
   },
 
+  // Opens (or resumes) a conversation with a specific user, even if they've
+  // never contacted support before — used by "Message"/"Message poster".
+  async startTicketWithUser(userId: string, userName: string): Promise<SupportTicket> {
+    const res = await adminFetch<{ success: boolean; data: SupportTicket }>(
+      `/support/tickets/admin/start/${userId}`,
+      { method: 'POST', body: JSON.stringify({ user_name: userName }) }
+    )
+    return (res as any)?.data ?? res
+  },
+
+  async sendMail(userId: string, email: string, subject: string, body: string): Promise<void> {
+    await adminFetch(`/admin/users/${userId}/send-mail`, {
+      method: 'POST',
+      body: JSON.stringify({ email, subject, body }),
+    })
+  },
+
   async grantConnects(userId: string, amount: number): Promise<void> {
     await adminFetch(`/admin/users/${userId}/grant-connects`, {
       method: 'POST',

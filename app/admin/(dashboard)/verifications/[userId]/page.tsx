@@ -7,8 +7,13 @@ import { adminApi } from '@/lib/api/admin'
 import type { PendingVerification, AdminUser } from '@/lib/api/admin'
 import {
   ArrowLeft, ShieldCheck, ShieldX, Clock, Check, X, Maximize2, User, Mail, Phone,
+  FolderCheck, FolderX, Loader2,
 } from 'lucide-react'
 import { ReasonModal, ImageLightbox } from '@/components/admin/shared/Modal'
+import {
+  isLocalSaveSupported, isVerificationFolderConnected, connectVerificationFolder,
+  saveVerificationImagesLocally,
+} from '@/lib/utils/local-verification-save'
 
 type DocStatus = 'pending' | 'approved' | 'rejected' | 'none'
 
@@ -32,6 +37,21 @@ export default function VerificationDetailPage() {
   const [lightbox, setLightbox] = useState<string | null>(null)
   const [rejectTarget, setRejectTarget] = useState<'id' | 'live' | 'both' | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+
+  const [folderConnected, setFolderConnected] = useState<boolean | null>(null)
+  const [localSaveStatus, setLocalSaveStatus] = useState<
+    { type: 'saving' } | { type: 'success'; folderName: string } | { type: 'error'; message: string } | null
+  >(null)
+
+  useEffect(() => {
+    if (!isLocalSaveSupported()) { setFolderConnected(false); return }
+    isVerificationFolderConnected().then(setFolderConnected)
+  }, [])
+
+  async function handleConnectFolder() {
+    const ok = await connectVerificationFolder()
+    setFolderConnected(ok)
+  }
 
   useEffect(() => {
     async function load() {
@@ -59,11 +79,38 @@ export default function VerificationDetailPage() {
   const liveStatus = (verif?.live_verification_status ?? 'none') as DocStatus
   const bothPending = idStatus === 'pending' && liveStatus === 'pending'
 
+  // Once both documents are approved, save them locally as one pair —
+  // saving them separately as each is approved could leave a folder with
+  // only one of the two images if they're approved at different times.
+  async function maybeSaveLocally(updated: PendingVerification) {
+    if (updated.id_verification_status !== 'approved' || updated.live_verification_status !== 'approved') return
+
+    const name = user ? [user.first_name, user.last_name].filter(Boolean).join(' ') || userId : userId
+    setLocalSaveStatus({ type: 'saving' })
+
+    let handle = folderConnected
+    if (!handle) {
+      const connected = await connectVerificationFolder()
+      setFolderConnected(connected)
+      handle = connected
+    }
+    if (!handle) {
+      setLocalSaveStatus({ type: 'error', message: 'Folder not connected — click "Connect Folder" and try approving again.' })
+      return
+    }
+
+    const result = await saveVerificationImagesLocally(name, updated.id_document_url, updated.selfie_url)
+    if (result.ok) setLocalSaveStatus({ type: 'success', folderName: result.folderName })
+    else setLocalSaveStatus({ type: 'error', message: result.message ?? 'Could not save images locally.' })
+  }
+
   async function approveId() {
     setActionLoading('approve-id')
     try {
       await adminApi.approveIdVerification(userId)
-      setVerif((v) => v ? { ...v, id_verification_status: 'approved', is_identity_verified: true } : v)
+      const updated = verif ? { ...verif, id_verification_status: 'approved', is_identity_verified: true } : null
+      setVerif(updated)
+      if (updated) maybeSaveLocally(updated)
     } catch (e) { alert(e instanceof Error ? e.message : 'Failed') }
     finally { setActionLoading(null) }
   }
@@ -72,7 +119,9 @@ export default function VerificationDetailPage() {
     setActionLoading('approve-live')
     try {
       await adminApi.approveLiveVerification(userId)
-      setVerif((v) => v ? { ...v, live_verification_status: 'approved', is_live_verified: true } : v)
+      const updated = verif ? { ...verif, live_verification_status: 'approved', is_live_verified: true } : null
+      setVerif(updated)
+      if (updated) maybeSaveLocally(updated)
     } catch (e) { alert(e instanceof Error ? e.message : 'Failed') }
     finally { setActionLoading(null) }
   }
@@ -84,7 +133,9 @@ export default function VerificationDetailPage() {
         adminApi.approveIdVerification(userId),
         adminApi.approveLiveVerification(userId),
       ])
-      setVerif((v) => v ? { ...v, id_verification_status: 'approved', live_verification_status: 'approved', is_identity_verified: true, is_live_verified: true } : v)
+      const updated = verif ? { ...verif, id_verification_status: 'approved', live_verification_status: 'approved', is_identity_verified: true, is_live_verified: true } : null
+      setVerif(updated)
+      if (updated) maybeSaveLocally(updated)
     } catch (e) { alert(e instanceof Error ? e.message : 'Failed') }
     finally { setActionLoading(null) }
   }
@@ -114,12 +165,40 @@ export default function VerificationDetailPage() {
         <div className="max-w-4xl mx-auto px-6 py-8">
 
           {/* Back */}
-          <button
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] mb-6 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" /> Back to Verifications
-          </button>
+          <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
+            <button
+              onClick={() => router.back()}
+              className="flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" /> Back to Verifications
+            </button>
+
+            {folderConnected === false && (
+              <button
+                onClick={handleConnectFolder}
+                className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/20 hover:bg-amber-500/25 transition-colors"
+              >
+                <FolderX className="w-3.5 h-3.5" /> Connect local VERIFICATION folder
+              </button>
+            )}
+            {folderConnected === true && (
+              <span className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+                <FolderCheck className="w-3.5 h-3.5" /> Local folder connected
+              </span>
+            )}
+          </div>
+
+          {localSaveStatus && (
+            <div className={`mb-6 rounded-xl px-4 py-3 text-sm flex items-center gap-2 ${
+              localSaveStatus.type === 'success' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
+              localSaveStatus.type === 'error' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
+              'bg-[var(--bg-raised)] text-[var(--text-secondary)] border border-[var(--border-color)]'
+            }`}>
+              {localSaveStatus.type === 'saving' && <><Loader2 className="w-4 h-4 animate-spin" /> Saving verification images locally…</>}
+              {localSaveStatus.type === 'success' && <><FolderCheck className="w-4 h-4" /> Saved to VERIFICATION\{localSaveStatus.folderName}</>}
+              {localSaveStatus.type === 'error' && <><FolderX className="w-4 h-4" /> {localSaveStatus.message}</>}
+            </div>
+          )}
 
           {loading && (
             <div className="flex items-center justify-center min-h-[400px]">

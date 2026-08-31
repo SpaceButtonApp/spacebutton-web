@@ -1,28 +1,28 @@
 const SIZES = {
-  sm: 'w-6',
-  md: 'w-9',
-  lg: 'w-14',
+  sm: { icon: 'w-4 h-auto', text: 'text-xs', gap: 'gap-1.5' },
+  md: { icon: 'w-6 h-auto', text: 'text-base', gap: 'gap-2' },
+  lg: { icon: 'w-9 h-auto', text: 'text-2xl', gap: 'gap-3' },
 } as const
 
 /**
- * SpaceButton logo watermark overlaid on property media (photos + videos).
- * Defaults to the bottom-right corner; pass `position` to avoid other
- * badges already occupying that corner in a given layout.
+ * SpaceButton logo + wordmark watermark over property media (photos + videos).
+ * Centered by default; pass `position` to move it clear of other centered
+ * overlays (e.g. video playback controls) in a given layout.
  */
 export function Watermark({
   size = 'md',
-  position = 'bottom-2 right-2',
+  position = 'inset-0 flex items-center justify-center',
 }: {
   size?: keyof typeof SIZES
   position?: string
 }) {
+  const s = SIZES[size]
   return (
-    <img
-      src="/logo.png"
-      alt=""
-      aria-hidden="true"
-      draggable={false}
-      className={`absolute ${position} ${SIZES[size]} h-auto opacity-70 pointer-events-none select-none drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)] z-[1]`}
-    />
+    <div className={`absolute ${position} pointer-events-none select-none z-[1]`}>
+      <div className={`flex items-center ${s.gap} opacity-60 drop-shadow-[0_1px_4px_rgba(0,0,0,0.5)]`}>
+        <img src="/logo.png" alt="" aria-hidden="true" draggable={false} className={s.icon} />
+        <span className={`${s.text} font-bold tracking-widest text-white uppercase`}>SpaceButton</span>
+      </div>
+    </div>
   )
 }

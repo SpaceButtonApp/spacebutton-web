@@ -320,7 +320,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
           <Maximize2 className="w-4 h-4 text-white" />
         </button>
 
-        <Watermark position="bottom-4 left-4" size="md" />
+        <Watermark size="md" />
       </div>
 
       {/* Content */}
@@ -639,7 +639,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
                 <Minimize2 className="w-5 h-5 text-white" />
               </button>
 
-              <Watermark position="top-4 left-4" size="lg" />
+              <Watermark size="lg" position="top-20 left-1/2 -translate-x-1/2 flex items-center justify-center" />
 
               {/* Centered playback controls — YouTube-style */}
               <div className="absolute inset-0 flex items-center justify-center gap-10 pointer-events-none">
@@ -702,7 +702,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
                 <Minimize2 className="w-5 h-5 text-white" />
               </button>
 
-              <Watermark position="top-4 left-4" size="lg" />
+              <Watermark size="lg" />
 
               {/* Prev / Next */}
               {mediaItems.length > 1 && (

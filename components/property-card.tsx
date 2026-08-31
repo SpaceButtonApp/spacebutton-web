@@ -17,7 +17,7 @@ interface PropertyCardProps {
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=400&h=300&fit=crop'
 
 /** Photo thumbnail, with a play badge when a video is also available. */
-function CardMedia({ property, watermarkPosition, watermarkSize }: { property: Property; watermarkPosition: string; watermarkSize: 'sm' | 'md' }) {
+function CardMedia({ property, playBadgePosition, watermarkSize }: { property: Property; playBadgePosition: string; watermarkSize: 'sm' | 'md' }) {
   return (
     <>
       <Image
@@ -28,13 +28,13 @@ function CardMedia({ property, watermarkPosition, watermarkSize }: { property: P
         unoptimized
       />
       {property.videoUrl && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-9 h-9 rounded-full bg-black/50 flex items-center justify-center backdrop-blur-sm">
-            <Play className="w-4 h-4 text-white fill-white ml-0.5" />
+        <div className={`absolute ${playBadgePosition} pointer-events-none`}>
+          <div className="w-8 h-8 rounded-full bg-black/50 flex items-center justify-center backdrop-blur-sm">
+            <Play className="w-3.5 h-3.5 text-white fill-white ml-0.5" />
           </div>
         </div>
       )}
-      <Watermark position={watermarkPosition} size={watermarkSize} />
+      <Watermark size={watermarkSize} />
     </>
   )
 }
@@ -61,7 +61,7 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
       >
         {/* Image */}
         <div className="relative w-32 h-28 flex-shrink-0 rounded-xl overflow-hidden">
-          <CardMedia property={property} watermarkPosition="top-1 right-1" watermarkSize="sm" />
+          <CardMedia property={property} playBadgePosition="bottom-2 right-2" watermarkSize="sm" />
           {property.isAdminPost && (
             <div className="absolute top-2 left-2 w-6 h-6 rounded-full bg-[#703BF7] flex items-center justify-center">
               <CheckCircle2 className="w-4 h-4 text-white" />
@@ -127,7 +127,7 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
     >
       {/* Image */}
       <div className="relative aspect-video">
-        <CardMedia property={property} watermarkPosition="bottom-2 left-2" watermarkSize="md" />
+        <CardMedia property={property} playBadgePosition="bottom-2 left-2" watermarkSize="md" />
 
         {/* Verified badge */}
         {property.isAdminPost && (

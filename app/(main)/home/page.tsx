@@ -8,6 +8,7 @@ import { BottomNav } from '@/components/bottom-nav'
 import { PropertyCard } from '@/components/property-card'
 import { ConnectBalanceButton } from '@/components/connect-balance-button'
 import { AppDownloadBanner } from '@/components/app-download-banner'
+import { Watermark } from '@/components/watermark'
 import { useAppStore } from '@/lib/store'
 import { listingsApi, mapListing } from '@/lib/api/listings'
 import { syncMyProfile } from '@/lib/api/users'
@@ -217,6 +218,7 @@ export default function HomePage() {
                         </div>
                       </div>
                     )}
+                    <Watermark size="sm" />
                   </div>
                   <div className="p-3">
                     <p className="text-sm font-semibold text-foreground line-clamp-1">{property.title}</p>

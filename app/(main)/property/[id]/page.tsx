@@ -7,7 +7,7 @@ import {
   Bookmark, ChevronLeft, ChevronRight, ChevronDown, Bed, Bath,
   Sofa, MapPin, Calendar, AlertTriangle, Users, Building2, ArrowLeft, X, Clock,
   Home, Tag, DollarSign, Grid3X3, Maximize, Eye, Play, Pause,
-  Maximize2, Minimize2, SkipBack, SkipForward
+  Maximize2, Minimize2, SkipBack, SkipForward, Share2, Check,
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { Button } from '@/components/ui/button'
@@ -15,6 +15,7 @@ import { BottomNav } from '@/components/bottom-nav'
 import { BackButton } from '@/components/back-button'
 import { ConnectCostModal } from '@/components/connect-cost-modal'
 import { SuggestedApartments } from '@/components/suggested-apartments'
+import { Watermark } from '@/components/watermark'
 import { useAppStore } from '@/lib/store'
 import { listingsApi, mapListing, saveListing } from '@/lib/api/listings'
 import { chatApi } from '@/lib/api/chat'
@@ -32,6 +33,7 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
   const [isVideoPlaying, setIsVideoPlaying] = useState(false)
   const [existingChatId, setExistingChatId] = useState<string | null>(null)
   const [safetyTipsExpanded, setSafetyTipsExpanded] = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
   const [property, setProperty] = useState<Property | null>(null)
   const [fetchError, setFetchError] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -181,6 +183,25 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
     setShowConnectModal(true)
   }
 
+  const handleShare = async () => {
+    const url = `${window.location.origin}/property/${id}`
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: property.title, text: `Check out this space on SpaceButton: ${property.title}`, url })
+      } catch {
+        // user cancelled the share sheet — nothing to do
+      }
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(url)
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 2000)
+    } catch {
+      // clipboard unavailable — nothing more we can do
+    }
+  }
+
   const handleConnectConfirm = async () => {
     if (!property) return
     const chat = await chatApi.createChat(
@@ -202,13 +223,27 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
           className="bg-background/80 backdrop-blur-sm"
         />
         
-        <button
-          onClick={() => saveListing(id)}
-          className="w-10 h-10 flex items-center justify-center rounded-full bg-background/80 backdrop-blur-sm"
-        >
-          <Bookmark className={cn('w-5 h-5', isSaved && 'fill-primary text-primary')} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleShare}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-background/80 backdrop-blur-sm"
+          >
+            {linkCopied ? <Check className="w-5 h-5 text-primary" /> : <Share2 className="w-5 h-5" />}
+          </button>
+          <button
+            onClick={() => saveListing(id)}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-background/80 backdrop-blur-sm"
+          >
+            <Bookmark className={cn('w-5 h-5', isSaved && 'fill-primary text-primary')} />
+          </button>
+        </div>
       </div>
+
+      {linkCopied && (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-foreground text-background text-sm font-medium px-4 py-2 rounded-full shadow-lg animate-in fade-in slide-in-from-top-2">
+          Link copied to clipboard
+        </div>
+      )}
 
       {/* Image Gallery */}
       <div
@@ -284,6 +319,8 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
         >
           <Maximize2 className="w-4 h-4 text-white" />
         </button>
+
+        <Watermark position="bottom-4 left-4" size="md" />
       </div>
 
       {/* Content */}
@@ -602,6 +639,8 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
                 <Minimize2 className="w-5 h-5 text-white" />
               </button>
 
+              <Watermark position="top-4 left-4" size="lg" />
+
               {/* Centered playback controls — YouTube-style */}
               <div className="absolute inset-0 flex items-center justify-center gap-10 pointer-events-none">
                 <button onClick={handleSkipBackward} className="flex flex-col items-center gap-1 pointer-events-auto">
@@ -662,6 +701,8 @@ export default function PropertyDetailsPage({ params }: { params: Promise<{ id: 
               >
                 <Minimize2 className="w-5 h-5 text-white" />
               </button>
+
+              <Watermark position="top-4 left-4" size="lg" />
 
               {/* Prev / Next */}
               {mediaItems.length > 1 && (

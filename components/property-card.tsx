@@ -7,6 +7,7 @@ import { useAppStore } from '@/lib/store'
 import { saveListing } from '@/lib/api/listings'
 import { formatPrice, type Property } from '@/lib/mock-data'
 import { cn } from '@/lib/utils'
+import { Watermark } from '@/components/watermark'
 
 interface PropertyCardProps {
   property: Property
@@ -16,7 +17,7 @@ interface PropertyCardProps {
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=400&h=300&fit=crop'
 
 /** Photo thumbnail, with a play badge when a video is also available. */
-function CardMedia({ property }: { property: Property }) {
+function CardMedia({ property, watermarkPosition, watermarkSize }: { property: Property; watermarkPosition: string; watermarkSize: 'sm' | 'md' }) {
   return (
     <>
       <Image
@@ -33,6 +34,7 @@ function CardMedia({ property }: { property: Property }) {
           </div>
         </div>
       )}
+      <Watermark position={watermarkPosition} size={watermarkSize} />
     </>
   )
 }
@@ -59,7 +61,7 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
       >
         {/* Image */}
         <div className="relative w-32 h-28 flex-shrink-0 rounded-xl overflow-hidden">
-          <CardMedia property={property} />
+          <CardMedia property={property} watermarkPosition="top-1 right-1" watermarkSize="sm" />
           {property.isAdminPost && (
             <div className="absolute top-2 left-2 w-6 h-6 rounded-full bg-[#703BF7] flex items-center justify-center">
               <CheckCircle2 className="w-4 h-4 text-white" />
@@ -125,7 +127,7 @@ export function PropertyCard({ property, variant = 'full' }: PropertyCardProps) 
     >
       {/* Image */}
       <div className="relative aspect-video">
-        <CardMedia property={property} />
+        <CardMedia property={property} watermarkPosition="bottom-2 left-2" watermarkSize="md" />
 
         {/* Verified badge */}
         {property.isAdminPost && (

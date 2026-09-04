@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import PropertyDetailClient from './PropertyDetailClient'
 import type { ListingResponse } from '@/lib/types/listing'
-import { withCloudinaryWatermark } from '@/lib/utils/cloudinary-watermark'
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.spacebutton.net/api/v1').replace(/\/$/, '')
 
@@ -32,7 +31,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     .filter((img) => !isVideoUrl(img.image_url))
     .sort((a, b) => (a.is_cover === b.is_cover ? a.order - b.order : a.is_cover ? -1 : 1))[0]
 
-  const ogImage = coverPhoto ? withCloudinaryWatermark(coverPhoto.image_url) : undefined
+  const ogImage = coverPhoto?.image_url
   const location = [listing.address, listing.city, listing.state].filter(Boolean).join(', ')
   const description = `${location ? `${location} — ` : ''}${listing.description || 'View this space on SpaceButton.'}`.slice(0, 200)
 

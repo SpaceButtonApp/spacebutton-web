@@ -15,7 +15,7 @@ import { BottomNav } from '@/components/bottom-nav'
 import { BackButton } from '@/components/back-button'
 import { ConnectCostModal } from '@/components/connect-cost-modal'
 import { SuggestedApartments } from '@/components/suggested-apartments'
-import { withCloudinaryWatermark } from '@/lib/utils/cloudinary-watermark'
+import { Watermark } from '@/components/watermark'
 import { useAppStore } from '@/lib/store'
 import { listingsApi, mapListing, saveListing } from '@/lib/api/listings'
 import { chatApi } from '@/lib/api/chat'
@@ -161,11 +161,6 @@ export default function PropertyDetailClient({ id }: { id: string }) {
 
   const mediaItems = [...(property.videoUrl ? [property.videoUrl] : []), ...property.images]
   const isVideoItem = (url: string) => !!property.videoUrl && url === property.videoUrl
-  // Watermark baked directly into the delivered file (via Cloudinary), so it
-  // survives a direct "Save image/video" — a CSS overlay never would, since
-  // the browser just downloads whatever the src URL points to.
-  const displayMediaItems = mediaItems.map(withCloudinaryWatermark)
-  const displayCover = withCloudinaryWatermark(property.images[0])
 
   const handlePrevImage = () => {
     setCurrentImageIndex((prev) =>
@@ -259,12 +254,12 @@ export default function PropertyDetailClient({ id }: { id: string }) {
           <>
             <video
               ref={videoRef}
-              src={displayMediaItems[currentImageIndex]}
+              src={mediaItems[currentImageIndex]}
               className="w-full h-full object-cover cursor-pointer"
               muted
               loop
               playsInline
-              poster={displayCover}
+              poster={property.images[0] || ''}
               onClick={() => setShowFullScreen(true)}
             />
             {!isVideoPlaying && (
@@ -280,7 +275,7 @@ export default function PropertyDetailClient({ id }: { id: string }) {
           </>
         ) : (
           <Image
-            src={displayMediaItems[currentImageIndex] || '/placeholder.jpg'}
+            src={mediaItems[currentImageIndex] || '/placeholder.jpg'}
             alt={property.title}
             fill
             className="object-cover cursor-pointer"
@@ -288,6 +283,7 @@ export default function PropertyDetailClient({ id }: { id: string }) {
             unoptimized
           />
         )}
+        <Watermark size="md" />
 
         {/* Navigation arrows */}
         <button
@@ -621,17 +617,19 @@ export default function PropertyDetailClient({ id }: { id: string }) {
             <div className="relative w-full h-full flex items-center justify-center">
               <video
                 ref={fullscreenVideoRef}
-                src={displayMediaItems[currentImageIndex]}
+                src={mediaItems[currentImageIndex]}
                 className="max-w-full max-h-full object-contain"
                 loop
                 playsInline
                 autoPlay
-                poster={displayCover}
+                poster={property.images[0] || ''}
                 onPlay={() => setIsFullscreenVideoPlaying(true)}
                 onPause={() => setIsFullscreenVideoPlaying(false)}
                 onLoadedMetadata={(e) => setVideoDuration(e.currentTarget.duration)}
                 onTimeUpdate={(e) => setVideoCurrentTime(e.currentTarget.currentTime)}
               />
+
+              <Watermark size="lg" />
 
               {/* Minimize */}
               <button
@@ -641,7 +639,8 @@ export default function PropertyDetailClient({ id }: { id: string }) {
                 <Minimize2 className="w-5 h-5 text-white" />
               </button>
 
-              {/* Centered playback controls — YouTube-style */}
+              {/* Centered playback controls — YouTube-style. Explicit z-index so
+                  these stay above the (also centered) watermark. */}
               <div className="absolute inset-0 z-10 flex items-center justify-center gap-10 pointer-events-none">
                 <button onClick={handleSkipBackward} className="flex flex-col items-center gap-1 pointer-events-auto">
                   <SkipBack className="w-8 h-8 text-white drop-shadow-lg" fill="white" />
@@ -686,13 +685,15 @@ export default function PropertyDetailClient({ id }: { id: string }) {
               onClick={() => setShowFullScreen(false)}
             >
               <Image
-                src={displayMediaItems[currentImageIndex]}
+                src={mediaItems[currentImageIndex]}
                 alt={property.title}
                 fill
                 className="object-contain"
                 unoptimized
                 onClick={(e) => e.stopPropagation()}
               />
+
+              <Watermark size="lg" />
 
               {/* Minimize */}
               <button

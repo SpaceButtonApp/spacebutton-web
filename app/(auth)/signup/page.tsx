@@ -205,7 +205,7 @@ export default function SignupPage() {
 
               <div>
                 <label className="block text-sm font-medium text-muted-foreground mb-2">
-                  How did you hear about SpaceButton? (Optional)
+                  How did you hear about SpaceButton?
                 </label>
                 <select
                   value={formData.heardAboutUs}

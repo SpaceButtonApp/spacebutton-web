@@ -81,6 +81,8 @@ export default function CreatePasswordPage() {
         password: formData.password,
         role: data.profileType === 'agent' ? 'agent' : 'user',
         referral_code: data.invitationCode || undefined,
+        heard_about_us: data.heardAboutUs || undefined,
+        heard_about_us_other: data.heardAboutUsOther || undefined,
       })
       // Save password for auto-login after phone verification
       localStorage.setItem('signupData', JSON.stringify({ ...data, password: formData.password }))

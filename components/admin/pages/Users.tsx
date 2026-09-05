@@ -25,6 +25,25 @@ function avatarColorForId(id: string) {
   return AVATAR_COLORS[n % AVATAR_COLORS.length];
 }
 
+const HEARD_ABOUT_LABELS: Record<string, string> = {
+  whatsapp: "WhatsApp",
+  twitter: "Twitter/X",
+  tiktok: "TikTok",
+  instagram: "Instagram",
+  facebook: "Facebook",
+  referral: "Referral (friend or family)",
+  event: "In-person event / flyer",
+  google: "Google Search",
+  email: "Email",
+  other: "Other",
+};
+
+function heardAboutLabel(slug?: string | null, other?: string | null): string {
+  if (!slug) return "—";
+  const label = HEARD_ABOUT_LABELS[slug] || slug;
+  return slug === "other" && other ? `${label}: ${other}` : label;
+}
+
 function mapApiUser(u: AdminUser): AppUser {
   return {
     id: u.id,
@@ -39,6 +58,8 @@ function mapApiUser(u: AdminUser): AppUser {
     referralCode: "",
     referralsMade: u.referrals_made ?? 0,
     connects: 0,
+    heardAboutUs: u.heard_about_us ?? null,
+    heardAboutUsOther: u.heard_about_us_other ?? null,
   };
 }
 
@@ -119,7 +140,7 @@ export function UsersPage({ onMessageUser, onMailUser, onViewUser }: UsersPagePr
       "users",
       filtered.map((u) => ({
         UserID: u.userId, Name: u.name, Email: u.email, Phone: u.phone, Role: u.role,
-        Status: u.status, Joined: formatDate(u.joinDate),
+        Status: u.status, HeardAboutUs: heardAboutLabel(u.heardAboutUs, u.heardAboutUsOther), Joined: formatDate(u.joinDate),
       })),
     );
   }
@@ -206,6 +227,7 @@ export function UsersPage({ onMessageUser, onMailUser, onViewUser }: UsersPagePr
                 <th className="px-6 py-4 font-medium">Role</th>
                 <th className="px-6 py-4 font-medium">Status</th>
                 <th className="px-6 py-4 font-medium">Referrals</th>
+                <th className="px-6 py-4 font-medium">Heard About</th>
                 <th className="px-6 py-4 font-medium">Joined</th>
                 <th className="px-6 py-4 font-medium text-right">Actions</th>
               </tr>
@@ -248,6 +270,7 @@ export function UsersPage({ onMessageUser, onMailUser, onViewUser }: UsersPagePr
                       {u.referralsMade}
                     </span>
                   </td>
+                  <td className="px-6 py-3.5 text-[var(--text-secondary)]">{heardAboutLabel(u.heardAboutUs, u.heardAboutUsOther)}</td>
                   <td className="px-6 py-3.5 text-[var(--text-secondary)]">{formatDate(u.joinDate)}</td>
                   <td className="px-6 py-3.5 text-right">
                     <ActionMenu

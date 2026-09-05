@@ -52,6 +52,8 @@ export interface AdminUser {
   is_email_verified: boolean
   referral_code?: string
   referrals_made: number
+  heard_about_us?: string | null
+  heard_about_us_other?: string | null
   created_at: string
 }
 

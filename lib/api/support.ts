@@ -41,6 +41,8 @@ export interface AdminUser {
   role: string
   status: string
   is_email_verified: boolean
+  heard_about_us?: string | null
+  heard_about_us_other?: string | null
   created_at: string
 }
 

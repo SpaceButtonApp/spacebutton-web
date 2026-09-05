@@ -37,6 +37,8 @@ export interface AppUser {
   referralsMade: number;
   connects: number; // available connects balance
   bio?: string;
+  heardAboutUs?: string | null;
+  heardAboutUsOther?: string | null;
 }
 
 export interface Verification {

@@ -22,12 +22,33 @@ interface Row {
   joinDate: string
   avatarColor: string
   isEmailVerified: boolean
+  heardAboutUs: string | null
+  heardAboutUsOther: string | null
 }
 
 const AVATAR_COLORS = ['#7c3aed', '#a855f7', '#8b5cf6', '#6366f1', '#c026d3', '#9333ea']
 function avatarColorForId(id: string) {
   const n = id.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
   return AVATAR_COLORS[n % AVATAR_COLORS.length]
+}
+
+const HEARD_ABOUT_LABELS: Record<string, string> = {
+  whatsapp: 'WhatsApp',
+  twitter: 'Twitter/X',
+  tiktok: 'TikTok',
+  instagram: 'Instagram',
+  facebook: 'Facebook',
+  referral: 'Referral (friend or family)',
+  event: 'In-person event / flyer',
+  google: 'Google Search',
+  email: 'Email',
+  other: 'Other',
+}
+
+function heardAboutLabel(slug?: string | null, other?: string | null): string {
+  if (!slug) return '—'
+  const label = HEARD_ABOUT_LABELS[slug] || slug
+  return slug === 'other' && other ? `${label}: ${other}` : label
 }
 
 function mapUser(u: AdminUser): Row {
@@ -42,6 +63,8 @@ function mapUser(u: AdminUser): Row {
     joinDate: u.created_at,
     avatarColor: avatarColorForId(u.id),
     isEmailVerified: u.is_email_verified,
+    heardAboutUs: u.heard_about_us ?? null,
+    heardAboutUsOther: u.heard_about_us_other ?? null,
   }
 }
 
@@ -161,7 +184,7 @@ export default function UsersView() {
       filtered.map((u) => ({
         UserID: u.userId, Name: u.name, Email: u.email, Phone: u.phone, Role: u.role,
         Verified: identityVerifiedIds.has(u.id) ? 'Verified' : 'Not Verified',
-        Status: u.status, Joined: formatDate(u.joinDate),
+        Status: u.status, HeardAboutUs: heardAboutLabel(u.heardAboutUs, u.heardAboutUsOther), Joined: formatDate(u.joinDate),
       })),
     )
   }
@@ -239,6 +262,7 @@ export default function UsersView() {
                       <th className="px-6 py-4 font-medium">Role</th>
                       <th className="px-6 py-4 font-medium">Verified</th>
                       <th className="px-6 py-4 font-medium">Status</th>
+                      <th className="px-6 py-4 font-medium">Heard About</th>
                       <th className="px-6 py-4 font-medium">Joined</th>
                       <th className="px-6 py-4 font-medium text-right">Actions</th>
                     </tr>
@@ -282,6 +306,7 @@ export default function UsersView() {
                           )}
                         </td>
                         <td className="px-6 py-3.5"><StatusBadge status={u.status} /></td>
+                        <td className="px-6 py-3.5 text-[var(--text-secondary)]">{heardAboutLabel(u.heardAboutUs, u.heardAboutUsOther)}</td>
                         <td className="px-6 py-3.5 text-[var(--text-secondary)]">{formatDate(u.joinDate)}</td>
                         <td className="px-6 py-3.5 text-right">
                           <ActionMenu
@@ -353,6 +378,10 @@ export default function UsersView() {
                 <div>
                   <p className="text-[10px] uppercase tracking-wide font-semibold text-[var(--text-muted)] mb-1">Joined</p>
                   <p className="text-sm text-[var(--text-primary)]">{formatDate(profileUser.joinDate)}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-wide font-semibold text-[var(--text-muted)] mb-1">Heard about us</p>
+                  <p className="text-sm text-[var(--text-primary)]">{heardAboutLabel(profileUser.heardAboutUs, profileUser.heardAboutUsOther)}</p>
                 </div>
                 <div>
                   <p className="text-[10px] uppercase tracking-wide font-semibold text-[var(--text-muted)] mb-1">Listings</p>

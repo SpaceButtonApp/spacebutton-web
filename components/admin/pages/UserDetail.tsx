@@ -19,6 +19,25 @@ function avatarColor(id: string) {
   return AVATAR_COLORS[n % AVATAR_COLORS.length]
 }
 
+const HEARD_ABOUT_LABELS: Record<string, string> = {
+  whatsapp: "WhatsApp",
+  twitter: "Twitter/X",
+  tiktok: "TikTok",
+  instagram: "Instagram",
+  facebook: "Facebook",
+  referral: "Referral (friend or family)",
+  event: "In-person event / flyer",
+  google: "Google Search",
+  email: "Email",
+  other: "Other",
+}
+
+function heardAboutLabel(slug?: string | null, other?: string | null): string | null {
+  if (!slug) return null
+  const label = HEARD_ABOUT_LABELS[slug] || slug
+  return slug === "other" && other ? `${label}: ${other}` : label
+}
+
 interface UserDetailPageProps {
   userId: string
   onBack: () => void
@@ -375,6 +394,7 @@ export function UserDetailPage({ userId, onBack, onMessageUser, onMailUser }: Us
             <InfoRow label="Location" value={[profile.city, profile.state].filter(Boolean).join(", ") || null} />
             <InfoRow label="Joined" value={formatDate(profile.created_at)} />
             <InfoRow label="Email Verified" value={profile.is_email_verified ? "Yes" : "No"} />
+            <InfoRow label="Heard about us" value={heardAboutLabel(profile.heard_about_us, profile.heard_about_us_other)} />
             {profile.role === "agent" && profile.years_of_experience != null && (
               <InfoRow label="Experience" value={`${profile.years_of_experience} yr${profile.years_of_experience !== 1 ? "s" : ""}`} />
             )}

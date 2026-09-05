@@ -15,6 +15,8 @@ export interface AuthUser {
   is_phone_verified: boolean
   referral_code: string | null
   referrals_made: number
+  heard_about_us?: string | null
+  heard_about_us_other?: string | null
 }
 
 export interface TokenResponse {
@@ -34,6 +36,8 @@ export interface SignupRequest {
   password: string
   role: UserRole
   referral_code?: string
+  heard_about_us?: string
+  heard_about_us_other?: string
 }
 
 export interface LoginRequest {

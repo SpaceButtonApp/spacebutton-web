@@ -7,6 +7,19 @@ import Image from 'next/image'
 import { User, Mail, Ticket, Check } from 'lucide-react'
 import { BackButton } from '@/components/back-button'
 
+const HEARD_ABOUT_OPTIONS = [
+  { value: 'whatsapp', label: 'WhatsApp' },
+  { value: 'twitter', label: 'Twitter/X' },
+  { value: 'tiktok', label: 'TikTok' },
+  { value: 'instagram', label: 'Instagram' },
+  { value: 'facebook', label: 'Facebook' },
+  { value: 'referral', label: 'Referral (friend or family)' },
+  { value: 'event', label: 'In-person event / flyer' },
+  { value: 'google', label: 'Google Search' },
+  { value: 'email', label: 'Email' },
+  { value: 'other', label: 'Other (please specify)' },
+]
+
 export default function SignupPage() {
   const router = useRouter()
   const [formData, setFormData] = useState({
@@ -16,6 +29,8 @@ export default function SignupPage() {
     phone: '',
     countryCode: '+234',
     invitationCode: '',
+    heardAboutUs: '',
+    heardAboutUsOther: '',
     agreeToTerms: false,
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -186,6 +201,31 @@ export default function SignupPage() {
                     className="w-full pl-11 pr-4 py-3 bg-secondary border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-muted-foreground mb-2">
+                  How did you hear about SpaceButton? (Optional)
+                </label>
+                <select
+                  value={formData.heardAboutUs}
+                  onChange={(e) => setFormData({ ...formData, heardAboutUs: e.target.value, heardAboutUsOther: e.target.value === 'other' ? formData.heardAboutUsOther : '' })}
+                  className="w-full px-4 py-3 bg-secondary border border-border rounded-xl text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                >
+                  <option value="">Select an option</option>
+                  {HEARD_ABOUT_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+                {formData.heardAboutUs === 'other' && (
+                  <input
+                    type="text"
+                    value={formData.heardAboutUsOther}
+                    onChange={(e) => setFormData({ ...formData, heardAboutUsOther: e.target.value })}
+                    placeholder="Please specify"
+                    className="mt-3 w-full px-4 py-3 bg-secondary border border-border rounded-xl text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+                  />
+                )}
               </div>
 
               <div className="flex items-center gap-3">

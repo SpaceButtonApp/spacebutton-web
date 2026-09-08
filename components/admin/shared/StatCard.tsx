@@ -22,7 +22,7 @@ export function StatCard({
   sublabel,
 }: StatCardProps) {
   return (
-    <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl p-5 flex flex-col gap-3 min-w-0">
+    <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl p-5 flex flex-col gap-3 min-w-0 shadow-[var(--shadow-card)]">
       {Icon && (
         <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${iconBg}`}>
           <Icon className={`w-5 h-5 ${iconColor}`} />

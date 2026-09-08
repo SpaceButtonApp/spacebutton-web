@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState, useCallback, useRef } from "react";
-import { Bell, Send, Check, X, Search, Loader2 } from "lucide-react";
+import { Bell, Send, Check, X, Search, Loader2, History, Users as UsersIcon } from "lucide-react";
 import { adminApi, AdminUser, NotificationBroadcastRequest, NotificationTargetType } from "@/lib/api/admin";
 import { ReasonModal } from "@/components/admin/shared/Modal";
 
@@ -40,6 +40,9 @@ export function NotificationsPage() {
   const [decidingId, setDecidingId] = useState<string | null>(null);
   const [rejectTarget, setRejectTarget] = useState<NotificationBroadcastRequest | null>(null);
 
+  const [sent, setSent] = useState<NotificationBroadcastRequest[]>([]);
+  const [sentLoading, setSentLoading] = useState(true);
+
   const loadPending = useCallback(async () => {
     try {
       const res = await adminApi.getPendingNotifications();
@@ -51,9 +54,21 @@ export function NotificationsPage() {
     }
   }, []);
 
+  const loadSent = useCallback(async () => {
+    try {
+      const res = await adminApi.getSentNotifications();
+      setSent(res.requests || []);
+    } catch {
+      // Non-critical — history just stays empty on failure
+    } finally {
+      setSentLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     loadPending();
-  }, [loadPending]);
+    loadSent();
+  }, [loadPending, loadSent]);
 
   useEffect(() => {
     if (targetType !== "specific" || userQuery.trim().length < 2) {
@@ -96,6 +111,7 @@ export function NotificationsPage() {
       setSelectedUsers([]);
       setUserQuery("");
       setTargetType("all");
+      loadSent();
     } catch (err) {
       setResult({ text: err instanceof Error ? err.message : "Failed to send broadcast.", ok: false });
     } finally {
@@ -134,7 +150,8 @@ export function NotificationsPage() {
   const canSend = title.trim().length > 0 && body.trim().length > 0 && !sending && (targetType !== "specific" || selectedUsers.length > 0);
 
   return (
-    <div className="p-8 max-w-2xl">
+    <div className="p-8 max-w-4xl">
+    <div className="max-w-2xl">
       <div className="flex items-center gap-3 mb-1">
         <div className="w-11 h-11 rounded-2xl bg-violet-500/15 flex items-center justify-center">
           <Bell className="w-5 h-5 text-violet-400" />
@@ -145,7 +162,7 @@ export function NotificationsPage() {
         </div>
       </div>
 
-      <div className="mt-6 space-y-4 bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-6">
+      <div className="mt-6 space-y-4 bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl p-6 shadow-[var(--shadow-card)]">
         <div>
           <label className="block text-sm text-[var(--text-secondary)] mb-2">Audience</label>
           <div className="flex flex-wrap gap-2">
@@ -297,7 +314,7 @@ export function NotificationsPage() {
         ) : (
           <div className="space-y-3">
             {pending.map((r) => (
-              <div key={r.id} className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-4">
+              <div key={r.id} className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl p-4 shadow-[var(--shadow-card)] transition-colors hover:bg-[var(--bg-hover)]">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
                     <div className="text-sm font-semibold text-[var(--text-primary)]">{r.title}</div>
@@ -327,6 +344,53 @@ export function NotificationsPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+      </div>
+    </div>
+
+      <div className="mt-10">
+        <div className="flex items-center gap-2 mb-3">
+          <History className="w-4 h-4 text-[var(--text-muted)]" />
+          <h3 className="text-sm font-bold text-[var(--text-primary)]">History</h3>
+        </div>
+        {sentLoading ? (
+          <div className="text-sm text-[var(--text-muted)]">Loading…</div>
+        ) : sent.length === 0 ? (
+          <div className="text-sm text-[var(--text-muted)]">No notifications sent yet.</div>
+        ) : (
+          <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl overflow-hidden shadow-[var(--shadow-card)]">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[var(--border-color)]">
+                  <th className="text-left px-4 py-3 text-xs uppercase tracking-wide text-[var(--text-muted)] font-medium">Notification</th>
+                  <th className="text-left px-4 py-3 text-xs uppercase tracking-wide text-[var(--text-muted)] font-medium">Audience</th>
+                  <th className="text-left px-4 py-3 text-xs uppercase tracking-wide text-[var(--text-muted)] font-medium">Recipients</th>
+                  <th className="text-left px-4 py-3 text-xs uppercase tracking-wide text-[var(--text-muted)] font-medium">Sent</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sent.map((r) => (
+                  <tr key={r.id} className="border-b border-[var(--border-color)] last:border-b-0 transition-colors hover:bg-[var(--bg-hover)]">
+                    <td className="px-4 py-3 max-w-xs">
+                      <div className="font-medium text-[var(--text-primary)] truncate">{r.title}</div>
+                      <div className="text-xs text-[var(--text-tertiary)] truncate">{r.body}</div>
+                    </td>
+                    <td className="px-4 py-3 text-[var(--text-secondary)]">
+                      <div className="flex items-center gap-1.5">
+                        <UsersIcon className="w-3.5 h-3.5 text-[var(--text-muted)]" />
+                        {r.target_type === "specific" ? (r.target_label || "1 user") : AUDIENCE_OPTIONS.find((o) => o.value === r.target_type)?.label}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-[var(--text-secondary)]">
+                      {r.total_users ?? "—"}
+                      {r.push_sent != null && <span className="text-[var(--text-muted)]"> · {r.push_sent} push</span>}
+                    </td>
+                    <td className="px-4 py-3 text-[var(--text-tertiary)] whitespace-nowrap">{timeAgo(r.created_at)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>

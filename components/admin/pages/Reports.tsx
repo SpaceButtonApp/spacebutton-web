@@ -32,7 +32,7 @@ function UserCell({ userId, user }: { userId: string; user?: AdminUser }) {
 const STATUS_BADGE: Record<string, { bg: string; text: string }> = {
   pending:   { bg: "bg-amber-500/15 text-amber-400",   text: "pending" },
   actioned:  { bg: "bg-emerald-500/15 text-emerald-400", text: "actioned" },
-  dismissed: { bg: "bg-slate-500/15 text-slate-400",   text: "dismissed" },
+  dismissed: { bg: "bg-slate-500/15 text-[var(--text-tertiary)]",   text: "dismissed" },
 };
 
 function ReasonBadge({ reason }: { reason: string }) {

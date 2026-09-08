@@ -284,7 +284,7 @@ export function TransactionsPage() {
         <ExportButton onClick={handleExport} />
       </div>
 
-      <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl overflow-hidden">
+      <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl overflow-hidden shadow-[var(--shadow-card)]">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>

@@ -1,17 +1,39 @@
 'use client'
 import React, { useCallback, useEffect, useState } from "react";
-import { Users, Building2, ShieldCheck, Ban, Mail } from "lucide-react";
-import { adminApi, type AdminStats, type WaitlistEntry } from "@/lib/api/admin";
+import { Users, Building2, ShieldCheck, Ban, Mail, Flag, UserPlus, Activity as ActivityIcon, TrendingUp } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { adminApi, type AdminStats, type WaitlistEntry, type AdminActivityItem, type AdminActivityType, type VisitPeriod, type VisitStatsResponse } from "@/lib/api/admin";
 import { StatCard } from "@/components/admin/shared/StatCard";
-import { ExportButton } from "@/components/admin/shared/Atoms";
-import { formatDate, exportToExcel } from "@/lib/utils/admin-format";
+import { ExportButton, FilterPill, EmptyState } from "@/components/admin/shared/Atoms";
+import { formatDate, formatRelativeTime, exportToExcel } from "@/lib/utils/admin-format";
 import type { AdminRoute } from "@/components/admin/shared/Sidebar";
+
+const ACTIVITY_META: Record<AdminActivityType, { icon: React.ElementType; color: string; bg: string }> = {
+  listing_created: { icon: Building2, color: "text-blue-400", bg: "bg-blue-500/15" },
+  user_signed_up: { icon: UserPlus, color: "text-violet-400", bg: "bg-violet-500/15" },
+  listing_reported: { icon: Flag, color: "text-red-400", bg: "bg-red-500/15" },
+  user_reported: { icon: Flag, color: "text-red-400", bg: "bg-red-500/15" },
+  verification_submitted: { icon: ShieldCheck, color: "text-purple-400", bg: "bg-purple-500/15" },
+};
+
+const PERIOD_LABELS: Record<VisitPeriod, string> = { day: "Day", week: "Week", month: "Month" };
+
+function formatBucketLabel(iso: string, period: VisitPeriod): string {
+  const d = new Date(iso);
+  if (period === "day") return d.toLocaleTimeString("en-NG", { hour: "numeric" });
+  return d.toLocaleDateString("en-NG", { month: "short", day: "numeric" });
+}
 
 export function Dashboard({ onNavigate }: { onNavigate: (r: AdminRoute) => void }) {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
   const [waitlistTotal, setWaitlistTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [activity, setActivity] = useState<AdminActivityItem[]>([]);
+  const [activityLoading, setActivityLoading] = useState(true);
+  const [visitStats, setVisitStats] = useState<VisitStatsResponse | null>(null);
+  const [visitPeriod, setVisitPeriod] = useState<VisitPeriod>("day");
+  const [visitLoading, setVisitLoading] = useState(true);
 
   const adminProfile = (() => {
     try {
@@ -23,22 +45,34 @@ export function Dashboard({ onNavigate }: { onNavigate: (r: AdminRoute) => void 
 
   const load = useCallback(async () => {
     setLoading(true);
+    setActivityLoading(true);
     try {
-      const [statsData, waitlistData] = await Promise.allSettled([
+      const [statsData, waitlistData, activityData] = await Promise.allSettled([
         adminApi.getStats(),
         adminApi.getWaitlist(1, 50),
+        adminApi.getRecentActivity(20),
       ]);
       if (statsData.status === 'fulfilled') setStats(statsData.value);
       if (waitlistData.status === 'fulfilled') {
         setWaitlist(waitlistData.value.entries ?? []);
         setWaitlistTotal(waitlistData.value.total ?? 0);
       }
+      if (activityData.status === 'fulfilled') setActivity(activityData.value.activity ?? []);
     } finally {
       setLoading(false);
+      setActivityLoading(false);
     }
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    setVisitLoading(true);
+    adminApi.getVisitStats(visitPeriod)
+      .then(setVisitStats)
+      .catch(() => setVisitStats(null))
+      .finally(() => setVisitLoading(false));
+  }, [visitPeriod]);
 
   const totalUsers = stats?.users?.total_users ?? 0;
   const agentCount = stats?.users?.total_agents ?? 0;
@@ -101,7 +135,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (r: AdminRoute) => void 
           <button
             key={a.label}
             onClick={() => onNavigate(a.route)}
-            className="text-left bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl p-5 hover:border-violet-500/30 transition-colors"
+            className="text-left bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl p-5 shadow-[var(--shadow-card)] hover:border-violet-500/30 transition-colors"
           >
             <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-4 ${a.bg}`}>
               <a.icon className={`w-5 h-5 ${a.color}`} />
@@ -112,7 +146,90 @@ export function Dashboard({ onNavigate }: { onNavigate: (r: AdminRoute) => void 
         ))}
       </div>
 
-      <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl overflow-hidden">
+      <div className="mb-8">
+        <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl overflow-hidden shadow-[var(--shadow-card)]">
+          <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border-color)] flex-wrap gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-violet-500/15 flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-violet-400" />
+              </div>
+              <div>
+                <div className="font-semibold text-[var(--text-primary)]">Website Visits</div>
+                <div className="text-sm text-[var(--text-secondary)]">
+                  {visitLoading ? '…' : `${visitStats?.buckets.reduce((s, b) => s + b.count, 0) ?? 0} unique visits`}
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              {(Object.keys(PERIOD_LABELS) as VisitPeriod[]).map((p) => (
+                <FilterPill key={p} active={visitPeriod === p} onClick={() => setVisitPeriod(p)}>
+                  {PERIOD_LABELS[p]}
+                </FilterPill>
+              ))}
+            </div>
+          </div>
+          <div className="p-6">
+            {visitLoading ? (
+              <div className="h-[220px] flex items-center justify-center text-sm text-[var(--text-muted)]">Loading…</div>
+            ) : !visitStats || visitStats.buckets.length === 0 ? (
+              <div className="h-[220px] flex items-center justify-center text-sm text-[var(--text-muted)]">No visit data yet.</div>
+            ) : (
+              <ResponsiveContainer width="100%" height={220}>
+                <LineChart data={visitStats.buckets.map((b) => ({ label: formatBucketLabel(b.label, visitPeriod), count: b.count }))} margin={{ top: 8, right: 8, bottom: 0, left: -20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color)" />
+                  <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--text-muted)" }} axisLine={false} tickLine={false} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "var(--text-muted)" }} axisLine={false} tickLine={false} />
+                  <Tooltip
+                    contentStyle={{ background: "var(--bg-modal)", border: "1px solid var(--border-strong)", borderRadius: 8, fontSize: 12, color: "var(--text-primary)" }}
+                    labelStyle={{ color: "var(--text-secondary)" }}
+                  />
+                  <Line type="monotone" dataKey="count" name="Visits" stroke="#7c3aed" strokeWidth={2} dot={{ r: 3, fill: "#7c3aed" }} activeDot={{ r: 5 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="mb-8">
+        <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl overflow-hidden shadow-[var(--shadow-card)]">
+          <div className="flex items-center gap-3 px-6 py-5 border-b border-[var(--border-color)]">
+            <div className="w-10 h-10 rounded-xl bg-violet-500/15 flex items-center justify-center">
+              <ActivityIcon className="w-5 h-5 text-violet-400" />
+            </div>
+            <div>
+              <div className="font-semibold text-[var(--text-primary)]">Recent Activity</div>
+              <div className="text-sm text-[var(--text-secondary)]">What's happening on the platform</div>
+            </div>
+          </div>
+          <div className="max-h-96 overflow-y-auto">
+            {activityLoading ? (
+              <div className="px-6 py-8 text-center text-[var(--text-muted)] text-sm">Loading…</div>
+            ) : activity.length === 0 ? (
+              <EmptyState label="No recent activity." />
+            ) : (
+              activity.map((a, i) => {
+                const meta = ACTIVITY_META[a.type];
+                const Icon = meta.icon;
+                return (
+                  <div key={i} className="flex items-center gap-3 px-6 py-3.5 border-b border-[var(--border-color)] last:border-0 transition-colors hover:bg-[var(--bg-hover)]">
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${meta.bg}`}>
+                      <Icon className={`w-4 h-4 ${meta.color}`} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-medium text-[var(--text-primary)] truncate">{a.title}</div>
+                      {a.subtitle && <div className="text-xs text-[var(--text-muted)] truncate">{a.subtitle}</div>}
+                    </div>
+                    <div className="text-xs text-[var(--text-tertiary)] shrink-0">{formatRelativeTime(a.timestamp)}</div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl overflow-hidden shadow-[var(--shadow-card)]">
         <div className="flex items-center justify-between px-6 py-5 border-b border-[var(--border-color)]">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-violet-500/15 flex items-center justify-center">

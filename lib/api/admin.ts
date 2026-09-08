@@ -286,6 +286,23 @@ export interface AdminStats {
   }
 }
 
+export type AdminActivityType = 'listing_created' | 'user_signed_up' | 'listing_reported' | 'user_reported' | 'verification_submitted'
+
+export interface AdminActivityItem {
+  type: AdminActivityType
+  title: string
+  subtitle: string
+  timestamp: string
+  link: string | null
+}
+
+export type VisitPeriod = 'day' | 'week' | 'month'
+
+export interface VisitStatsResponse {
+  period: VisitPeriod
+  buckets: { label: string; count: number }[]
+}
+
 export interface PendingVerification {
   user_id: string
   id_type?: string
@@ -412,6 +429,16 @@ export const adminApi = {
   async getStats(): Promise<AdminStats> {
     const res = await adminFetch<{ success: boolean; data: AdminStats }>('/admin/stats')
     return res.data
+  },
+
+  async getVisitStats(period: VisitPeriod = 'day'): Promise<VisitStatsResponse> {
+    const res = await adminFetch<{ success: boolean; data: VisitStatsResponse }>(`/admin/stats/visits?period=${period}`)
+    return (res as any)?.data ?? res
+  },
+
+  async getRecentActivity(limit = 20): Promise<{ activity: AdminActivityItem[] }> {
+    const res = await adminFetch<{ success: boolean; data: { activity: AdminActivityItem[] } }>(`/admin/activity?limit=${limit}`)
+    return (res as any)?.data ?? res
   },
 
   // Users
@@ -752,6 +779,11 @@ export const adminApi = {
 
   async getMyNotifications(): Promise<{ requests: NotificationBroadcastRequest[] }> {
     const res = await adminFetch<{ success: boolean; data: { requests: NotificationBroadcastRequest[] } }>('/admin/notifications/mine')
+    return (res as any)?.data ?? res
+  },
+
+  async getSentNotifications(): Promise<{ requests: NotificationBroadcastRequest[] }> {
+    const res = await adminFetch<{ success: boolean; data: { requests: NotificationBroadcastRequest[] } }>('/admin/notifications/sent')
     return (res as any)?.data ?? res
   },
 

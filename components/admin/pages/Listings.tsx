@@ -479,7 +479,7 @@ export function ListingsPage({ onMessageUser, onMailUser, focusListingId, onFocu
 
 function ListingCard({ listing, onView }: { listing: ListingRow; onView: () => void }) {
   return (
-    <div onClick={onView} className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl overflow-hidden cursor-pointer hover:border-violet-500/30 transition-colors">
+    <div onClick={onView} className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl overflow-hidden cursor-pointer shadow-[var(--shadow-card)] hover:border-violet-500/30 transition-colors">
       {listing.images[0] ? (
         <img src={listing.images[0]} alt={listing.title} className="w-full h-44 object-cover" />
       ) : (

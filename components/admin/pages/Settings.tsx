@@ -85,7 +85,7 @@ function ProfileTab() {
   }
 
   return (
-    <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl p-6">
+    <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl p-6 shadow-[var(--shadow-card)]">
       <h3 className="font-semibold text-[var(--text-primary)] mb-1">Profile Information</h3>
       <p className="text-sm text-[var(--text-secondary)] mb-6">Update your display name and photo</p>
 
@@ -164,7 +164,7 @@ function SecurityTab() {
   }
 
   return (
-    <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl p-6">
+    <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl p-6 shadow-[var(--shadow-card)]">
       <h3 className="font-semibold text-[var(--text-primary)] mb-1">Change Password</h3>
       <p className="text-sm text-[var(--text-secondary)] mb-6">Update your password to keep your account secure</p>
 
@@ -286,7 +286,7 @@ function SupportTab() {
   return (
     <div className="space-y-6">
       {/* Create form */}
-      <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl p-6">
+      <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl p-6 shadow-[var(--shadow-card)]">
         <h3 className="font-semibold text-[var(--text-primary)] mb-1">Create Support Account</h3>
         <p className="text-sm text-[var(--text-secondary)] mb-6">
           Give a customer support agent their own login. Email must be a <span className="font-medium text-[var(--text-primary)]">@spacebutton.net</span> address.
@@ -335,7 +335,7 @@ function SupportTab() {
       </div>
 
       {/* Agent list */}
-      <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl p-6">
+      <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl p-6 shadow-[var(--shadow-card)]">
         <h3 className="font-semibold text-[var(--text-primary)] mb-1">Customer Support Team</h3>
         <p className="text-sm text-[var(--text-secondary)] mb-5">
           {loadingAgents ? "Loading…" : `${agents.length} support account${agents.length === 1 ? "" : "s"}`}
@@ -480,7 +480,7 @@ function NotificationsTab() {
   const [prefs, setPrefs] = useState(NOTIF_PREFS_DEFAULT);
 
   return (
-    <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl p-6">
+    <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl p-6 shadow-[var(--shadow-card)]">
       <h3 className="font-semibold text-[var(--text-primary)] mb-1">Notification Preferences</h3>
       <p className="text-sm text-[var(--text-secondary)] mb-6">Choose what notifications you want to receive</p>
 

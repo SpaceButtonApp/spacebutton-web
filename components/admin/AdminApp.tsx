@@ -141,9 +141,9 @@ export function AdminApp() {
   }
 
   return (
-    <div className={`admin-root fixed inset-0 flex overflow-hidden bg-[var(--bg-page)] text-[var(--text-primary)] font-sans ${theme === "dark" ? "dark" : ""}`}>
+    <div className={`admin-root fixed inset-0 flex overflow-hidden bg-[var(--bg-base)] text-[var(--text-primary)] font-sans ${theme === "dark" ? "dark" : ""}`}>
       {isLoading && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-[var(--bg-page)]/80 backdrop-blur-sm">
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-[var(--bg-base)]/80 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-3">
             <div className="w-8 h-8 border-2 border-violet-500/30 border-t-violet-500 rounded-full animate-spin" />
             <span className="text-sm text-[var(--text-secondary)]">Loading data…</span>

@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 // Routes that require the user to be logged in
+// NOTE: '/property' is intentionally NOT in this list — listing pages must be
+// publicly viewable (no auth cookie) so shared links render a real preview
+// for WhatsApp/TikTok/etc. link-crawlers, and so the "Share" feature actually
+// lets a recipient view the listing. Interactive actions on that page
+// (Connect, Save) still require login via their own API calls.
 const PROTECTED_PREFIXES = [
   '/home',
   '/search',
@@ -9,7 +14,6 @@ const PROTECTED_PREFIXES = [
   '/chat',
   '/notifications',
   '/profile',
-  '/property',
   '/user',
   '/saved',
   '/add-post',

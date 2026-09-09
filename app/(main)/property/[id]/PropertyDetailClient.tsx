@@ -7,7 +7,7 @@ import {
   Bookmark, ChevronLeft, ChevronRight, ChevronDown, Bed, Bath,
   Sofa, MapPin, Calendar, AlertTriangle, Users, Building2, ArrowLeft, X, Clock,
   Home, Tag, DollarSign, Grid3X3, Maximize, Eye, Play, Pause,
-  Maximize2, Minimize2, SkipBack, SkipForward, Share2, Check,
+  Maximize2, Minimize2, SkipBack, SkipForward, Share2, Check, Download,
 } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { Button } from '@/components/ui/button'
@@ -16,6 +16,7 @@ import { BackButton } from '@/components/back-button'
 import { ConnectCostModal } from '@/components/connect-cost-modal'
 import { SuggestedApartments } from '@/components/suggested-apartments'
 import { Watermark } from '@/components/watermark'
+import { withDownloadFlag } from '@/lib/utils/cloudinary-download'
 import { useAppStore } from '@/lib/store'
 import { listingsApi, mapListing, saveListing } from '@/lib/api/listings'
 import { chatApi } from '@/lib/api/chat'
@@ -175,11 +176,35 @@ export default function PropertyDetailClient({ id }: { id: string }) {
   }
 
   const handleInterested = () => {
+    if (!user) {
+      router.push(`/login?from=/property/${id}`)
+      return
+    }
     if (existingChatId) {
       router.push(`/chat/${existingChatId}`)
       return
     }
     setShowConnectModal(true)
+  }
+
+  const handleSave = () => {
+    if (!user) {
+      router.push(`/login?from=/property/${id}`)
+      return
+    }
+    saveListing(id)
+  }
+
+  const handleDownload = () => {
+    const url = withDownloadFlag(mediaItems[currentImageIndex])
+    if (!url) return
+    const a = document.createElement('a')
+    a.href = url
+    a.download = ''
+    a.rel = 'noopener'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
   }
 
   const handleShare = async () => {
@@ -224,13 +249,20 @@ export default function PropertyDetailClient({ id }: { id: string }) {
         
         <div className="flex items-center gap-2">
           <button
+            onClick={handleDownload}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-background/80 backdrop-blur-sm"
+            aria-label="Download photo or video"
+          >
+            <Download className="w-5 h-5" />
+          </button>
+          <button
             onClick={handleShare}
             className="w-10 h-10 flex items-center justify-center rounded-full bg-background/80 backdrop-blur-sm"
           >
             {linkCopied ? <Check className="w-5 h-5 text-primary" /> : <Share2 className="w-5 h-5" />}
           </button>
           <button
-            onClick={() => saveListing(id)}
+            onClick={handleSave}
             className="w-10 h-10 flex items-center justify-center rounded-full bg-background/80 backdrop-blur-sm"
           >
             <Bookmark className={cn('w-5 h-5', isSaved && 'fill-primary text-primary')} />
@@ -631,13 +663,22 @@ export default function PropertyDetailClient({ id }: { id: string }) {
 
               <Watermark size="lg" />
 
-              {/* Minimize */}
-              <button
-                onClick={() => setShowFullScreen(false)}
-                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center z-10"
-              >
-                <Minimize2 className="w-5 h-5 text-white" />
-              </button>
+              {/* Minimize / Download */}
+              <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+                <button
+                  onClick={handleDownload}
+                  className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center"
+                  aria-label="Download video"
+                >
+                  <Download className="w-5 h-5 text-white" />
+                </button>
+                <button
+                  onClick={() => setShowFullScreen(false)}
+                  className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center"
+                >
+                  <Minimize2 className="w-5 h-5 text-white" />
+                </button>
+              </div>
 
               {/* Centered playback controls — YouTube-style. Explicit z-index so
                   these stay above the (also centered) watermark. */}
@@ -695,13 +736,22 @@ export default function PropertyDetailClient({ id }: { id: string }) {
 
               <Watermark size="lg" />
 
-              {/* Minimize */}
-              <button
-                onClick={() => setShowFullScreen(false)}
-                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center z-10"
-              >
-                <Minimize2 className="w-5 h-5 text-white" />
-              </button>
+              {/* Minimize / Download */}
+              <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleDownload() }}
+                  className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center"
+                  aria-label="Download photo"
+                >
+                  <Download className="w-5 h-5 text-white" />
+                </button>
+                <button
+                  onClick={() => setShowFullScreen(false)}
+                  className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center"
+                >
+                  <Minimize2 className="w-5 h-5 text-white" />
+                </button>
+              </div>
 
               {/* Prev / Next */}
               {mediaItems.length > 1 && (

@@ -30,7 +30,7 @@ function insertTransformation(url: string, transformation: string): string {
  */
 export function withCloudinaryWatermark(url: string | undefined | null): string {
   if (!url) return url ?? ''
-  return insertTransformation(url, `l_${WATERMARK_PUBLIC_ID},g_center,w_0.3,fl_relative,o_60/fl_layer_apply`)
+  return insertTransformation(url, `l_${WATERMARK_PUBLIC_ID},g_center,w_0.45,fl_relative,o_60/fl_layer_apply`)
 }
 
 /**

@@ -15,8 +15,7 @@ import { BottomNav } from '@/components/bottom-nav'
 import { BackButton } from '@/components/back-button'
 import { ConnectCostModal } from '@/components/connect-cost-modal'
 import { SuggestedApartments } from '@/components/suggested-apartments'
-import { Watermark } from '@/components/watermark'
-import { withDownloadFlag } from '@/lib/utils/cloudinary-download'
+import { withCloudinaryWatermark, withDownloadFlag } from '@/lib/utils/cloudinary-watermark'
 import { useAppStore } from '@/lib/store'
 import { listingsApi, mapListing, saveListing } from '@/lib/api/listings'
 import { chatApi } from '@/lib/api/chat'
@@ -162,6 +161,14 @@ export default function PropertyDetailClient({ id }: { id: string }) {
 
   const mediaItems = [...(property.videoUrl ? [property.videoUrl] : []), ...property.images]
   const isVideoItem = (url: string) => !!property.videoUrl && url === property.videoUrl
+  // Watermark baked directly into the delivered file (via Cloudinary), so it
+  // survives a direct "Save image/video" or the download button — a CSS
+  // overlay never would, since the browser just downloads whatever the src
+  // URL points to. mediaItems stays raw (used for the isVideoItem identity
+  // check and indexing); displayMediaItems/displayCover are watermarked and
+  // used only for actual src/poster rendering.
+  const displayMediaItems = mediaItems.map(withCloudinaryWatermark)
+  const displayCover = withCloudinaryWatermark(property.images[0])
 
   const handlePrevImage = () => {
     setCurrentImageIndex((prev) =>
@@ -196,7 +203,7 @@ export default function PropertyDetailClient({ id }: { id: string }) {
   }
 
   const handleDownload = () => {
-    const url = withDownloadFlag(mediaItems[currentImageIndex])
+    const url = withDownloadFlag(displayMediaItems[currentImageIndex])
     if (!url) return
     const a = document.createElement('a')
     a.href = url
@@ -286,12 +293,12 @@ export default function PropertyDetailClient({ id }: { id: string }) {
           <>
             <video
               ref={videoRef}
-              src={mediaItems[currentImageIndex]}
+              src={displayMediaItems[currentImageIndex]}
               className="w-full h-full object-cover cursor-pointer"
               muted
               loop
               playsInline
-              poster={property.images[0] || ''}
+              poster={displayCover}
               onClick={() => setShowFullScreen(true)}
             />
             {!isVideoPlaying && (
@@ -307,7 +314,7 @@ export default function PropertyDetailClient({ id }: { id: string }) {
           </>
         ) : (
           <Image
-            src={mediaItems[currentImageIndex] || '/placeholder.jpg'}
+            src={displayMediaItems[currentImageIndex] || '/placeholder.jpg'}
             alt={property.title}
             fill
             className="object-cover cursor-pointer"
@@ -315,7 +322,6 @@ export default function PropertyDetailClient({ id }: { id: string }) {
             unoptimized
           />
         )}
-        <Watermark size="md" />
 
         {/* Navigation arrows */}
         <button
@@ -649,19 +655,17 @@ export default function PropertyDetailClient({ id }: { id: string }) {
             <div className="relative w-full h-full flex items-center justify-center">
               <video
                 ref={fullscreenVideoRef}
-                src={mediaItems[currentImageIndex]}
+                src={displayMediaItems[currentImageIndex]}
                 className="max-w-full max-h-full object-contain"
                 loop
                 playsInline
                 autoPlay
-                poster={property.images[0] || ''}
+                poster={displayCover}
                 onPlay={() => setIsFullscreenVideoPlaying(true)}
                 onPause={() => setIsFullscreenVideoPlaying(false)}
                 onLoadedMetadata={(e) => setVideoDuration(e.currentTarget.duration)}
                 onTimeUpdate={(e) => setVideoCurrentTime(e.currentTarget.currentTime)}
               />
-
-              <Watermark size="lg" />
 
               {/* Minimize / Download */}
               <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
@@ -726,15 +730,13 @@ export default function PropertyDetailClient({ id }: { id: string }) {
               onClick={() => setShowFullScreen(false)}
             >
               <Image
-                src={mediaItems[currentImageIndex]}
+                src={displayMediaItems[currentImageIndex]}
                 alt={property.title}
                 fill
                 className="object-contain"
                 unoptimized
                 onClick={(e) => e.stopPropagation()}
               />
-
-              <Watermark size="lg" />
 
               {/* Minimize / Download */}
               <div className="absolute top-4 right-4 flex items-center gap-2 z-10">

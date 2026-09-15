@@ -23,6 +23,15 @@ import type { ReviewResponse } from '@/lib/types/user'
 const DEFAULT_AVATAR = '/placeholder-user.jpg'
 const DEFAULT_PROPERTY_IMG = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=400&h=300&fit=crop'
 
+const PHONE_CANDIDATE_RE = /\+?\d(?:[\s\-.()]{0,3}\d){6,}/g
+function containsPhoneNumber(text: string): boolean {
+  const matches = text.match(PHONE_CANDIDATE_RE) || []
+  return matches.some((m) => {
+    const digits = m.replace(/\D/g, '')
+    return digits.length >= 10 && digits.length <= 15
+  })
+}
+
 interface DisplayInfo { name: string; avatar: string | null; isAvailable: boolean; role: string }
 
 function formatMsgTime(iso: string) {
@@ -54,6 +63,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [input, setInput] = useState('')
+  const [sendError, setSendError] = useState<string | null>(null)
 
   const [doneDeal, setDoneDeal] = useState<DoneDealState | null>(null)
   const [showMenu, setShowMenu] = useState(false)
@@ -136,6 +146,11 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
   const handleSend = async () => {
     const content = input.trim()
     if (!content || sending) return
+    if (containsPhoneNumber(content)) {
+      setSendError("Phone numbers aren't allowed in chat messages.")
+      return
+    }
+    setSendError(null)
     setInput('')
     setSending(true)
     const optimistic: MessageResponse = {
@@ -161,6 +176,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
 
   const handleInputChange = (v: string) => {
     setInput(v)
+    if (sendError) setSendError(null)
     wsTyping(true)
     if (typingTimer.current) clearTimeout(typingTimer.current)
     typingTimer.current = setTimeout(() => wsTyping(false), 1500)
@@ -466,6 +482,10 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             ✓ Deal completed — this chat is now closed
           </p>
         ) : (
+          <div>
+          {sendError && (
+            <p className="text-center text-sm text-destructive pb-2">{sendError}</p>
+          )}
           <div className="flex items-center gap-2">
             <Input
               type="text"
@@ -482,6 +502,7 @@ export default function ChatPage({ params }: { params: Promise<{ id: string }> }
             >
               <Send className="w-4.5 h-4.5 w-[18px] h-[18px] text-primary-foreground" />
             </button>
+          </div>
           </div>
         )}
       </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
+import { useState, useEffect, useRef, use } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { ChevronLeft, Phone, PhoneOff } from 'lucide-react'
@@ -18,6 +18,19 @@ export default function IncomingCallPage({ params }: { params: Promise<{ id: str
   const [callerName, setCallerName] = useState('Incoming Call')
   const [callerAvatar, setCallerAvatar] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+
+  // Ring until accepted or declined
+  useEffect(() => {
+    const audio = audioRef.current
+    if (audio) {
+      audio.loop = true
+      audio.play().catch(() => {})
+    }
+    return () => {
+      if (audio) { audio.pause(); audio.currentTime = 0 }
+    }
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -41,11 +54,13 @@ export default function IncomingCallPage({ params }: { params: Promise<{ id: str
 
   const handleAccept = async () => {
     if (!call) return
+    audioRef.current?.pause()
     const type = call.call_type === 'video' ? 'video' : 'voice'
     router.push(`/call/${type}/${call.caller_id}?callId=${id}`)
   }
 
   const handleDecline = async () => {
+    audioRef.current?.pause()
     await callsApi.endCall(id, 'rejected').catch(() => {})
     window.history.back()
   }
@@ -54,6 +69,7 @@ export default function IncomingCallPage({ params }: { params: Promise<{ id: str
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
+      <audio ref={audioRef} src="/ringtone.mp3" />
       <header className="flex items-center gap-4 p-4">
         <button onClick={() => window.history.back()} className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
           <ChevronLeft className="h-6 w-6" />

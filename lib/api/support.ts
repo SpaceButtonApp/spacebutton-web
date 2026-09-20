@@ -1,4 +1,9 @@
+import { fetchAllPages } from '@/lib/utils/fetch-all-pages'
+
 const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.spacebutton.net/api/v1').replace(/\/$/, '')
+
+// The largest page the ticket list endpoint accepts (it rejects anything above 100).
+const TICKET_PAGE_SIZE = 100
 
 function getSupportToken(): string {
   if (typeof window === 'undefined') return ''
@@ -134,15 +139,18 @@ export const supportApi = {
 
   // ── Ticket list ──────────────────────────────────────────────────────────
 
-  async getTickets(params?: { status?: string; page?: number; page_size?: number }): Promise<{ tickets: Ticket[]; total: number }> {
-    const qs = new URLSearchParams()
-    if (params?.status) qs.set('status', params.status)
-    if (params?.page) qs.set('page', String(params.page))
-    qs.set('page_size', String(params?.page_size ?? 50))
-    const res = await supportFetch<{ success: boolean; data: { tickets: Ticket[]; total: number } }>(
-      `/support/tickets/admin/all?${qs}`
-    )
-    return res.data
+  // Returns every ticket, not just one page. (This used to request page 1 of
+  // 50 and stop, so anything older than the 50 most recent never showed up.)
+  async getAllTickets(params?: { status?: string }): Promise<{ tickets: Ticket[]; total: number }> {
+    const { items, total } = await fetchAllPages<Ticket>(async (page) => {
+      const qs = new URLSearchParams({ page: String(page), page_size: String(TICKET_PAGE_SIZE) })
+      if (params?.status) qs.set('status', params.status)
+      const res = await supportFetch<{ success: boolean; data: { tickets: Ticket[]; total: number } }>(
+        `/support/tickets/admin/all?${qs}`
+      )
+      return { items: res.data.tickets, total: res.data.total }
+    }, TICKET_PAGE_SIZE)
+    return { tickets: items, total }
   },
 
   // ── Ticket detail ────────────────────────────────────────────────────────

@@ -39,7 +39,7 @@ export function useTickets() {
 
   const loadTickets = useCallback(async () => {
     try {
-      const data = await supportApi.getTickets()
+      const data = await supportApi.getAllTickets()
       setState(prev => ({ ...prev, tickets: data.tickets, loading: false, error: null }))
     } catch (err) {
       setState(prev => ({

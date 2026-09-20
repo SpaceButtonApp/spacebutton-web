@@ -50,7 +50,7 @@ export default function DashboardView({ onTabChange }: DashboardViewProps) {
 
   useEffect(() => {
     supportApi
-      .getTickets({ page_size: 200 })
+      .getAllTickets()
       .then(data => setMetrics(computeMetrics(data.tickets)))
       .catch(() => setMetrics({ open: 0, urgent: 0, resolvedToday: 0, total: 0 }))
       .finally(() => setLoading(false))

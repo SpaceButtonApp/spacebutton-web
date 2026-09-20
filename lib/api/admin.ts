@@ -1,4 +1,9 @@
+import { fetchAllPages } from '@/lib/utils/fetch-all-pages'
+
 const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.spacebutton.net/api/v1').replace(/\/$/, '')
+
+// The largest page the ticket list endpoint accepts (it rejects anything above 100).
+const SUPPORT_TICKET_PAGE_SIZE = 100
 
 function getAdminToken(): string {
   if (typeof window === 'undefined') return ''
@@ -699,14 +704,19 @@ export const adminApi = {
   },
 
   // Support tickets (admin role satisfies require_role("admin","support_agent"))
-  async getSupportTickets(params?: { status?: string; page?: number }): Promise<{ tickets: SupportTicket[]; total: number }> {
-    const qs = new URLSearchParams({ page_size: '50' })
-    if (params?.status) qs.set('status', params.status)
-    if (params?.page) qs.set('page', String(params.page))
-    const res = await adminFetch<{ success: boolean; data: { tickets: SupportTicket[]; total: number } }>(
-      `/support/tickets/admin/all?${qs}`
-    )
-    return (res as any)?.data ?? res
+  // Returns every ticket, not just one page. (This used to request page 1 of
+  // 50 and stop, so anything older than the 50 most recent never showed up.)
+  async getSupportTickets(params?: { status?: string }): Promise<{ tickets: SupportTicket[]; total: number }> {
+    const { items, total } = await fetchAllPages<SupportTicket>(async (page) => {
+      const qs = new URLSearchParams({ page: String(page), page_size: String(SUPPORT_TICKET_PAGE_SIZE) })
+      if (params?.status) qs.set('status', params.status)
+      const res = await adminFetch<{ success: boolean; data: { tickets: SupportTicket[]; total: number } }>(
+        `/support/tickets/admin/all?${qs}`
+      )
+      const data = (res as any)?.data ?? res
+      return { items: data.tickets ?? [], total: data.total ?? 0 }
+    }, SUPPORT_TICKET_PAGE_SIZE)
+    return { tickets: items, total }
   },
 
   async getSupportTicketDetail(ticketId: string): Promise<{ ticket: SupportTicket; messages: SupportTicketMessage[]; admin_messages: SupportTicketMessage[] }> {

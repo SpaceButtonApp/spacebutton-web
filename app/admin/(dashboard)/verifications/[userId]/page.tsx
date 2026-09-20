@@ -7,12 +7,12 @@ import { adminApi } from '@/lib/api/admin'
 import type { PendingVerification, AdminUser } from '@/lib/api/admin'
 import {
   ArrowLeft, ShieldCheck, ShieldX, Clock, Check, X, Maximize2, User, Mail, Phone,
-  FolderCheck, FolderX, Loader2,
+  FolderCheck, FolderX, Loader2, Download,
 } from 'lucide-react'
 import { ReasonModal, ImageLightbox } from '@/components/admin/shared/Modal'
 import {
   isLocalSaveSupported, isVerificationFolderConnected, connectVerificationFolder,
-  saveVerificationImagesLocally,
+  connectFailureMessage, saveVerificationImagesLocally,
 } from '@/lib/utils/local-verification-save'
 
 type DocStatus = 'pending' | 'approved' | 'rejected' | 'none'
@@ -38,19 +38,27 @@ export default function VerificationDetailPage() {
   const [rejectTarget, setRejectTarget] = useState<'id' | 'live' | 'both' | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
 
+  const [folderSupported, setFolderSupported] = useState<boolean | null>(null)
   const [folderConnected, setFolderConnected] = useState<boolean | null>(null)
   const [localSaveStatus, setLocalSaveStatus] = useState<
     { type: 'saving' } | { type: 'success'; folderName: string } | { type: 'error'; message: string } | null
   >(null)
 
   useEffect(() => {
-    if (!isLocalSaveSupported()) { setFolderConnected(false); return }
+    const supported = isLocalSaveSupported()
+    setFolderSupported(supported)
+    if (!supported) { setFolderConnected(false); return }
     isVerificationFolderConnected().then(setFolderConnected)
   }, [])
 
   async function handleConnectFolder() {
-    const ok = await connectVerificationFolder()
-    setFolderConnected(ok)
+    setLocalSaveStatus(null)
+    const result = await connectVerificationFolder()
+    setFolderConnected(result.ok)
+    // Cancelling the picker is a deliberate choice, not an error worth showing.
+    if (!result.ok && result.reason !== 'cancelled') {
+      setLocalSaveStatus({ type: 'error', message: connectFailureMessage(result) })
+    }
   }
 
   useEffect(() => {
@@ -82,26 +90,56 @@ export default function VerificationDetailPage() {
   // Once both documents are approved, save them locally as one pair —
   // saving them separately as each is approved could leave a folder with
   // only one of the two images if they're approved at different times.
-  async function maybeSaveLocally(updated: PendingVerification) {
-    if (updated.id_verification_status !== 'approved' || updated.live_verification_status !== 'approved') return
-
+  async function saveNow(v: PendingVerification) {
     const name = user ? [user.first_name, user.last_name].filter(Boolean).join(' ') || userId : userId
     setLocalSaveStatus({ type: 'saving' })
 
-    let handle = folderConnected
-    if (!handle) {
-      const connected = await connectVerificationFolder()
-      setFolderConnected(connected)
-      handle = connected
-    }
-    if (!handle) {
-      setLocalSaveStatus({ type: 'error', message: 'Folder not connected — click "Connect Folder" and try approving again.' })
+    const result = await saveVerificationImagesLocally(name, v.id_document_url, v.selfie_url)
+    if (result.ok) {
+      setLocalSaveStatus({ type: 'success', folderName: result.folderName })
       return
     }
+    // Permission lapsed — show the Connect button again so it can be re-granted.
+    if (result.reason === 'not-connected') setFolderConnected(false)
+    setLocalSaveStatus({ type: 'error', message: result.message ?? 'Could not save images locally.' })
+  }
 
-    const result = await saveVerificationImagesLocally(name, updated.id_document_url, updated.selfie_url)
-    if (result.ok) setLocalSaveStatus({ type: 'success', folderName: result.folderName })
-    else setLocalSaveStatus({ type: 'error', message: result.message ?? 'Could not save images locally.' })
+  // Runs automatically after an approval. It deliberately never opens a folder
+  // picker or permission prompt by itself: that needs a fresh click, and the
+  // approval API call before this has usually used up the click's window —
+  // an unprompted native dialog popping up mid-approval is unreliable and
+  // confusing. If the folder isn't ready, say so and leave "Save images now".
+  async function maybeSaveLocally(updated: PendingVerification) {
+    if (updated.id_verification_status !== 'approved' || updated.live_verification_status !== 'approved') return
+
+    if (!folderSupported) {
+      setLocalSaveStatus({ type: 'error', message: connectFailureMessage({ ok: false, reason: 'unsupported' }) })
+      return
+    }
+    if (!folderConnected) {
+      setLocalSaveStatus({
+        type: 'error',
+        message: 'Approved, but the images were not saved locally because the folder isn\'t connected. Click "Connect local VERIFICATION folder", then "Save images now".',
+      })
+      return
+    }
+    await saveNow(updated)
+  }
+
+  // Manual (re)try — runs from a real click, so it can re-grant folder access.
+  async function handleSaveNow() {
+    if (!verif) return
+    if (!folderConnected) {
+      const connected = await connectVerificationFolder()
+      setFolderConnected(connected.ok)
+      if (!connected.ok) {
+        if (connected.reason !== 'cancelled') {
+          setLocalSaveStatus({ type: 'error', message: connectFailureMessage(connected) })
+        }
+        return
+      }
+    }
+    await saveNow(verif)
   }
 
   async function approveId() {
@@ -158,6 +196,15 @@ export default function VerificationDetailPage() {
 
   const name = user ? [user.first_name, user.last_name].filter(Boolean).join(' ') || '—' : '—'
 
+  const canSaveNow =
+    folderSupported === true &&
+    idStatus === 'approved' &&
+    liveStatus === 'approved' &&
+    !!verif?.id_document_url &&
+    !!verif?.selfie_url &&
+    localSaveStatus?.type !== 'saving' &&
+    localSaveStatus?.type !== 'success'
+
   return (
     <div className="admin-root flex flex-col h-screen overflow-hidden bg-[var(--bg-base)]">
       <AdminHeader title="Verification Review" />
@@ -173,19 +220,37 @@ export default function VerificationDetailPage() {
               <ArrowLeft className="w-4 h-4" /> Back to Verifications
             </button>
 
-            {folderConnected === false && (
-              <button
-                onClick={handleConnectFolder}
-                className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/20 hover:bg-amber-500/25 transition-colors"
-              >
-                <FolderX className="w-3.5 h-3.5" /> Connect local VERIFICATION folder
-              </button>
-            )}
-            {folderConnected === true && (
-              <span className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
-                <FolderCheck className="w-3.5 h-3.5" /> Local folder connected
-              </span>
-            )}
+            <div className="flex items-center gap-2 flex-wrap">
+              {canSaveNow && (
+                <button
+                  onClick={handleSaveNow}
+                  className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-violet-500/15 text-violet-300 border border-violet-500/25 hover:bg-violet-500/25 transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5" /> Save images now
+                </button>
+              )}
+              {folderSupported === false && (
+                <span
+                  title="Firefox and Safari can't save into a folder you pick. Open the admin dashboard in Chrome or Edge to use this."
+                  className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/20"
+                >
+                  <FolderX className="w-3.5 h-3.5" /> Local folder saving needs Chrome or Edge
+                </span>
+              )}
+              {folderSupported && folderConnected === false && (
+                <button
+                  onClick={handleConnectFolder}
+                  className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/20 hover:bg-amber-500/25 transition-colors"
+                >
+                  <FolderX className="w-3.5 h-3.5" /> Connect local VERIFICATION folder
+                </button>
+              )}
+              {folderConnected === true && (
+                <span className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+                  <FolderCheck className="w-3.5 h-3.5" /> Local folder connected
+                </span>
+              )}
+            </div>
           </div>
 
           {localSaveStatus && (

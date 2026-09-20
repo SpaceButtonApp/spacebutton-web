@@ -41,7 +41,7 @@ export default function VerificationDetailPage() {
   const [folderSupported, setFolderSupported] = useState<boolean | null>(null)
   const [folderConnected, setFolderConnected] = useState<boolean | null>(null)
   const [localSaveStatus, setLocalSaveStatus] = useState<
-    { type: 'saving' } | { type: 'success'; folderName: string } | { type: 'error'; message: string } | null
+    { type: 'saving' } | { type: 'success'; message: string } | { type: 'error'; message: string } | null
   >(null)
 
   useEffect(() => {
@@ -96,7 +96,12 @@ export default function VerificationDetailPage() {
 
     const result = await saveVerificationImagesLocally(name, v.id_document_url, v.selfie_url)
     if (result.ok) {
-      setLocalSaveStatus({ type: 'success', folderName: result.folderName })
+      setLocalSaveStatus({
+        type: 'success',
+        message: result.method === 'folder'
+          ? `Saved to VERIFICATION\\${result.folderName}`
+          : `Downloaded ${result.fileNames.length} file${result.fileNames.length === 1 ? '' : 's'} to your Downloads folder: ${result.fileNames.join(', ')}`,
+      })
       return
     }
     // Permission lapsed — show the Connect button again so it can be re-granted.
@@ -112,8 +117,9 @@ export default function VerificationDetailPage() {
   async function maybeSaveLocally(updated: PendingVerification) {
     if (updated.id_verification_status !== 'approved' || updated.live_verification_status !== 'approved') return
 
+    // No folder API (Firefox/Safari): nothing to connect, just download.
     if (!folderSupported) {
-      setLocalSaveStatus({ type: 'error', message: connectFailureMessage({ ok: false, reason: 'unsupported' }) })
+      await saveNow(updated)
       return
     }
     if (!folderConnected) {
@@ -129,7 +135,7 @@ export default function VerificationDetailPage() {
   // Manual (re)try — runs from a real click, so it can re-grant folder access.
   async function handleSaveNow() {
     if (!verif) return
-    if (!folderConnected) {
+    if (folderSupported && !folderConnected) {
       const connected = await connectVerificationFolder()
       setFolderConnected(connected.ok)
       if (!connected.ok) {
@@ -197,7 +203,7 @@ export default function VerificationDetailPage() {
   const name = user ? [user.first_name, user.last_name].filter(Boolean).join(' ') || '—' : '—'
 
   const canSaveNow =
-    folderSupported === true &&
+    folderSupported !== null &&
     idStatus === 'approved' &&
     liveStatus === 'approved' &&
     !!verif?.id_document_url &&
@@ -231,10 +237,10 @@ export default function VerificationDetailPage() {
               )}
               {folderSupported === false && (
                 <span
-                  title="Firefox and Safari can't save into a folder you pick. Open the admin dashboard in Chrome or Edge to use this."
-                  className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/20"
+                  title="This browser can't save into a folder you pick, so approved images download to your Downloads folder instead. In Firefox, turn on Settings > General > Downloads > 'Always ask you where to save files' to choose the VERIFICATION folder each time. Chrome and Edge can save straight into a connected folder."
+                  className="flex items-center gap-2 text-xs px-3 py-1.5 rounded-full bg-[var(--bg-raised)] text-[var(--text-secondary)] border border-[var(--border-color)]"
                 >
-                  <FolderX className="w-3.5 h-3.5" /> Local folder saving needs Chrome or Edge
+                  <Download className="w-3.5 h-3.5" /> Images download to your Downloads folder
                 </span>
               )}
               {folderSupported && folderConnected === false && (
@@ -260,7 +266,7 @@ export default function VerificationDetailPage() {
               'bg-[var(--bg-raised)] text-[var(--text-secondary)] border border-[var(--border-color)]'
             }`}>
               {localSaveStatus.type === 'saving' && <><Loader2 className="w-4 h-4 animate-spin" /> Saving verification images locally…</>}
-              {localSaveStatus.type === 'success' && <><FolderCheck className="w-4 h-4" /> Saved to VERIFICATION\{localSaveStatus.folderName}</>}
+              {localSaveStatus.type === 'success' && <><FolderCheck className="w-4 h-4 shrink-0" /> {localSaveStatus.message}</>}
               {localSaveStatus.type === 'error' && <><FolderX className="w-4 h-4" /> {localSaveStatus.message}</>}
             </div>
           )}

@@ -104,7 +104,7 @@ export async function connectVerificationFolder(): Promise<ConnectResult> {
 
 export function connectFailureMessage(result: Extract<ConnectResult, { ok: false }>): string {
   if (result.reason === 'unsupported') {
-    return "This browser can't save to a local folder — open the admin dashboard in Chrome or Edge."
+    return "This browser can't connect a folder — the images download to your Downloads folder instead."
   }
   if (result.reason === 'cancelled') {
     return 'Folder not connected — click "Connect local VERIFICATION folder" and approve again.'
@@ -157,7 +157,7 @@ const EXT_BY_MIME: Record<string, string> = {
 // Verification images are private Cloudinary assets served via signed URLs
 // that carry no file extension, so the extension has to come from the
 // downloaded file's actual type rather than the URL.
-async function saveUrlToFile(dirHandle: FileSystemDirectoryHandle, baseName: string, url: string): Promise<void> {
+async function fetchImage(baseName: string, url: string): Promise<{ blob: Blob; ext: string }> {
   let blob: Blob
   try {
     const res = await fetch(url)
@@ -167,8 +167,11 @@ async function saveUrlToFile(dirHandle: FileSystemDirectoryHandle, baseName: str
     const detail = e instanceof Error ? e.message : 'unknown error'
     throw new Error(`${baseName} could not be downloaded (${detail})`)
   }
+  return { blob, ext: EXT_BY_MIME[blob.type.toLowerCase()] ?? extFromUrl(url, 'jpg') }
+}
 
-  const ext = EXT_BY_MIME[blob.type.toLowerCase()] ?? extFromUrl(url, 'jpg')
+async function saveUrlToFile(dirHandle: FileSystemDirectoryHandle, baseName: string, url: string): Promise<void> {
+  const { blob, ext } = await fetchImage(baseName, url)
   const fileHandle = await dirHandle.getFileHandle(`${baseName}.${ext}`, { create: true })
   const writable = await fileHandle.createWritable()
   await writable.write(blob)
@@ -176,21 +179,71 @@ async function saveUrlToFile(dirHandle: FileSystemDirectoryHandle, baseName: str
 }
 
 export type SaveVerificationResult =
-  | { ok: true; folderName: string }
-  | { ok: false; reason: 'not-supported' | 'not-connected' | 'error'; message?: string }
+  | { ok: true; method: 'folder'; folderName: string }
+  | { ok: true; method: 'download'; fileNames: string[] }
+  | { ok: false; reason: 'not-connected' | 'error'; message?: string }
+
+function triggerDownload(blob: Blob, fileName: string): void {
+  const objectUrl = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = objectUrl
+  a.download = fileName
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  // Give the browser time to start reading the blob before releasing it.
+  setTimeout(() => URL.revokeObjectURL(objectUrl), 30_000)
+}
 
 /**
- * Saves both images into `<connected folder>/<sanitized user name>/`.
- * Call this once both the ID document and selfie are approved.
+ * Fallback for browsers without the File System Access API (Firefox, Safari):
+ * they can't write into a folder the admin picks, so the images are downloaded
+ * to the browser's normal download location instead, with the user's name in
+ * each filename so the pair stays together and easy to file away.
+ */
+async function downloadVerificationImages(
+  userName: string,
+  idImageUrl?: string,
+  selfieImageUrl?: string,
+): Promise<SaveVerificationResult> {
+  const base = sanitizeFolderName(userName)
+  const items: { baseName: string; url: string }[] = []
+  if (idImageUrl) items.push({ baseName: 'id-document', url: idImageUrl })
+  if (selfieImageUrl) items.push({ baseName: 'selfie', url: selfieImageUrl })
+
+  const fileNames: string[] = []
+  const failures: string[] = []
+  for (const item of items) {
+    try {
+      const { blob, ext } = await fetchImage(item.baseName, item.url)
+      const fileName = `${base} - ${item.baseName}.${ext}`
+      triggerDownload(blob, fileName)
+      fileNames.push(fileName)
+      // Browsers can drop back-to-back downloads fired in the same tick.
+      await new Promise((resolve) => setTimeout(resolve, 400))
+    } catch (e) {
+      failures.push(e instanceof Error ? e.message : 'unknown error')
+    }
+  }
+
+  if (failures.length > 0) {
+    return { ok: false, reason: 'error', message: `Some images did not download: ${failures.join('; ')}` }
+  }
+  return { ok: true, method: 'download', fileNames }
+}
+
+/**
+ * Saves both images locally. With the File System Access API (Chrome/Edge)
+ * they go into `<connected folder>/<sanitized user name>/`; otherwise
+ * (Firefox/Safari) they are downloaded. Call once both the ID document and
+ * selfie are approved.
  */
 export async function saveVerificationImagesLocally(
   userName: string,
   idImageUrl?: string,
   selfieImageUrl?: string,
 ): Promise<SaveVerificationResult> {
-  if (!isLocalSaveSupported()) {
-    return { ok: false, reason: 'not-supported', message: connectFailureMessage({ ok: false, reason: 'unsupported' }) }
-  }
+  if (!isLocalSaveSupported()) return downloadVerificationImages(userName, idImageUrl, selfieImageUrl)
 
   // Query-only: asking for permission needs a fresh click, which this (often
   // post-network-request) call can't rely on. The caller's "Connect" / "Save
@@ -220,7 +273,7 @@ export async function saveVerificationImagesLocally(
       return { ok: false, reason: 'error', message: `Some images did not save: ${failures.join('; ')}` }
     }
 
-    return { ok: true, folderName }
+    return { ok: true, method: 'folder', folderName }
   } catch (e) {
     return {
       ok: false,

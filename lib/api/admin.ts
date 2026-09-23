@@ -251,6 +251,7 @@ export interface AdminChatInfo {
   agent_email?: string
   listing_id?: string | null
   listing?: AdminChatListingSummary | null
+  status?: string
 }
 
 export interface AdminChatMessagesResponse {
@@ -755,6 +756,18 @@ export const adminApi = {
       return { items: data.chats ?? [], total: data.total ?? 0 }
     }, pageSize)
     return { chats: items, total }
+  },
+
+  async freezeChat(chatId: string): Promise<void> {
+    await adminFetch(`/admin/chats/${chatId}/freeze`, { method: 'PATCH' })
+  },
+
+  async unfreezeChat(chatId: string): Promise<void> {
+    await adminFetch(`/admin/chats/${chatId}/unfreeze`, { method: 'PATCH' })
+  },
+
+  async deleteChatMessage(chatId: string, messageId: string): Promise<void> {
+    await adminFetch(`/admin/chats/${chatId}/messages/${messageId}`, { method: 'DELETE' })
   },
 
   // Support tickets (admin role satisfies require_role("admin","support_agent"))

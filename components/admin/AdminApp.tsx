@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { LogOut } from "lucide-react";
 import { useAdminStore } from "@/lib/admin-store";
-import { adminApi, getAdminLoginUrl, type SupportTicket } from "@/lib/api/admin";
+import { adminApi, getAdminLoginUrl, type SupportTicket, type AdminChat } from "@/lib/api/admin";
 import { Sidebar } from "@/components/admin/shared/Sidebar";
 import { AdminHeader } from "@/components/admin/shared/AdminHeader";
 import { ConfirmModal } from "@/components/admin/shared/Modal";
@@ -99,12 +99,51 @@ export function AdminApp() {
     .filter((t) => t.escalated_to_admin)
     .reduce((sum, t) => sum + (t.unread_count ?? 0), 0);
 
+  // Connections nav badge — count of chats created since this admin last
+  // opened the Connections page. Persisted in localStorage (not just this
+  // session) so it survives a reload, unlike the "reports" badge below.
+  const CONNECTIONS_SEEN_KEY = "admin-connections-last-seen";
+  const [connectionsChats, setConnectionsChats] = useState<AdminChat[]>([]);
+  const [connectionsLastSeenAt, setConnectionsLastSeenAt] = useState<string>(() => {
+    // First time this admin ever loads the dashboard: start from "now", not
+    // the epoch — otherwise every chat that already existed shows as "new".
+    if (typeof window === "undefined") return new Date().toISOString();
+    const stored = localStorage.getItem(CONNECTIONS_SEEN_KEY);
+    if (stored) return stored;
+    const now = new Date().toISOString();
+    localStorage.setItem(CONNECTIONS_SEEN_KEY, now);
+    return now;
+  });
+  useEffect(() => {
+    let cancelled = false;
+    async function pollConnections() {
+      try {
+        const res = await adminApi.getAllChats();
+        if (!cancelled) setConnectionsChats(res.chats ?? []);
+      } catch {
+        // ignore — badge just won't update this cycle
+      }
+    }
+    pollConnections();
+    const t = setInterval(pollConnections, 10_000);
+    return () => { cancelled = true; clearInterval(t); };
+  }, []);
+  const newConnectionsCount = connectionsChats.filter(
+    (c) => new Date(c.created_at).getTime() > new Date(connectionsLastSeenAt).getTime()
+  ).length;
+  function markConnectionsSeen() {
+    const now = new Date().toISOString();
+    setConnectionsLastSeenAt(now);
+    if (typeof window !== "undefined") localStorage.setItem(CONNECTIONS_SEEN_KEY, now);
+  }
+
   const pendingReports = reports.filter((r) => r.status === "pending").length;
   const badgeCounts: Partial<Record<AdminRoute, number>> = {
     verifications: verifications.filter((v) => v.status === "pending").length,
     listings: listings.filter((l) => l.approval === "pending").length,
     reports: visitedRoutes.has("reports") ? 0 : pendingReports,
     messages: messagesUnread,
+    connections: newConnectionsCount,
     notifications: pendingApprovalsCount,
   };
 
@@ -131,6 +170,7 @@ export function AdminApp() {
   function handleNavigate(r: AdminRoute) {
     if (r !== "users") setViewUserId(null);
     setVisitedRoutes((prev) => new Set([...prev, r]));
+    if (r === "connections") markConnectionsSeen();
     setRoute(r);
   }
 

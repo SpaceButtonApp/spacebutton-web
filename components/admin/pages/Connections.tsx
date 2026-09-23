@@ -1,6 +1,6 @@
 'use client'
 import React, { useEffect, useState, useCallback, useRef, useMemo } from "react"
-import { RotateCw, AlertCircle, Search, MapPin } from "lucide-react"
+import { RotateCw, AlertCircle, Search, MapPin, Snowflake, Play, Trash2 } from "lucide-react"
 import { adminApi, type AdminChat, type AdminChatMessage, type AdminChatInfo } from "@/lib/api/admin"
 import { Avatar, EmptyState } from "@/components/admin/shared/Atoms"
 import { StatusBadge } from "@/components/admin/shared/Badge"
@@ -45,6 +45,7 @@ export function ConnectionsPage({ onViewListing }: ConnectionsPageProps) {
   const [chatInfo, setChatInfo] = useState<AdminChatInfo | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailError, setDetailError] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // ── load chat list ────────────────────────────────────────────────────────
@@ -99,6 +100,7 @@ export function ConnectionsPage({ onViewListing }: ConnectionsPageProps) {
   }, [])
 
   useEffect(() => {
+    setActionError(null)
     if (!selectedId) { setMessages([]); setChatInfo(null); return }
     loadDetail(selectedId)
     const t = setInterval(() => {
@@ -110,6 +112,51 @@ export function ConnectionsPage({ onViewListing }: ConnectionsPageProps) {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  // ── freeze / unfreeze ────────────────────────────────────────────────────
+
+  const [freezeBusy, setFreezeBusy] = useState(false)
+  const isFrozen = chatInfo?.status === 'blocked'
+
+  async function handleToggleFreeze() {
+    if (!selectedId || freezeBusy) return
+    setFreezeBusy(true)
+    setActionError(null)
+    try {
+      if (isFrozen) {
+        await adminApi.unfreezeChat(selectedId)
+        setChatInfo((prev) => (prev ? { ...prev, status: 'active' } : prev))
+      } else {
+        await adminApi.freezeChat(selectedId)
+        setChatInfo((prev) => (prev ? { ...prev, status: 'blocked' } : prev))
+      }
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : 'Could not update this conversation.')
+    } finally {
+      setFreezeBusy(false)
+    }
+  }
+
+  // ── delete message ───────────────────────────────────────────────────────
+
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  async function handleDeleteMessage(messageId: string) {
+    if (!selectedId || deletingId) return
+    setDeletingId(messageId)
+    setActionError(null)
+    const prev = messages
+    // Optimistic — it just vanishes, same as it will for the two users next time they load the chat.
+    setMessages((m) => m.filter((msg) => msg.id !== messageId))
+    try {
+      await adminApi.deleteChatMessage(selectedId, messageId)
+    } catch (e) {
+      setMessages(prev)
+      setActionError(e instanceof Error ? e.message : 'Could not delete that message.')
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   const selectedChat = chats.find((c) => c.id === selectedId)
   const listing = chatInfo?.listing
@@ -215,8 +262,35 @@ export function ConnectionsPage({ onViewListing }: ConnectionsPageProps) {
                   </div>
                 </div>
               </div>
-              <div className="shrink-0"><StatusBadge status={selectedChat.status} /></div>
+              <div className="flex items-center gap-2 shrink-0">
+                <StatusBadge status={chatInfo?.status ?? selectedChat.status} />
+                <button
+                  onClick={handleToggleFreeze}
+                  disabled={freezeBusy}
+                  title={isFrozen ? 'Unfreeze — let them message each other again' : 'Freeze — they will not be able to message each other'}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border disabled:opacity-50 ${
+                    isFrozen
+                      ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border-emerald-500/20'
+                      : 'bg-sky-500/10 text-sky-400 hover:bg-sky-500/20 border-sky-500/20'
+                  }`}
+                >
+                  {isFrozen ? <Play className="w-3.5 h-3.5" /> : <Snowflake className="w-3.5 h-3.5" />}
+                  {isFrozen ? 'Unfreeze' : 'Freeze'}
+                </button>
+              </div>
             </div>
+
+            {isFrozen && (
+              <div className="px-6 py-2 bg-sky-500/10 border-b border-sky-500/20 text-xs text-sky-400 shrink-0">
+                This conversation is frozen — neither user can send a new message until you unfreeze it.
+              </div>
+            )}
+
+            {actionError && (
+              <div className="px-6 py-2 bg-red-500/10 border-b border-red-500/20 text-xs text-red-400 shrink-0">
+                {actionError}
+              </div>
+            )}
 
             {/* property banner — mirrors the in-app chat page's listing strip */}
             {listing && (
@@ -259,7 +333,17 @@ export function ConnectionsPage({ onViewListing }: ConnectionsPageProps) {
                   const isAgent = m.sender_id === chatInfo?.agent_id
                   const senderName = isAgent ? chatInfo?.agent_name : chatInfo?.user_name
                   return (
-                    <div key={m.id} className={`flex ${isAgent ? 'justify-end' : 'justify-start'}`}>
+                    <div key={m.id} className={`group flex items-center gap-2 ${isAgent ? 'justify-end' : 'justify-start'}`}>
+                      {!isAgent && (
+                        <button
+                          onClick={() => handleDeleteMessage(m.id)}
+                          disabled={deletingId === m.id}
+                          title="Delete this message — the user will not be notified"
+                          className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50 shrink-0"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                       <div
                         className={`max-w-[70%] rounded-2xl px-4 py-3 text-sm ${
                           isAgent
@@ -275,6 +359,16 @@ export function ConnectionsPage({ onViewListing }: ConnectionsPageProps) {
                           {formatTime(m.created_at)}
                         </div>
                       </div>
+                      {isAgent && (
+                        <button
+                          onClick={() => handleDeleteMessage(m.id)}
+                          disabled={deletingId === m.id}
+                          title="Delete this message — the user will not be notified"
+                          className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50 shrink-0"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
                   )
                 })

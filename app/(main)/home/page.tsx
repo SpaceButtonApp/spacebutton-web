@@ -44,7 +44,7 @@ function SkeletonCard() {
 export default function HomePage() {
   const router = useRouter()
   const { user, activeTab, setActiveTab, savedProperties, setSavedProperties } = useAppStore()
-  const [currentTab, setCurrentTab] = useState<Tab>('Connect')
+  const [currentTab, setCurrentTab] = useState<Tab>('Agent')
   const [listings, setListings] = useState<Property[]>([])
   const [forYou, setForYou] = useState<Property[]>([])
   const [loading, setLoading] = useState(false)

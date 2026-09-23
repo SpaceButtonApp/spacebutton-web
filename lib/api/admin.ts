@@ -770,6 +770,10 @@ export const adminApi = {
     await adminFetch(`/admin/chats/${chatId}/messages/${messageId}`, { method: 'DELETE' })
   },
 
+  async restoreChatMessage(chatId: string, messageId: string): Promise<void> {
+    await adminFetch(`/admin/chats/${chatId}/messages/${messageId}/restore`, { method: 'PATCH' })
+  },
+
   // Support tickets (admin role satisfies require_role("admin","support_agent"))
   // Returns every ticket, not just one page. (This used to request page 1 of
   // 50 and stop, so anything older than the 50 most recent never showed up.)

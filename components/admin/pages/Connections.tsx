@@ -1,9 +1,10 @@
 'use client'
 import React, { useEffect, useState, useCallback, useRef, useMemo } from "react"
-import { RotateCw, AlertCircle, Search, MapPin, Snowflake, Play, Trash2 } from "lucide-react"
+import { RotateCw, AlertCircle, Search, MapPin, Snowflake, Play, Trash2, Undo2 } from "lucide-react"
 import { adminApi, type AdminChat, type AdminChatMessage, type AdminChatInfo } from "@/lib/api/admin"
 import { Avatar, EmptyState } from "@/components/admin/shared/Atoms"
 import { StatusBadge } from "@/components/admin/shared/Badge"
+import { ConfirmModal } from "@/components/admin/shared/Modal"
 
 interface ConnectionsPageProps {
   onViewListing?: (listingId: string) => void
@@ -12,6 +13,7 @@ interface ConnectionsPageProps {
 const POLL_LIST = 10_000
 const POLL_DETAIL = 6_000
 const DEFAULT_PROPERTY_IMG = 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=400&h=300&fit=crop'
+const UNDO_WINDOW_MS = 30_000
 
 function timeAgo(iso: string) {
   const diff = Date.now() - new Date(iso).getTime()
@@ -137,19 +139,36 @@ export function ConnectionsPage({ onViewListing }: ConnectionsPageProps) {
     }
   }
 
-  // ── delete message ───────────────────────────────────────────────────────
+  // ── delete message (confirm -> delete -> 30s undo window) ────────────────
 
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [pendingUndo, setPendingUndo] = useState<{ chatId: string; message: AdminChatMessage } | null>(null)
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  async function handleDeleteMessage(messageId: string) {
-    if (!selectedId || deletingId) return
+  function clearUndoTimer() {
+    if (undoTimerRef.current) { clearTimeout(undoTimerRef.current); undoTimerRef.current = null }
+  }
+
+  function requestDeleteMessage(messageId: string) {
+    setConfirmDeleteId(messageId)
+  }
+
+  async function confirmDeleteMessage() {
+    const messageId = confirmDeleteId
+    setConfirmDeleteId(null)
+    if (!selectedId || !messageId || deletingId) return
+    const target = messages.find((m) => m.id === messageId)
     setDeletingId(messageId)
     setActionError(null)
     const prev = messages
-    // Optimistic — it just vanishes, same as it will for the two users next time they load the chat.
+    // Optimistic — it vanishes immediately, same as it will for the two users next time they load the chat.
     setMessages((m) => m.filter((msg) => msg.id !== messageId))
     try {
       await adminApi.deleteChatMessage(selectedId, messageId)
+      clearUndoTimer()
+      if (target) setPendingUndo({ chatId: selectedId, message: target })
+      undoTimerRef.current = setTimeout(() => setPendingUndo(null), UNDO_WINDOW_MS)
     } catch (e) {
       setMessages(prev)
       setActionError(e instanceof Error ? e.message : 'Could not delete that message.')
@@ -157,6 +176,34 @@ export function ConnectionsPage({ onViewListing }: ConnectionsPageProps) {
       setDeletingId(null)
     }
   }
+
+  async function handleUndoDelete() {
+    if (!pendingUndo) return
+    const { chatId, message } = pendingUndo
+    clearUndoTimer()
+    setPendingUndo(null)
+    try {
+      await adminApi.restoreChatMessage(chatId, message.id)
+      // Only splice it back in if we're still looking at that same chat.
+      if (selectedIdRef.current === chatId) {
+        setMessages((m) => (m.some((x) => x.id === message.id) ? m : [...m, message].sort(
+          (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        )))
+      }
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : 'Could not restore that message.')
+    }
+  }
+
+  // Switching conversations clears any in-flight confirm/undo state for the previous one.
+  useEffect(() => {
+    setConfirmDeleteId(null)
+    clearUndoTimer()
+    setPendingUndo(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId])
+
+  useEffect(() => () => clearUndoTimer(), [])
 
   const selectedChat = chats.find((c) => c.id === selectedId)
   const listing = chatInfo?.listing
@@ -336,7 +383,7 @@ export function ConnectionsPage({ onViewListing }: ConnectionsPageProps) {
                     <div key={m.id} className={`group flex items-center gap-2 ${isAgent ? 'justify-end' : 'justify-start'}`}>
                       {!isAgent && (
                         <button
-                          onClick={() => handleDeleteMessage(m.id)}
+                          onClick={() => requestDeleteMessage(m.id)}
                           disabled={deletingId === m.id}
                           title="Delete this message — the user will not be notified"
                           className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50 shrink-0"
@@ -361,7 +408,7 @@ export function ConnectionsPage({ onViewListing }: ConnectionsPageProps) {
                       </div>
                       {isAgent && (
                         <button
-                          onClick={() => handleDeleteMessage(m.id)}
+                          onClick={() => requestDeleteMessage(m.id)}
                           disabled={deletingId === m.id}
                           title="Delete this message — the user will not be notified"
                           className="p-1.5 rounded-lg text-[var(--text-muted)] hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50 shrink-0"
@@ -376,6 +423,18 @@ export function ConnectionsPage({ onViewListing }: ConnectionsPageProps) {
               <div ref={messagesEndRef} />
             </div>
 
+            {pendingUndo && pendingUndo.chatId === selectedId && (
+              <div className="px-4 py-2.5 border-t border-[var(--border-color)] bg-[var(--bg-raised)] flex items-center justify-between gap-3 shrink-0">
+                <span className="text-xs text-[var(--text-secondary)]">Message deleted.</span>
+                <button
+                  onClick={handleUndoDelete}
+                  className="flex items-center gap-1.5 text-xs font-semibold text-violet-400 hover:text-violet-300 transition-colors"
+                >
+                  <Undo2 className="w-3.5 h-3.5" /> Undo
+                </button>
+              </div>
+            )}
+
             <div className="px-4 py-3 border-t border-[var(--border-color)] text-center text-xs text-[var(--text-muted)] shrink-0">
               Read-only — admin cannot send messages in a user-to-user conversation.
             </div>
@@ -386,6 +445,18 @@ export function ConnectionsPage({ onViewListing }: ConnectionsPageProps) {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        open={!!confirmDeleteId}
+        title="Delete this message?"
+        description="The user will not be notified — it will simply disappear from their conversation. You can undo this for 30 seconds after deleting."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        danger
+        icon={<Trash2 className="w-6 h-6 text-red-400" />}
+        onConfirm={confirmDeleteMessage}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
     </div>
   )
 }

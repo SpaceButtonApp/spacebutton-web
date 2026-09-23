@@ -38,8 +38,8 @@ export default function SignupPage() {
   const logoUrl = '/logo.png'
 
   const handlePhoneChange = (value: string) => {
-    // Only allow numbers
-    const numericValue = value.replace(/\D/g, '')
+    // Only allow numbers, capped at 11 digits (also covers a paste that's too long)
+    const numericValue = value.replace(/\D/g, '').slice(0, 11)
     setFormData({ ...formData, phone: numericValue })
   }
 
@@ -50,7 +50,8 @@ export default function SignupPage() {
     if (!formData.name) newErrors.name = 'Name is required'
     if (!formData.email) newErrors.email = 'Email is required'
     if (!formData.phone) newErrors.phone = 'Phone number is required'
-    if (formData.phone.length < 10) newErrors.phone = 'Please enter a valid phone number'
+    else if (formData.phone.length < 10) newErrors.phone = 'Please complete your phone number'
+    else if (formData.phone.length > 11) newErrors.phone = 'Phone number is too long'
     if (!formData.agreeToTerms) newErrors.terms = 'You must agree to the terms'
     
     if (Object.keys(newErrors).length > 0) {
@@ -178,6 +179,7 @@ export default function SignupPage() {
                     type="tel"
                     inputMode="numeric"
                     pattern="[0-9]*"
+                    maxLength={11}
                     value={formData.phone}
                     onChange={(e) => handlePhoneChange(e.target.value)}
                     placeholder="080XXXXXXXX"

@@ -233,13 +233,50 @@ export interface AdminChatMessage {
   created_at: string
 }
 
+export interface AdminChatListingSummary {
+  id: string
+  title: string | null
+  price: string | null
+  cover_image: string | null
+  city: string | null
+  state: string | null
+}
+
+export interface AdminChatInfo {
+  user_id?: string
+  user_name?: string
+  user_email?: string
+  agent_id?: string
+  agent_name?: string
+  agent_email?: string
+  listing_id?: string | null
+  listing?: AdminChatListingSummary | null
+}
+
 export interface AdminChatMessagesResponse {
   chat_id: string
-  chat_info?: { user_id?: string; agent_id?: string; listing_id?: string }
+  chat_info?: AdminChatInfo
   total: number
   page: number
   page_size: number
   messages: AdminChatMessage[]
+}
+
+export interface AdminChat {
+  id: string
+  user_id: string
+  agent_id: string
+  listing_id: string | null
+  status: string
+  last_message: string | null
+  last_sender_id: string | null
+  created_at: string
+  updated_at: string
+  user_name: string
+  user_email: string | null
+  agent_name: string
+  agent_email: string | null
+  listing: AdminChatListingSummary | null
 }
 
 export interface AdminListing {
@@ -701,6 +738,23 @@ export const adminApi = {
     )
     const inner = (res as any)?.data ?? res
     return inner as AdminChatMessagesResponse
+  },
+
+  // Connections — every user-to-user chat platform-wide, for the admin
+  // "Connections" page. Returns everything, not just one page (page_size is
+  // capped at 100 backend-side, same reasoning as getSupportTickets above).
+  async getAllChats(params?: { status?: string }): Promise<{ chats: AdminChat[]; total: number }> {
+    const pageSize = 100
+    const { items, total } = await fetchAllPages<AdminChat>(async (page) => {
+      const qs = new URLSearchParams({ page: String(page), page_size: String(pageSize) })
+      if (params?.status) qs.set('status', params.status)
+      const res = await adminFetch<{ success: boolean; data: { chats: AdminChat[]; total: number } }>(
+        `/admin/chats?${qs}`,
+      )
+      const data = (res as any)?.data ?? res
+      return { items: data.chats ?? [], total: data.total ?? 0 }
+    }, pageSize)
+    return { chats: items, total }
   },
 
   // Support tickets (admin role satisfies require_role("admin","support_agent"))

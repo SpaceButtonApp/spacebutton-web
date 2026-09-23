@@ -12,6 +12,7 @@ import { UsersPage } from "@/components/admin/pages/Users";
 import { VerificationsPage } from "@/components/admin/pages/Verifications";
 import { ListingsPage } from "@/components/admin/pages/Listings";
 import { MessagesPage } from "@/components/admin/pages/Messages";
+import { ConnectionsPage } from "@/components/admin/pages/Connections";
 import { TransactionsPage } from "@/components/admin/pages/Transactions";
 import { ReviewsPage } from "@/components/admin/pages/Reviews";
 import { NotificationsPage } from "@/components/admin/pages/Notifications";
@@ -26,6 +27,7 @@ const PAGE_TITLES: Record<AdminRoute, string> = {
   verifications: "Verifications",
   listings: "Listings",
   messages: "Support Messages",
+  connections: "Connections",
   transactions: "Transactions",
   reviews: "Reviews",
   notifications: "Notifications",
@@ -196,6 +198,7 @@ export function AdminApp() {
           {route === "messages" && (
             <MessagesPage openUserId={messageTargetUserId} onOpenUserConsumed={() => setMessageTargetUserId(null)} onOpenTicket={markMessageOpened} />
           )}
+          {route === "connections" && <ConnectionsPage onViewListing={goToListingDetail} />}
           {route === "transactions" && <TransactionsPage />}
           {route === "reviews" && <ReviewsPage />}
           {route === "notifications" && <NotificationsPage />}

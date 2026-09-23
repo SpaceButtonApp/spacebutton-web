@@ -2,12 +2,12 @@
 import React, { useState } from "react";
 import {
   LayoutGrid, Users, ShieldCheck, Building2, MessageSquare, CreditCard,
-  Star, Bell, Flag, Settings, LogOut, ChevronLeft,
+  Star, Bell, Flag, Settings, LogOut, ChevronLeft, Handshake,
 } from "lucide-react";
 
 export type AdminRoute =
   | "dashboard" | "users" | "verifications" | "listings" | "messages"
-  | "transactions" | "reviews" | "notifications" | "reports" | "settings";
+  | "connections" | "transactions" | "reviews" | "notifications" | "reports" | "settings";
 
 const NAV_ITEMS: { key: AdminRoute; label: string; icon: React.ElementType }[] = [
   { key: "dashboard", label: "Dashboard", icon: LayoutGrid },
@@ -15,6 +15,7 @@ const NAV_ITEMS: { key: AdminRoute; label: string; icon: React.ElementType }[] =
   { key: "verifications", label: "Verifications", icon: ShieldCheck },
   { key: "listings", label: "Listings", icon: Building2 },
   { key: "messages", label: "Messages", icon: MessageSquare },
+  { key: "connections", label: "Connections", icon: Handshake },
   { key: "transactions", label: "Transactions", icon: CreditCard },
   { key: "reviews", label: "Reviews", icon: Star },
   { key: "notifications", label: "Notifications", icon: Bell },

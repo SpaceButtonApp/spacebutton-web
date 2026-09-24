@@ -16,16 +16,36 @@ export function getAdminLoginUrl(): string {
   return key ? `/admin/login?key=${key}` : '/admin/login'
 }
 
+// Without this, a genuinely stuck backend request (e.g. a slow downstream
+// lookup while enriching one chat's data) left the UI spinning forever with
+// no error at all — this is what made one Connections chat look "stuck":
+// the admin_service response never arrived, and there was nothing here to
+// time out and report it.
+const ADMIN_FETCH_TIMEOUT_MS = 25_000
+
 async function adminFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getAdminToken()
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(options.headers || {}),
-    },
-  })
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), ADMIN_FETCH_TIMEOUT_MS)
+  let res: Response
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(options.headers || {}),
+      },
+    })
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'AbortError') {
+      throw new Error('The server took too long to respond. Please try again.')
+    }
+    throw e
+  } finally {
+    clearTimeout(timeoutId)
+  }
   if (res.status === 401) {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('admin-token')

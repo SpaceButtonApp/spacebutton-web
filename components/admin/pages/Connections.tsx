@@ -372,6 +372,12 @@ export function ConnectionsPage({ onViewListing }: ConnectionsPageProps) {
                 <div className="flex flex-col items-center gap-2 text-center py-8">
                   <AlertCircle className="w-6 h-6 text-red-400" />
                   <p className="text-xs text-[var(--text-muted)]">{detailError}</p>
+                  <button
+                    onClick={() => selectedId && loadDetail(selectedId)}
+                    className="text-xs text-violet-400 hover:underline"
+                  >
+                    Retry
+                  </button>
                 </div>
               ) : messages.length === 0 ? (
                 <EmptyState label="No messages in this conversation yet." />

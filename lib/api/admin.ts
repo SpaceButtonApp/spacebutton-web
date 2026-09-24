@@ -752,13 +752,24 @@ export const adminApi = {
     return inner as WaitlistResponse
   },
 
-  // Chat Evidence
+  // Chat Evidence — fetches every message in the conversation, not just the
+  // first page. This request has no `page` param, so it always got page 1 of
+  // 50 (the *oldest* 50, since messages are ordered ascending) and stopped —
+  // any conversation past 50 messages looked "stuck" at whatever the 50th
+  // message happened to be, even though the list's last_message preview
+  // (from a separate, unpaginated query) correctly showed something newer.
   async getChatMessages(chatId: string): Promise<AdminChatMessagesResponse> {
-    const res = await adminFetch<{ success: boolean; data: AdminChatMessagesResponse }>(
-      `/admin/chats/${chatId}/messages`,
-    )
-    const inner = (res as any)?.data ?? res
-    return inner as AdminChatMessagesResponse
+    const pageSize = 200 // the backend caps page_size at 200
+    let chatInfo: AdminChatInfo | undefined
+    const { items, total } = await fetchAllPages<AdminChatMessage>(async (page) => {
+      const res = await adminFetch<{ success: boolean; data: AdminChatMessagesResponse }>(
+        `/admin/chats/${chatId}/messages?page=${page}&page_size=${pageSize}`,
+      )
+      const data = (res as any)?.data ?? res
+      if (page === 1) chatInfo = data.chat_info
+      return { items: data.messages ?? [], total: data.total ?? 0 }
+    }, pageSize)
+    return { chat_id: chatId, chat_info: chatInfo, total, page: 1, page_size: pageSize, messages: items }
   },
 
   // Connections — every user-to-user chat platform-wide, for the admin

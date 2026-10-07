@@ -5,10 +5,14 @@ import Image from 'next/image'
 import {
   CheckCircle, Clock, XCircle, Upload, ShieldCheck, AlertCircle, Camera,
 } from 'lucide-react'
+import dynamic from 'next/dynamic'
 import { Button } from '@/components/ui/button'
 import { BackButton } from '@/components/back-button'
 import { verificationApi } from '@/lib/api/users'
+import { useAppStore } from '@/lib/store'
 import type { VerificationStatus } from '@/lib/types/user'
+
+const LivenessVerificationModal = dynamic(() => import('@/components/liveness/LivenessVerificationModal'), { ssr: false })
 
 const ID_TYPES = [
   { value: 'NIN', label: 'NIN (National ID Number)', numberLabel: 'NIN Number', placeholder: '11-digit NIN', maxLength: 11 },
@@ -85,6 +89,10 @@ function FileDropZone({
 type ApiErr = { response?: { data?: { message?: string } } }
 
 export default function VerificationPage() {
+  const user = useAppStore((s) => s.user)
+  const isAgent = user?.type === 'agent'
+  const [showLiveness, setShowLiveness] = useState<null | 'combined' | 'selfie-only'>(null)
+
   const [status, setStatus] = useState<VerificationStatus | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -160,19 +168,24 @@ export default function VerificationPage() {
 
   const idStatus = status?.id_verification_status ?? 'none'
   const selfieStatus = status?.live_verification_status ?? 'none'
-  const anyPending = idStatus === 'pending' || selfieStatus === 'pending'
   const idApproved = idStatus === 'approved'
   const selfieApproved = selfieStatus === 'approved'
-  const fullyVerified = idApproved && selfieApproved
 
-  // combined: neither is approved yet — first time or both rejected
-  const showCombined = !anyPending && !fullyVerified && !idApproved && !selfieApproved
-  // id-only: selfie already approved, ID needs action (rejected or none)
-  const showIdOnly = !anyPending && !fullyVerified && selfieApproved && !idApproved
-  // selfie-only: ID already approved, selfie needs action (rejected or none)
-  const showSelfieOnly = !anyPending && !fullyVerified && idApproved && !selfieApproved
+  // Individuals verify via face verification alone — no ID document step at
+  // all (agents keep the full ID + selfie flow, unchanged).
+  const anyPending = isAgent ? (idStatus === 'pending' || selfieStatus === 'pending') : selfieStatus === 'pending'
+  const fullyVerified = isAgent ? (idApproved && selfieApproved) : selfieApproved
 
-  const overallStatus = fullyVerified ? 'fully' : (idApproved || selfieApproved) ? 'partial' : 'none'
+  // combined: neither is approved yet — first time or both rejected (agents only)
+  const showCombined = isAgent && !anyPending && !fullyVerified && !idApproved && !selfieApproved
+  // id-only: selfie already approved, ID needs action (rejected or none) (agents only)
+  const showIdOnly = isAgent && !anyPending && !fullyVerified && selfieApproved && !idApproved
+  // selfie-only: ID already approved, selfie needs action (rejected or none) (agents only)
+  const showSelfieOnly = isAgent && !anyPending && !fullyVerified && idApproved && !selfieApproved
+  // face-only: individuals' single-step flow — not yet submitted/approved, or rejected
+  const showFaceOnly = !isAgent && !anyPending && !fullyVerified
+
+  const overallStatus = fullyVerified ? 'fully' : (isAgent && (idApproved || selfieApproved)) ? 'partial' : 'none'
   const selected = ID_TYPES.find(t => t.value === idType)!
 
   return (
@@ -207,7 +220,9 @@ export default function VerificationPage() {
                   ? 'Your account is fully verified. You can post listings.'
                   : overallStatus === 'partial'
                     ? 'One document is verified. Complete the other to unlock posting.'
-                    : 'Submit your ID document and a selfie to unlock all features.'}
+                    : isAgent
+                      ? 'Submit your ID document and a selfie to unlock all features.'
+                      : 'Complete a quick face verification to unlock all features.'}
               </p>
             </div>
           </div>
@@ -222,23 +237,25 @@ export default function VerificationPage() {
             {/* Pending — show status cards; user must wait */}
             {anyPending && (
               <div className="space-y-3">
-                <div className="rounded-xl border border-border bg-card p-4 flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-foreground">ID Document</p>
-                    {idStatus === 'approved' && <p className="text-sm text-green-600 mt-0.5">Verified</p>}
-                    {idStatus === 'pending' && <p className="text-sm text-muted-foreground mt-0.5">Under review — we&apos;ll notify you when done</p>}
-                    {idStatus === 'rejected' && (
-                      <>
-                        <p className="text-sm text-destructive mt-0.5">Rejected</p>
-                        {status?.id_rejection_reason && <p className="text-xs text-muted-foreground mt-0.5">{status.id_rejection_reason}</p>}
-                      </>
-                    )}
+                {isAgent && (
+                  <div className="rounded-xl border border-border bg-card p-4 flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-foreground">ID Document</p>
+                      {idStatus === 'approved' && <p className="text-sm text-green-600 mt-0.5">Verified</p>}
+                      {idStatus === 'pending' && <p className="text-sm text-muted-foreground mt-0.5">Under review — we&apos;ll notify you when done</p>}
+                      {idStatus === 'rejected' && (
+                        <>
+                          <p className="text-sm text-destructive mt-0.5">Rejected</p>
+                          {status?.id_rejection_reason && <p className="text-xs text-muted-foreground mt-0.5">{status.id_rejection_reason}</p>}
+                        </>
+                      )}
+                    </div>
+                    <StatusBadge status={idStatus} />
                   </div>
-                  <StatusBadge status={idStatus} />
-                </div>
+                )}
                 <div className="rounded-xl border border-border bg-card p-4 flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-foreground">Selfie</p>
+                    <p className="font-medium text-foreground">{isAgent ? 'Selfie' : 'Face Verification'}</p>
                     {selfieStatus === 'approved' && <p className="text-sm text-green-600 mt-0.5">Verified</p>}
                     {selfieStatus === 'pending' && <p className="text-sm text-muted-foreground mt-0.5">Under review — we&apos;ll notify you when done</p>}
                     {selfieStatus === 'rejected' && (
@@ -334,29 +351,73 @@ export default function VerificationPage() {
                         </div>
                       </div>
                     )}
-                    <p className="text-sm text-muted-foreground">
-                      Take a clear selfie with your face visible. Make sure you&apos;re in good lighting.
-                    </p>
-                    <FileDropZone
-                      preview={selfiePreview}
-                      accept="image/*"
-                      capture="user"
-                      label="Tap to take a selfie with your front camera"
-                      icon={Camera}
-                      onChange={f => { setSelfieFile(f); setSelfiePreview(URL.createObjectURL(f)); setError('') }}
-                    />
-                    {selfiePreview && (
-                      <button onClick={() => { setSelfieFile(null); setSelfiePreview(null) }} className="text-xs text-muted-foreground mt-1.5 hover:text-destructive">
-                        Remove photo
-                      </button>
+                    {isAgent ? (
+                      <>
+                        <p className="text-sm text-muted-foreground">
+                          Take a clear selfie with your face visible. Make sure you&apos;re in good lighting.
+                        </p>
+                        <FileDropZone
+                          preview={selfiePreview}
+                          accept="image/*"
+                          capture="user"
+                          label="Tap to take a selfie with your front camera"
+                          icon={Camera}
+                          onChange={f => { setSelfieFile(f); setSelfiePreview(URL.createObjectURL(f)); setError('') }}
+                        />
+                        {selfiePreview && (
+                          <button onClick={() => { setSelfieFile(null); setSelfiePreview(null) }} className="text-xs text-muted-foreground mt-1.5 hover:text-destructive">
+                            Remove photo
+                          </button>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-sm text-muted-foreground">
+                          We&apos;ll guide you through a quick face verification — a few simple actions in front of your camera to confirm it&apos;s really you.
+                        </p>
+                        <Button onClick={() => setShowLiveness('combined')} disabled={!idFile} variant="outline" className="w-full">
+                          Start Face Verification
+                        </Button>
+                        {!idFile && <p className="text-xs text-muted-foreground">Upload your ID document first.</p>}
+                      </>
                     )}
                   </div>
 
-                  {error && <p className="text-sm text-destructive">{error}</p>}
-                  {message && <p className="text-sm text-green-600">{message}</p>}
+                  {isAgent && (
+                    <>
+                      {error && <p className="text-sm text-destructive">{error}</p>}
+                      {message && <p className="text-sm text-green-600">{message}</p>}
+                      <Button onClick={handleSubmitBoth} disabled={submitting || !idFile || !selfieFile} className="w-full">
+                        {submitting ? 'Submitting...' : 'Submit Both Documents'}
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
 
-                  <Button onClick={handleSubmitBoth} disabled={submitting || !idFile || !selfieFile} className="w-full">
-                    {submitting ? 'Submitting...' : 'Submit Both Documents'}
+            {/* Individuals — face verification only, no ID document step */}
+            {showFaceOnly && (
+              <div className="rounded-xl border border-border bg-card overflow-hidden">
+                <div className="px-4 py-3 border-b border-border bg-secondary/50">
+                  <p className="font-semibold text-foreground">Get Verified</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Confirm it&apos;s really you with a quick face verification</p>
+                </div>
+                <div className="p-4 space-y-4">
+                  {status?.live_rejection_reason && (
+                    <div className="flex gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                      <XCircle className="w-4 h-4 text-destructive flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-destructive">Previous attempt was rejected</p>
+                        <p className="text-sm text-muted-foreground">{status.live_rejection_reason}</p>
+                      </div>
+                    </div>
+                  )}
+                  <p className="text-sm text-muted-foreground">
+                    We&apos;ll guide you through a few simple actions in front of your camera to confirm it&apos;s really you.
+                  </p>
+                  <Button onClick={() => setShowLiveness('selfie-only')} className="w-full">
+                    Start Face Verification
                   </Button>
                 </div>
               </div>
@@ -460,27 +521,40 @@ export default function VerificationPage() {
                         </div>
                       </div>
                     )}
-                    <p className="text-sm text-muted-foreground">
-                      Take a clear selfie with your face visible. Make sure you&apos;re in good lighting.
-                    </p>
-                    <FileDropZone
-                      preview={selfiePreview}
-                      accept="image/*"
-                      capture="user"
-                      label="Tap to take a selfie with your front camera"
-                      icon={Camera}
-                      onChange={f => { setSelfieFile(f); setSelfiePreview(URL.createObjectURL(f)); setError('') }}
-                    />
-                    {selfiePreview && (
-                      <button onClick={() => { setSelfieFile(null); setSelfiePreview(null) }} className="text-xs text-muted-foreground mt-1.5 hover:text-destructive">
-                        Remove photo
-                      </button>
+                    {isAgent ? (
+                      <>
+                        <p className="text-sm text-muted-foreground">
+                          Take a clear selfie with your face visible. Make sure you&apos;re in good lighting.
+                        </p>
+                        <FileDropZone
+                          preview={selfiePreview}
+                          accept="image/*"
+                          capture="user"
+                          label="Tap to take a selfie with your front camera"
+                          icon={Camera}
+                          onChange={f => { setSelfieFile(f); setSelfiePreview(URL.createObjectURL(f)); setError('') }}
+                        />
+                        {selfiePreview && (
+                          <button onClick={() => { setSelfieFile(null); setSelfiePreview(null) }} className="text-xs text-muted-foreground mt-1.5 hover:text-destructive">
+                            Remove photo
+                          </button>
+                        )}
+                        {error && <p className="text-sm text-destructive">{error}</p>}
+                        {message && <p className="text-sm text-green-600">{message}</p>}
+                        <Button onClick={handleSubmitSelfie} disabled={submitting || !selfieFile} className="w-full">
+                          {submitting ? 'Submitting...' : 'Resubmit Selfie'}
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-sm text-muted-foreground">
+                          We&apos;ll guide you through a quick face verification — a few simple actions in front of your camera to confirm it&apos;s really you.
+                        </p>
+                        <Button onClick={() => setShowLiveness('selfie-only')} className="w-full">
+                          Start Face Verification
+                        </Button>
+                      </>
                     )}
-                    {error && <p className="text-sm text-destructive">{error}</p>}
-                    {message && <p className="text-sm text-green-600">{message}</p>}
-                    <Button onClick={handleSubmitSelfie} disabled={submitting || !selfieFile} className="w-full">
-                      {submitting ? 'Submitting...' : 'Resubmit Selfie'}
-                    </Button>
                   </div>
                 </div>
               </>
@@ -497,6 +571,17 @@ export default function VerificationPage() {
           </>
         )}
       </div>
+
+      {showLiveness && (
+        <LivenessVerificationModal
+          mode={showLiveness}
+          idFile={showLiveness === 'combined' ? idFile : undefined}
+          idType={showLiveness === 'combined' ? idType : undefined}
+          documentNumber={showLiveness === 'combined' ? (documentNumber.trim() || undefined) : undefined}
+          onSuccess={() => { setShowLiveness(null); refresh() }}
+          onCancel={() => setShowLiveness(null)}
+        />
+      )}
     </div>
   )
 }

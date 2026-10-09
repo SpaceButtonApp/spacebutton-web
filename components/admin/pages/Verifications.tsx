@@ -280,7 +280,11 @@ export function VerificationsPage({ onMessageUser, onMailUser }: VerificationsPa
                         {r.status === "partial" && (
                           <div className="text-xs text-orange-400 flex items-center gap-1">
                             <ShieldAlert className="w-3 h-3" />
-                            {r.idVerificationStatus === "approved"
+                            {r.role !== "agent"
+                          ? r.liveVerificationStatus === "pending"   ? "Face verification pending review"
+                          : r.liveVerificationStatus === "rejected"  ? "Face verification rejected"
+                          : "Face verification needed"
+                          : r.idVerificationStatus === "approved"
                           ? r.liveVerificationStatus === "pending"   ? "ID ✓ — Selfie pending review"
                           : r.liveVerificationStatus === "rejected"  ? "ID ✓ — Selfie rejected"
                           : "ID ✓ — Selfie needed"
@@ -295,7 +299,13 @@ export function VerificationsPage({ onMessageUser, onMailUser }: VerificationsPa
                   </td>
                   <td className="px-6 py-3.5 text-[var(--text-secondary)]">{r.email}</td>
                   <td className="px-6 py-3.5 text-[var(--text-secondary)]">{r.phone || "—"}</td>
-                  <td className="px-6 py-3.5"><DocStatusChip status={r.idVerificationStatus} /></td>
+                  <td className="px-6 py-3.5">
+                    {r.role !== "agent" ? (
+                      <span className="text-[var(--text-muted)]">N/A</span>
+                    ) : (
+                      <DocStatusChip status={r.idVerificationStatus} />
+                    )}
+                  </td>
                   <td className="px-6 py-3.5"><DocStatusChip status={r.liveVerificationStatus} /></td>
                   <td className="px-6 py-3.5">
                     {r.idType ? (

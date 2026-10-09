@@ -12,23 +12,6 @@ import type {
 } from '../types/user'
 import type { ChallengeId } from '@/lib/liveness/challenges'
 
-export interface ChallengeResult {
-  challenge: ChallengeId
-  passed: boolean
-  started_at: string
-  completed_at: string
-  confidence: number | null
-}
-
-export interface GuidedLivenessMetadata {
-  challenge_sequence: ChallengeId[]
-  challenge_results: ChallengeResult[]
-  spoof_check_passed: boolean
-  spoof_check_detail: Record<string, unknown> | null
-  client_platform: 'ios' | 'android' | 'web'
-  session_duration_ms: number
-}
-
 // ─── User profile endpoints (/users) ─────────────────────────────────────────
 // NOTE: GET /users/me and GET /users/{id} return the profile DIRECTLY (no envelope)
 
@@ -116,10 +99,9 @@ export const verificationApi = {
     return res.message
   },
 
-  async submitSelfie(file: File, livenessMetadata?: GuidedLivenessMetadata): Promise<string> {
+  async submitSelfie(file: File): Promise<string> {
     const form = new FormData()
     form.append('file', file)
-    if (livenessMetadata) form.append('liveness_metadata', JSON.stringify(livenessMetadata))
     const res = await api.post<ApiResponse<null>>('/verification/live', form)
     return res.message
   },
@@ -129,15 +111,25 @@ export const verificationApi = {
     idFile: File,
     selfieFile: File,
     documentNumber?: string,
-    livenessMetadata?: GuidedLivenessMetadata,
   ): Promise<string> {
     const form = new FormData()
     form.append('id_type', idType)
     form.append('id_file', idFile)
     form.append('selfie_file', selfieFile)
     if (documentNumber) form.append('document_number', documentNumber)
-    if (livenessMetadata) form.append('liveness_metadata', JSON.stringify(livenessMetadata))
     const res = await api.post<ApiResponse<null>>('/verification/submit-both', form)
+    return res.message
+  },
+
+  // Individual users only — the guided 15-second face video. Agents keep the
+  // plain photo flow above.
+  async submitLivenessVideo(file: File, instructions: ChallengeId[], sessionDurationMs: number): Promise<string> {
+    const form = new FormData()
+    form.append('file', file)
+    form.append('instructions', JSON.stringify(instructions))
+    form.append('client_platform', 'web')
+    form.append('session_duration_ms', String(sessionDurationMs))
+    const res = await api.post<ApiResponse<null>>('/verification/live-video', form)
     return res.message
   },
 }

@@ -91,7 +91,7 @@ type ApiErr = { response?: { data?: { message?: string } } }
 export default function VerificationPage() {
   const user = useAppStore((s) => s.user)
   const isAgent = user?.type === 'agent'
-  const [showLiveness, setShowLiveness] = useState<null | 'combined' | 'selfie-only'>(null)
+  const [showLiveness, setShowLiveness] = useState(false)
 
   const [status, setStatus] = useState<VerificationStatus | null>(null)
   const [loading, setLoading] = useState(true)
@@ -351,47 +351,31 @@ export default function VerificationPage() {
                         </div>
                       </div>
                     )}
-                    {isAgent ? (
-                      <>
-                        <p className="text-sm text-muted-foreground">
-                          Take a clear selfie with your face visible. Make sure you&apos;re in good lighting.
-                        </p>
-                        <FileDropZone
-                          preview={selfiePreview}
-                          accept="image/*"
-                          capture="user"
-                          label="Tap to take a selfie with your front camera"
-                          icon={Camera}
-                          onChange={f => { setSelfieFile(f); setSelfiePreview(URL.createObjectURL(f)); setError('') }}
-                        />
-                        {selfiePreview && (
-                          <button onClick={() => { setSelfieFile(null); setSelfiePreview(null) }} className="text-xs text-muted-foreground mt-1.5 hover:text-destructive">
-                            Remove photo
-                          </button>
-                        )}
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-sm text-muted-foreground">
-                          We&apos;ll guide you through a quick face verification — a few simple actions in front of your camera to confirm it&apos;s really you.
-                        </p>
-                        <Button onClick={() => setShowLiveness('combined')} disabled={!idFile} variant="outline" className="w-full">
-                          Start Face Verification
-                        </Button>
-                        {!idFile && <p className="text-xs text-muted-foreground">Upload your ID document first.</p>}
-                      </>
+                    {/* showCombined only renders for agents — individuals verify
+                        by face alone, with no ID step at all. */}
+                    <p className="text-sm text-muted-foreground">
+                      Take a clear selfie with your face visible. Make sure you&apos;re in good lighting.
+                    </p>
+                    <FileDropZone
+                      preview={selfiePreview}
+                      accept="image/*"
+                      capture="user"
+                      label="Tap to take a selfie with your front camera"
+                      icon={Camera}
+                      onChange={f => { setSelfieFile(f); setSelfiePreview(URL.createObjectURL(f)); setError('') }}
+                    />
+                    {selfiePreview && (
+                      <button onClick={() => { setSelfieFile(null); setSelfiePreview(null) }} className="text-xs text-muted-foreground mt-1.5 hover:text-destructive">
+                        Remove photo
+                      </button>
                     )}
                   </div>
 
-                  {isAgent && (
-                    <>
-                      {error && <p className="text-sm text-destructive">{error}</p>}
-                      {message && <p className="text-sm text-green-600">{message}</p>}
-                      <Button onClick={handleSubmitBoth} disabled={submitting || !idFile || !selfieFile} className="w-full">
-                        {submitting ? 'Submitting...' : 'Submit Both Documents'}
-                      </Button>
-                    </>
-                  )}
+                  {error && <p className="text-sm text-destructive">{error}</p>}
+                  {message && <p className="text-sm text-green-600">{message}</p>}
+                  <Button onClick={handleSubmitBoth} disabled={submitting || !idFile || !selfieFile} className="w-full">
+                    {submitting ? 'Submitting...' : 'Submit Both Documents'}
+                  </Button>
                 </div>
               </div>
             )}
@@ -416,7 +400,7 @@ export default function VerificationPage() {
                   <p className="text-sm text-muted-foreground">
                     We&apos;ll guide you through a few simple actions in front of your camera to confirm it&apos;s really you.
                   </p>
-                  <Button onClick={() => setShowLiveness('selfie-only')} className="w-full">
+                  <Button onClick={() => setShowLiveness(true)} className="w-full">
                     Start Face Verification
                   </Button>
                 </div>
@@ -550,7 +534,7 @@ export default function VerificationPage() {
                         <p className="text-sm text-muted-foreground">
                           We&apos;ll guide you through a quick face verification — a few simple actions in front of your camera to confirm it&apos;s really you.
                         </p>
-                        <Button onClick={() => setShowLiveness('selfie-only')} className="w-full">
+                        <Button onClick={() => setShowLiveness(true)} className="w-full">
                           Start Face Verification
                         </Button>
                       </>
@@ -572,16 +556,11 @@ export default function VerificationPage() {
         )}
       </div>
 
-      {showLiveness && (
-        <LivenessVerificationModal
-          mode={showLiveness}
-          idFile={showLiveness === 'combined' ? idFile : undefined}
-          idType={showLiveness === 'combined' ? idType : undefined}
-          documentNumber={showLiveness === 'combined' ? (documentNumber.trim() || undefined) : undefined}
-          onSuccess={() => { setShowLiveness(null); refresh() }}
-          onCancel={() => setShowLiveness(null)}
-        />
-      )}
+      <LivenessVerificationModal
+        visible={showLiveness}
+        onSuccess={() => { setShowLiveness(false); refresh() }}
+        onCancel={() => setShowLiveness(false)}
+      />
     </div>
   )
 }

@@ -9,6 +9,17 @@ import {
   ArrowLeft, ShieldCheck, ShieldX, Clock, Check, X, Maximize2, User, Mail, Phone,
   FolderCheck, FolderX, Loader2, Download,
 } from 'lucide-react'
+
+const LIVENESS_INSTRUCTION_LABELS: Record<string, string> = {
+  BLINK_TWICE: 'Blink twice',
+  TURN_LEFT: 'Turn head left',
+  TURN_RIGHT: 'Turn head right',
+  TURN_UP: 'Turn head up',
+  TURN_DOWN: 'Turn head down',
+  SMILE: 'Smile',
+  OPEN_MOUTH: 'Open mouth',
+  RAISE_EYEBROWS: 'Raise eyebrows',
+}
 import { ReasonModal, ImageLightbox } from '@/components/admin/shared/Modal'
 import {
   isLocalSaveSupported, isVerificationFolderConnected, connectVerificationFolder,
@@ -86,6 +97,9 @@ export default function VerificationDetailPage() {
   const idStatus = (verif?.id_verification_status ?? 'none') as DocStatus
   const liveStatus = (verif?.live_verification_status ?? 'none') as DocStatus
   const bothPending = idStatus === 'pending' && liveStatus === 'pending'
+  // Individuals verify via a guided liveness video alone — no ID step at all
+  // (agents keep the full ID + selfie flow, unchanged).
+  const isAgent = user?.role === 'agent'
 
   // Once both documents are approved, save them locally as one pair —
   // saving them separately as each is approved could leave a folder with
@@ -302,6 +316,65 @@ export default function VerificationDetailPage() {
               </div>
 
               {/* Documents */}
+              {!isAgent ? (
+                /* Individual users: guided liveness video only, no ID step */
+                <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl p-5 shadow-[var(--shadow-card)] mb-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="font-semibold text-[var(--text-primary)]">Face Verification Video</div>
+                    {statusBadge(liveStatus)}
+                  </div>
+
+                  {verif?.selfie_url ? (
+                    <video
+                      src={verif.selfie_url}
+                      controls
+                      playsInline
+                      className="w-full max-h-[480px] rounded-xl border border-[var(--border-color)] bg-black mb-4"
+                    />
+                  ) : (
+                    <div className="h-48 rounded-xl border border-[var(--border-color)] bg-[var(--bg-sunken)] flex items-center justify-center mb-4">
+                      <span className="text-sm text-[var(--text-muted)]">
+                        {liveStatus === 'rejected' ? 'Video removed after rejection' : 'No video submitted'}
+                      </span>
+                    </div>
+                  )}
+
+                  {verif?.liveness_instructions && verif.liveness_instructions.length > 0 && (
+                    <div className="mb-4">
+                      <div className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide mb-2">The user was asked to:</div>
+                      <ol className="text-sm text-[var(--text-secondary)] list-decimal list-inside space-y-1">
+                        {verif.liveness_instructions.map((id, i) => (
+                          <li key={i}>{LIVENESS_INSTRUCTION_LABELS[id] ?? id}</li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
+
+                  <p className="text-xs text-[var(--text-muted)] mb-4">
+                    Watch the video and confirm the user visibly performed each action above before approving.
+                  </p>
+
+                  {liveStatus === 'pending' && (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setRejectTarget('live')}
+                        disabled={!!actionLoading}
+                        className="flex-1 py-2 rounded-xl bg-red-500/15 text-red-400 font-medium hover:bg-red-500/25 transition-colors flex items-center justify-center gap-1.5 text-sm disabled:opacity-50"
+                      >
+                        <X className="w-4 h-4" /> Reject
+                      </button>
+                      <button
+                        onClick={approveLive}
+                        disabled={!!actionLoading}
+                        className="flex-1 py-2 rounded-xl bg-emerald-500 text-white font-medium hover:bg-emerald-600 transition-colors flex items-center justify-center gap-1.5 text-sm disabled:opacity-50"
+                      >
+                        {actionLoading === 'approve-live' ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check className="w-4 h-4" />}
+                        Approve
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
 
                 {/* ID Document */}
@@ -411,9 +484,10 @@ export default function VerificationDetailPage() {
                   )}
                 </div>
               </div>
+              )}
 
-              {/* Approve / Reject Both — only when both are pending */}
-              {bothPending && (
+              {/* Approve / Reject Both — only when both are pending (agents only) */}
+              {isAgent && bothPending && (
                 <div className="bg-[var(--bg-raised)] border border-[var(--border-color)] rounded-2xl p-5 shadow-[var(--shadow-card)]">
                   <div className="text-sm font-medium text-[var(--text-secondary)] mb-3">Bulk Action — both documents are pending</div>
                   <div className="flex gap-3">

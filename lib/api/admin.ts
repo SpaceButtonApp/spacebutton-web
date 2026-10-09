@@ -376,6 +376,8 @@ export interface PendingVerification {
   is_live_verified: boolean
   id_document_url?: string
   selfie_url?: string
+  selfie_is_video?: boolean
+  liveness_instructions?: string[] | null
   created_at?: string
 }
 

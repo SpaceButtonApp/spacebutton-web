@@ -129,7 +129,10 @@ export default function VerificationDetailPage() {
   // an unprompted native dialog popping up mid-approval is unreliable and
   // confusing. If the folder isn't ready, say so and leave "Save images now".
   async function maybeSaveLocally(updated: PendingVerification) {
-    if (updated.id_verification_status !== 'approved' || updated.live_verification_status !== 'approved') return
+    // Individuals have no ID-document step, so their id_verification_status
+    // stays 'none' forever — only require it to be approved for agents.
+    if (isAgent && updated.id_verification_status !== 'approved') return
+    if (updated.live_verification_status !== 'approved') return
 
     // No folder API (Firefox/Safari): nothing to connect, just download.
     if (!folderSupported) {
@@ -218,9 +221,8 @@ export default function VerificationDetailPage() {
 
   const canSaveNow =
     folderSupported !== null &&
-    idStatus === 'approved' &&
+    (!isAgent || (idStatus === 'approved' && !!verif?.id_document_url)) &&
     liveStatus === 'approved' &&
-    !!verif?.id_document_url &&
     !!verif?.selfie_url &&
     localSaveStatus?.type !== 'saving' &&
     localSaveStatus?.type !== 'success'

@@ -236,6 +236,10 @@ export const supportApi = {
     await supportFetch(`/admin/users/${userId}/activate`, { method: 'PATCH' })
   },
 
+  async verifyUserEmail(userId: string): Promise<void> {
+    await supportFetch(`/admin/users/${userId}/verify-email`, { method: 'PATCH' })
+  },
+
   // ── Verifications ────────────────────────────────────────────────────────
 
   async getVerifiedUsers(page = 1): Promise<{ users: Array<{ user_id: string; first_name: string; last_name: string; email: string; phone_number: string | null; role: string; id_type: string | null; verified_at?: string; created_at?: string; updated_at?: string }>; total: number }> {

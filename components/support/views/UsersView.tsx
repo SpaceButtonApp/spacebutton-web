@@ -78,6 +78,7 @@ export default function UsersView() {
   const [search, setSearch] = useState('')
   const [confirmAction, setConfirmAction] = useState<{ type: 'suspend' | 'reinstate'; user: Row } | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
+  const [verifyingId, setVerifyingId] = useState<string | null>(null)
   const [profileUser, setProfileUser] = useState<Row | null>(null)
   const [listingsCountMap, setListingsCountMap] = useState<Map<string, number>>(new Map())
   const [ratingMap, setRatingMap] = useState<Map<string, { avg: number; count: number }>>(new Map())
@@ -209,6 +210,20 @@ export default function UsersView() {
     }
   }
 
+  async function handleVerifyEmail(userId: string) {
+    if (verifyingId) return
+    setVerifyingId(userId)
+    try {
+      await supportApi.verifyUserEmail(userId)
+      setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, isEmailVerified: true } : u))
+      setProfileUser((prev) => (prev && prev.id === userId ? { ...prev, isEmailVerified: true } : prev))
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Could not verify this user's email.")
+    } finally {
+      setVerifyingId(null)
+    }
+  }
+
   return (
     <div className="admin-root dark" style={{ height: 'auto', overflow: 'visible' }}>
       <div className="p-8">
@@ -312,6 +327,12 @@ export default function UsersView() {
                           <ActionMenu
                             items={[
                               { label: 'View profile', icon: <Eye className="w-4 h-4" />, onClick: () => setProfileUser(u) },
+                              {
+                                label: u.isEmailVerified ? 'Email verified' : 'Verify email',
+                                icon: <ShieldCheck className="w-4 h-4" />,
+                                onClick: () => handleVerifyEmail(u.id),
+                                disabled: u.isEmailVerified || verifyingId === u.id,
+                              },
                               u.status === 'suspended'
                                 ? { label: 'Reinstate', icon: <UserCheck className="w-4 h-4" />, onClick: () => setConfirmAction({ type: 'reinstate', user: u }) }
                                 : { label: 'Suspend', icon: <UserX className="w-4 h-4" />, onClick: () => setConfirmAction({ type: 'suspend', user: u }), danger: true },
@@ -369,7 +390,17 @@ export default function UsersView() {
                 </div>
                 <div>
                   <p className="text-[10px] uppercase tracking-wide font-semibold text-[var(--text-muted)] mb-1">Email Verified</p>
-                  <p className="text-sm text-[var(--text-primary)]">{profileUser.isEmailVerified ? 'Yes' : 'No'}</p>
+                  {profileUser.isEmailVerified ? (
+                    <p className="text-sm text-[var(--text-primary)]">Yes</p>
+                  ) : (
+                    <button
+                      onClick={() => handleVerifyEmail(profileUser.id)}
+                      disabled={verifyingId === profileUser.id}
+                      className="text-sm font-medium text-violet-400 hover:text-violet-300 transition-colors disabled:opacity-50"
+                    >
+                      {verifyingId === profileUser.id ? 'Verifying…' : 'No — Verify now'}
+                    </button>
+                  )}
                 </div>
                 <div>
                   <p className="text-[10px] uppercase tracking-wide font-semibold text-[var(--text-muted)] mb-1 flex items-center gap-1"><Phone className="w-3 h-3" /> Phone</p>

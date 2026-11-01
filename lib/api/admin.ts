@@ -538,6 +538,10 @@ export const adminApi = {
     await adminFetch(`/admin/users/${userId}/activate`, { method: 'PATCH' })
   },
 
+  async verifyUserEmail(userId: string): Promise<void> {
+    await adminFetch(`/admin/users/${userId}/verify-email`, { method: 'PATCH' })
+  },
+
   // Agents
   async getAgents(page = 1, pageSize = 20): Promise<AdminAgentListResponse> {
     const qs = new URLSearchParams({ page: String(page), page_size: String(pageSize) })

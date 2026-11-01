@@ -75,6 +75,7 @@ export interface ActionMenuItem {
   icon?: React.ReactNode;
   onClick: () => void;
   danger?: boolean;
+  disabled?: boolean;
 }
 
 export function ActionMenu({ items }: { items: ActionMenuItem[] }) {
@@ -103,12 +104,16 @@ export function ActionMenu({ items }: { items: ActionMenuItem[] }) {
           {items.map((item, i) => (
             <button
               key={i}
+              disabled={item.disabled}
               onClick={() => {
+                if (item.disabled) return;
                 item.onClick();
                 setOpen(false);
               }}
               className={`w-full flex items-center gap-2 px-3.5 py-2 text-sm text-left transition-colors ${
-                item.danger
+                item.disabled
+                  ? "text-[var(--text-muted)] opacity-50 cursor-not-allowed"
+                  : item.danger
                   ? "text-red-400 hover:bg-red-500/10"
                   : "text-[var(--text-tertiary)] hover:bg-[var(--bg-hover)]"
               }`}

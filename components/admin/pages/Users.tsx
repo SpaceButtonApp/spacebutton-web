@@ -74,6 +74,7 @@ export function UsersPage({ onMessageUser, onMailUser, onViewUser }: UsersPagePr
   const [search, setSearch] = useState("");
   const [confirmAction, setConfirmAction] = useState<{ type: "suspend" | "delete" | "reinstate"; user: AppUser } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [verifyingId, setVerifyingId] = useState<string | null>(null);
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
@@ -166,6 +167,19 @@ export function UsersPage({ onMessageUser, onMailUser, onViewUser }: UsersPagePr
     } finally {
       setActionLoading(false);
       setConfirmAction(null);
+    }
+  }
+
+  async function handleVerifyEmail(userId: string) {
+    if (verifyingId || emailVerifiedMap.get(userId)) return;
+    setVerifyingId(userId);
+    try {
+      await adminApi.verifyUserEmail(userId);
+      setEmailVerifiedMap((prev) => new Map(prev).set(userId, true));
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Could not verify this user's email.");
+    } finally {
+      setVerifyingId(null);
     }
   }
 
@@ -278,6 +292,12 @@ export function UsersPage({ onMessageUser, onMailUser, onViewUser }: UsersPagePr
                         { label: "View profile", icon: <Eye className="w-4 h-4" />, onClick: () => onViewUser?.(u.id) },
                         { label: "Message", icon: <MessageCircle className="w-4 h-4" />, onClick: () => onMessageUser?.(u) },
                         { label: "Send mail", icon: <Mail className="w-4 h-4" />, onClick: () => onMailUser?.(u) },
+                        {
+                          label: emailVerifiedMap.get(u.id) ? "Email verified" : "Verify email",
+                          icon: <ShieldCheck className="w-4 h-4" />,
+                          onClick: () => handleVerifyEmail(u.id),
+                          disabled: !!emailVerifiedMap.get(u.id) || verifyingId === u.id,
+                        },
                         u.status === "suspended"
                           ? { label: "Reinstate", icon: <UserCheck className="w-4 h-4" />, onClick: () => setConfirmAction({ type: "reinstate", user: u }) }
                           : { label: "Suspend", icon: <UserX className="w-4 h-4" />, onClick: () => setConfirmAction({ type: "suspend", user: u }), danger: true },
